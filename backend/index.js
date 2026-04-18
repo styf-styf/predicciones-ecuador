@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
@@ -10,7 +11,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const SECRET = "secreto123";
+const SECRET = process.env.JWT_SECRET;
+if (!SECRET) {
+  throw new Error("JWT_SECRET no está definido en .env");
+}
 
 // =======================
 // 🔐 Middleware auth
@@ -36,6 +40,19 @@ const auth = (req, res, next) => {
 // =======================
 app.post("/register", async (req, res) => {
   const { email, password } = req.body;
+
+  // 🔴 VALIDACIÓN
+  if (!email || !password) {
+    return res.status(400).json({
+      message: "Email y contraseña son obligatorios"
+    });
+  }
+
+  if (email.trim() === "" || password.trim() === "") {
+    return res.status(400).json({
+      message: "No se permiten campos vacíos"
+    });
+  }
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
