@@ -141,6 +141,24 @@ export default function RegisterPage() {
           >
             {loading ? "Creando..." : "Registrarse"}
           </button>
+          <div className="mt-4">
+  <button
+    type="button"
+    onClick={async () => {
+      const { supabase } = await import("@/lib/supabase");
+
+      await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: "https://predicciones-ecuador.onrender.com",
+        },
+      });
+    }}
+    className="w-full bg-white text-black font-bold py-3 rounded-xl"
+  >
+    Continuar con Google
+  </button>
+ </div>
 
           <p className="text-center text-sm mt-4 text-slate-400">
   ¿Ya tienes cuenta?{" "}

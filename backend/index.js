@@ -20,7 +20,7 @@ if (!SECRET) {
 // 🔐 Middleware auth
 // =======================
 const auth = (req, res, next) => {
-  const token = req.headers.authorization;
+  const token = req.headers.authorization?.split(" ")[1];
 
   if (!token) {
     return res.status(401).json({ message: "No autorizado" });
@@ -65,17 +65,19 @@ app.post("/register", async (req, res) => {
   }
 
   // 🔥 evitar usuarios duplicados
-  const { data: existing } = await supabase
-    .from("users")
-    .select("id")
-    .eq("email", email)
-    .single();
+  const { data: existing, error: checkError } = await supabase
+  .from("users")
+  .select("id")
+  .eq("email", email)
+  .maybeSingle();
 
-  if (existing) {
-    return res.status(400).json({
-      message: "El usuario ya existe",
-    });
-  }
+ if (checkError) {
+  return res.status(500).json({ message: checkError.message });
+ }
+
+ if (existing) {
+  return res.status(400).json({ message: "El usuario ya existe" });
+ }
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -140,6 +142,62 @@ app.post("/login", async (req, res) => {
     role: data.role
   });
 });
+
+app.post("/auth/google", async (req, res) => {
+  const { email, nombre } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: "Email requerido" });
+  }
+
+  const { data: existing, error: checkError } = await supabase
+    .from("users")
+    .select("*")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (checkError) {
+    return res.status(500).json({ message: checkError.message });
+  }
+
+  if (existing) {
+  const token = jwt.sign(
+    {
+      id: existing.id,
+      role: existing.role,
+      points: existing.points,
+    },
+    SECRET,
+    { expiresIn: "7d" }
+  );
+
+  return res.json({
+    message: "Login Google exitoso",
+    token,
+    user: existing,
+  });
+}
+
+  const { data, error } = await supabase
+    .from("users")
+    .insert([
+      {
+        email,
+        nombre: nombre || "",
+        role: "user",
+        points: 0,
+      },
+    ])
+    .select()
+    .single();
+
+  if (error) {
+    return res.status(400).json({ message: error.message });
+  }
+
+  res.json({ message: "Usuario creado", user: data });
+ });
+
 
 // =======================
 // 📊 OBTENER MERCADOS
@@ -208,7 +266,7 @@ app.get("/ranking", async (req, res) => {
 });
 
 app.get("/admin/winners", async (req, res) => {
-  const token = req.headers.authorization;
+  const token = req.headers.authorization?.split(" ")[1];
 
   if (!token) {
     return res.status(401).json({ message: "Token requerido" });
@@ -250,7 +308,7 @@ app.get("/admin/winners", async (req, res) => {
 });
 
 app.put("/notifications/read", async (req, res) => {
-  const token = req.headers.authorization;
+  const token = req.headers.authorization?.split(" ")[1];
   if (!token) return res.status(401).json({ message: "No autorizado" });
 
   try {
@@ -322,7 +380,7 @@ console.log("ERROR WINNERS:", winnersError);
 console.log("TODAS LAS APUESTAS:", allBets);
 console.log("WINNER ELEGIDO:", winner);
 
-if (winners.length === 0) {
+if (!winners || winners.length === 0) {
   await supabase
     .from("markets")
     .update({

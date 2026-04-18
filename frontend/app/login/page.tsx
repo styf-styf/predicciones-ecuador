@@ -93,7 +93,25 @@ export default function Login() {
   <button className="w-full bg-blue-500 font-bold py-3 rounded-xl mb-2">
     Registrarse
   </button>
-</Link>
+ </Link>
+ <div className="mb-2">
+  <button
+    type="button"
+    onClick={async () => {
+      const { supabase } = await import("@/lib/supabase");
+
+      await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: "https://predicciones-ecuador.onrender.com",
+        },
+      });
+    }}
+    className="w-full bg-white text-black font-bold py-3 rounded-xl"
+  >
+    Continuar con Google
+  </button>
+ </div>
 
         <button
           onClick={handleLogout}
