@@ -40,14 +40,20 @@ export default function RegisterPage() {
  };
 
   return (
-    <div style={{ maxWidth: 400, margin: "auto", padding: 20 }}>
-      <h2>Registrarse</h2>
+  <main className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
+    <div className="bg-slate-900 p-8 rounded-2xl w-96 border border-slate-800 shadow-xl">
 
-      <form onSubmit={handleRegister}>
+      <h1 className="text-2xl font-bold mb-6 text-center">
+        Crear cuenta
+      </h1>
+
+      <form onSubmit={handleRegister} className="space-y-3">
+
         <input
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          className="w-full p-3 rounded-xl bg-slate-800 outline-none focus:ring-2 focus:ring-emerald-500"
         />
 
         <input
@@ -55,14 +61,31 @@ export default function RegisterPage() {
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          className="w-full p-3 rounded-xl bg-slate-800 outline-none focus:ring-2 focus:ring-emerald-500"
         />
 
-        <button disabled={loading}>
+        <button
+          disabled={loading}
+          className="w-full bg-emerald-500 hover:bg-emerald-400 transition text-slate-950 font-bold py-3 rounded-xl"
+        >
           {loading ? "Creando..." : "Registrarse"}
         </button>
 
-        {error && <p style={{ color: "red" }}>{error}</p>}
+        <p className="text-center text-sm mt-4 text-slate-400">
+  ¿Ya tienes cuenta?{" "}
+  <a href="/login" className="text-emerald-400 hover:underline">
+    Inicia sesión
+  </a>
+</p>
+
       </form>
+
+      {error && (
+        <p className="text-center text-sm mt-4 text-rose-400">
+          {error}
+        </p>
+      )}
     </div>
-  );
+  </main>
+);
 }
