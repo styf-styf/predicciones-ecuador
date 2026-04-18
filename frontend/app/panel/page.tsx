@@ -89,9 +89,9 @@ export default function PanelPage() {
       const headers = { authorization: token };
 
       const [meRes, betsRes, rankRes] = await Promise.all([
-        fetch("http://localhost:4000/me", { headers }),
-        fetch("http://localhost:4000/my-bets", { headers }),
-        fetch("http://localhost:4000/ranking"),
+        fetch("https://predicciones-ecuador.onrender.com/me", { headers }),
+        fetch("https://predicciones-ecuador.onrender.com/my-bets", { headers }),
+        fetch("https://predicciones-ecuador.onrender.com/ranking"),
       ]);
 
       const meData = await meRes.json();

@@ -524,5 +524,5 @@ app.get("/", (req, res) => {
 
 // =======================
 app.listen(4000, () => {
-  console.log("Servidor en http://localhost:4000");
+  console.log("Servidor en https://predicciones-ecuador.onrender.com");
 });

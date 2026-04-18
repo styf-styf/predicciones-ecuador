@@ -13,7 +13,7 @@ export default function AdminPage() {
   const [winners, setWinners] = useState<any[]>([]);
 
   const fetchMarkets = async () => {
-  const res = await fetch("http://localhost:4000/markets");
+  const res = await fetch("https://predicciones-ecuador.onrender.com/markets");
   const data = await res.json();
   setMarkets(data);
 };
@@ -21,7 +21,7 @@ export default function AdminPage() {
 const fetchWinners = async () => {
   const token = localStorage.getItem("token");
 
-  const res = await fetch("http://localhost:4000/admin/winners", {
+  const res = await fetch("https://predicciones-ecuador.onrender.com/admin/winners", {
     headers: {
       authorization: token || "",
     },
@@ -37,7 +37,7 @@ const fetchWinners = async () => {
   const handleCreateMarket = async () => {
     const token = localStorage.getItem("token");
     if (!newQuestion.trim()) return;
-    const res = await fetch("http://localhost:4000/admin/markets", {
+    const res = await fetch("https://predicciones-ecuador.onrender.com/admin/markets", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -57,7 +57,7 @@ const fetchWinners = async () => {
 
   const handleDeleteMarket = async (id:any) => {
     const token = localStorage.getItem("token");
-    const res = await fetch(`http://localhost:4000/admin/markets/${id}`, {
+    const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/markets/${id}`, {
       method: "DELETE",
       headers: { authorization: token || "" },
     });
@@ -79,7 +79,7 @@ const fetchWinners = async () => {
   const token = localStorage.getItem("token");
 
   const res = await fetch(
-    `http://localhost:4000/admin/resolve/${id}`,
+    `https://predicciones-ecuador.onrender.com/admin/resolve/${id}`,
     {
       method: "POST",
       headers: {
@@ -101,7 +101,7 @@ const fetchWinners = async () => {
     const token = localStorage.getItem("token");
     if (!token) return alert("Debes iniciar sesión ❌");
 
-    const res = await fetch("http://localhost:4000/bet", {
+    const res = await fetch("https://predicciones-ecuador.onrender.com/bet", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -21,7 +21,7 @@ export default function Login() {
   }, [router]);
 
   const handleRegister = async () => {
-    const res = await fetch("http://localhost:4000/register", {
+    const res = await fetch("https://predicciones-ecuador.onrender.com/register", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -34,7 +34,7 @@ export default function Login() {
   };
 
   const handleLogin = async () => {
-    const res = await fetch("http://localhost:4000/login", {
+    const res = await fetch("https://predicciones-ecuador.onrender.com/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

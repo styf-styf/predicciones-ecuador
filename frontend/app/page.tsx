@@ -21,7 +21,7 @@ const loadNotifications = async () => {
   }
 
   try {
-    const res = await fetch("http://localhost:4000/notifications", {
+    const res = await fetch("https://predicciones-ecuador.onrender.com/notifications", {
       headers: { authorization: token },
     });
 
@@ -38,7 +38,7 @@ const loadNotifications = async () => {
  };
 
   const fetchMarkets = async () => {
-    const res = await fetch("http://localhost:4000/markets");
+    const res = await fetch("https://predicciones-ecuador.onrender.com/markets");
     const data = await res.json();
     setMarkets(data);
   };
@@ -47,7 +47,7 @@ const loadNotifications = async () => {
     const token = localStorage.getItem("token");
     if (!token) return alert("Debes iniciar sesión ❌");
 
-    const res = await fetch("http://localhost:4000/bet", {
+    const res = await fetch("https://predicciones-ecuador.onrender.com/bet", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -69,7 +69,7 @@ const loadNotifications = async () => {
   const token = localStorage.getItem("token");
   if (!token) return;
 
-  const res = await fetch("http://localhost:4000/me", {
+  const res = await fetch("https://predicciones-ecuador.onrender.com/me", {
     headers: { authorization: token },
   });
 
@@ -195,7 +195,7 @@ const loadNotifications = async () => {
 
       const token = localStorage.getItem("token");
 
-      await fetch("http://localhost:4000/notifications/read", {
+      await fetch("https://predicciones-ecuador.onrender.com/notifications/read", {
         method: "PUT",
         headers: {
           authorization: token || "",
