@@ -39,18 +39,41 @@ const auth = (req, res, next) => {
 // 👤 REGISTRO
 // =======================
 app.post("/register", async (req, res) => {
-  const { email, password } = req.body;
+  const {
+    email,
+    password,
+    nombre,
+    apellido,
+    cedula,
+    celular,
+    ciudad,
+    direccion,
+    pais,
+  } = req.body;
 
-  // 🔴 VALIDACIÓN
+  // 🔴 validación básica
   if (!email || !password) {
     return res.status(400).json({
-      message: "Email y contraseña son obligatorios"
+      message: "Email y contraseña son obligatorios",
     });
   }
 
   if (email.trim() === "" || password.trim() === "") {
     return res.status(400).json({
-      message: "No se permiten campos vacíos"
+      message: "No se permiten campos vacíos",
+    });
+  }
+
+  // 🔥 evitar usuarios duplicados
+  const { data: existing } = await supabase
+    .from("users")
+    .select("id")
+    .eq("email", email)
+    .single();
+
+  if (existing) {
+    return res.status(400).json({
+      message: "El usuario ya existe",
     });
   }
 
@@ -60,6 +83,15 @@ app.post("/register", async (req, res) => {
     {
       email,
       password: hashedPassword,
+      nombre,
+      apellido,
+      cedula,
+      celular,
+      ciudad,
+      direccion,
+      pais: pais || "Ecuador",
+      role: "user",
+      points: 0,
     },
   ]);
 
@@ -67,8 +99,8 @@ app.post("/register", async (req, res) => {
     return res.status(400).json({ message: error.message });
   }
 
-  res.json({ message: "Usuario registrado" });
-});
+  res.json({ message: "Usuario registrado correctamente" });
+ });
 
 // =======================
 // 🔑 LOGIN

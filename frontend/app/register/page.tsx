@@ -142,6 +142,13 @@ export default function RegisterPage() {
             {loading ? "Creando..." : "Registrarse"}
           </button>
 
+          <p className="text-center text-sm mt-4 text-slate-400">
+  ¿Ya tienes cuenta?{" "}
+  <a href="/login" className="text-emerald-400 hover:underline">
+    Inicia sesión
+  </a>
+ </p>
+
         </form>
 
         {error && (
