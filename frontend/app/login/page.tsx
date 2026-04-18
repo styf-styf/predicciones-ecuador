@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function Login() {
   const router = useRouter();
@@ -20,18 +21,7 @@ export default function Login() {
     }
   }, [router]);
 
-  const handleRegister = async () => {
-    const res = await fetch("https://predicciones-ecuador.onrender.com/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const data = await res.json();
-    setMessage(data.message);
-  };
+  
 
   const handleLogin = async () => {
     const res = await fetch("https://predicciones-ecuador.onrender.com/login", {
@@ -99,12 +89,11 @@ export default function Login() {
           Iniciar sesión
         </button>
 
-        <button
-          onClick={handleRegister}
-          className="w-full bg-blue-500 font-bold py-3 rounded-xl mb-2"
-        >
-          Registrarse
-        </button>
+        <Link href="/register">
+  <button className="w-full bg-blue-500 font-bold py-3 rounded-xl mb-2">
+    Registrarse
+  </button>
+</Link>
 
         <button
           onClick={handleLogout}
