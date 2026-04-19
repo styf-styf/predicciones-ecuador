@@ -68,19 +68,41 @@ const loadNotifications = async () => {
 
   const loadMe = async () => {
   const token = localStorage.getItem("token");
-  if (!token) return;
 
-  const res = await fetch("https://predicciones-ecuador.onrender.com/me", {
-    headers: { authorization: token },
-  });
+  // Login normal
+  if (token && token !== "google-login") {
+    const res = await fetch("https://predicciones-ecuador.onrender.com/me", {
+      headers: { authorization: token },
+    });
 
-  if (!res.ok) return;
+    if (res.ok) {
+      const data = await res.json();
+      setPoints(data.points);
+      setIsAdmin(data.role === "admin");
+      setIsLogged(true);
+      return;
+    }
+  }
 
-  const data = await res.json();
+  // Login con Google
+  const { data } = await supabase.auth.getSession();
 
-  setPoints(data.points);
-  setIsAdmin(data.role === "admin");
-  setIsLogged(true);
+  if (data.session) {
+    const email = data.session.user.email;
+
+    const { data: userData } = await supabase
+      .from("users")
+      .select("points, role")
+      .eq("email", email)
+      .single();
+
+    setPoints(userData?.points || 0);
+    setIsAdmin(userData?.role === "admin");
+    setIsLogged(true);
+    return;
+  }
+
+  setIsLogged(false);
  }; 
 
   useEffect(() => {
@@ -262,11 +284,17 @@ const loadNotifications = async () => {
  </div>
             {isLogged ? (
               <button
-                onClick={() => {
-                  localStorage.removeItem("token");
-                  setIsLogged(false);
-                  setPoints(null);
-                }}
+                onClick={async () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("role");
+  localStorage.removeItem("points");
+
+  await supabase.auth.signOut();
+
+  setIsLogged(false);
+  setPoints(null);
+  setIsAdmin(false);
+ }}
                 className="px-4 py-2 rounded-2xl bg-rose-500 font-medium flex items-center gap-2"
               >
                 <LogOut size={16} /> Cerrar sesión
