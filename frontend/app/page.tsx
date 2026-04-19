@@ -86,53 +86,59 @@ const loadNotifications = async () => {
 
   useEffect(() => {
   const handleOAuth = async () => {
-    const { data } = await supabase.auth.getSession();
+  const { data } = await supabase.auth.getSession();
 
-    const session = data.session;
+  const session = data.session;
+  if (!session) return;
+
+  const user = session.user;
+
+  const res = await fetch("https://predicciones-ecuador.onrender.com/auth/google", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: user.email,
+      nombre: user.user_metadata?.full_name || "",
+    }),
+  });
+
+  const dataBackend = await res.json();
+
+  // 🔥 ESTE es el importante
+  localStorage.setItem("token", dataBackend.token);
+
+  await loadMe();
+  await loadNotifications();
+
+  window.history.replaceState(null, "", "/");
+};
+
+  handleOAuth();
+
+  const { data: listener } = supabase.auth.onAuthStateChange(
+  async (_event, session) => {
     if (!session) return;
 
-    const user = session.user;
-
-    await fetch("https://predicciones-ecuador.onrender.com/auth/google", {
+    const res = await fetch("https://predicciones-ecuador.onrender.com/auth/google", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        email: user.email,
-        nombre: user.user_metadata?.full_name || "",
+        email: session.user.email,
+        nombre: session.user.user_metadata?.full_name || "",
       }),
     });
 
-    localStorage.setItem("token", session.access_token);
+    const dataBackend = await res.json();
+
+    // 🔥 TOKEN CORRECTO
+    localStorage.setItem("token", dataBackend.token);
 
     await loadMe();
     await loadNotifications();
 
     window.history.replaceState(null, "", "/");
-  };
-
-  handleOAuth();
-
-  const { data: listener } = supabase.auth.onAuthStateChange(
-    async (_event, session) => {
-      if (!session) return;
-
-      await fetch("https://predicciones-ecuador.onrender.com/auth/google", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: session.user.email,
-          nombre: session.user.user_metadata?.full_name || "",
-        }),
-      });
-
-      localStorage.setItem("token", session.access_token);
-
-      await loadMe();
-      await loadNotifications();
-
-      window.history.replaceState(null, "", "/");
-    }
-  );
+  }
+);
 
   return () => {
     listener?.subscription?.unsubscribe?.();

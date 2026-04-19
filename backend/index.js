@@ -169,7 +169,11 @@ app.post("/auth/google", async (req, res) => {
     },
     SECRET,
     { expiresIn: "7d" }
+
+    
   );
+
+
 
   return res.json({
     message: "Login Google exitoso",
@@ -178,22 +182,21 @@ app.post("/auth/google", async (req, res) => {
   });
 }
 
-  const { data, error } = await supabase
-    .from("users")
-    .insert([
-      {
-        email,
-        nombre: nombre || "",
-        role: "user",
-        points: 0,
-      },
-    ])
-    .select()
-    .single();
+  const token = jwt.sign(
+  {
+    id: data.id,
+    role: data.role,
+    points: data.points,
+  },
+  SECRET,
+  { expiresIn: "7d" }
+);
 
-  if (error) {
-    return res.status(400).json({ message: error.message });
-  }
+ return res.json({
+  message: "Usuario creado",
+  token,
+  user: data,
+ });
 
   res.json({ message: "Usuario creado", user: data });
  });
