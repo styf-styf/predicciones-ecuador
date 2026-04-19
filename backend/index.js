@@ -61,8 +61,7 @@ app.post("/register", async (req, res) => {
   if (email.trim() === "" || password.trim() === "") {
     return res.status(400).json({
       message: "No se permiten campos vacíos",
-<<<<<<< HEAD
-=======
+
     });
   }
 
@@ -76,7 +75,7 @@ app.post("/register", async (req, res) => {
   if (existing) {
     return res.status(400).json({
       message: "El usuario ya existe",
->>>>>>> version-0.10
+
     });
   }
 
