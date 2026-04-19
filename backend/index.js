@@ -20,7 +20,7 @@ if (!SECRET) {
 // 🔐 Middleware auth
 // =======================
 const auth = (req, res, next) => {
-  const token = req.headers.authorization;
+  const token = req.headers.authorization?.split(" ")[1];
 
   if (!token) {
     return res.status(401).json({ message: "No autorizado" });
@@ -161,8 +161,22 @@ app.post("/auth/google", async (req, res) => {
   }
 
   if (existing) {
-    return res.json({ message: "Usuario ya existe", user: existing });
-  }
+  const token = jwt.sign(
+    {
+      id: existing.id,
+      role: existing.role,
+      points: existing.points,
+    },
+    SECRET,
+    { expiresIn: "7d" }
+  );
+
+  return res.json({
+    message: "Login Google exitoso",
+    token,
+    user: existing,
+  });
+}
 
   const { data, error } = await supabase
     .from("users")
@@ -252,7 +266,7 @@ app.get("/ranking", async (req, res) => {
 });
 
 app.get("/admin/winners", async (req, res) => {
-  const token = req.headers.authorization;
+  const token = req.headers.authorization?.split(" ")[1];
 
   if (!token) {
     return res.status(401).json({ message: "Token requerido" });
@@ -294,7 +308,7 @@ app.get("/admin/winners", async (req, res) => {
 });
 
 app.put("/notifications/read", async (req, res) => {
-  const token = req.headers.authorization;
+  const token = req.headers.authorization?.split(" ")[1];
   if (!token) return res.status(401).json({ message: "No autorizado" });
 
   try {
@@ -366,7 +380,7 @@ console.log("ERROR WINNERS:", winnersError);
 console.log("TODAS LAS APUESTAS:", allBets);
 console.log("WINNER ELEGIDO:", winner);
 
-if (winners.length === 0) {
+if (!winners || winners.length === 0) {
   await supabase
     .from("markets")
     .update({
