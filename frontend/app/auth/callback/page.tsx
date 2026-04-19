@@ -8,7 +8,14 @@ export default function CallbackPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const checkUser = async () => {
+    const handleLogin = async () => {
+      const url = new URL(window.location.href);
+      const code = url.searchParams.get("code");
+
+      if (code) {
+        await supabase.auth.exchangeCodeForSession(code);
+      }
+
       const { data } = await supabase.auth.getSession();
 
       if (data.session) {
@@ -18,7 +25,7 @@ export default function CallbackPage() {
       }
     };
 
-    checkUser();
+    handleLogin();
   }, []);
 
   return <p>Iniciando sesión...</p>;
