@@ -59,6 +59,7 @@ const loadNotifications = async () => {
     const data = await res.json();
     if (data.points !== undefined) {
       setPoints(data.points);
+      setIsLogged(true);
       fetchMarkets();
     } else {
       alert(data.message);
@@ -78,78 +79,65 @@ const loadNotifications = async () => {
   const data = await res.json();
 
   setPoints(data.points);
-  setIsAdmin(data.role === "admin");
   setIsLogged(true);
+  setIsAdmin(data.role === "admin");
+  
  }; 
 
   useEffect(() => {
-  fetchMarkets();
-  loadNotifications();
-  loadMe();
-  const handleClickOutside = (event: any) => {
-    if (
-      notifRef.current &&
-      !notifRef.current.contains(event.target)
-    ) {
-      setShowNotifications(false);
-    }
+  const handleOAuth = async () => {
+    const { data } = await supabase.auth.getSession();
+
+    const session = data.session;
+    if (!session) return;
+
+    const user = session.user;
+
+    await fetch("https://predicciones-ecuador.onrender.com/auth/google", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: user.email,
+        nombre: user.user_metadata?.full_name || "",
+      }),
+    });
+
+    localStorage.setItem("token", session.access_token);
+
+    await loadMe();
+    await loadNotifications();
+
+    window.history.replaceState(null, "", "/");
   };
 
-  document.addEventListener("mousedown", handleClickOutside);
-  
+  handleOAuth();
 
-  const channel = supabase
-    .channel("markets-live")
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "markets",
-      },
-      () => {
-        fetchMarkets();
-      }
-    )
-    .subscribe();
+  const { data: listener } = supabase.auth.onAuthStateChange(
+    async (_event, session) => {
+      if (!session) return;
 
-  const notifChannel = supabase
-    .channel("notifications-live")
-    .on(
-      "postgres_changes",
-      {
-        event: "INSERT",
-        schema: "public",
-        table: "notifications",
-      },
-      () => {
-        loadNotifications();
-      }
-    )
-    .subscribe();
+      await fetch("https://predicciones-ecuador.onrender.com/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: session.user.email,
+          nombre: session.user.user_metadata?.full_name || "",
+        }),
+      });
 
-    const userChannel = supabase
-  .channel("user-points-live")
-  .on(
-    "postgres_changes",
-    {
-      event: "UPDATE",
-      schema: "public",
-      table: "users",
-    },
-    () => {
-      loadMe();
+      localStorage.setItem("token", session.access_token);
+
+      await loadMe();
+      await loadNotifications();
+
+      window.history.replaceState(null, "", "/");
     }
-  )
-  .subscribe();
+  );
 
   return () => {
-    document.removeEventListener("mousedown", handleClickOutside);
-    supabase.removeChannel(channel);
-    supabase.removeChannel(notifChannel);
-    supabase.removeChannel(userChannel);
+    listener?.subscription?.unsubscribe?.();
   };
- }, []);
+}, []);
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -261,11 +249,15 @@ const loadNotifications = async () => {
  </div>
             {isLogged ? (
               <button
-                onClick={() => {
-                  localStorage.removeItem("token");
-                  setIsLogged(false);
-                  setPoints(null);
-                }}
+               onClick={async () => {
+  localStorage.removeItem("token");
+  await supabase.auth.signOut();
+  setIsLogged(false);
+setPoints(null);
+setIsAdmin(false);
+setNotifications([]);
+setShowNotifications(false);
+}}
                 className="px-4 py-2 rounded-2xl bg-rose-500 font-medium flex items-center gap-2"
               >
                 <LogOut size={16} /> Cerrar sesión
