@@ -144,21 +144,25 @@ app.post("/login", async (req, res) => {
   {
     id: data.id,
     role: data.role,
-    points: data.points
+    points: data.points,
   },
   SECRET,
   { expiresIn: "7d" }
  );
 
-  res.json({
-    message: "Login exitoso",
+ return res.json({
     token,
-    points: data.points,
-    role: data.role
+    user: {
+      id: data.id,
+      email: data.email,
+      role: data.role,
+      points: data.points,
+    },
   });
-});
+ });
+  
 
-app.post("/auth/google", async (req, res) => {
+ app.post("/auth/google", async (req, res) => {
   const { email, nombre } = req.body;
 
   if (!email) {
@@ -175,24 +179,30 @@ app.post("/auth/google", async (req, res) => {
     return res.status(500).json({ message: checkError.message });
   }
 
+  // ✅ SI YA EXISTE → SOLO LOGIN
   if (existing) {
-  const token = jwt.sign(
-    {
-      id: existing.id,
-      role: existing.role,
-      points: existing.points,
-    },
-    SECRET,
-    { expiresIn: "7d" }
-  );
+    const token = jwt.sign(
+      {
+        id: existing.id,
+        role: existing.role,
+        points: existing.points,
+      },
+      SECRET,
+      { expiresIn: "7d" }
+    );
 
-  return res.json({
-    message: "Login Google exitoso",
-    token,
-    user: existing,
-  });
-}
+    return res.json({
+      token,
+      user: {
+        id: existing.id,
+        email: existing.email,
+        role: existing.role,
+        points: existing.points,
+      },
+    });
+  }
 
+  // ✅ SI NO EXISTE → CREAR USUARIO
   const { data, error } = await supabase
     .from("users")
     .insert([
@@ -211,26 +221,25 @@ app.post("/auth/google", async (req, res) => {
   }
 
   const token = jwt.sign(
-  {
-    id: data.id,
-    role: data.role,
-    points: data.points,
-  },
-  SECRET,
-  { expiresIn: "7d" }
-);
+    {
+      id: data.id,
+      role: data.role,
+      points: data.points,
+    },
+    SECRET,
+    { expiresIn: "7d" }
+  );
 
-res.json({
-  message: "Login Google exitoso",
-  token,
-  user: {
-    id: data.id,
-    email: data.email,
-    role: data.role,
-    points: data.points,
-  },
- });
- });
+  return res.json({
+    token,
+    user: {
+      id: data.id,
+      email: data.email,
+      role: data.role,
+      points: data.points,
+    },
+  });
+});
 
 
 // =======================
