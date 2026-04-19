@@ -59,7 +59,6 @@ const loadNotifications = async () => {
     const data = await res.json();
     if (data.points !== undefined) {
       setPoints(data.points);
-      setIsLogged(true);
       fetchMarkets();
     } else {
       alert(data.message);
@@ -69,7 +68,6 @@ const loadNotifications = async () => {
   const loadMe = async () => {
   const token = localStorage.getItem("token");
   if (!token) return;
-  
 
   const res = await fetch("https://predicciones-ecuador.onrender.com/me", {
     headers: { authorization: token },
@@ -78,72 +76,66 @@ const loadNotifications = async () => {
   if (!res.ok) return;
 
   const data = await res.json();
+
   setPoints(data.points);
-  setIsLogged(true);
   setIsAdmin(data.role === "admin");
-  
+  setIsLogged(true);
  }; 
 
   useEffect(() => {
   const handleOAuth = async () => {
-  const { data } = await supabase.auth.getSession();
+    const { data } = await supabase.auth.getSession();
 
-  const session = data.session;
-  if (!session) return;
-
-  const user = session.user;
-
-  const res = await fetch("https://predicciones-ecuador.onrender.com/auth/google", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email: user.email,
-      nombre: user.user_metadata?.full_name || "",
-    }),
-  });
-
-  const dataBackend = await res.json();
-
-  // 🔥 ESTE es el importante
-  localStorage.setItem("token", dataBackend.token);
-
-  await loadMe();
-  await loadNotifications();
-
-  window.history.replaceState(null, "", "/");
-};
-
-  handleOAuth();
-
-  const { data: listener } = supabase.auth.onAuthStateChange(
-  async (_event, session) => {
+    const session = data.session;
     if (!session) return;
 
-    const res = await fetch("https://predicciones-ecuador.onrender.com/auth/google", {
+    const user = session.user;
+
+    await fetch("https://predicciones-ecuador.onrender.com/auth/google", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        email: session.user.email,
-        nombre: session.user.user_metadata?.full_name || "",
+        email: user.email,
+        nombre: user.user_metadata?.full_name || "",
       }),
     });
 
-    const dataBackend = await res.json();
-
-    // 🔥 TOKEN CORRECTO
-    localStorage.setItem("token", dataBackend.token);
+    localStorage.setItem("token", session.access_token);
 
     await loadMe();
     await loadNotifications();
 
     window.history.replaceState(null, "", "/");
-  }
-);
+  };
+
+  handleOAuth();
+
+  const { data: authListener } = supabase.auth.onAuthStateChange(
+    async (_event, session) => {
+      if (!session) return;
+
+      await fetch("https://predicciones-ecuador.onrender.com/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: session.user.email,
+          nombre: session.user.user_metadata?.full_name || "",
+        }),
+      });
+
+      localStorage.setItem("token", session.access_token);
+
+      await loadMe();
+      await loadNotifications();
+
+      window.history.replaceState(null, "", "/");
+    }
+  );
 
   return () => {
-    listener?.subscription?.unsubscribe?.();
-  };
-}, []);
+  authListener?.subscription?.unsubscribe?.();
+ };
+ }, []);
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -255,15 +247,12 @@ const loadNotifications = async () => {
  </div>
             {isLogged ? (
               <button
-               onClick={async () => {
+                onClick={async () => {
   localStorage.removeItem("token");
   await supabase.auth.signOut();
   setIsLogged(false);
-setPoints(null);
-setIsAdmin(false);
-setNotifications([]);
-setShowNotifications(false);
-}}
+  setPoints(null);
+ }}
                 className="px-4 py-2 rounded-2xl bg-rose-500 font-medium flex items-center gap-2"
               >
                 <LogOut size={16} /> Cerrar sesión
