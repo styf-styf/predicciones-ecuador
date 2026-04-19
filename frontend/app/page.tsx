@@ -122,6 +122,9 @@ const loadNotifications = async () => {
 
   init();
 
+  
+
+
   const handleClickOutside = (event: any) => {
     if (notifRef.current && !notifRef.current.contains(event.target)) {
       setShowNotifications(false);
@@ -168,14 +171,24 @@ const loadNotifications = async () => {
       () => loadMe()
     )
     .subscribe();
+    
+    const { data: { subscription } } =
+  supabase.auth.onAuthStateChange(() => {
+    loadMe();
+    loadNotifications();
+  });
+ 
 
   return () => {
     document.removeEventListener("mousedown", handleClickOutside);
     supabase.removeChannel(channel);
     supabase.removeChannel(notifChannel);
     supabase.removeChannel(userChannel);
+    subscription.unsubscribe();
   };
 }, []);
+
+
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">

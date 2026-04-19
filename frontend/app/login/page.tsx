@@ -38,6 +38,7 @@ export default function Login() {
       localStorage.setItem("token", data.token);
       localStorage.setItem("role", data.role || "user");
       localStorage.setItem("points", String(data.points || 0));
+      window.dispatchEvent(new Event("auth-change"));
 
       setMessage("Login exitoso ✅");
 
@@ -58,6 +59,8 @@ export default function Login() {
     localStorage.removeItem("points");
     setMessage("Sesión cerrada");
   };
+
+  
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
