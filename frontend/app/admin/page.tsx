@@ -23,7 +23,7 @@ const fetchWinners = async () => {
 
   const res = await fetch("https://predicciones-ecuador.onrender.com/admin/winners", {
     headers: {
-      authorization: token || "",
+      authorization: `Bearer ${token}` || "",
     },
   });
 
@@ -41,7 +41,7 @@ const fetchWinners = async () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        authorization: token || "",
+        authorization: `Bearer ${token}` || "",
       },
       body: JSON.stringify({ question: newQuestion }),
     });
@@ -59,7 +59,7 @@ const fetchWinners = async () => {
     const token = localStorage.getItem("token");
     const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/markets/${id}`, {
       method: "DELETE",
-      headers: { authorization: token || "" },
+      headers: { authorization: `Bearer ${token}` || "" },
     });
     const data = await res.json();
     if (res.ok) {
@@ -84,7 +84,7 @@ const fetchWinners = async () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        authorization: token || "",
+        authorization: `Bearer ${token}` || "",
       },
       body: JSON.stringify({ winner }),
     }
@@ -105,7 +105,7 @@ const fetchWinners = async () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        authorization: token,
+        authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ marketId, type }),
     });

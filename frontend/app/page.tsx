@@ -23,7 +23,7 @@ const loadNotifications = async () => {
 
   try {
     const res = await fetch("https://predicciones-ecuador.onrender.com/notifications", {
-      headers: { authorization: token },
+      headers: { authorization: `Bearer ${token}` },
     });
 
     if (!res.ok) {
@@ -52,7 +52,7 @@ const loadNotifications = async () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        authorization: token,
+        authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ marketId, type }),
     });
@@ -73,7 +73,7 @@ const loadNotifications = async () => {
   if (token) {
     try {
       const res = await fetch("https://predicciones-ecuador.onrender.com/me", {
-        headers: { authorization: token },
+        headers: { authorization: `Bearer ${token}` },
       });
 
       if (res.ok) {
@@ -224,7 +224,7 @@ const loadNotifications = async () => {
       await fetch("https://predicciones-ecuador.onrender.com/notifications/read", {
         method: "PUT",
         headers: {
-          authorization: token || "",
+          authorization: `Bearer ${token}` || "",
         },
       });
 
