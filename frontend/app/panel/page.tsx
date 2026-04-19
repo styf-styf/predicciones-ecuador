@@ -24,117 +24,71 @@ export default function PanelPage() {
   loadPanel();
 
   const token = localStorage.getItem("token");
-  if (!token || token === "google-login") return;
+  if (!token) return;
+
   const payload = JSON.parse(atob(token.split(".")[1]));
   const userId = payload.id;
 
   const usersChannel = supabase
     .channel("panel-users")
-    .on(
-      "postgres_changes",
-      {
-        event: "UPDATE",
-        schema: "public",
-        table: "users",
-        filter: `id=eq.${userId}`,
-      },
-      () => loadPanel()
-    )
+    .on("postgres_changes", {
+      event: "UPDATE",
+      schema: "public",
+      table: "users",
+      filter: `id=eq.${userId}`,
+    }, () => loadPanel())
     .subscribe();
 
   const betsChannel = supabase
     .channel("panel-bets")
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "bets",
-        filter: `user_id=eq.${userId}`,
-      },
-      () => loadPanel()
-    )
-    .subscribe();
-
-  const rankingChannel = supabase
-    .channel("panel-ranking")
-    .on(
-      "postgres_changes",
-      {
-        event: "UPDATE",
-        schema: "public",
-        table: "users",
-      },
-      () => loadPanel()
-    )
+    .on("postgres_changes", {
+      event: "*",
+      schema: "public",
+      table: "bets",
+      filter: `user_id=eq.${userId}`,
+    }, () => loadPanel())
     .subscribe();
 
   return () => {
     supabase.removeChannel(usersChannel);
     supabase.removeChannel(betsChannel);
-    supabase.removeChannel(rankingChannel);
   };
  }, []);
 
-  const loadPanel = async () => {
+ const loadPanel = async () => {
   const token = localStorage.getItem("token");
 
-  try {
-    // LOGIN NORMAL
-    if (token && token !== "google-login") {
-      const headers = { authorization: token };
-
-      const [meRes, betsRes, rankRes] = await Promise.all([
-        fetch("https://predicciones-ecuador.onrender.com/me", { headers }),
-        fetch("https://predicciones-ecuador.onrender.com/my-bets", { headers }),
-        fetch("https://predicciones-ecuador.onrender.com/ranking"),
-      ]);
-
-      const meData = await meRes.json();
-      const betsData = await betsRes.json();
-      const rankData = await rankRes.json();
-
-      setUser(meData);
-      setBets(betsData || []);
-      setRanking(rankData || []);
-      setLoading(false);
-      return;
-    }
-
-    // LOGIN GOOGLE
-    const { data } = await supabase.auth.getSession();
-
-    if (data.session) {
-      const email = data.session.user.email;
-
-      const { data: userData } = await supabase
-        .from("users")
-        .select("*")
-        .eq("email", email)
-        .single();
-
-      const { data: betsData } = await supabase
-        .from("bets")
-        .select("*, markets(question)")
-        .eq("user_id", userData.id);
-
-      const rankRes = await fetch("https://predicciones-ecuador.onrender.com/ranking");
-      const rankData = await rankRes.json();
-
-      setUser(userData);
-      setBets(betsData || []);
-      setRanking(rankData || []);
-      setLoading(false);
-      return;
-    }
-
+  if (!token) {
     router.push("/login");
+    return;
+  }
+
+  const headers = {
+    authorization: `Bearer ${token}`,
+  };
+
+  try {
+    const [meRes, betsRes, rankRes] = await Promise.all([
+      fetch("https://predicciones-ecuador.onrender.com/me", { headers }),
+      fetch("https://predicciones-ecuador.onrender.com/my-bets", { headers }),
+      fetch("https://predicciones-ecuador.onrender.com/ranking"),
+    ]);
+
+    const meData = await meRes.json();
+    const betsData = await betsRes.json();
+    const rankData = await rankRes.json();
+
+    setUser(meData);
+    setBets(betsData || []);
+    setRanking(rankData || []);
+    setLoading(false);
   } catch (error) {
     console.error(error);
     setLoading(false);
   }
  };
 
+  
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-950 text-white grid place-items-center">

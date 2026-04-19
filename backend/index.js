@@ -210,7 +210,26 @@ app.post("/auth/google", async (req, res) => {
     return res.status(400).json({ message: error.message });
   }
 
-  res.json({ message: "Usuario creado", user: data });
+  const token = jwt.sign(
+  {
+    id: data.id,
+    role: data.role,
+    points: data.points,
+  },
+  SECRET,
+  { expiresIn: "7d" }
+);
+
+res.json({
+  message: "Login Google exitoso",
+  token,
+  user: {
+    id: data.id,
+    email: data.email,
+    role: data.role,
+    points: data.points,
+  },
+ });
  });
 
 
