@@ -69,6 +69,7 @@ const loadNotifications = async () => {
   const loadMe = async () => {
   const token = localStorage.getItem("token");
   if (!token) return;
+  
 
   const res = await fetch("https://predicciones-ecuador.onrender.com/me", {
     headers: { authorization: token },
@@ -77,7 +78,6 @@ const loadNotifications = async () => {
   if (!res.ok) return;
 
   const data = await res.json();
-
   setPoints(data.points);
   setIsLogged(true);
   setIsAdmin(data.role === "admin");

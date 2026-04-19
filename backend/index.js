@@ -110,6 +110,14 @@ app.post("/register", async (req, res) => {
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
+  if (!email || !password) {
+    return res.status(400).json({
+      message: "Email y contraseña son obligatorios",
+    });
+  }
+
+  const { email, password } = req.body;
+
   const { data, error } = await supabase
     .from("users")
     .select("*")
@@ -182,23 +190,39 @@ app.post("/auth/google", async (req, res) => {
   });
 }
 
-  const token = jwt.sign(
+const { data: created, error: insertError } = await supabase
+  .from("users")
+  .insert([
+    {
+      email,
+      nombre: nombre || "",
+      role: "user",
+      points: 0,
+    },
+  ])
+  .select()
+  .single();
+
+if (insertError) {
+  return res.status(500).json({ message: insertError.message });
+}
+
+const token = jwt.sign(
   {
-    id: data.id,
-    role: data.role,
-    points: data.points,
+    id: created.id,
+    role: created.role,
+    points: created.points,
   },
   SECRET,
   { expiresIn: "7d" }
 );
 
- return res.json({
+return res.json({
   message: "Usuario creado",
   token,
-  user: data,
- });
+  user: created,
+});
 
-  res.json({ message: "Usuario creado", user: data });
  });
 
 
@@ -528,11 +552,13 @@ if (market.resolved) {
   // 📊 Actualizar mercado
   let updatedValues = {};
 
-  if (type === "yes") {
-    updatedValues = { yes: market.yes + 10 };
-  } else {
-    updatedValues = { no: market.no + 10 };
-  }
+  const normalizedType = type?.toLowerCase();
+
+if (normalizedType === "yes") {
+  updatedValues = { yes: market.yes + 10 };
+} else {
+  updatedValues = { no: market.no + 10 };
+}
 
   await supabase
     .from("markets")
@@ -633,6 +659,8 @@ app.get("/", (req, res) => {
 });
 
 // =======================
-app.listen(4000, () => {
-  console.log("Servidor en https://predicciones-ecuador.onrender.com");
+const PORT = process.env.PORT || 4000;
+
+app.listen(PORT, () => {
+  console.log("Servidor corriendo en puerto", PORT);
 });
