@@ -122,43 +122,62 @@ const fetchWinners = async () => {
 
 
   useEffect(() => {
-    
-  fetchMarkets();
-  fetchWinners();
+  const initAdmin = async () => {
+    fetchMarkets();
 
-  const token = localStorage.getItem("token");
-  
+    const token = localStorage.getItem("token");
 
-  if (token) {
-    setIsLogged(true);
+    // LOGIN NORMAL
+    if (token && token !== "google-login") {
+      setIsLogged(true);
 
-    try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
 
-      if (payload.role === "admin") {
-        setIsAdmin(true);
-      } else {
-        setIsAdmin(false);
-        window.location.href = "/";
+        if (payload.role === "admin") {
+          setIsAdmin(true);
+          setPoints(payload.points || 0);
+          fetchWinners();
+          return;
+        } else {
+          window.location.href = "/";
+          return;
+        }
+      } catch (error) {
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+        return;
       }
-
-      if (payload.points !== undefined) {
-        setPoints(payload.points);
-      }
-
-    } catch (error) {
-      console.error("Token inválido");
-      localStorage.removeItem("token");
-      window.location.href = "/login";
     }
 
-  } else {
-    setIsLogged(false);
-    setIsAdmin(false);
-    window.location.href = "/login";
-  }
+    // LOGIN GOOGLE
+    const { data } = await supabase.auth.getSession();
 
-  
+    if (data.session) {
+      const email = data.session.user.email;
+
+      const { data: userData } = await supabase
+        .from("users")
+        .select("*")
+        .eq("email", email)
+        .single();
+
+      if (userData?.role === "admin") {
+        setIsLogged(true);
+        setIsAdmin(true);
+        setPoints(userData.points || 0);
+        fetchWinners();
+        return;
+      } else {
+        window.location.href = "/";
+        return;
+      }
+    }
+
+    window.location.href = "/login";
+   };
+
+  initAdmin();
  }, []);
 
   return (
@@ -190,11 +209,19 @@ const fetchWinners = async () => {
             <button className="p-2 rounded-xl bg-slate-900"><Bell size={18} /></button>
             {isLogged ? (
               <button
-                onClick={() => {
-                  localStorage.removeItem("token");
-                  setIsLogged(false);
-                  setPoints(null);
-                }}
+                onClick={async () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("role");
+  localStorage.removeItem("points");
+
+  await supabase.auth.signOut();
+
+  setIsLogged(false);
+  setIsAdmin(false);
+  setPoints(null);
+
+  window.location.href = "/login";
+ }}
                 className="px-4 py-2 rounded-2xl bg-rose-500 font-medium flex items-center gap-2"
               >
                 <LogOut size={16} /> Cerrar sesión

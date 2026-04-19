@@ -24,8 +24,7 @@ export default function PanelPage() {
   loadPanel();
 
   const token = localStorage.getItem("token");
-  if (!token) return;
-
+  if (!token || token === "google-login") return;
   const payload = JSON.parse(atob(token.split(".")[1]));
   const userId = payload.id;
 
@@ -78,14 +77,11 @@ export default function PanelPage() {
  }, []);
 
   const loadPanel = async () => {
-    const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token");
 
-    if (!token) {
-      router.push("/login");
-      return;
-    }
-
-    try {
+  try {
+    // LOGIN NORMAL
+    if (token && token !== "google-login") {
       const headers = { authorization: token };
 
       const [meRes, betsRes, rankRes] = await Promise.all([
@@ -101,14 +97,43 @@ export default function PanelPage() {
       setUser(meData);
       setBets(betsData || []);
       setRanking(rankData || []);
-    } catch (error) {
-      console.error(error);
+      setLoading(false);
+      return;
     }
 
-    finally {
-        setLoading(false);
+    // LOGIN GOOGLE
+    const { data } = await supabase.auth.getSession();
+
+    if (data.session) {
+      const email = data.session.user.email;
+
+      const { data: userData } = await supabase
+        .from("users")
+        .select("*")
+        .eq("email", email)
+        .single();
+
+      const { data: betsData } = await supabase
+        .from("bets")
+        .select("*, markets(question)")
+        .eq("user_id", userData.id);
+
+      const rankRes = await fetch("https://predicciones-ecuador.onrender.com/ranking");
+      const rankData = await rankRes.json();
+
+      setUser(userData);
+      setBets(betsData || []);
+      setRanking(rankData || []);
+      setLoading(false);
+      return;
     }
-  };
+
+    router.push("/login");
+  } catch (error) {
+    console.error(error);
+    setLoading(false);
+  }
+ };
 
   if (loading) {
     return (
