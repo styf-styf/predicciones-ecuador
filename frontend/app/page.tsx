@@ -69,22 +69,27 @@ const loadNotifications = async () => {
   const loadMe = async () => {
   const token = localStorage.getItem("token");
 
-  // Login normal
-  if (token && token !== "google-login") {
-    const res = await fetch("https://predicciones-ecuador.onrender.com/me", {
-      headers: { authorization: token },
-    });
+  // 1. Intentar login normal (JWT backend)
+  if (token) {
+    try {
+      const res = await fetch("https://predicciones-ecuador.onrender.com/me", {
+        headers: { authorization: token },
+      });
 
-    if (res.ok) {
-      const data = await res.json();
-      setPoints(data.points);
-      setIsAdmin(data.role === "admin");
-      setIsLogged(true);
-      return;
+      if (res.ok) {
+        const data = await res.json();
+
+        setPoints(data.points || 0);
+        setIsAdmin(data.role === "admin");
+        setIsLogged(true);
+        return;
+      }
+    } catch (error) {
+      console.log("No es token backend");
     }
   }
 
-  // Login con Google
+  // 2. Intentar login Google
   const { data } = await supabase.auth.getSession();
 
   if (data.session) {
@@ -102,8 +107,11 @@ const loadNotifications = async () => {
     return;
   }
 
+  // 3. No hay sesión
   setIsLogged(false);
- }; 
+  setIsAdmin(false);
+  setPoints(null);
+ };
 
   useEffect(() => {
   fetchMarkets();
