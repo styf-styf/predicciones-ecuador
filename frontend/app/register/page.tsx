@@ -141,7 +141,7 @@ export default function RegisterPage() {
           >
             {loading ? "Creando..." : "Registrarse"}
           </button>
-<<<<<<< HEAD
+
           <div className="mt-4">
   <button
     type="button"
@@ -160,8 +160,7 @@ export default function RegisterPage() {
     Continuar con Google
   </button>
  </div>
-=======
->>>>>>> version-0.10
+
 
           <p className="text-center text-sm mt-4 text-slate-400">
   ¿Ya tienes cuenta?{" "}
