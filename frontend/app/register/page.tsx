@@ -151,7 +151,7 @@ export default function RegisterPage() {
       await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: "https://predicciones-ecuador.onrender.com",
+          redirectTo: "https://predicciones-ecuador.vercel.app/auth/callback",
         },
       });
     }}
