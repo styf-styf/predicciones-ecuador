@@ -114,20 +114,21 @@ const loadNotifications = async () => {
  };
 
   useEffect(() => {
-  fetchMarkets();
-  loadNotifications();
-  loadMe();
+  const init = async () => {
+    await fetchMarkets();
+    await loadMe();
+    await loadNotifications();
+  };
+
+  init();
+
   const handleClickOutside = (event: any) => {
-    if (
-      notifRef.current &&
-      !notifRef.current.contains(event.target)
-    ) {
+    if (notifRef.current && !notifRef.current.contains(event.target)) {
       setShowNotifications(false);
     }
   };
 
   document.addEventListener("mousedown", handleClickOutside);
-  
 
   const channel = supabase
     .channel("markets-live")
@@ -138,9 +139,7 @@ const loadNotifications = async () => {
         schema: "public",
         table: "markets",
       },
-      () => {
-        fetchMarkets();
-      }
+      () => fetchMarkets()
     )
     .subscribe();
 
@@ -153,26 +152,22 @@ const loadNotifications = async () => {
         schema: "public",
         table: "notifications",
       },
-      () => {
-        loadNotifications();
-      }
+      () => loadNotifications()
     )
     .subscribe();
 
-    const userChannel = supabase
-  .channel("user-points-live")
-  .on(
-    "postgres_changes",
-    {
-      event: "UPDATE",
-      schema: "public",
-      table: "users",
-    },
-    () => {
-      loadMe();
-    }
-  )
-  .subscribe();
+  const userChannel = supabase
+    .channel("user-points-live")
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "users",
+      },
+      () => loadMe()
+    )
+    .subscribe();
 
   return () => {
     document.removeEventListener("mousedown", handleClickOutside);
@@ -180,7 +175,7 @@ const loadNotifications = async () => {
     supabase.removeChannel(notifChannel);
     supabase.removeChannel(userChannel);
   };
- }, []);
+}, []);
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">

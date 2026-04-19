@@ -42,9 +42,9 @@ export default function Login() {
       setMessage("Login exitoso ✅");
 
       if (data.role === "admin") {
-        router.push("/admin");
+        window.location.href = "/admin";
       } else {
-        router.push("/");
+        window.location.href = "/";
       }
     } else {
       setMessage(data.message || "Error al iniciar sesión");
