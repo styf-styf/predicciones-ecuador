@@ -20,7 +20,7 @@ if (!SECRET) {
 // 🔐 Middleware auth
 // =======================
 const auth = (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1];
+  const token = req.headers.authorization;
 
   if (!token) {
     return res.status(401).json({ message: "No autorizado" });
@@ -110,14 +110,6 @@ app.post("/register", async (req, res) => {
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).json({
-      message: "Email y contraseña son obligatorios",
-    });
-  }
-
-  const { email, password } = req.body;
-
   const { data, error } = await supabase
     .from("users")
     .select("*")
@@ -169,60 +161,27 @@ app.post("/auth/google", async (req, res) => {
   }
 
   if (existing) {
-  const token = jwt.sign(
-    {
-      id: existing.id,
-      role: existing.role,
-      points: existing.points,
-    },
-    SECRET,
-    { expiresIn: "7d" }
+    return res.json({ message: "Usuario ya existe", user: existing });
+  }
 
-    
-  );
+  const { data, error } = await supabase
+    .from("users")
+    .insert([
+      {
+        email,
+        nombre: nombre || "",
+        role: "user",
+        points: 0,
+      },
+    ])
+    .select()
+    .single();
 
+  if (error) {
+    return res.status(400).json({ message: error.message });
+  }
 
-
-  return res.json({
-    message: "Login Google exitoso",
-    token,
-    user: existing,
-  });
-}
-
-const { data: created, error: insertError } = await supabase
-  .from("users")
-  .insert([
-    {
-      email,
-      nombre: nombre || "",
-      role: "user",
-      points: 0,
-    },
-  ])
-  .select()
-  .single();
-
-if (insertError) {
-  return res.status(500).json({ message: insertError.message });
-}
-
-const token = jwt.sign(
-  {
-    id: created.id,
-    role: created.role,
-    points: created.points,
-  },
-  SECRET,
-  { expiresIn: "7d" }
-);
-
-return res.json({
-  message: "Usuario creado",
-  token,
-  user: created,
-});
-
+  res.json({ message: "Usuario creado", user: data });
  });
 
 
@@ -293,7 +252,7 @@ app.get("/ranking", async (req, res) => {
 });
 
 app.get("/admin/winners", async (req, res) => {
-  const token = req.headers.authorization?.split(" ")[1];
+  const token = req.headers.authorization;
 
   if (!token) {
     return res.status(401).json({ message: "Token requerido" });
@@ -335,7 +294,7 @@ app.get("/admin/winners", async (req, res) => {
 });
 
 app.put("/notifications/read", async (req, res) => {
-  const token = req.headers.authorization?.split(" ")[1];
+  const token = req.headers.authorization;
   if (!token) return res.status(401).json({ message: "No autorizado" });
 
   try {
@@ -407,7 +366,7 @@ console.log("ERROR WINNERS:", winnersError);
 console.log("TODAS LAS APUESTAS:", allBets);
 console.log("WINNER ELEGIDO:", winner);
 
-if (!winners || winners.length === 0) {
+if (winners.length === 0) {
   await supabase
     .from("markets")
     .update({
@@ -552,13 +511,11 @@ if (market.resolved) {
   // 📊 Actualizar mercado
   let updatedValues = {};
 
-  const normalizedType = type?.toLowerCase();
-
-if (normalizedType === "yes") {
-  updatedValues = { yes: market.yes + 10 };
-} else {
-  updatedValues = { no: market.no + 10 };
-}
+  if (type === "yes") {
+    updatedValues = { yes: market.yes + 10 };
+  } else {
+    updatedValues = { no: market.no + 10 };
+  }
 
   await supabase
     .from("markets")
@@ -659,8 +616,6 @@ app.get("/", (req, res) => {
 });
 
 // =======================
-const PORT = process.env.PORT || 4000;
-
-app.listen(PORT, () => {
-  console.log("Servidor corriendo en puerto", PORT);
+app.listen(4000, () => {
+  console.log("Servidor en https://predicciones-ecuador.onrender.com");
 });
