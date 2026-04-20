@@ -172,6 +172,7 @@ app.post("/login", async (req, res) => {
 
  app.post("/auth/google", async (req, res) => {
   const { code } = req.body;
+  
 
   if (!code) {
     return res.status(400).json({ message: "Code requerido" });
