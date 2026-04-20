@@ -5,8 +5,13 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const supabase = require("./supabase");
 const { OAuth2Client } = require("google-auth-library");
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+// ✅ googleClient actualizado con Client Secret
+const googleClient = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  "postmessage"
+);
 
 const app = express();
 
@@ -51,39 +56,27 @@ app.post("/register", async (req, res) => {
     ciudad,
     direccion,
     pais,
-    
   } = req.body;
 
-  // 🔴 validación básica
   if (!email?.trim() || !password?.trim()) {
     return res.status(400).json({
       message: "Email y contraseña son obligatorios",
     });
   }
 
-  if (email.trim() === "" || password.trim() === "") {
-    return res.status(400).json({
-      message: "No se permiten campos vacíos",
+  const { data: existing, error: checkError } = await supabase
+    .from("users")
+    .select("id")
+    .eq("email", email)
+    .maybeSingle();
 
-    });
+  if (checkError) {
+    return res.status(500).json({ message: checkError.message });
   }
 
-
-
-  // 🔥 evitar usuarios duplicados
-  const { data: existing, error: checkError } = await supabase
-  .from("users")
-  .select("id")
-  .eq("email", email)
-  .maybeSingle();
-
- if (checkError) {
-  return res.status(500).json({ message: checkError.message });
- }
-
- if (existing) {
-  return res.status(400).json({ message: "El usuario ya existe" });
- }
+  if (existing) {
+    return res.status(400).json({ message: "El usuario ya existe" });
+  }
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -110,7 +103,7 @@ app.post("/register", async (req, res) => {
   }
 
   res.json({ message: "Usuario registrado correctamente" });
- });
+});
 
 // =======================
 // 🔑 LOGIN
@@ -119,10 +112,10 @@ app.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-  return res.status(400).json({
-    message: "Email y contraseña obligatorios"
-  });
- }
+    return res.status(400).json({
+      message: "Email y contraseña obligatorios",
+    });
+  }
 
   const { data, error } = await supabase
     .from("users")
@@ -134,10 +127,10 @@ app.post("/login", async (req, res) => {
     return res.status(400).json({ message: "Usuario no encontrado" });
   }
 
-   if (data.provider === "google") {
-  return res.status(400).json({
-    message: "Estas registrado con una cuenta de Google"
-  });
+  if (data.provider === "google") {
+    return res.status(400).json({
+      message: "Estas registrado con una cuenta de Google",
+    });
   }
 
   const validPassword = await bcrypt.compare(password, data.password);
@@ -145,21 +138,13 @@ app.post("/login", async (req, res) => {
     return res.status(400).json({ message: "Contraseña incorrecta" });
   }
 
-  
-
- 
-
   const token = jwt.sign(
-  {
-    id: data.id,
-    role: data.role,
-    points: data.points,
-  },
-  SECRET,
-  { expiresIn: "7d" }
- );
+    { id: data.id, role: data.role, points: data.points },
+    SECRET,
+    { expiresIn: "7d" }
+  );
 
- return res.json({
+  return res.json({
     token,
     user: {
       id: data.id,
@@ -168,19 +153,90 @@ app.post("/login", async (req, res) => {
       points: data.points,
     },
   });
- });
+});
 
- useEffect(() => {
-  const syncAuth = () => {
-    loadMe();
-  };
+// =======================
+// 🔵 LOGIN CON GOOGLE
+// =======================
+app.post("/auth/google", async (req, res) => {
+  const { code } = req.body;
 
-  window.addEventListener("auth-change", syncAuth);
+  if (!code) {
+    return res.status(400).json({ message: "Código de Google requerido" });
+  }
 
-  return () => {
-    window.removeEventListener("auth-change", syncAuth);
-  };
-}, []);
+  try {
+    const { tokens } = await googleClient.getToken({
+      code,
+      redirect_uri: "postmessage",
+    });
+
+    const ticket = await googleClient.verifyIdToken({
+      idToken: tokens.id_token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const { email, given_name, family_name, picture } = payload;
+
+    const { data: existing } = await supabase
+      .from("users")
+      .select("*")
+      .eq("email", email)
+      .maybeSingle();
+
+    let user = existing;
+
+    if (!user) {
+      const { data: newUser, error } = await supabase
+        .from("users")
+        .insert([{
+          email,
+          nombre: given_name || "",
+          apellido: family_name || "",
+          avatar: picture || "",
+          provider: "google",
+          password: "",
+          role: "user",
+          points: 100,
+          pais: "Ecuador",
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        return res.status(500).json({ message: error.message });
+      }
+
+      user = newUser;
+    }
+
+    if (user.provider === "local") {
+      return res.status(400).json({
+        message: "Este correo ya está registrado con email y contraseña",
+      });
+    }
+
+    const token = jwt.sign(
+      { id: user.id, role: user.role, points: user.points },
+      SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        points: user.points,
+      },
+    });
+  } catch (err) {
+    console.error("Error Google Auth:", err);
+    res.status(500).json({ message: "Error autenticando con Google" });
+  }
+});
 
 // =======================
 // 📊 OBTENER MERCADOS
@@ -269,22 +325,16 @@ app.get("/admin/winners", async (req, res) => {
         prediction,
         reward,
         created_at,
-        users (
-          email
-        ),
-        markets (
-          question
-        )
+        users ( email ),
+        markets ( question )
       `)
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.log(error);
       return res.status(500).json({ message: "Error cargando winners" });
     }
 
     res.json(data);
-
   } catch (err) {
     res.status(401).json({ message: "Token inválido" });
   }
@@ -312,11 +362,9 @@ app.put("/notifications/read", async (req, res) => {
 });
 
 app.post("/admin/resolve/:id", auth, async (req, res) => {
-  console.log("ENTRÓ A RESOLVE");
   const { winner } = req.body;
   const marketId = Number(req.params.id);
 
-  // validar admin
   const { data: admin } = await supabase
     .from("users")
     .select("*")
@@ -327,7 +375,6 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
     return res.status(403).json({ message: "Solo admin" });
   }
 
-  // mercado
   const { data: market } = await supabase
     .from("markets")
     .select("*")
@@ -342,93 +389,60 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
     return res.status(400).json({ message: "Mercado ya resuelto" });
   }
 
-  // apuestas ganadoras
-  const { data: allBets } = await supabase
-  .from("bets")
-  .select("*");
+  const { data: winners, error: winnersError } = await supabase
+    .from("bets")
+    .select("*")
+    .eq("market_id", marketId)
+    .eq("type", winner);
 
-console.log("TODAS LAS APUESTAS:", allBets);
+  if (winnersError) {
+    return res.status(500).json({ message: winnersError.message });
+  }
 
-const { data: winners, error: winnersError } = await supabase
-  .from("bets")
-  .select("*")
-  .eq("market_id", marketId)
-  .eq("type", winner);
+  if (!winners || winners.length === 0) {
+    await supabase
+      .from("markets")
+      .update({ resolved: true, winner })
+      .eq("id", marketId);
 
-console.log("MARKET ID:", marketId, typeof marketId);
-console.log("WINNER:", winner);
-console.log("GANADORES:", winners);
-console.log("ERROR WINNERS:", winnersError);
+    return res.json({ message: "Mercado resuelto, pero no hubo ganadores" });
+  }
 
-console.log("TODAS LAS APUESTAS:", allBets);
-console.log("WINNER ELEGIDO:", winner);
+  for (const bet of winners) {
+    const reward = bet.amount * 2;
 
-if (!winners || winners.length === 0) {
-  await supabase
-    .from("markets")
-    .update({
-      resolved: true,
-      winner
-    })
-    .eq("id", marketId);
+    const { data: winnerUser } = await supabase
+      .from("users")
+      .select("points")
+      .eq("id", bet.user_id)
+      .single();
 
-  return res.json({
-    message: "Mercado resuelto, pero no hubo ganadores"
-  });
-}
+    await supabase
+      .from("users")
+      .update({ points: winnerUser.points + reward })
+      .eq("id", bet.user_id);
 
-    for (const bet of winners) {
-  const reward = bet.amount * 2;
-  
+    await supabase.from("notifications").insert([{
+      user_id: bet.user_id,
+      title: "🎉 Ganaste una apuesta",
+      message: `Recibiste ${reward} puntos en ${market.question}`,
+      read: false,
+    }]);
 
-  // Obtener puntos actuales del usuario ganador
-  const { data: winnerUser } = await supabase
-    .from("users")
-    .select("points")
-    .eq("id", bet.user_id)
-    .single();
-
-  // Sumar premio
-  await supabase
-    .from("users")
-    .update({
-      points: winnerUser.points + reward
-    })
-    .eq("id", bet.user_id);
-
-  // Crear notificación
-  await supabase.from("notifications").insert([
-{
- user_id: bet.user_id,
- title: "🎉 Ganaste una apuesta",
- message: `Recibiste ${reward} puntos en ${market.question}`,
- read: false
-}
-]);
-
-  // Guardar historial de ganador
-  await supabase.from("winners").insert([
-    {
+    await supabase.from("winners").insert([{
       user_id: bet.user_id,
       market_id: marketId,
       prediction: winner,
-      reward: reward
-    }
-  ]);
-}
+      reward: reward,
+    }]);
+  }
 
-  // cerrar mercado
   await supabase
     .from("markets")
-    .update({
-      resolved: true,
-      winner
-    })
+    .update({ resolved: true, winner })
     .eq("id", marketId);
 
   res.json({ message: "Mercado resuelto y premios pagados" });
-
-  
 });
 
 app.get("/notifications", auth, async (req, res) => {
@@ -455,15 +469,12 @@ app.put("/notifications/:id/read", auth, async (req, res) => {
   res.json({ message: "Leída" });
 });
 
-
-
 // =======================
 // 💰 APOSTAR
 // =======================
 app.post("/bet", auth, async (req, res) => {
   const { marketId, type } = req.body;
 
-  // 🔍 Obtener usuario
   const { data: user, error: userError } = await supabase
     .from("users")
     .select("*")
@@ -478,26 +489,20 @@ app.post("/bet", auth, async (req, res) => {
     return res.status(400).json({ message: "Sin puntos suficientes" });
   }
 
-  // 🔍 Obtener mercado
   const { data: market, error: marketError } = await supabase
-  .from("markets")
-  .select("*")
-  .eq("id", marketId)
-  .single();
+    .from("markets")
+    .select("*")
+    .eq("id", marketId)
+    .single();
 
-if (marketError || !market) {
-  return res.status(404).json({ message: "Mercado no encontrado" });
-}
+  if (marketError || !market) {
+    return res.status(404).json({ message: "Mercado no encontrado" });
+  }
 
-if (market.resolved) {
-  return res.status(400).json({
-    message: "Este mercado ya está cerrado"
-  });
-}
+  if (market.resolved) {
+    return res.status(400).json({ message: "Este mercado ya está cerrado" });
+  }
 
-  
-
-  // 💸 Actualizar puntos usuario
   const newPoints = user.points - 10;
 
   await supabase
@@ -505,31 +510,22 @@ if (market.resolved) {
     .update({ points: newPoints })
     .eq("id", user.id);
 
-  // 📊 Actualizar mercado
-  let updatedValues = {};
-
-  if (type === "yes") {
-    updatedValues = { yes: market.yes + 10 };
-  } else {
-    updatedValues = { no: market.no + 10 };
-  }
+  const updatedValues = type === "yes"
+    ? { yes: market.yes + 10 }
+    : { no: market.no + 10 };
 
   await supabase
     .from("markets")
     .update(updatedValues)
     .eq("id", marketId);
 
-  // 🧾 Guardar apuesta
-  await supabase.from("bets").insert([
-    {
-      user_id: user.id,
-      market_id: marketId,
-      type,
-      amount: 10,
-    },
-  ]);
+  await supabase.from("bets").insert([{
+    user_id: user.id,
+    market_id: marketId,
+    type,
+    amount: 10,
+  }]);
 
-  // 🔄 Obtener mercado actualizado
   const { data: updatedMarket } = await supabase
     .from("markets")
     .select("*")
@@ -542,7 +538,6 @@ if (market.resolved) {
     market: updatedMarket,
   });
 });
-
 
 // =======================
 // 👑 ADMIN - CREAR MERCADO
@@ -612,7 +607,6 @@ app.get("/", (req, res) => {
   res.send("API funcionando 🚀");
 });
 
-// =======================
 app.listen(4000, () => {
   console.log("Servidor en https://predicciones-ecuador.onrender.com");
 });

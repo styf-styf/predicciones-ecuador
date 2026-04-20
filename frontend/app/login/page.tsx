@@ -11,6 +11,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
 
+  // ✅ Solo redirige si ya hay sesión activa
   useEffect(() => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
@@ -22,24 +23,38 @@ export default function Login() {
     }
   }, [router]);
 
-  
+  const googleLogin = useGoogleLogin({
+    flow: "auth-code",
+    onSuccess: async (codeResponse) => {
+      const res = await fetch(
+        "https://predicciones-ecuador.onrender.com/auth/google",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: codeResponse.code }),
+        }
+      );
 
-    
+      const data = await res.json();
 
-
-     const googleLogin = useGoogleLogin({
-  flow: "auth-code",
-  onSuccess: async (codeResponse) => {
-    const res = await fetch(
-      "https://predicciones-ecuador.onrender.com/auth/google",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          code: codeResponse.code,
-        }),
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("role", data.user.role || "user");
+        localStorage.setItem("points", String(data.user.points || 0));
+        window.dispatchEvent(new Event("auth-change"));
+        router.push("/");
+      } else {
+        setMessage(data.message || "Error con Google");
       }
-    );
+    },
+  });
+
+  const handleLogin = async () => {
+    const res = await fetch("https://predicciones-ecuador.onrender.com/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
 
     const data = await res.json();
 
@@ -47,49 +62,12 @@ export default function Login() {
       localStorage.setItem("token", data.token);
       localStorage.setItem("role", data.user.role || "user");
       localStorage.setItem("points", String(data.user.points || 0));
-
       window.dispatchEvent(new Event("auth-change"));
       router.push("/");
+    } else {
+      setMessage(data.message || "Error al iniciar sesión");
     }
-
-    if (data.token) {
-  localStorage.setItem("token", data.token);
-  window.dispatchEvent(new Event("auth-change"));
-  router.push("/");
-}
-  },
-});
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
-    localStorage.removeItem("points");
-    setMessage("Sesión cerrada");
   };
-
-  const handleLogin = async () => {
-  const res = await fetch("https://predicciones-ecuador.onrender.com/login", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ email, password }),
-  });
-
-  const data = await res.json();
-
-  if (data.token) {
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("role", data.user.role || "user");
-    localStorage.setItem("points", String(data.user.points || 0));
-
-    window.dispatchEvent(new Event("auth-change"));
-
-    router.push("/");
-  } else {
-    setMessage(data.message || "Error al iniciar sesión");
-  }
- };
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
@@ -122,33 +100,22 @@ export default function Login() {
         </button>
 
         <Link href="/register">
-  <button className="w-full bg-blue-500 font-bold py-3 rounded-xl mb-2">
-    Registrarse
-  </button>
- </Link>
- <div className="mb-2">
-  <button
-  onClick={() => googleLogin()}
-  className="w-full flex items-center justify-center gap-2 bg-white text-black font-bold py-3 rounded-xl"
->
-  Continuar con Google
-</button>
-  
+          <button className="w-full bg-blue-500 font-bold py-3 rounded-xl mb-2">
+            Registrarse
+          </button>
+        </Link>
 
-     </div>
-  
-
-        <button
-          onClick={handleLogout}
-          className="w-full bg-rose-500 font-bold py-3 rounded-xl"
-        >
-          Cerrar sesión
-        </button>
+        <div className="mb-2">
+          <button
+            onClick={() => googleLogin()}
+            className="w-full flex items-center justify-center gap-2 bg-white text-black font-bold py-3 rounded-xl"
+          >
+            Continuar con Google
+          </button>
+        </div>
 
         {message && (
-          <p className="text-center text-sm mt-4 text-slate-300">
-            {message}
-          </p>
+          <p className="text-center text-sm mt-4 text-slate-300">{message}</p>
         )}
       </div>
     </main>
