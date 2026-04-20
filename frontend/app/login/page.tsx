@@ -24,43 +24,24 @@ export default function Login() {
 
   
 
-    const googleLogin = useGoogleLogin({
-  flow: "implicit",
-  onSuccess: async (tokenResponse) => {
-    console.log("TOKEN:", tokenResponse); // 👈 IMPORTANTE para debug
+    
 
-    const accessToken = tokenResponse.access_token;
 
-    if (!accessToken) {
-      console.log("No llegó access token");
-      return;
-    }
-
+     const googleLogin = useGoogleLogin({
+  flow: "auth-code",
+  onSuccess: async (codeResponse) => {
     const res = await fetch(
-      "https://www.googleapis.com/oauth2/v3/userinfo",
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
-
-    const profile = await res.json();
-
-    const backendRes = await fetch(
       "https://predicciones-ecuador.onrender.com/auth/google",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: profile.email,
-          name: profile.name,
-          picture: profile.picture,
+          code: codeResponse.code,
         }),
       }
     );
 
-    const data = await backendRes.json();
+    const data = await res.json();
 
     if (data.token) {
       localStorage.setItem("token", data.token);
@@ -72,8 +53,6 @@ export default function Login() {
     }
   },
 });
-
-     
 
   const handleLogout = () => {
     localStorage.removeItem("token");

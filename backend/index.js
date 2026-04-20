@@ -171,15 +171,17 @@ app.post("/login", async (req, res) => {
  });
 
  app.post("/auth/google", async (req, res) => {
-  const { credential } = req.body;
+  const { code } = req.body;
 
-  if (!credential) {
-    return res.status(400).json({ message: "Token requerido" });
+  if (!code) {
+    return res.status(400).json({ message: "Code requerido" });
   }
 
   try {
+    const { tokens } = await googleClient.getToken(code);
+
     const ticket = await googleClient.verifyIdToken({
-      idToken: credential,
+      idToken: tokens.id_token,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
 
@@ -190,15 +192,19 @@ app.post("/login", async (req, res) => {
     const picture = payload.picture;
 
     // buscar usuario
-    let { data: user } = await supabase
+    let { data: user, error } = await supabase
       .from("users")
       .select("*")
       .eq("email", email)
       .maybeSingle();
 
+    if (error) {
+      return res.status(400).json({ message: error.message });
+    }
+
     // crear si no existe
     if (!user) {
-      const { data: newUser, error } = await supabase
+      const { data: newUser, error: insertError } = await supabase
         .from("users")
         .insert([
           {
@@ -213,12 +219,14 @@ app.post("/login", async (req, res) => {
         .select()
         .single();
 
-      if (error) return res.status(400).json({ message: error.message });
+      if (insertError) {
+        return res.status(400).json({ message: insertError.message });
+      }
 
       user = newUser;
     }
 
-    // tu JWT
+    // 🔐 crear JWT
     const token = jwt.sign(
       {
         id: user.id,
@@ -229,10 +237,14 @@ app.post("/login", async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    return res.json({ token, user });
+    return res.json({
+      token,
+      user,
+    });
 
   } catch (err) {
-    return res.status(401).json({ message: "Google token inválido" });
+    console.error(err);
+    return res.status(401).json({ message: "Google login inválido" });
   }
 });
 
