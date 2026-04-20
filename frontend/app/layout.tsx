@@ -31,7 +31,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         
-        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
+        <GoogleOAuthProvider clientId="878077499931-10s520r6k3g0go7reucm09a9h00u6g2a.apps.googleusercontent.com">
           {children}
         </GoogleOAuthProvider>
 
