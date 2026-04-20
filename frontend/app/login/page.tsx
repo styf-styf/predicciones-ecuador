@@ -51,6 +51,12 @@ export default function Login() {
       window.dispatchEvent(new Event("auth-change"));
       router.push("/");
     }
+
+    if (data.token) {
+  localStorage.setItem("token", data.token);
+  window.dispatchEvent(new Event("auth-change"));
+  router.push("/");
+}
   },
 });
 

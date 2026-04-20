@@ -78,35 +78,16 @@ const loadNotifications = async () => {
   };
 
 
-useEffect(() => {
-  const syncGoogleLogin = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-
-    if (!session?.user?.email) return;
-
-    const token = localStorage.getItem("token");
-    if (token) return; // 👈 evita duplicado
-
-    const email = session.user.email;
-
-    const res = await fetch("https://predicciones-ecuador.onrender.com/auth/google", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
-
-    const data = await res.json();
-
-    if (data.token) {
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("role", data.user.role);
-      localStorage.setItem("points", data.user.points);
-
-      await loadMe();
-    }
+ useEffect(() => {
+  const syncAuth = () => {
+    loadMe();
   };
 
-  syncGoogleLogin();
+  window.addEventListener("auth-change", syncAuth);
+
+  return () => {
+    window.removeEventListener("auth-change", syncAuth);
+  };
 }, []);
   // 2. Intentar login Google
   const loadMe = async () => {
@@ -328,7 +309,7 @@ useEffect(() => {
             {isLogged ? (
               <button
                 onClick={async () => {
-  await supabase.auth.signOut();
+ 
 
   localStorage.removeItem("token");
   localStorage.removeItem("role");

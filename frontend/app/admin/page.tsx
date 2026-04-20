@@ -151,33 +151,10 @@ const fetchWinners = async () => {
     }
 
     // LOGIN GOOGLE
-    const { data } = await supabase.auth.getSession();
-
-    if (data.session) {
-      const email = data.session.user.email;
-
-      const { data: userData } = await supabase
-        .from("users")
-        .select("*")
-        .eq("email", email)
-        .single();
-
-      if (userData?.role === "admin") {
-        setIsLogged(true);
-        setIsAdmin(true);
-        setPoints(userData.points || 0);
-        fetchWinners();
-        return;
-      } else {
-        window.location.href = "/";
-        return;
-      }
+    
     }
 
-    window.location.href = "/login";
-   };
-
-  initAdmin();
+   
  }, []);
 
   return (
