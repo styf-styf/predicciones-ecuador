@@ -1,4 +1,3 @@
-
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -14,45 +13,68 @@ export default function Home() {
   const [showNotifications, setShowNotifications] = useState(false);
   const notifRef = useRef<any>(null);
 
-useEffect(() => {
-  const init = async () => {
-    await fetchMarkets();
-    await loadNotifications();
-    const token = localStorage.getItem("token");
-    if (token) await loadMe();
-  };
-
-  init();
-}, []);
-
-const loadNotifications = async () => {
-  const token = localStorage.getItem("token");
-  if (!token) {
-    setNotifications([]);
-    return;
-  }
-
-  try {
-    const res = await fetch("https://predicciones-ecuador.onrender.com/notifications", {
-      headers: { authorization: `Bearer ${token}` },
-    });
-
-    if (!res.ok) {
-      setNotifications([]);
-      return;
-    }
-
-    const data = await res.json();
-    setNotifications(Array.isArray(data) ? data : []);
-  } catch (err) {
-    setNotifications([]);
-  }
- };
-
+  // =======================
+  // 🔧 FUNCIONES
+  // =======================
   const fetchMarkets = async () => {
     const res = await fetch("https://predicciones-ecuador.onrender.com/markets");
     const data = await res.json();
     setMarkets(data);
+  };
+
+  const loadMe = async () => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      setIsLogged(false);
+      setIsAdmin(false);
+      setPoints(null);
+      return;
+    }
+
+    try {
+      const res = await fetch("https://predicciones-ecuador.onrender.com/me", {
+        headers: { authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) throw new Error();
+
+      const data = await res.json();
+      setPoints(data.points || 0);
+      setIsAdmin(data.role === "admin");
+      setIsLogged(true);
+    } catch {
+      localStorage.removeItem("token");
+      localStorage.removeItem("role");
+      localStorage.removeItem("points");
+      setIsLogged(false);
+      setIsAdmin(false);
+      setPoints(null);
+    }
+  };
+
+  const loadNotifications = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setNotifications([]);
+      return;
+    }
+
+    try {
+      const res = await fetch("https://predicciones-ecuador.onrender.com/notifications", {
+        headers: { authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        setNotifications([]);
+        return;
+      }
+
+      const data = await res.json();
+      setNotifications(Array.isArray(data) ? data : []);
+    } catch {
+      setNotifications([]);
+    }
   };
 
   const handleBet = async (marketId: number, type: "yes" | "no") => {
@@ -77,127 +99,73 @@ const loadNotifications = async () => {
     }
   };
 
+  // =======================
+  // 🔁 EFECTOS
+  // =======================
 
- useEffect(() => {
-  const syncAuth = () => {
-    loadMe();
-  };
-
-  window.addEventListener("auth-change", syncAuth);
-
-  return () => {
-    window.removeEventListener("auth-change", syncAuth);
-  };
-}, []);
-  // 2. Intentar login Google
-  const loadMe = async () => {
-  const token = localStorage.getItem("token");
-
-  if (!token) {
-    setIsLogged(false);
-    setIsAdmin(false);
-    setPoints(null);
-    return;
-  }
-
-  try {
-    const res = await fetch("https://predicciones-ecuador.onrender.com/me", {
-      headers: { authorization: `Bearer ${token}` },
-    });
-
-    if (!res.ok) throw new Error();
-
-    const data = await res.json();
-
-    setPoints(data.points || 0);
-    setIsAdmin(data.role === "admin");
-    setIsLogged(true);
-  } catch {
-
-    localStorage.removeItem("token");
-  localStorage.removeItem("role");
-  localStorage.removeItem("points");
-    setIsLogged(false);
-    setIsAdmin(false);
-    setPoints(null);
-  }
-};
-
- 
-
+  // ✅ Un solo useEffect para inicializar y suscripciones
   useEffect(() => {
-  const init = async () => {
-    await fetchMarkets();
-    await loadMe();
-    await loadNotifications();
-  };
+    const init = async () => {
+      await fetchMarkets();
+      await loadMe();
+      await loadNotifications();
+    };
 
-  init();
+    init();
 
-  
+    // Escuchar cambios de auth desde login/register
+    const syncAuth = () => loadMe();
+    window.addEventListener("auth-change", syncAuth);
 
+    // Cerrar notificaciones al hacer click afuera
+    const handleClickOutside = (event: any) => {
+      if (notifRef.current && !notifRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
 
-  const handleClickOutside = (event: any) => {
-    if (notifRef.current && !notifRef.current.contains(event.target)) {
-      setShowNotifications(false);
-    }
-  };
+    // Suscripciones realtime Supabase
+    const channel = supabase
+      .channel("markets-live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "markets" },
+        () => fetchMarkets()
+      )
+      .subscribe();
 
-  document.addEventListener("mousedown", handleClickOutside);
+    const notifChannel = supabase
+      .channel("notifications-live")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "notifications" },
+        () => loadNotifications()
+      )
+      .subscribe();
 
-  const channel = supabase
-    .channel("markets-live")
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "markets",
-      },
-      () => fetchMarkets()
-    )
-    .subscribe();
+    const userChannel = supabase
+      .channel("user-points-live")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "users" },
+        () => loadMe()
+      )
+      .subscribe();
 
-  const notifChannel = supabase
-    .channel("notifications-live")
-    .on(
-      "postgres_changes",
-      {
-        event: "INSERT",
-        schema: "public",
-        table: "notifications",
-      },
-      () => loadNotifications()
-    )
-    .subscribe();
+    // Cleanup
+    return () => {
+      window.removeEventListener("auth-change", syncAuth);
+      document.removeEventListener("mousedown", handleClickOutside);
+      supabase.removeChannel(channel);
+      supabase.removeChannel(notifChannel);
+      supabase.removeChannel(userChannel);
+    };
+  }, []);
 
-  const userChannel = supabase
-    .channel("user-points-live")
-    .on(
-      "postgres_changes",
-      {
-        event: "UPDATE",
-        schema: "public",
-        table: "users",
-      },
-      () => loadMe()
-    )
-    .subscribe();
-    
-  
- 
-
-  return () => {
-    document.removeEventListener("mousedown", handleClickOutside);
-    supabase.removeChannel(channel);
-    supabase.removeChannel(notifChannel);
-    supabase.removeChannel(userChannel);
-    
-  };
- }, []);
-
-
-
+  // =======================
+  // 🎨 RENDER
+  // =======================
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <header className="sticky top-0 z-50 border-b border-slate-800 bg-slate-950/90 backdrop-blur">
@@ -205,126 +173,138 @@ const loadNotifications = async () => {
           <div className="flex items-center gap-3">
             {isAdmin && (
               <Link
-              href="/admin"
-              className="px-4 py-2 rounded-2xl bg-amber-500 text-slate-950 font-semibold"
+                href="/admin"
+                className="px-4 py-2 rounded-2xl bg-amber-500 text-slate-950 font-semibold"
               >
                 Admin
-                </Link>
-              )}
+              </Link>
+            )}
 
-              <Link
-               href="/panel"
-               className="px-4 py-2 rounded-2xl bg-blue-500 font-semibold"
-               >
-                Panel
-                </Link>
-            <div className="h-10 w-10 rounded-2xl bg-emerald-500 grid place-items-center font-bold text-slate-950">P</div>
+            <Link
+              href="/panel"
+              className="px-4 py-2 rounded-2xl bg-blue-500 font-semibold"
+            >
+              Panel
+            </Link>
+
+            <div className="h-10 w-10 rounded-2xl bg-emerald-500 grid place-items-center font-bold text-slate-950">
+              P
+            </div>
             <div>
               <h1 className="text-xl font-bold">Predicciones Ecuador</h1>
-              <p className="text-xs text-slate-400">Mercados predictivos en tiempo real</p>
+              <p className="text-xs text-slate-400">
+                Mercados predictivos en tiempo real
+              </p>
             </div>
           </div>
 
           <div className="hidden md:flex items-center gap-3 bg-slate-900 px-4 py-2 rounded-2xl w-96">
             <Search size={18} className="text-slate-400" />
-            <input placeholder="Buscar mercados..." className="bg-transparent outline-none w-full text-sm" />
+            <input
+              placeholder="Buscar mercados..."
+              className="bg-transparent outline-none w-full text-sm"
+            />
           </div>
 
           <div className="flex items-center gap-3">
+            {/* 🔔 Notificaciones */}
             <div className="relative" ref={notifRef}>
-  <button
-  onClick={async () => {
-    const next = !showNotifications;
-    setShowNotifications(next);
-
-    if (next) {
-      await loadNotifications();
-
-      const token = localStorage.getItem("token");
-
-      await fetch("https://predicciones-ecuador.onrender.com/notifications/read", {
-        method: "PUT",
-        headers: {
-          authorization: `Bearer ${token}` || "",
-        },
-      });
-
-      setNotifications((prev:any) =>
-        prev.map((n:any) => ({ ...n, read: true }))
-      );
-    }
-  }}
-    className="p-2 rounded-xl bg-slate-900 relative"
-  >
-    <Bell size={18} />
-
-    {notifications.filter((n:any) => !n.read).length > 0 && (
-      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] px-1 rounded-full">
-        {notifications.filter((n:any) => !n.read).length}
-      </span>
-    )}
-  </button>
-
-  {showNotifications && (
-    <div className="absolute right-0 top-14 w-96 max-h-[500px] overflow-y-auto bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-3 z-50">
-
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="font-bold text-sm">Notificaciones</h3>
-
-        <button
-          onClick={() => setShowNotifications(false)}
-          className="text-xs text-slate-400 hover:text-white"
-        >
-          Cerrar
-        </button>
-      </div>
-
-      {notifications.length === 0 ? (
-        <p className="text-sm text-slate-400 py-6 text-center">
-          No tienes notificaciones
-        </p>
-      ) : (
-        <div className="space-y-2">
-          {notifications.map((n:any) => (
-            <div
-              key={n.id}
-              className={`p-3 rounded-xl border ${
-                n.read
-                  ? "bg-slate-950 border-slate-800"
-                  : "bg-emerald-500/10 border-emerald-500/30"
-              }`}
-            >
-              <p className="font-semibold text-sm">{n.title}</p>
-              <p className="text-xs text-slate-300 mt-1">{n.message}</p>
-              <p className="text-[10px] text-slate-500 mt-2">
-                {new Date(n.created_at).toLocaleString()}
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )}
- </div>
-            {isLogged ? (
               <button
                 onClick={async () => {
- 
+                  const next = !showNotifications;
+                  setShowNotifications(next);
 
-  localStorage.removeItem("token");
-  localStorage.removeItem("role");
-  localStorage.removeItem("points");
+                  if (next) {
+                    await loadNotifications();
 
-  setIsLogged(false);
-  setPoints(null);
-  setIsAdmin(false);
-}}
+                    const token = localStorage.getItem("token");
+                    await fetch(
+                      "https://predicciones-ecuador.onrender.com/notifications/read",
+                      {
+                        method: "PUT",
+                        headers: {
+                          authorization: `Bearer ${token}` || "",
+                        },
+                      }
+                    );
+
+                    setNotifications((prev: any) =>
+                      prev.map((n: any) => ({ ...n, read: true }))
+                    );
+                  }
+                }}
+                className="p-2 rounded-xl bg-slate-900 relative"
+              >
+                <Bell size={18} />
+                {notifications.filter((n: any) => !n.read).length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] px-1 rounded-full">
+                    {notifications.filter((n: any) => !n.read).length}
+                  </span>
+                )}
+              </button>
+
+              {showNotifications && (
+                <div className="absolute right-0 top-14 w-96 max-h-[500px] overflow-y-auto bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-3 z-50">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-bold text-sm">Notificaciones</h3>
+                    <button
+                      onClick={() => setShowNotifications(false)}
+                      className="text-xs text-slate-400 hover:text-white"
+                    >
+                      Cerrar
+                    </button>
+                  </div>
+
+                  {notifications.length === 0 ? (
+                    <p className="text-sm text-slate-400 py-6 text-center">
+                      No tienes notificaciones
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {notifications.map((n: any) => (
+                        <div
+                          key={n.id}
+                          className={`p-3 rounded-xl border ${
+                            n.read
+                              ? "bg-slate-950 border-slate-800"
+                              : "bg-emerald-500/10 border-emerald-500/30"
+                          }`}
+                        >
+                          <p className="font-semibold text-sm">{n.title}</p>
+                          <p className="text-xs text-slate-300 mt-1">
+                            {n.message}
+                          </p>
+                          <p className="text-[10px] text-slate-500 mt-2">
+                            {new Date(n.created_at).toLocaleString()}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* 🔐 Auth */}
+            {isLogged ? (
+              <button
+                onClick={() => {
+                  localStorage.removeItem("token");
+                  localStorage.removeItem("role");
+                  localStorage.removeItem("points");
+                  setIsLogged(false);
+                  setPoints(null);
+                  setIsAdmin(false);
+                }}
                 className="px-4 py-2 rounded-2xl bg-rose-500 font-medium flex items-center gap-2"
               >
                 <LogOut size={16} /> Cerrar sesión
               </button>
             ) : (
-              <Link href="/login" className="px-4 py-2 rounded-2xl bg-emerald-500 text-slate-950 font-semibold flex items-center gap-2">
+              <Link
+                href="/login"
+                className="px-4 py-2 rounded-2xl bg-emerald-500 text-slate-950 font-semibold flex items-center gap-2"
+              >
                 <LogIn size={16} /> Login
               </Link>
             )}
@@ -342,95 +322,90 @@ const loadNotifications = async () => {
 
         <section className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-  <h2 className="text-2xl font-bold mb-4">Mercados activos</h2>
+            <h2 className="text-2xl font-bold mb-4">Mercados activos</h2>
 
-  <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
-    {markets.map((market) => {
-      const total = (market.yes ?? 0) + (market.no ?? 0) || 1;
-      const yesPct = ((market.yes / total) * 100).toFixed(0);
-      const noPct = ((market.no / total) * 100).toFixed(0);
-      const isResolved = market.resolved;
+            <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {markets.map((market) => {
+                const total = (market.yes ?? 0) + (market.no ?? 0) || 1;
+                const yesPct = ((market.yes / total) * 100).toFixed(0);
+                const noPct = ((market.no / total) * 100).toFixed(0);
+                const isResolved = market.resolved;
 
-      return (
-        <div
-          key={market.id}
-          className="bg-slate-900 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition"
-        >
-          {/* Header */}
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-xs text-slate-400">
-                Mercado #{market.id}
-              </p>
+                return (
+                  <div
+                    key={market.id}
+                    className="bg-slate-900 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs text-slate-400">
+                          Mercado #{market.id}
+                        </p>
+                        <h3 className="font-semibold text-lg mt-1">
+                          {market.question}
+                        </h3>
+                      </div>
 
-              <h3 className="font-semibold text-lg mt-1">
-                {market.question}
-              </h3>
+                      <span
+                        className={`text-xs px-3 py-1 rounded-full ${
+                          isResolved
+                            ? "bg-slate-700 text-white"
+                            : "bg-emerald-500/10 text-emerald-400"
+                        }`}
+                      >
+                        {isResolved ? "Cerrado" : "En vivo"}
+                      </span>
+                    </div>
+
+                    <div className="mt-4 h-2 bg-slate-800 rounded-full overflow-hidden flex">
+                      <div
+                        className="bg-emerald-500"
+                        style={{ width: `${yesPct}%` }}
+                      />
+                      <div
+                        className="bg-rose-500"
+                        style={{ width: `${noPct}%` }}
+                      />
+                    </div>
+
+                    <p className="text-xs mt-2 text-slate-400">
+                      Sí {yesPct}% • No {noPct}% • {total} pts
+                    </p>
+
+                    <div className="mt-4">
+                      {isResolved ? (
+                        <div className="text-center text-sm px-3 py-3 rounded-xl bg-slate-800 text-white">
+                          <p className="font-bold">Mercado resuelto</p>
+                          <p className="mt-1 text-slate-300">
+                            Ganó{" "}
+                            <span className="text-emerald-400 font-bold">
+                              {market.winner === "yes" ? "Sí" : "No"}
+                            </span>
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => handleBet(market.id, "yes")}
+                            className="bg-emerald-500 text-slate-950 font-bold rounded-xl py-2 text-sm"
+                          >
+                            Comprar Sí
+                          </button>
+                          <button
+                            onClick={() => handleBet(market.id, "no")}
+                            className="bg-rose-500 text-white font-bold rounded-xl py-2 text-sm"
+                          >
+                            Comprar No
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-
-            <span
-              className={`text-xs px-3 py-1 rounded-full ${
-                isResolved
-                  ? "bg-slate-700 text-white"
-                  : "bg-emerald-500/10 text-emerald-400"
-              }`}
-            >
-              {isResolved ? "Cerrado" : "En vivo"}
-            </span>
           </div>
 
-          {/* Barra */}
-          <div className="mt-4 h-2 bg-slate-800 rounded-full overflow-hidden flex">
-            <div
-              className="bg-emerald-500"
-              style={{ width: `${yesPct}%` }}
-            />
-            <div
-              className="bg-rose-500"
-              style={{ width: `${noPct}%` }}
-            />
-          </div>
-
-          {/* Info */}
-          <p className="text-xs mt-2 text-slate-400">
-            Sí {yesPct}% • No {noPct}% • {total} pts
-          </p>
-
-          {/* Botones */}
-          <div className="mt-4">
-            {isResolved ? (
-              <div className="text-center text-sm px-3 py-3 rounded-xl bg-slate-800 text-white">
-                <p className="font-bold">Mercado resuelto</p>
-                <p className="mt-1 text-slate-300">
-                  Ganó{" "}
-                  <span className="text-emerald-400 font-bold">
-                    {market.winner === "yes" ? "Sí" : "No"}
-                  </span>
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => handleBet(market.id, "yes")}
-                  className="bg-emerald-500 text-slate-950 font-bold rounded-xl py-2 text-sm"
-                >
-                  Comprar Sí
-                </button>
-
-                <button
-                  onClick={() => handleBet(market.id, "no")}
-                  className="bg-rose-500 text-white font-bold rounded-xl py-2 text-sm"
-                >
-                  Comprar No
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      );
-    })}
-  </div>
-</div>
           <aside className="space-y-4">
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
               <h3 className="font-semibold mb-3">Resumen</h3>
@@ -444,7 +419,9 @@ const loadNotifications = async () => {
 
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
               <h3 className="font-semibold mb-3">Tendencias</h3>
-              <p className="text-sm text-slate-400">Los mercados con mayor actividad aparecerán aquí.</p>
+              <p className="text-sm text-slate-400">
+                Los mercados con mayor actividad aparecerán aquí.
+              </p>
             </div>
           </aside>
         </section>
