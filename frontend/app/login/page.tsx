@@ -25,45 +25,55 @@ export default function Login() {
   
 
     const googleLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      const accessToken = tokenResponse.access_token;
+  flow: "implicit",
+  onSuccess: async (tokenResponse) => {
+    console.log("TOKEN:", tokenResponse); // 👈 IMPORTANTE para debug
 
-      const res = await fetch(
-        "https://www.googleapis.com/oauth2/v3/userinfo",
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
+    const accessToken = tokenResponse.access_token;
 
-      const profile = await res.json();
+    if (!accessToken) {
+      console.log("No llegó access token");
+      return;
+    }
 
-      const backendRes = await fetch(
-        "https://predicciones-ecuador.onrender.com/auth/google",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: profile.email,
-            name: profile.name,
-            picture: profile.picture,
-          }),
-        }
-      );
-
-      const data = await backendRes.json();
-
-      if (data.token) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("role", data.user.role || "user");
-        localStorage.setItem("points", String(data.user.points || 0));
-
-        window.dispatchEvent(new Event("auth-change"));
-        router.push("/");
+    const res = await fetch(
+      "https://www.googleapis.com/oauth2/v3/userinfo",
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
       }
-    },
-  });
+    );
+
+    const profile = await res.json();
+
+    const backendRes = await fetch(
+      "https://predicciones-ecuador.onrender.com/auth/google",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: profile.email,
+          name: profile.name,
+          picture: profile.picture,
+        }),
+      }
+    );
+
+    const data = await backendRes.json();
+
+    if (data.token) {
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("role", data.user.role || "user");
+      localStorage.setItem("points", String(data.user.points || 0));
+
+      window.dispatchEvent(new Event("auth-change"));
+      router.push("/");
+    }
+  },
+});
+
+     
 
   const handleLogout = () => {
     localStorage.removeItem("token");
