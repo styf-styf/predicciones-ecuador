@@ -146,15 +146,26 @@ export default function RegisterPage() {
   <button
     type="button"
     onClick={async () => {
-      const { supabase } = await import("@/lib/supabase");
+  const res = await fetch("https://predicciones-ecuador.onrender.com/auth/google", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: "EMAIL_DE_GOOGLE",
+      name: "NAME",
+      picture: "PHOTO"
+    }),
+  });
 
-      await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: "https://predicciones-ecuador.vercel.app/auth/callback",
-        },
-      });
-    }}
+  const data = await res.json();
+
+  if (data.token) {
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("role", data.user.role);
+    localStorage.setItem("points", data.user.points);
+
+    window.location.href = "/";
+  }
+}}
     className="w-full bg-white text-black font-bold py-3 rounded-xl"
   >
     Continuar con Google

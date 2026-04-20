@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { GoogleLogin } from "@react-oauth/google";
 
 export default function Login() {
   const router = useRouter();
@@ -23,35 +24,7 @@ export default function Login() {
 
   
 
-  const handleLogin = async () => {
-    const res = await fetch("https://predicciones-ecuador.onrender.com/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const data = await res.json();
-
-    if (data.token) {
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("role", data.role || "user");
-      localStorage.setItem("points", String(data.points || 0));
-      window.dispatchEvent(new Event("auth-change"));
-
-      setMessage("Login exitoso ✅");
-
-      if (data.role === "admin") {
-        window.location.href = "/admin";
-      } else {
-        window.location.href = "/";
-      }
-    } else {
-      setMessage(data.message || "Error al iniciar sesión");
-    }
-    
-  };
+  
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -60,7 +33,29 @@ export default function Login() {
     setMessage("Sesión cerrada");
   };
 
-  
+  const handleLogin = async () => {
+  const res = await fetch("https://predicciones-ecuador.onrender.com/login", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email, password }),
+  });
+
+  const data = await res.json();
+
+  if (data.token) {
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("role", data.user.role || "user");
+    localStorage.setItem("points", String(data.user.points || 0));
+
+    window.dispatchEvent(new Event("auth-change"));
+
+    router.push("/");
+  } else {
+    setMessage(data.message || "Error al iniciar sesión");
+  }
+};
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
@@ -98,23 +93,37 @@ export default function Login() {
   </button>
  </Link>
  <div className="mb-2">
-  <button
-    type="button"
-    onClick={async () => {
-      const { supabase } = await import("@/lib/supabase");
+  <GoogleLogin
+    onSuccess={async (credentialResponse) => {
+      const res = await fetch(
+        "https://predicciones-ecuador.onrender.com/auth/google",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            credential: credentialResponse.credential,
+          }),
+        }
+      );
 
-      await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: "https://predicciones-ecuador.vercel.app/auth/callback",
-        },
-      });
+      const data = await res.json();
+
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("role", data.user.role || "user");
+        localStorage.setItem("points", String(data.user.points || 0));
+
+        window.dispatchEvent(new Event("auth-change"));
+
+        router.push("/");
+      }
     }}
-    className="w-full bg-white text-black font-bold py-3 rounded-xl"
-  >
-    Continuar con Google
-  </button>
+    onError={() => {
+      setMessage("Error al iniciar sesión con Google");
+    }}
+  />
  </div>
+  
 
         <button
           onClick={handleLogout}

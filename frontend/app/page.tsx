@@ -14,6 +14,17 @@ export default function Home() {
   const [showNotifications, setShowNotifications] = useState(false);
   const notifRef = useRef<any>(null);
 
+useEffect(() => {
+  const init = async () => {
+    await fetchMarkets();
+    await loadNotifications();
+    const token = localStorage.getItem("token");
+    if (token) await loadMe();
+  };
+
+  init();
+}, []);
+
 const loadNotifications = async () => {
   const token = localStorage.getItem("token");
   if (!token) {
@@ -66,52 +77,72 @@ const loadNotifications = async () => {
     }
   };
 
+
+useEffect(() => {
+  const syncGoogleLogin = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session?.user?.email) return;
+
+    const token = localStorage.getItem("token");
+    if (token) return; // 👈 evita duplicado
+
+    const email = session.user.email;
+
+    const res = await fetch("https://predicciones-ecuador.onrender.com/auth/google", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+
+    const data = await res.json();
+
+    if (data.token) {
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("role", data.user.role);
+      localStorage.setItem("points", data.user.points);
+
+      await loadMe();
+    }
+  };
+
+  syncGoogleLogin();
+}, []);
+  // 2. Intentar login Google
   const loadMe = async () => {
   const token = localStorage.getItem("token");
 
-  // 1. Intentar login normal (JWT backend)
-  if (token) {
-    try {
-      const res = await fetch("https://predicciones-ecuador.onrender.com/me", {
-        headers: { authorization: `Bearer ${token}` },
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-
-        setPoints(data.points || 0);
-        setIsAdmin(data.role === "admin");
-        setIsLogged(true);
-        return;
-      }
-    } catch (error) {
-      console.log("No es token backend");
-    }
-  }
-
-  // 2. Intentar login Google
-  const { data } = await supabase.auth.getSession();
-
-  if (data.session) {
-    const email = data.session.user.email;
-
-    const { data: userData } = await supabase
-      .from("users")
-      .select("points, role")
-      .eq("email", email)
-      .single();
-
-    setPoints(userData?.points || 0);
-    setIsAdmin(userData?.role === "admin");
-    setIsLogged(true);
+  if (!token) {
+    setIsLogged(false);
+    setIsAdmin(false);
+    setPoints(null);
     return;
   }
 
-  // 3. No hay sesión
-  setIsLogged(false);
-  setIsAdmin(false);
-  setPoints(null);
- };
+  try {
+    const res = await fetch("https://predicciones-ecuador.onrender.com/me", {
+      headers: { authorization: `Bearer ${token}` },
+    });
+
+    if (!res.ok) throw new Error();
+
+    const data = await res.json();
+
+    setPoints(data.points || 0);
+    setIsAdmin(data.role === "admin");
+    setIsLogged(true);
+  } catch {
+
+    localStorage.removeItem("token");
+  localStorage.removeItem("role");
+  localStorage.removeItem("points");
+    setIsLogged(false);
+    setIsAdmin(false);
+    setPoints(null);
+  }
+};
+
+ 
 
   useEffect(() => {
   const init = async () => {
@@ -172,11 +203,7 @@ const loadNotifications = async () => {
     )
     .subscribe();
     
-    const { data: { subscription } } =
-  supabase.auth.onAuthStateChange(() => {
-    loadMe();
-    loadNotifications();
-  });
+  
  
 
   return () => {
@@ -184,9 +211,9 @@ const loadNotifications = async () => {
     supabase.removeChannel(channel);
     supabase.removeChannel(notifChannel);
     supabase.removeChannel(userChannel);
-    subscription.unsubscribe();
+    
   };
-}, []);
+ }, []);
 
 
 
@@ -301,16 +328,16 @@ const loadNotifications = async () => {
             {isLogged ? (
               <button
                 onClick={async () => {
+  await supabase.auth.signOut();
+
   localStorage.removeItem("token");
   localStorage.removeItem("role");
   localStorage.removeItem("points");
 
-  await supabase.auth.signOut();
-
   setIsLogged(false);
   setPoints(null);
   setIsAdmin(false);
- }}
+}}
                 className="px-4 py-2 rounded-2xl bg-rose-500 font-medium flex items-center gap-2"
               >
                 <LogOut size={16} /> Cerrar sesión
