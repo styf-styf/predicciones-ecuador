@@ -340,6 +340,79 @@ app.get("/admin/winners", async (req, res) => {
   }
 });
 
+// =======================
+// 📊 ESTADÍSTICAS ADMIN
+// =======================
+app.get("/admin/stats", auth, async (req, res) => {
+  // Verificar admin
+  const { data: admin } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", req.userId)
+    .single();
+
+  if (!admin || admin.role !== "admin") {
+    return res.status(403).json({ message: "Solo admin" });
+  }
+
+  // Total usuarios
+  const { count: totalUsers } = await supabase
+    .from("users")
+    .select("*", { count: "exact", head: true });
+
+  // Total puntos en circulación
+  const { data: usersPoints } = await supabase
+    .from("users")
+    .select("points");
+  const totalPoints = usersPoints?.reduce((sum, u) => sum + Number(u.points), 0) ?? 0;
+
+  // Total apostado
+  const { data: allBets } = await supabase
+    .from("bets")
+    .select("amount");
+  const totalBetted = allBets?.reduce((sum, b) => sum + Number(b.amount), 0) ?? 0;
+
+  // Comisiones recaudadas (3% sobre utilidades pagadas)
+  const { data: allWinners } = await supabase
+    .from("winners")
+    .select("reward, market_id");
+  
+  // Mercados activos vs cerrados
+  const { count: activeMarkets } = await supabase
+    .from("markets")
+    .select("*", { count: "exact", head: true })
+    .eq("resolved", false);
+
+  const { count: closedMarkets } = await supabase
+    .from("markets")
+    .select("*", { count: "exact", head: true })
+    .eq("resolved", true);
+
+  // Usuarios registrados hoy
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const { count: newUsersToday } = await supabase
+    .from("users")
+    .select("*", { count: "exact", head: true })
+    .gte("created_at", today.toISOString());
+
+  // Apuestas de hoy
+  const { count: betsToday } = await supabase
+    .from("bets")
+    .select("*", { count: "exact", head: true })
+    .gte("created_at", today.toISOString());
+
+  res.json({
+    totalUsers,
+    totalPoints: totalPoints.toFixed(2),
+    totalBetted: totalBetted.toFixed(2),
+    activeMarkets,
+    closedMarkets,
+    newUsersToday,
+    betsToday,
+  });
+});
+
 app.put("/notifications/read", async (req, res) => {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) return res.status(401).json({ message: "No autorizado" });

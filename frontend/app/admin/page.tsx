@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Bell, Search, TrendingUp, Trophy, Wallet, LogOut, LogIn } from "lucide-react";
+import { Bell, Search, TrendingUp, Trophy, Wallet, LogOut, LogIn, Users, Activity, DollarSign, BarChart2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 export default function AdminPage() {
@@ -11,6 +11,7 @@ export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [newQuestion, setNewQuestion] = useState("");
   const [winners, setWinners] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>(null);
 
   // =======================
   // 🔧 FUNCIONES
@@ -28,6 +29,15 @@ export default function AdminPage() {
     });
     const data = await res.json();
     if (res.ok) setWinners(data);
+  };
+
+  const fetchStats = async () => {
+    const token = localStorage.getItem("token");
+    const res = await fetch("https://predicciones-ecuador.onrender.com/admin/stats", {
+      headers: { authorization: `Bearer ${token}` || "" },
+    });
+    const data = await res.json();
+    if (res.ok) setStats(data);
   };
 
   const loadMe = async () => {
@@ -56,6 +66,7 @@ export default function AdminPage() {
       setIsAdmin(true);
       setPoints(data.points || 0);
       fetchWinners();
+      fetchStats();
     } catch {
       localStorage.removeItem("token");
       window.location.href = "/login";
@@ -79,7 +90,7 @@ export default function AdminPage() {
     if (res.ok) {
       setNewQuestion("");
       fetchMarkets();
-      fetchWinners();
+      fetchStats();
     } else {
       alert(data.message || "Error al crear mercado");
     }
@@ -97,7 +108,7 @@ export default function AdminPage() {
     const data = await res.json();
     if (res.ok) {
       fetchMarkets();
-      fetchWinners();
+      fetchStats();
     } else {
       alert(data.message || "Error al eliminar");
     }
@@ -122,6 +133,7 @@ export default function AdminPage() {
     alert(data.message);
     fetchMarkets();
     fetchWinners();
+    fetchStats();
   };
 
   // =======================
@@ -197,12 +209,78 @@ export default function AdminPage() {
       </header>
 
       <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+
+        {/* 📊 Cards admin */}
         <section className="grid md:grid-cols-4 gap-4">
-          <Card title="Balance" value={`${points ?? 0} pts`} icon={<Wallet size={18} />} />
+          <Card title="Mi Balance" value={`${points ?? 0} pts`} icon={<Wallet size={18} />} />
           <Card title="Mercados" value={`${markets.length}`} icon={<TrendingUp size={18} />} />
           <Card title="Ganadores" value={`${winners.length}`} icon={<Trophy size={18} />} />
           <Card title="Estado" value={isLogged ? "Online" : "Invitado"} icon={<Bell size={18} />} />
         </section>
+
+        {/* ======================= */}
+        {/* 📈 ESTADÍSTICAS GENERALES */}
+        {/* ======================= */}
+        {stats && (
+          <section className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+            <div className="flex items-center gap-2 mb-6">
+              <BarChart2 size={20} className="text-emerald-400" />
+              <h2 className="text-xl font-bold">Estadísticas generales</h2>
+            </div>
+
+            <div className="grid md:grid-cols-4 gap-4 mb-6">
+              <StatCard
+                title="Total usuarios"
+                value={stats.totalUsers}
+                sub={`+${stats.newUsersToday} hoy`}
+                icon={<Users size={18} />}
+                color="text-blue-400"
+              />
+              <StatCard
+                title="Puntos en circulación"
+                value={`${stats.totalPoints} pts`}
+                sub="suma de todos los balances"
+                icon={<Wallet size={18} />}
+                color="text-emerald-400"
+              />
+              <StatCard
+                title="Total apostado"
+                value={`${stats.totalBetted} pts`}
+                sub={`${stats.betsToday} apuestas hoy`}
+                icon={<DollarSign size={18} />}
+                color="text-amber-400"
+              />
+              <StatCard
+                title="Mercados"
+                value={`${stats.activeMarkets} activos`}
+                sub={`${stats.closedMarkets} cerrados`}
+                icon={<Activity size={18} />}
+                color="text-rose-400"
+              />
+            </div>
+
+            {/* Barra de progreso activos vs cerrados */}
+            <div>
+              <div className="flex justify-between text-xs text-slate-400 mb-1">
+                <span>Mercados activos</span>
+                <span>Mercados cerrados</span>
+              </div>
+              <div className="h-2 bg-slate-800 rounded-full overflow-hidden flex">
+                <div
+                  className="bg-emerald-500 transition-all"
+                  style={{
+                    width: `${((stats.activeMarkets ?? 0) / ((stats.activeMarkets ?? 0) + (stats.closedMarkets ?? 1))) * 100}%`
+                  }}
+                />
+                <div className="bg-slate-600 flex-1" />
+              </div>
+              <div className="flex justify-between text-xs mt-1">
+                <span className="text-emerald-400">{stats.activeMarkets} activos</span>
+                <span className="text-slate-400">{stats.closedMarkets} cerrados</span>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* ======================= */}
         {/* 👑 GESTIÓN ADMIN */}
@@ -211,7 +289,7 @@ export default function AdminPage() {
           <section className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
             <div className="flex items-center justify-between gap-4 mb-4">
               <div>
-                <h2 className="text-2xl font-bold">Gestión Administrativa</h2>
+                <h2 className="text-2xl font-bold">Gestión de mercados</h2>
                 <p className="text-sm text-slate-400">Crear y gestionar mercados</p>
               </div>
               <span className="text-xs px-3 py-1 rounded-full bg-amber-500/15 text-amber-400">
@@ -219,7 +297,6 @@ export default function AdminPage() {
               </span>
             </div>
 
-            {/* Crear mercado */}
             <div className="grid md:grid-cols-3 gap-3">
               <input
                 value={newQuestion}
@@ -235,15 +312,15 @@ export default function AdminPage() {
               </button>
             </div>
 
-            {/* Tabla de mercados */}
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="text-slate-400 border-b border-slate-800">
                   <tr>
                     <th className="text-left py-2">ID</th>
                     <th className="text-left py-2">Pregunta</th>
-                    <th className="text-left py-2">Sí</th>
-                    <th className="text-left py-2">No</th>
+                    <th className="text-left py-2">Sí (pts)</th>
+                    <th className="text-left py-2">No (pts)</th>
+                    <th className="text-left py-2">Total</th>
                     <th className="text-left py-2">Acción</th>
                   </tr>
                 </thead>
@@ -252,12 +329,15 @@ export default function AdminPage() {
                     <tr key={m.id} className="border-b border-slate-900">
                       <td className="py-2">{m.id}</td>
                       <td className="py-2">{m.question}</td>
-                      <td className="py-2">{m.yes}</td>
-                      <td className="py-2">{m.no}</td>
+                      <td className="py-2 text-emerald-400">{m.yes}</td>
+                      <td className="py-2 text-rose-400">{m.no}</td>
+                      <td className="py-2 text-amber-400 font-bold">
+                        {(Number(m.yes) + Number(m.no)).toFixed(2)}
+                      </td>
                       <td className="py-2">
                         {m.resolved ? (
                           <div className="text-xs rounded-xl bg-slate-800 px-3 py-2 inline-block">
-                            <p className="font-bold text-white">Mercado cerrado</p>
+                            <p className="font-bold text-white">Cerrado</p>
                             <p className="text-slate-300 mt-1">
                               Ganó:{" "}
                               <span className="text-emerald-400 font-bold">
@@ -313,12 +393,9 @@ export default function AdminPage() {
                   className="bg-slate-900 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-xs text-slate-400">Mercado #{market.id}</p>
-                      <h3 className="font-semibold text-lg mt-1">{market.question}</h3>
-                    </div>
+                    <h3 className="font-semibold text-base">{market.question}</h3>
                     <span
-                      className={`text-xs px-3 py-1 rounded-full ${
+                      className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full ${
                         market.resolved
                           ? "bg-slate-700 text-white"
                           : "bg-emerald-500/10 text-emerald-400"
@@ -397,6 +474,7 @@ export default function AdminPage() {
             </table>
           </div>
         </section>
+
       </div>
     </main>
   );
@@ -410,6 +488,19 @@ function Card({ title, value, icon }: any) {
         {icon}
       </div>
       <p className="text-2xl font-bold mt-2">{value}</p>
+    </div>
+  );
+}
+
+function StatCard({ title, value, sub, icon, color }: any) {
+  return (
+    <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4">
+      <div className={`flex items-center gap-2 ${color} mb-2`}>
+        {icon}
+        <span className="text-sm font-medium">{title}</span>
+      </div>
+      <p className="text-2xl font-bold text-white">{value}</p>
+      <p className="text-xs text-slate-400 mt-1">{sub}</p>
     </div>
   );
 }
