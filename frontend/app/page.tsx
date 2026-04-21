@@ -13,6 +13,7 @@ export default function Home() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [betAmounts, setBetAmounts] = useState<{ [key: number]: string }>({});
   const notifRef = useRef<any>(null);
+  const marketRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
 
   // =======================
   // 🔧 FUNCIONES
@@ -20,7 +21,16 @@ export default function Home() {
   const fetchMarkets = async () => {
     const res = await fetch("https://predicciones-ecuador.onrender.com/markets");
     const data = await res.json();
-    setMarkets(data);
+
+    // Separar activos y resueltos
+    const active = data.filter((m: any) => !m.resolved);
+    const resolved = data.filter((m: any) => m.resolved);
+
+    // Mezclar activos aleatoriamente
+    const shuffled = active.sort(() => Math.random() - 0.5);
+
+    // Resueltos siempre al final
+    setMarkets([...shuffled, ...resolved]);
   };
 
   const loadMe = async () => {
@@ -107,7 +117,17 @@ export default function Home() {
     }
   };
 
-  // Top 3 mercados con mayor actividad (yes + no)
+  // ✅ Scroll al mercado al hacer click en tendencia
+  const scrollToMarket = (marketId: number) => {
+    const el = marketRefs.current[marketId];
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("ring-2", "ring-orange-400");
+      setTimeout(() => el.classList.remove("ring-2", "ring-orange-400"), 2000);
+    }
+  };
+
+  // Top 3 mercados con mayor actividad
   const trendingMarkets = [...markets]
     .filter((m) => !m.resolved)
     .sort((a, b) => (b.yes + b.no) - (a.yes + a.no))
@@ -224,18 +244,14 @@ export default function Home() {
 
                   if (next) {
                     await loadNotifications();
-
                     const token = localStorage.getItem("token");
                     await fetch(
                       "https://predicciones-ecuador.onrender.com/notifications/read",
                       {
                         method: "PUT",
-                        headers: {
-                          authorization: `Bearer ${token}` || "",
-                        },
+                        headers: { authorization: `Bearer ${token}` || "" },
                       }
                     );
-
                     setNotifications((prev: any) =>
                       prev.map((n: any) => ({ ...n, read: true }))
                     );
@@ -279,9 +295,7 @@ export default function Home() {
                           }`}
                         >
                           <p className="font-semibold text-sm">{n.title}</p>
-                          <p className="text-xs text-slate-300 mt-1">
-                            {n.message}
-                          </p>
+                          <p className="text-xs text-slate-300 mt-1">{n.message}</p>
                           <p className="text-[10px] text-slate-500 mt-2">
                             {new Date(n.created_at).toLocaleString()}
                           </p>
@@ -346,9 +360,10 @@ export default function Home() {
                 const noPct = ((market.no / total) * 100).toFixed(0);
 
                 return (
-                  <div
+                  <button
                     key={market.id}
-                    className="bg-slate-900 border border-orange-500/30 rounded-2xl p-4 flex items-center gap-4"
+                    onClick={() => scrollToMarket(market.id)}
+                    className="bg-slate-900 border border-orange-500/30 rounded-2xl p-4 flex items-center gap-4 hover:border-orange-400 transition text-left w-full"
                   >
                     <span className="text-2xl font-black text-orange-400">
                       #{index + 1}
@@ -363,14 +378,14 @@ export default function Home() {
                         {total} pts apostados • Sí {yesPct}% • No {noPct}%
                       </p>
                     </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
           </section>
         )}
 
-        {/* 📈 Mercados activos */}
+        {/* 📈 Mercados */}
         <section>
           <h2 className="text-2xl font-bold mb-4">Mercados activos</h2>
 
@@ -384,20 +399,18 @@ export default function Home() {
               return (
                 <div
                   key={market.id}
+                  ref={(el) => { marketRefs.current[market.id] = el; }}
                   className="bg-slate-900 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-xs text-slate-400">
-                        Mercado #{market.id}
-                      </p>
-                      <h3 className="font-semibold text-lg mt-1">
-                        {market.question}
-                      </h3>
-                    </div>
+                    {/* ✅ Sin "Mercado #" */}
+                    <h3 className="font-semibold text-base mt-1">
+                      {market.question}
+                    </h3>
 
+                    {/* ✅ Badge más pequeño */}
                     <span
-                      className={`text-xs px-3 py-1 rounded-full ${
+                      className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full ${
                         isResolved
                           ? "bg-slate-700 text-white"
                           : "bg-emerald-500/10 text-emerald-400"
