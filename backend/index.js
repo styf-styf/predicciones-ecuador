@@ -413,6 +413,123 @@ app.get("/admin/stats", auth, async (req, res) => {
   });
 });
 
+// =======================
+// 👥 ADMIN - GESTIÓN USUARIOS
+// =======================
+app.get("/admin/users", auth, async (req, res) => {
+  const { data: admin } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", req.userId)
+    .single();
+
+  if (!admin || admin.role !== "admin") {
+    return res.status(403).json({ message: "Solo admin" });
+  }
+
+  const { data, error } = await supabase
+    .from("users")
+    .select("id, email, nombre, apellido, points, role, provider, created_at")
+    .order("created_at", { ascending: false });
+
+  if (error) return res.status(500).json({ message: error.message });
+
+  res.json(data);
+});
+
+// Cambiar rol
+app.put("/admin/users/:id/role", auth, async (req, res) => {
+  const { data: admin } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", req.userId)
+    .single();
+
+  if (!admin || admin.role !== "admin") {
+    return res.status(403).json({ message: "Solo admin" });
+  }
+
+  const { role } = req.body;
+  if (!["admin", "user"].includes(role)) {
+    return res.status(400).json({ message: "Rol inválido" });
+  }
+
+  const { error } = await supabase
+    .from("users")
+    .update({ role })
+    .eq("id", req.params.id);
+
+  if (error) return res.status(500).json({ message: error.message });
+
+  res.json({ message: "Rol actualizado" });
+});
+
+// Dar/quitar puntos
+app.put("/admin/users/:id/points", auth, async (req, res) => {
+  const { data: admin } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", req.userId)
+    .single();
+
+  if (!admin || admin.role !== "admin") {
+    return res.status(403).json({ message: "Solo admin" });
+  }
+
+  const { points } = req.body;
+  if (isNaN(points)) {
+    return res.status(400).json({ message: "Puntos inválidos" });
+  }
+
+  // Obtener puntos actuales
+  const { data: user } = await supabase
+    .from("users")
+    .select("points")
+    .eq("id", req.params.id)
+    .single();
+
+  if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
+
+  const newPoints = Number(user.points) + Number(points);
+
+  if (newPoints < 0) {
+    return res.status(400).json({ message: "El usuario no puede tener puntos negativos" });
+  }
+
+  const { error } = await supabase
+    .from("users")
+    .update({ points: newPoints })
+    .eq("id", req.params.id);
+
+  if (error) return res.status(500).json({ message: error.message });
+
+  res.json({ message: "Puntos actualizados", newPoints });
+});
+
+// Suspender/activar usuario
+app.put("/admin/users/:id/suspend", auth, async (req, res) => {
+  const { data: admin } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", req.userId)
+    .single();
+
+  if (!admin || admin.role !== "admin") {
+    return res.status(403).json({ message: "Solo admin" });
+  }
+
+  const { suspended } = req.body;
+
+  const { error } = await supabase
+    .from("users")
+    .update({ suspended })
+    .eq("id", req.params.id);
+
+  if (error) return res.status(500).json({ message: error.message });
+
+  res.json({ message: suspended ? "Usuario suspendido" : "Usuario activado" });
+});
+
 app.put("/notifications/read", async (req, res) => {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) return res.status(401).json({ message: "No autorizado" });
