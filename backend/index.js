@@ -364,7 +364,9 @@ app.put("/notifications/read", async (req, res) => {
 app.post("/admin/resolve/:id", auth, async (req, res) => {
   const { winner } = req.body;
   const marketId = Number(req.params.id);
+  const COMMISSION = 0.03; // 3%
 
+  // Validar admin
   const { data: admin } = await supabase
     .from("users")
     .select("*")
@@ -375,74 +377,99 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
     return res.status(403).json({ message: "Solo admin" });
   }
 
+  // Obtener mercado
   const { data: market } = await supabase
     .from("markets")
     .select("*")
     .eq("id", marketId)
     .single();
 
-  if (!market) {
-    return res.status(404).json({ message: "Mercado no encontrado" });
-  }
+  if (!market) return res.status(404).json({ message: "Mercado no encontrado" });
+  if (market.resolved) return res.status(400).json({ message: "Mercado ya resuelto" });
 
-  if (market.resolved) {
-    return res.status(400).json({ message: "Mercado ya resuelto" });
-  }
-
-  const { data: winners, error: winnersError } = await supabase
+  // Obtener todas las apuestas del mercado
+  const { data: allBets } = await supabase
     .from("bets")
     .select("*")
-    .eq("market_id", marketId)
-    .eq("type", winner);
+    .eq("market_id", marketId);
 
-  if (winnersError) {
-    return res.status(500).json({ message: winnersError.message });
+  if (!allBets || allBets.length === 0) {
+    await supabase.from("markets").update({ resolved: true, winner }).eq("id", marketId);
+    return res.json({ message: "Mercado resuelto, no hubo apuestas" });
   }
 
-  if (!winners || winners.length === 0) {
-    await supabase
-      .from("markets")
-      .update({ resolved: true, winner })
-      .eq("id", marketId);
+  // Separar ganadores y perdedores
+  const winningBets = allBets.filter((b) => b.type === winner);
+  const losingBets = allBets.filter((b) => b.type !== winner);
 
+  // Total apostado por perdedores (el pool a repartir)
+  const losingPool = losingBets.reduce((sum, b) => sum + Number(b.amount), 0);
+
+  // Total apostado por ganadores
+  const winningPool = winningBets.reduce((sum, b) => sum + Number(b.amount), 0);
+
+  if (winningBets.length === 0) {
+    await supabase.from("markets").update({ resolved: true, winner }).eq("id", marketId);
     return res.json({ message: "Mercado resuelto, pero no hubo ganadores" });
   }
 
-  for (const bet of winners) {
-    const reward = bet.amount * 2;
+  let totalCommission = 0;
 
-    const { data: winnerUser } = await supabase
+  for (const bet of winningBets) {
+    const amount = Number(bet.amount);
+
+    // Participación proporcional
+    const participation = amount / winningPool;
+
+    // Utilidad bruta
+    const grossProfit = losingPool * participation;
+
+    // Comisión
+    const commission = grossProfit * COMMISSION;
+    totalCommission += commission;
+
+    // Utilidad neta
+    const netProfit = grossProfit - commission;
+
+    // Pago final = apuesta original + utilidad neta
+    const payout = amount + netProfit;
+
+    // Obtener puntos actuales del usuario
+    const { data: user } = await supabase
       .from("users")
       .select("points")
       .eq("id", bet.user_id)
       .single();
 
+    // Sumar pago
     await supabase
       .from("users")
-      .update({ points: winnerUser.points + reward })
+      .update({ points: Number(user.points) + payout })
       .eq("id", bet.user_id);
 
+    // Notificación
     await supabase.from("notifications").insert([{
       user_id: bet.user_id,
       title: "🎉 Ganaste una apuesta",
-      message: `Recibiste ${reward} puntos en ${market.question}`,
+      message: `Apostaste ${amount} pts • Utilidad bruta: ${grossProfit.toFixed(2)} pts • Comisión (3%): ${commission.toFixed(2)} pts • Total recibido: ${payout.toFixed(2)} pts`,
       read: false,
     }]);
 
+    // Historial ganador
     await supabase.from("winners").insert([{
       user_id: bet.user_id,
       market_id: marketId,
       prediction: winner,
-      reward: reward,
+      reward: parseFloat(payout.toFixed(2)),
     }]);
   }
 
-  await supabase
-    .from("markets")
-    .update({ resolved: true, winner })
-    .eq("id", marketId);
+  // Cerrar mercado
+  await supabase.from("markets").update({ resolved: true, winner }).eq("id", marketId);
 
-  res.json({ message: "Mercado resuelto y premios pagados" });
+  res.json({
+    message: `Mercado resuelto. Comisión total plataforma: ${totalCommission.toFixed(2)} pts`
+  });
 });
 
 app.get("/notifications", auth, async (req, res) => {
@@ -473,7 +500,13 @@ app.put("/notifications/:id/read", auth, async (req, res) => {
 // 💰 APOSTAR
 // =======================
 app.post("/bet", auth, async (req, res) => {
-  const { marketId, type } = req.body;
+  const { marketId, type, amount } = req.body;
+
+  // Validar monto
+  const betAmount = parseFloat(amount);
+  if (isNaN(betAmount) || betAmount < 1 || betAmount > 10) {
+    return res.status(400).json({ message: "El monto debe ser entre 1 y 10 puntos" });
+  }
 
   const { data: user, error: userError } = await supabase
     .from("users")
@@ -481,11 +514,9 @@ app.post("/bet", auth, async (req, res) => {
     .eq("id", req.userId)
     .single();
 
-  if (userError || !user) {
-    return res.status(404).json({ message: "Usuario no encontrado" });
-  }
+  if (userError || !user) return res.status(404).json({ message: "Usuario no encontrado" });
 
-  if (user.points < 10) {
+  if (user.points < betAmount) {
     return res.status(400).json({ message: "Sin puntos suficientes" });
   }
 
@@ -495,35 +526,26 @@ app.post("/bet", auth, async (req, res) => {
     .eq("id", marketId)
     .single();
 
-  if (marketError || !market) {
-    return res.status(404).json({ message: "Mercado no encontrado" });
-  }
+  if (marketError || !market) return res.status(404).json({ message: "Mercado no encontrado" });
+  if (market.resolved) return res.status(400).json({ message: "Este mercado ya está cerrado" });
 
-  if (market.resolved) {
-    return res.status(400).json({ message: "Este mercado ya está cerrado" });
-  }
+  // Descontar puntos
+  const newPoints = Number(user.points) - betAmount;
+  await supabase.from("users").update({ points: newPoints }).eq("id", user.id);
 
-  const newPoints = user.points - 10;
-
-  await supabase
-    .from("users")
-    .update({ points: newPoints })
-    .eq("id", user.id);
-
+  // Actualizar mercado
   const updatedValues = type === "yes"
-    ? { yes: market.yes + 10 }
-    : { no: market.no + 10 };
+    ? { yes: Number(market.yes) + betAmount }
+    : { no: Number(market.no) + betAmount };
 
-  await supabase
-    .from("markets")
-    .update(updatedValues)
-    .eq("id", marketId);
+  await supabase.from("markets").update(updatedValues).eq("id", marketId);
 
+  // Guardar apuesta con monto variable
   await supabase.from("bets").insert([{
     user_id: user.id,
     market_id: marketId,
     type,
-    amount: 10,
+    amount: betAmount,
   }]);
 
   const { data: updatedMarket } = await supabase

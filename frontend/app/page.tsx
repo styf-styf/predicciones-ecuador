@@ -11,6 +11,7 @@ export default function Home() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [betAmounts, setBetAmounts] = useState<{ [key: number]: string }>({});
   const notifRef = useRef<any>(null);
 
   // =======================
@@ -81,18 +82,26 @@ export default function Home() {
     const token = localStorage.getItem("token");
     if (!token) return alert("Debes iniciar sesión ❌");
 
+    const amount = parseFloat(betAmounts[marketId] || "");
+
+    if (isNaN(amount) || amount < 1 || amount > 10) {
+      return alert("El monto debe ser entre 1 y 10 puntos");
+    }
+
     const res = await fetch("https://predicciones-ecuador.onrender.com/bet", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ marketId, type }),
+      body: JSON.stringify({ marketId, type, amount }),
     });
 
     const data = await res.json();
     if (data.points !== undefined) {
       setPoints(data.points);
+      // Limpiar el monto de ese mercado
+      setBetAmounts((prev) => ({ ...prev, [marketId]: "" }));
       fetchMarkets();
     } else {
       alert(data.message);
@@ -102,8 +111,6 @@ export default function Home() {
   // =======================
   // 🔁 EFECTOS
   // =======================
-
-  // ✅ Un solo useEffect para inicializar y suscripciones
   useEffect(() => {
     const init = async () => {
       await fetchMarkets();
@@ -113,11 +120,9 @@ export default function Home() {
 
     init();
 
-    // Escuchar cambios de auth desde login/register
     const syncAuth = () => loadMe();
     window.addEventListener("auth-change", syncAuth);
 
-    // Cerrar notificaciones al hacer click afuera
     const handleClickOutside = (event: any) => {
       if (notifRef.current && !notifRef.current.contains(event.target)) {
         setShowNotifications(false);
@@ -125,7 +130,6 @@ export default function Home() {
     };
     document.addEventListener("mousedown", handleClickOutside);
 
-    // Suscripciones realtime Supabase
     const channel = supabase
       .channel("markets-live")
       .on(
@@ -153,7 +157,6 @@ export default function Home() {
       )
       .subscribe();
 
-    // Cleanup
     return () => {
       window.removeEventListener("auth-change", syncAuth);
       document.removeEventListener("mousedown", handleClickOutside);
@@ -384,19 +387,42 @@ export default function Home() {
                           </p>
                         </div>
                       ) : (
-                        <div className="grid grid-cols-2 gap-2">
-                          <button
-                            onClick={() => handleBet(market.id, "yes")}
-                            className="bg-emerald-500 text-slate-950 font-bold rounded-xl py-2 text-sm"
-                          >
-                            Comprar Sí
-                          </button>
-                          <button
-                            onClick={() => handleBet(market.id, "no")}
-                            className="bg-rose-500 text-white font-bold rounded-xl py-2 text-sm"
-                          >
-                            Comprar No
-                          </button>
+                        <div className="space-y-2">
+                          {/* ✅ Casilla de monto */}
+                          <div className="flex items-center gap-2 bg-slate-800 rounded-xl px-3 py-2">
+                            <span className="text-slate-400 text-xs">pts</span>
+                            <input
+                              type="number"
+                              min="1"
+                              max="10"
+                              step="0.01"
+                              placeholder="1.00 - 10.00"
+                              value={betAmounts[market.id] || ""}
+                              onChange={(e) =>
+                                setBetAmounts((prev) => ({
+                                  ...prev,
+                                  [market.id]: e.target.value,
+                                }))
+                              }
+                              className="bg-transparent outline-none w-full text-sm text-white placeholder-slate-500"
+                            />
+                          </div>
+
+                          {/* ✅ Botones */}
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              onClick={() => handleBet(market.id, "yes")}
+                              className="bg-emerald-500 text-slate-950 font-bold rounded-xl py-2 text-sm"
+                            >
+                              Comprar Sí
+                            </button>
+                            <button
+                              onClick={() => handleBet(market.id, "no")}
+                              className="bg-rose-500 text-white font-bold rounded-xl py-2 text-sm"
+                            >
+                              Comprar No
+                            </button>
+                          </div>
                         </div>
                       )}
                     </div>
