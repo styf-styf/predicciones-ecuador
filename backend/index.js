@@ -287,23 +287,20 @@ app.get("/admin/charts", auth, async (req, res) => {
     return res.status(403).json({ message: "Solo admin" });
   }
 
-  // Apuestas por día (últimos 7 días)
   const { data: bets } = await supabase
     .from("bets")
     .select("amount, created_at")
     .gte("created_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
     .order("created_at", { ascending: true });
 
-  // Usuarios registrados por día (últimos 7 días)
   const { data: users } = await supabase
     .from("users")
     .select("created_at")
     .gte("created_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
     .order("created_at", { ascending: true });
 
-  // Agrupar por día
-  const groupByDay = (items: any[], field = "created_at") => {
-    const map: { [key: string]: number } = {};
+  const groupByDay = (items, field = "created_at") => {
+    const map = {};
     items?.forEach((item) => {
       const day = new Date(item[field]).toLocaleDateString("es-EC", {
         month: "short", day: "numeric"
@@ -313,8 +310,8 @@ app.get("/admin/charts", auth, async (req, res) => {
     return map;
   };
 
-  const groupAmountByDay = (items: any[]) => {
-    const map: { [key: string]: number } = {};
+  const groupAmountByDay = (items) => {
+    const map = {};
     items?.forEach((item) => {
       const day = new Date(item.created_at).toLocaleDateString("es-EC", {
         month: "short", day: "numeric"
@@ -328,7 +325,6 @@ app.get("/admin/charts", auth, async (req, res) => {
   const amountPerDay = groupAmountByDay(bets || []);
   const usersPerDay = groupByDay(users || []);
 
-  // Generar últimos 7 días
   const last7Days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() - (6 - i));
