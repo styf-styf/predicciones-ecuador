@@ -55,6 +55,55 @@ export default function AdminPage() {
     if (res.ok) setUsers(data);
   };
 
+
+  const [config, setConfig] = useState<any>(null);
+const [settingsForm, setSettingsForm] = useState({
+  min_bet: "",
+  max_bet: "",
+  commission: "",
+  welcome_points: "",
+});
+
+const fetchSettings = async () => {
+  const token = localStorage.getItem("token");
+  const res = await fetch("https://predicciones-ecuador.onrender.com/admin/settings", {
+    headers: { authorization: `Bearer ${token}` || "" },
+  });
+  const data = await res.json();
+  if (res.ok) {
+    setConfig(data); // ✅
+    setSettingsForm({
+      min_bet: data.min_bet,
+      max_bet: data.max_bet,
+      commission: data.commission,
+      welcome_points: data.welcome_points,
+    });
+  }
+};
+
+const handleSaveSettings = async () => {
+  const token = localStorage.getItem("token");
+  const res = await fetch("https://predicciones-ecuador.onrender.com/admin/settings", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      authorization: `Bearer ${token}` || "",
+    },
+    body: JSON.stringify({
+      min_bet: parseFloat(settingsForm.min_bet),
+      max_bet: parseFloat(settingsForm.max_bet),
+      commission: parseFloat(settingsForm.commission),
+      welcome_points: parseFloat(settingsForm.welcome_points),
+    }),
+  });
+  const data = await res.json();
+  if (res.ok) {
+    alert("✅ Configuración guardada");
+    fetchSettings();
+  } else {
+    alert(data.message || "Error al guardar");
+  }
+ };
   const loadMe = async () => {
     const token = localStorage.getItem("token");
     if (!token) { window.location.href = "/login"; return; }
@@ -161,54 +210,7 @@ export default function AdminPage() {
     else alert(data.message);
   };
 
-  const [config, setConfig] = useState<any>(null);
-const [settingsForm, setSettingsForm] = useState({
-  min_bet: "",
-  max_bet: "",
-  commission: "",
-  welcome_points: "",
-});
-
-const fetchSettings = async () => {
-  const token = localStorage.getItem("token");
-  const res = await fetch("https://predicciones-ecuador.onrender.com/admin/settings", {
-    headers: { authorization: `Bearer ${token}` || "" },
-  });
-  const data = await res.json();
-  if (res.ok) {
-    setConfig(data); // ✅
-    setSettingsForm({
-      min_bet: data.min_bet,
-      max_bet: data.max_bet,
-      commission: data.commission,
-      welcome_points: data.welcome_points,
-    });
-  }
-};
-
-const handleSaveSettings = async () => {
-  const token = localStorage.getItem("token");
-  const res = await fetch("https://predicciones-ecuador.onrender.com/admin/settings", {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      authorization: `Bearer ${token}` || "",
-    },
-    body: JSON.stringify({
-      min_bet: parseFloat(settingsForm.min_bet),
-      max_bet: parseFloat(settingsForm.max_bet),
-      commission: parseFloat(settingsForm.commission),
-      welcome_points: parseFloat(settingsForm.welcome_points),
-    }),
-  });
-  const data = await res.json();
-  if (res.ok) {
-    alert("✅ Configuración guardada");
-    fetchSettings();
-  } else {
-    alert(data.message || "Error al guardar");
-  }
-};
+  
 
   // =======================
   // 🔁 EFECTO
