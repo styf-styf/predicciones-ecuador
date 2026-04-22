@@ -188,25 +188,35 @@ app.post("/auth/google", async (req, res) => {
     let user = existing;
 
     if (!user) {
-      const { data: newUser, error } = await supabase
-        .from("users")
-        .insert([{
-          email,
-          nombre: given_name || "",
-          apellido: family_name || "",
-          avatar: picture || "",
-          provider: "google",
-          password: "",
-          role: "user",
-          points: 100,
-          pais: "Ecuador",
-        }])
-        .select()
-        .single();
+  // ✅ Primero obtener la configuración
+  const { data: settings } = await supabase
+    .from("settings")
+    .select("welcome_points")
+    .eq("id", 1)
+    .single();
 
-      if (error) {
-        return res.status(500).json({ message: error.message });
-      }
+  const welcomePoints = settings?.welcome_points ?? 100;
+
+  // ✅ Luego usar el valor en el insert
+  const { data: newUser, error } = await supabase
+    .from("users")
+    .insert([{
+      email,
+      nombre: given_name || "",
+      apellido: family_name || "",
+      avatar: picture || "",
+      provider: "google",
+      password: "",
+      role: "user",
+      points: welcomePoints,
+      pais: "Ecuador",
+    }])
+    .select()
+    .single();
+
+   if (error) {
+    return res.status(500).json({ message: error.message });
+   }
 
       user = newUser;
     }
@@ -437,6 +447,110 @@ app.get("/admin/users", auth, async (req, res) => {
   res.json(data);
 });
 
+app.put("/admin/settings", auth, async (req, res) => {
+  const { data: admin } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", req.userId)
+    .single();
+
+  if (!admin || admin.role !== "admin") {
+    return res.status(403).json({ message: "Solo admin" });
+  }
+
+  const { min_bet, max_bet, commission, welcome_points } = req.body;
+
+  // Validaciones
+  if (min_bet < 0 || max_bet < 0) {
+    return res.status(400).json({ message: "Los valores no pueden ser negativos" });
+  }
+
+  if (min_bet >= max_bet) {
+    return res.status(400).json({ message: "El mínimo debe ser menor que el máximo" });
+  }
+
+  if (commission < 0 || commission > 100) {
+    return res.status(400).json({ message: "La comisión debe ser entre 0 y 100" });
+  }
+
+  const { error } = await supabase
+    .from("settings")
+    .update({
+      min_bet,
+      max_bet,
+      commission,
+      welcome_points,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", 1);
+
+  if (error) return res.status(500).json({ message: error.message });
+
+  res.json({ message: "Configuración actualizada" });
+});
+
+// =======================
+// ⚙️ CONFIGURACIÓN PLATAFORMA
+// =======================
+app.get("/admin/config", auth, async (req, res) => {
+  const { data: admin } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", req.userId)
+    .single();
+
+  if (!admin || admin.role !== "admin") {
+    return res.status(403).json({ message: "Solo admin" });
+  }
+
+  const { data, error } = await supabase
+    .from("config")
+    .select("*")
+    .eq("id", 1)
+    .single();
+
+  if (error) return res.status(500).json({ message: error.message });
+
+  res.json(data);
+});
+
+app.put("/admin/config", auth, async (req, res) => {
+  const { data: admin } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", req.userId)
+    .single();
+
+  if (!admin || admin.role !== "admin") {
+    return res.status(403).json({ message: "Solo admin" });
+  }
+
+  const { min_bet, max_bet, commission, welcome_points } = req.body;
+
+  if (min_bet < 0 || max_bet < min_bet) {
+    return res.status(400).json({ message: "Valores de apuesta inválidos" });
+  }
+
+  if (commission < 0 || commission > 1) {
+    return res.status(400).json({ message: "Comisión debe ser entre 0 y 1" });
+  }
+
+  const { error } = await supabase
+    .from("config")
+    .update({
+      min_bet,
+      max_bet,
+      commission,
+      welcome_points,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", 1);
+
+  if (error) return res.status(500).json({ message: error.message });
+
+  res.json({ message: "Configuración actualizada" });
+});
+
 // Cambiar rol
 app.put("/admin/users/:id/role", auth, async (req, res) => {
   const { data: admin } = await supabase
@@ -554,7 +668,13 @@ app.put("/notifications/read", async (req, res) => {
 app.post("/admin/resolve/:id", auth, async (req, res) => {
   const { winner } = req.body;
   const marketId = Number(req.params.id);
-  const COMMISSION = 0.03; // 3%
+  const { data: config } = await supabase
+  .from("config")
+  .select("commission")
+  .eq("id", 1)
+  .single();
+
+  const COMMISSION = config?.commission ?? 0.03;
 
   // Validar admin
   const { data: admin } = await supabase
@@ -693,10 +813,20 @@ app.post("/bet", auth, async (req, res) => {
   const { marketId, type, amount } = req.body;
 
   // Validar monto
-  const betAmount = parseFloat(amount);
-  if (isNaN(betAmount) || betAmount < 1 || betAmount > 10) {
-    return res.status(400).json({ message: "El monto debe ser entre 1 y 10 puntos" });
-  }
+  const { data: config } = await supabase
+  .from("config")
+  .select("min_bet, max_bet")
+  .eq("id", 1)
+  .single();
+
+const minBet = config?.min_bet ?? 1;
+const maxBet = config?.max_bet ?? 10;
+
+if (isNaN(betAmount) || betAmount < minBet || betAmount > maxBet) {
+  return res.status(400).json({
+    message: `El monto debe ser entre ${minBet} y ${maxBet} puntos`
+  });
+}
 
   const { data: user, error: userError } = await supabase
     .from("users")

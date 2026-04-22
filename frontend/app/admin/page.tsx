@@ -71,6 +71,7 @@ export default function AdminPage() {
       fetchWinners();
       fetchStats();
       fetchUsers();
+      fetchConfig();
     } catch {
       localStorage.removeItem("token");
       window.location.href = "/login";
@@ -158,6 +159,55 @@ export default function AdminPage() {
     if (res.ok) fetchUsers();
     else alert(data.message);
   };
+
+  const [config, setConfig] = useState<any>(null);
+const [settingsForm, setSettingsForm] = useState({
+  min_bet: "",
+  max_bet: "",
+  commission: "",
+  welcome_points: "",
+});
+
+const fetchSettings = async () => {
+  const token = localStorage.getItem("token");
+  const res = await fetch("https://predicciones-ecuador.onrender.com/admin/settings", {
+    headers: { authorization: `Bearer ${token}` || "" },
+  });
+  const data = await res.json();
+  if (res.ok) {
+    setConfig(data); // ✅
+    setSettingsForm({
+      min_bet: data.min_bet,
+      max_bet: data.max_bet,
+      commission: data.commission,
+      welcome_points: data.welcome_points,
+    });
+  }
+};
+
+const handleSaveSettings = async () => {
+  const token = localStorage.getItem("token");
+  const res = await fetch("https://predicciones-ecuador.onrender.com/admin/settings", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      authorization: `Bearer ${token}` || "",
+    },
+    body: JSON.stringify({
+      min_bet: parseFloat(settingsForm.min_bet),
+      max_bet: parseFloat(settingsForm.max_bet),
+      commission: parseFloat(settingsForm.commission),
+      welcome_points: parseFloat(settingsForm.welcome_points),
+    }),
+  });
+  const data = await res.json();
+  if (res.ok) {
+    alert("✅ Configuración guardada");
+    fetchSettings();
+  } else {
+    alert(data.message || "Error al guardar");
+  }
+};
 
   // =======================
   // 🔁 EFECTO
@@ -255,6 +305,115 @@ export default function AdminPage() {
             </div>
           </section>
         )}
+
+        {/* ======================= */}
+{/* ⚙️ CONFIGURACIÓN */}
+{/* ======================= */}
+{config && (
+  <section className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+    <div className="flex items-center gap-2 mb-6">
+      <Settings size={20} className="text-slate-400" />
+      <h2 className="text-xl font-bold">Configuración de la plataforma</h2>
+      {config.updated_at && (
+        <span className="ml-auto text-xs text-slate-500">
+          Última actualización: {new Date(config.updated_at).toLocaleString()}
+        </span>
+      )}
+    </div>
+
+    <div className="grid md:grid-cols-2 gap-6">
+      {/* Apuestas */}
+      <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-4">
+        <h3 className="font-semibold text-sm text-slate-300 flex items-center gap-2">
+          <DollarSign size={16} className="text-amber-400" />
+          Límites de apuesta
+        </h3>
+
+        <div>
+          <label className="text-xs text-slate-400 mb-1 block">Apuesta mínima (pts)</label>
+          <input
+            type="number"
+            step="0.01"
+            value={settingsForm.min_bet}
+            onChange={(e) => setSettingsForm((prev) => ({ ...prev, min_bet: e.target.value }))}
+            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 outline-none text-sm"
+          />
+        </div>
+
+        <div>
+          <label className="text-xs text-slate-400 mb-1 block">Apuesta máxima (pts)</label>
+          <input
+            type="number"
+            step="0.01"
+            value={settingsForm.max_bet}
+            onChange={(e) => setSettingsForm((prev) => ({ ...prev, max_bet: e.target.value }))}
+            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 outline-none text-sm"
+          />
+        </div>
+      </div>
+
+      {/* Comisión y puntos */}
+      <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-4">
+        <h3 className="font-semibold text-sm text-slate-300 flex items-center gap-2">
+          <Activity size={16} className="text-emerald-400" />
+          Parámetros generales
+        </h3>
+
+        <div>
+          <label className="text-xs text-slate-400 mb-1 block">Comisión plataforma (%)</label>
+          <input
+            type="number"
+            step="0.1"
+            min="0"
+            max="100"
+            value={settingsForm.commission}
+            onChange={(e) => setSettingsForm((prev) => ({ ...prev, commission: e.target.value }))}
+            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 outline-none text-sm"
+          />
+        </div>
+
+        <div>
+          <label className="text-xs text-slate-400 mb-1 block">Puntos de bienvenida</label>
+          <input
+            type="number"
+            step="1"
+            min="0"
+            value={settingsForm.welcome_points}
+            onChange={(e) => setSettingsForm((prev) => ({ ...prev, welcome_points: e.target.value }))}
+            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 outline-none text-sm"
+          />
+        </div>
+      </div>
+    </div>
+
+    {/* Resumen actual */}
+    <div className="mt-4 grid md:grid-cols-4 gap-3">
+      <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 text-center">
+        <p className="text-xs text-slate-400">Apuesta mín.</p>
+        <p className="text-lg font-bold text-amber-400">{config.min_bet} pts</p>
+      </div>
+      <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 text-center">
+        <p className="text-xs text-slate-400">Apuesta máx.</p>
+        <p className="text-lg font-bold text-amber-400">{config.max_bet} pts</p>
+      </div>
+      <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 text-center">
+        <p className="text-xs text-slate-400">Comisión</p>
+        <p className="text-lg font-bold text-emerald-400">{config.commission}%</p>
+      </div>
+      <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 text-center">
+        <p className="text-xs text-slate-400">Puntos bienvenida</p>
+        <p className="text-lg font-bold text-blue-400">{config.welcome_points} pts</p>
+      </div>
+    </div>
+
+    <button
+      onClick={handleSaveSettings}
+      className="mt-4 w-full bg-emerald-500 text-slate-950 font-bold rounded-xl py-3"
+    >
+      Guardar configuración
+    </button>
+  </section>
+ )}
 
         {/* 👥 GESTIÓN DE USUARIOS */}
         <section className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
