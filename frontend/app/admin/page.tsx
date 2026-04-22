@@ -7,6 +7,8 @@ import {
   BarChart2, ShieldCheck, ShieldOff, Plus, Minus,
   Settings
 } from "lucide-react";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, 
+  CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 export default function AdminPage() {
   const [markets, setMarkets] = useState<any[]>([]);
@@ -45,6 +47,17 @@ export default function AdminPage() {
     const data = await res.json();
     if (res.ok) setStats(data);
   };
+
+  const [charts, setCharts] = useState<any[]>([]);
+
+const fetchCharts = async () => {
+  const token = localStorage.getItem("token");
+  const res = await fetch("https://predicciones-ecuador.onrender.com/admin/charts", {
+    headers: { authorization: `Bearer ${token}` || "" },
+  });
+  const data = await res.json();
+  if (res.ok) setCharts(data);
+};
 
   const fetchUsers = async () => {
     const token = localStorage.getItem("token");
@@ -122,6 +135,7 @@ const handleSaveSettings = async () => {
       fetchStats();
       fetchUsers();
       fetchSettings();
+      fetchCharts();
     } catch {
       localStorage.removeItem("token");
       window.location.href = "/login";
@@ -308,6 +322,86 @@ const handleSaveSettings = async () => {
             </div>
           </section>
         )}
+
+
+        {/* ======================= */}
+{/* 📈 GRÁFICAS */}
+{/* ======================= */}
+{charts.length > 0 && (
+  <section className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+    <div className="flex items-center gap-2 mb-6">
+      <TrendingUp size={20} className="text-emerald-400" />
+      <h2 className="text-xl font-bold">Actividad últimos 7 días</h2>
+    </div>
+
+    <div className="grid md:grid-cols-2 gap-6">
+      {/* Apuestas por día */}
+      <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4">
+        <h3 className="text-sm font-semibold text-slate-300 mb-4">
+          Apuestas por día
+        </h3>
+        <ResponsiveContainer width="100%" height={200}>
+          <BarChart data={charts}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+            <XAxis dataKey="day" tick={{ fill: "#94a3b8", fontSize: 11 }} />
+            <YAxis tick={{ fill: "#94a3b8", fontSize: 11 }} />
+            <Tooltip
+              contentStyle={{ backgroundColor: "#0f172a", border: "1px solid #1e293b", borderRadius: "12px" }}
+              labelStyle={{ color: "#fff" }}
+            />
+            <Bar dataKey="apuestas" fill="#10b981" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Volumen apostado por día */}
+      <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4">
+        <h3 className="text-sm font-semibold text-slate-300 mb-4">
+          Volumen apostado (pts)
+        </h3>
+        <ResponsiveContainer width="100%" height={200}>
+          <LineChart data={charts}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+            <XAxis dataKey="day" tick={{ fill: "#94a3b8", fontSize: 11 }} />
+            <YAxis tick={{ fill: "#94a3b8", fontSize: 11 }} />
+            <Tooltip
+              contentStyle={{ backgroundColor: "#0f172a", border: "1px solid #1e293b", borderRadius: "12px" }}
+              labelStyle={{ color: "#fff" }}
+            />
+            <Line
+              type="monotone"
+              dataKey="volumen"
+              stroke="#f59e0b"
+              strokeWidth={2}
+              dot={{ fill: "#f59e0b", r: 4 }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Usuarios registrados por día */}
+      <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 md:col-span-2">
+        <h3 className="text-sm font-semibold text-slate-300 mb-4">
+          Nuevos usuarios por día
+        </h3>
+        <ResponsiveContainer width="100%" height={200}>
+          <BarChart data={charts}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+            <XAxis dataKey="day" tick={{ fill: "#94a3b8", fontSize: 11 }} />
+            <YAxis tick={{ fill: "#94a3b8", fontSize: 11 }} />
+            <Tooltip
+              contentStyle={{ backgroundColor: "#0f172a", border: "1px solid #1e293b", borderRadius: "12px" }}
+              labelStyle={{ color: "#fff" }}
+            />
+            <Legend wrapperStyle={{ color: "#94a3b8", fontSize: 12 }} />
+            <Bar dataKey="usuarios" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Nuevos usuarios" />
+            <Bar dataKey="apuestas" fill="#10b981" radius={[4, 4, 0, 0]} name="Apuestas" />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  </section>
+)}
 
         {/* ======================= */}
 {/* ⚙️ CONFIGURACIÓN */}

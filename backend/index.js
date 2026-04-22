@@ -277,8 +277,73 @@ app.get("/admin/stats", auth, async (req, res) => {
 });
 
 // =======================
-// ⚙️ CONFIGURACIÓN
+// 📈 GRÁFICAS ADMIN
 // =======================
+app.get("/admin/charts", auth, async (req, res) => {
+  const { data: admin } = await supabase
+    .from("users").select("role").eq("id", req.userId).single();
+
+  if (!admin || admin.role !== "admin") {
+    return res.status(403).json({ message: "Solo admin" });
+  }
+
+  // Apuestas por día (últimos 7 días)
+  const { data: bets } = await supabase
+    .from("bets")
+    .select("amount, created_at")
+    .gte("created_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+    .order("created_at", { ascending: true });
+
+  // Usuarios registrados por día (últimos 7 días)
+  const { data: users } = await supabase
+    .from("users")
+    .select("created_at")
+    .gte("created_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+    .order("created_at", { ascending: true });
+
+  // Agrupar por día
+  const groupByDay = (items: any[], field = "created_at") => {
+    const map: { [key: string]: number } = {};
+    items?.forEach((item) => {
+      const day = new Date(item[field]).toLocaleDateString("es-EC", {
+        month: "short", day: "numeric"
+      });
+      map[day] = (map[day] || 0) + 1;
+    });
+    return map;
+  };
+
+  const groupAmountByDay = (items: any[]) => {
+    const map: { [key: string]: number } = {};
+    items?.forEach((item) => {
+      const day = new Date(item.created_at).toLocaleDateString("es-EC", {
+        month: "short", day: "numeric"
+      });
+      map[day] = (map[day] || 0) + Number(item.amount);
+    });
+    return map;
+  };
+
+  const betsPerDay = groupByDay(bets || []);
+  const amountPerDay = groupAmountByDay(bets || []);
+  const usersPerDay = groupByDay(users || []);
+
+  // Generar últimos 7 días
+  const last7Days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    return d.toLocaleDateString("es-EC", { month: "short", day: "numeric" });
+  });
+
+  const chartData = last7Days.map((day) => ({
+    day,
+    apuestas: betsPerDay[day] || 0,
+    volumen: amountPerDay[day] || 0,
+    usuarios: usersPerDay[day] || 0,
+  }));
+
+  res.json(chartData);
+});
 // =======================
 // ⚙️ CONFIGURACIÓN
 // =======================
