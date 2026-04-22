@@ -4,7 +4,8 @@ import Link from "next/link";
 import {
   Bell, Search, TrendingUp, Trophy, Wallet,
   LogOut, LogIn, Users, Activity, DollarSign,
-  BarChart2, ShieldCheck, ShieldOff, Plus, Minus
+  BarChart2, ShieldCheck, ShieldOff, Plus, Minus,
+  Settings
 } from "lucide-react";
 
 export default function AdminPage() {
