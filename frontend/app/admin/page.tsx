@@ -71,7 +71,7 @@ export default function AdminPage() {
       fetchWinners();
       fetchStats();
       fetchUsers();
-      fetchConfig();
+      fetchSettings();
     } catch {
       localStorage.removeItem("token");
       window.location.href = "/login";
