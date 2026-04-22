@@ -279,9 +279,14 @@ app.get("/admin/stats", auth, async (req, res) => {
 // =======================
 // ⚙️ CONFIGURACIÓN
 // =======================
+// =======================
+// ⚙️ CONFIGURACIÓN
+// =======================
 app.get("/admin/settings", auth, async (req, res) => {
-  const { data: admin } = await supabase
+  const { data: admin, error: adminError } = await supabase
     .from("users").select("role").eq("id", req.userId).single();
+
+  console.log("ADMIN:", admin, "ERROR:", adminError);
 
   if (!admin || admin.role !== "admin") {
     return res.status(403).json({ message: "Solo admin" });
@@ -289,6 +294,8 @@ app.get("/admin/settings", auth, async (req, res) => {
 
   const { data, error } = await supabase
     .from("config").select("*").eq("id", 1).single();
+
+  console.log("CONFIG DATA:", data, "CONFIG ERROR:", error);
 
   if (error) return res.status(500).json({ message: error.message });
   res.json(data);
