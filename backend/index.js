@@ -771,10 +771,14 @@ app.post("/markets/:id/comments", auth, async (req, res) => {
 
   const { data, error } = await supabase
     .from("comments")
-    .insert({ market_id: id, user_id: req.userId, username, content })
+    .insert({ market_id: Number(id), user_id: req.userId, username, content })
     .select()
     .single();
-  if (error) return res.status(500).json({ message: "Error al comentar" });
+
+  if (error) {
+    console.error("Error comentario:", error);
+    return res.status(500).json({ message: error.message });
+  }
   res.json(data);
 });
 
