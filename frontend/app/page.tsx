@@ -33,7 +33,7 @@ export default function Home() {
     });
     const data = await res.json();
     if (data.points !== undefined) {
-      setPoints(data.points);
+      
       setBetAmounts((prev) => ({ ...prev, [marketId]: "" }));
       fetchMarkets();
     } else { alert(data.message); }
