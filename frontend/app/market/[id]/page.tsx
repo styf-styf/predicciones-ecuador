@@ -22,6 +22,7 @@ export default function MarketPage() {
   const [news, setNews] = useState<any[]>([]);
   const [loadingNews, setLoadingNews] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   const [token, setToken] = useState<string | null>(null);
   useEffect(() => {
@@ -88,22 +89,23 @@ export default function MarketPage() {
   };
 
   const handleComment = async () => {
-    console.log("token:", token);
-    console.log("comment:", newComment);
-    if (!token) return alert("Debes iniciar sesión para comentar");
-    if (!newComment.trim()) return;
-    setSubmitting(true);
-    const res = await fetch(`https://predicciones-ecuador.onrender.com/markets/${id}/comments`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
-      body: JSON.stringify({ content: newComment }),
-    });
-    const data = await res.json();
-    console.log("respuesta backend:", data);
-    if (res.ok) { setNewComment(""); fetchComments(); }
-    else alert(data.message);
-    setSubmitting(false);
-  };
+  if (!token) {
+    setShowLoginPrompt(true);
+    return;
+  }
+  setShowLoginPrompt(false);
+  if (!newComment.trim()) return;
+  setSubmitting(true);
+  const res = await fetch(`https://predicciones-ecuador.onrender.com/markets/${id}/comments`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+    body: JSON.stringify({ content: newComment }),
+  });
+  const data = await res.json();
+  if (res.ok) { setNewComment(""); fetchComments(); }
+  else alert(data.message);
+  setSubmitting(false);
+ };
 
   if (!market) return (
     <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center">
@@ -219,19 +221,27 @@ export default function MarketPage() {
 
           {/* Input */}
           <div className="flex gap-2 mb-5">
-            <input
-              placeholder={token ? "Escribe un comentario..." : "Inicia sesión para comentar"}
-              value={newComment}
-              disabled={!token}
-              onChange={(e) => setNewComment(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") handleComment(); }}
-              className="flex-1 bg-slate-200 dark:bg-slate-800 rounded-xl px-4 py-2.5 text-sm outline-none placeholder-slate-500 disabled:opacity-50"
-            />
-            <button onClick={handleComment} disabled={submitting || !token}
-              className="bg-purple-500 text-white px-4 rounded-xl disabled:opacity-50 hover:bg-purple-600 transition">
-              <Send size={16} />
-            </button>
-          </div>
+  <input
+    placeholder="Escribe un comentario..."
+    value={newComment}
+    onChange={(e) => setNewComment(e.target.value)}
+    onKeyDown={(e) => { if (e.key === "Enter") handleComment(); }}
+    className="flex-1 bg-slate-200 dark:bg-slate-800 rounded-xl px-4 py-2.5 text-sm outline-none placeholder-slate-500"
+  />
+  <button onClick={handleComment} disabled={submitting}
+    className="bg-purple-500 text-white px-4 rounded-xl disabled:opacity-50 hover:bg-purple-600 transition">
+    <Send size={16} />
+  </button>
+ </div>
+
+ {showLoginPrompt && (
+  <div className="mb-4 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between gap-3">
+    <p className="text-sm text-slate-900 dark:text-slate-200">Debes iniciar sesión para comentar</p>
+    <Link href="/login" className="shrink-0 bg-emerald-500 text-slate-950 font-bold text-sm px-4 py-2 rounded-xl">
+      Iniciar sesión
+    </Link>
+  </div>
+ )}
 
           {/* Lista */}
           {comments.length === 0 ? (
