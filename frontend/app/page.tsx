@@ -48,50 +48,14 @@ export default function Home() {
     .slice(0, 3);
 
   useEffect(() => {
-    const init = async () => { await fetchMarkets(); };
-    init();
-    
-  
-    const handleClickOutside = (event: any) => {
-      if (notifRef.current && !notifRef.current.contains(event.target)) setShowNotifications(false);
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    const channel = supabase.channel("markets-live")
-      .on("postgres_changes", { event: "*", schema: "public", table: "markets" }, () => fetchMarkets())
-      .subscribe();
-    const notifChannel = supabase.channel("notifications-live")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications" }, () => loadNotifications())
-      .subscribe();
-    const userChannel = supabase.channel("user-points-live")
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "users" }, () => loadMe())
-      .subscribe();
-    return () => {
-      window.removeEventListener("auth-change", syncAuth);
-      document.removeEventListener("mousedown", handleClickOutside);
-      supabase.removeChannel(channel);
-      supabase.removeChannel(notifChannel);
-      supabase.removeChannel(userChannel);
-    };
-
-    // Cerrar resultados al hacer click fuera
- const handleClickOutsideSearch = (e: any) => {
-  if (searchRef.current && !searchRef.current.contains(e.target)) {
-    setShowResults(false);
-  }
- };
- document.addEventListener("mousedown", handleClickOutsideSearch);
-
- // Debounce búsqueda
- const debounceTimer = setTimeout(() => {
-  if (searchQuery.trim() !== "") handleSearch(searchQuery);
- }, 400);
-
- return () => {
-  // ...los removes que ya tienes...
-  document.removeEventListener("mousedown", handleClickOutsideSearch);
-  clearTimeout(debounceTimer);
- };
-  }, []);
+  fetchMarkets();
+  const channel = supabase.channel("markets-live")
+    .on("postgres_changes", { event: "*", schema: "public", table: "markets" }, () => fetchMarkets())
+    .subscribe();
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, []);
 
   return (
     <main className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
