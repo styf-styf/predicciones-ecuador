@@ -418,7 +418,7 @@ export default function Home() {
         <section>
           <h2 className="text-xl sm:text-2xl font-bold mb-4">Mercados activos</h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             {markets.map((market) => {
               const total = (market.yes ?? 0) + (market.no ?? 0) || 1;
               const yesPct = ((market.yes / total) * 100).toFixed(0);
