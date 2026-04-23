@@ -3,15 +3,16 @@ import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import {
   Bell, Search, TrendingUp, Trophy, Wallet,
-  LogOut, LogIn, Users, Activity, DollarSign,
+  LogOut, Users, Activity, DollarSign,
   BarChart2, ShieldCheck, ShieldOff, Plus, Minus,
-  Settings, Menu, X
+  Settings, X, LayoutDashboard, ChevronRight,
+  ArrowUpRight, ArrowDownRight, Circle, Zap
 } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis,
-  CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+  CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import ThemeToggle from "@/components/ThemeToggle";
-import Header from "@/components/Header";
 
+type Section = "overview" | "markets" | "users" | "settings" | "winners";
 
 export default function AdminPage() {
   const [markets, setMarkets] = useState<any[]>([]);
@@ -25,18 +26,13 @@ export default function AdminPage() {
   const [pointsInput, setPointsInput] = useState<{ [key: string]: string }>({});
   const [charts, setCharts] = useState<any[]>([]);
   const [config, setConfig] = useState<any>(null);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [activeSection, setActiveSection] = useState<Section>("overview");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settingsForm, setSettingsForm] = useState({
     min_bet: "", max_bet: "", commission: "", welcome_points: "",
   });
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [showResults, setShowResults] = useState(false);
-  const searchRef = useRef<any>(null);
 
-  // =======================
-  // 🔧 FUNCIONES
-  // =======================
   const fetchMarkets = async () => {
     const res = await fetch("https://predicciones-ecuador.onrender.com/markets");
     const data = await res.json();
@@ -202,660 +198,498 @@ export default function AdminPage() {
     if (res.ok) fetchUsers(); else alert(data.message);
   };
 
-  const handleSearch = async (q: string) => {
-  setSearchQuery(q);
-  if (q.trim() === "") {
-    setSearchResults([]);
-    setShowResults(false);
-    return;
-  }
-  const token = localStorage.getItem("token");
-  const res = await fetch(
-    `https://predicciones-ecuador.onrender.com/markets/search?q=${encodeURIComponent(q)}`,
-    { headers: { authorization: `Bearer ${token}` } }
+  useEffect(() => { fetchMarkets(); loadMe(); }, []);
+
+  const filteredMarkets = markets.filter(m =>
+    m.question.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  const data = await res.json();
-  setSearchResults(data);
-  setShowResults(true);
- };
+  const filteredUsers = users.filter(u =>
+    u.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    u.nombre?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-  // =======================
-  // 🔁 EFECTO
-  // =======================
-  useEffect(() => { fetchMarkets(); loadMe(); 
-    const handleClickOutsideSearch = (e: any) => {
-  if (searchRef.current && !searchRef.current.contains(e.target)) {
-    setShowResults(false);
-  }
- };
- document.addEventListener("mousedown", handleClickOutsideSearch);
+  const navItems = [
+    { id: "overview", label: "Resumen", icon: <LayoutDashboard size={15} /> },
+    { id: "markets", label: "Mercados", icon: <TrendingUp size={15} />, badge: markets.filter(m => !m.resolved).length },
+    { id: "users", label: "Usuarios", icon: <Users size={15} />, badge: users.length },
+    { id: "winners", label: "Ganadores", icon: <Trophy size={15} /> },
+    { id: "settings", label: "Configuración", icon: <Settings size={15} /> },
+  ];
 
- const debounceTimer = setTimeout(() => {
-  if (searchQuery.trim() !== "") handleSearch(searchQuery);
- }, 400);
-
- return () => {
-  document.removeEventListener("mousedown", handleClickOutsideSearch);
-  clearTimeout(debounceTimer);
- };
-  }, []);
-
-  // =======================
-  // 🎨 RENDER
-  // =======================
   return (
-    <main className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
+    <div className="min-h-screen bg-[#0a0a0a] text-white flex" style={{ fontFamily: "'DM Mono', 'Fira Code', monospace" }}>
 
-      {/* ===== HEADER ===== */}
-      <header className="sticky top-0 z-50 border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-3">
+      {/* ===== SIDEBAR ===== */}
+      <>
+        {/* Overlay móvil */}
+        {sidebarOpen && (
+          <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden" onClick={() => setSidebarOpen(false)} />
+        )}
 
+        <aside className={`fixed lg:sticky top-0 left-0 h-screen w-60 bg-[#111111] border-r border-white/[0.06] z-50 flex flex-col transition-transform duration-200 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}>
           {/* Logo */}
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="h-9 w-9 sm:h-10 sm:w-10 shrink-0 rounded-2xl bg-emerald-500 grid place-items-center font-bold text-slate-950 text-sm">P</div>
-            <div className="min-w-0">
-              <h1 className="text-sm sm:text-xl font-bold leading-tight truncate">Admin • Predicciones EC</h1>
-              <p className="text-[10px] sm:text-xs text-slate-400 hidden sm:block">Centro de control y administración</p>
-            </div>
-          </div>
-
-          {/* Search — solo desktop */}
-          <div className="relative hidden md:block" ref={searchRef}>
-  <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-900 px-4 py-2 rounded-2xl w-80 lg:w-96">
-    <Search size={18} className="text-slate-400 shrink-0" />
-    <input
-      placeholder="Buscar mercados..."
-      value={searchQuery}
-      onChange={(e) => handleSearch(e.target.value)}
-      className="bg-transparent outline-none w-full text-sm text-slate-900 dark:text-white placeholder-slate-400"
-    />
-    {searchQuery && (
-      <button onClick={() => { setSearchQuery(""); setSearchResults([]); setShowResults(false); }}>
-        <X size={14} className="text-slate-400 hover:text-slate-200" />
-      </button>
-    )}
-  </div>
-
-  {/* Dropdown resultados */}
-  {showResults && (
-    <div className="absolute top-12 left-0 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden">
-      {searchResults.length === 0 ? (
-        <p className="text-sm text-slate-400 text-center py-6">Sin resultados para "{searchQuery}"</p>
-      ) : (
-        <div className="max-h-80 overflow-y-auto">
-          {searchResults.map((m) => (
-            <button
-              key={m.id}
-              onClick={() => { setShowResults(false); setSearchQuery(""); }}
-              className="w-full text-left px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition border-b border-slate-100 dark:border-slate-800 last:border-0"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{m.question}</p>
-                <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full ${m.resolved ? "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300" : "bg-emerald-500/10 text-emerald-400"}`}>
-                  {m.resolved ? "Cerrado" : "En vivo"}
-                </span>
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  )}
- </div>
-
-          {/* Acciones */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            <ThemeToggle />
-            <button className="p-2 rounded-xl bg-slate-900"><Bell size={18} /></button>
-
-            {/* Auth — desktop */}
-            <div className="hidden sm:flex items-center gap-2">
-              {isAdmin && (
-                <Link href="/admin" className="px-3 py-2 rounded-2xl bg-amber-500 text-slate-950 font-semibold text-sm">Admin</Link>
-              )}
-              <Link href="/" className="px-3 py-2 rounded-2xl bg-slate-800 font-medium text-sm">Inicio</Link>
-              {isLogged ? (
-                <button
-                  onClick={() => { localStorage.removeItem("token"); localStorage.removeItem("role"); localStorage.removeItem("points"); window.location.href = "/login"; }}
-                  className="px-3 py-2 rounded-2xl bg-rose-500 font-medium flex items-center gap-1.5 text-sm"
-                >
-                  <LogOut size={15} /> Salir
-                </button>
-              ) : (
-                <Link href="/login" className="px-3 py-2 rounded-2xl bg-emerald-500 text-slate-950 font-semibold flex items-center gap-1.5 text-sm">
-                  <LogIn size={15} /> Login
-                </Link>
-              )}
-            </div>
-
-            {/* Hamburguesa — móvil */}
-            <button onClick={() => setShowMobileMenu(!showMobileMenu)} className="sm:hidden p-2 rounded-xl bg-slate-900">
-              {showMobileMenu ? <X size={18} /> : <Menu size={18} />}
-            </button>
-          </div>
-        </div>
-
-        {/* Menú móvil */}
-        {showMobileMenu && (
-          <div className="sm:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-4 space-y-3">
-            <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-900 px-4 py-2.5 rounded-2xl">
-  <Search size={16} className="text-slate-400 shrink-0" />
-  <input
-    placeholder="Buscar mercados..."
-    value={searchQuery}
-    onChange={(e) => handleSearch(e.target.value)}
-    className="bg-transparent outline-none w-full text-sm text-slate-900 dark:text-white"
-  />
-</div>
-
-{showResults && searchResults.length > 0 && (
-  <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
-    {searchResults.map((m) => (
-      <button
-        key={m.id}
-        onClick={() => { setShowResults(false); setSearchQuery(""); setShowMobileMenu(false); }}
-        className="w-full text-left px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition border-b border-slate-100 dark:border-slate-800 last:border-0"
-      >
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{m.question}</p>
-          <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full ${m.resolved ? "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300" : "bg-emerald-500/10 text-emerald-400"}`}>
-            {m.resolved ? "Cerrado" : "En vivo"}
-          </span>
-        </div>
-      </button>
-    ))}
-  </div>
- )}
-            <div className="flex flex-col gap-2">
-              <Link href="/" onClick={() => setShowMobileMenu(false)} className="px-4 py-3 rounded-2xl bg-slate-800 font-medium text-sm text-center">Inicio</Link>
-              {isLogged ? (
-                <button
-                  onClick={() => { localStorage.removeItem("token"); localStorage.removeItem("role"); localStorage.removeItem("points"); window.location.href = "/login"; }}
-                  className="px-4 py-3 rounded-2xl bg-rose-500 font-medium flex items-center justify-center gap-2 text-sm"
-                >
-                  <LogOut size={15} /> Cerrar sesión
-                </button>
-              ) : (
-                <Link href="/login" className="px-4 py-3 rounded-2xl bg-emerald-500 text-slate-950 font-semibold flex items-center justify-center gap-2 text-sm">
-                  <LogIn size={15} /> Login
-                </Link>
-              )}
-            </div>
-          </div>
-        )}
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
-
-        {/* 📊 Cards */}
-        <section className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-          <Card title="Mi Balance" value={`${points ?? 0} pts`} icon={<Wallet size={16} />} />
-          <Card title="Mercados" value={`${markets.length}`} icon={<TrendingUp size={16} />} />
-          <Card title="Ganadores" value={`${winners.length}`} icon={<Trophy size={16} />} />
-          <Card title="Usuarios" value={`${users.length}`} icon={<Users size={16} />} />
-        </section>
-
-        {/* 📈 ESTADÍSTICAS */}
-        {stats && (
-          <section className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5">
-            <div className="flex items-center gap-2 mb-4 sm:mb-6">
-              <BarChart2 size={18} className="text-emerald-400" />
-              <h2 className="text-lg sm:text-xl font-bold">Estadísticas generales</h2>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
-              <StatCard title="Total usuarios" value={stats.totalUsers} sub={`+${stats.newUsersToday} hoy`} icon={<Users size={16} />} color="text-blue-400" />
-              <StatCard title="Puntos en circulación" value={`${stats.totalPoints} pts`} sub="suma de todos" icon={<Wallet size={16} />} color="text-emerald-400" />
-              <StatCard title="Total apostado" value={`${stats.totalBetted} pts`} sub={`${stats.betsToday} hoy`} icon={<DollarSign size={16} />} color="text-amber-400" />
-              <StatCard title="Mercados" value={`${stats.activeMarkets} activos`} sub={`${stats.closedMarkets} cerrados`} icon={<Activity size={16} />} color="text-rose-400" />
-            </div>
-
-            <div>
-              <div className="flex justify-between text-xs text-slate-400 mb-1">
-                <span>Mercados activos</span>
-                <span>Mercados cerrados</span>
-              </div>
-              <div className="h-2 bg-slate-800 rounded-full overflow-hidden flex">
-                <div className="bg-emerald-500 transition-all"
-                  style={{ width: `${((stats.activeMarkets ?? 0) / ((stats.activeMarkets ?? 0) + (stats.closedMarkets ?? 1))) * 100}%` }} />
-                <div className="bg-slate-600 flex-1" />
-              </div>
-              <div className="flex justify-between text-xs mt-1">
-                <span className="text-emerald-400">{stats.activeMarkets} activos</span>
-                <span className="text-slate-400">{stats.closedMarkets} cerrados</span>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* 📈 GRÁFICAS */}
-        {charts.length > 0 && (
-          <section className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5">
-            <div className="flex items-center gap-2 mb-4 sm:mb-6">
-              <TrendingUp size={18} className="text-emerald-400" />
-              <h2 className="text-lg sm:text-xl font-bold">Actividad últimos 7 días</h2>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-              <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4">
-                <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-4">Apuestas por día</h3>
-                <ResponsiveContainer width="100%" height={180}>
-                  <BarChart data={charts}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                    <XAxis dataKey="day" tick={{ fill: "#94a3b8", fontSize: 10 }} />
-                    <YAxis tick={{ fill: "#94a3b8", fontSize: 10 }} width={30} />
-                    <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "1px solid #1e293b", borderRadius: "12px" }} labelStyle={{ color: "#fff" }} />
-                    <Bar dataKey="apuestas" fill="#10b981" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4">
-                <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-4">Volumen apostado (pts)</h3>
-                <ResponsiveContainer width="100%" height={180}>
-                  <LineChart data={charts}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                    <XAxis dataKey="day" tick={{ fill: "#94a3b8", fontSize: 10 }} />
-                    <YAxis tick={{ fill: "#94a3b8", fontSize: 10 }} width={30} />
-                    <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "1px solid #1e293b", borderRadius: "12px" }} labelStyle={{ color: "#fff" }} />
-                    <Line type="monotone" dataKey="volumen" stroke="#f59e0b" strokeWidth={2} dot={{ fill: "#f59e0b", r: 3 }} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 md:col-span-2">
-                <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-4">Nuevos usuarios por día</h3>
-                <ResponsiveContainer width="100%" height={180}>
-                  <BarChart data={charts}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                    <XAxis dataKey="day" tick={{ fill: "#94a3b8", fontSize: 10 }} />
-                    <YAxis tick={{ fill: "#94a3b8", fontSize: 10 }} width={30} />
-                    <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "1px solid #1e293b", borderRadius: "12px" }} labelStyle={{ color: "#fff" }} />
-                    <Legend wrapperStyle={{ color: "#94a3b8", fontSize: 11 }} />
-                    <Bar dataKey="usuarios" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Nuevos usuarios" />
-                    <Bar dataKey="apuestas" fill="#10b981" radius={[4, 4, 0, 0]} name="Apuestas" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* ⚙️ CONFIGURACIÓN */}
-        {config && (
-          <section className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5">
-            <div className="flex flex-wrap items-center gap-2 mb-4 sm:mb-6">
-              <Settings size={18} className="text-slate-400" />
-              <h2 className="text-lg sm:text-xl font-bold">Configuración de la plataforma</h2>
-              {config.updated_at && (
-                <span className="text-xs text-slate-500 sm:ml-auto w-full sm:w-auto">
-                  Actualizado: {new Date(config.updated_at).toLocaleString()}
-                </span>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-4">
-                <h3 className="font-semibold text-sm text-slate-300 flex items-center gap-2">
-                  <DollarSign size={15} className="text-amber-400" /> Límites de apuesta
-                </h3>
-                <div>
-                  <label className="text-xs text-slate-400 mb-1 block">Apuesta mínima (pts)</label>
-                  <input type="number" step="0.01" value={settingsForm.min_bet}
-                    onChange={(e) => setSettingsForm((prev) => ({ ...prev, min_bet: e.target.value }))}
-                    className="w-full bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none text-sm text-slate-900 dark:text-white" />
-                </div>
-                <div>
-                  <label className="text-xs text-slate-400 mb-1 block">Apuesta máxima (pts)</label>
-                  <input type="number" step="0.01" value={settingsForm.max_bet}
-                    onChange={(e) => setSettingsForm((prev) => ({ ...prev, max_bet: e.target.value }))}
-                    className="w-full bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none text-sm text-slate-900 dark:text-white" />
-                </div>
-              </div>
-
-              <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-4">
-                <h3 className="font-semibold text-sm text-slate-300 flex items-center gap-2">
-                  <Activity size={15} className="text-emerald-400" /> Parámetros generales
-                </h3>
-                <div>
-                  <label className="text-xs text-slate-400 mb-1 block">Comisión plataforma (%)</label>
-                  <input type="number" step="0.1" min="0" max="100" value={settingsForm.commission}
-                    onChange={(e) => setSettingsForm((prev) => ({ ...prev, commission: e.target.value }))}
-                    className="w-full bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none text-sm text-slate-900 dark:text-white" />
-                </div>
-                <div>
-                  <label className="text-xs text-slate-400 mb-1 block">Puntos de bienvenida</label>
-                  <input type="number" step="1" min="0" value={settingsForm.welcome_points}
-                    onChange={(e) => setSettingsForm((prev) => ({ ...prev, welcome_points: e.target.value }))}
-                    className="w-full bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none text-sm text-slate-900 dark:text-white" />
-                </div>
-              </div>
-            </div>
-
-            {/* Resumen actual */}
-            <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {[
-                { label: "Apuesta mín.", value: `${config.min_bet} pts`, color: "text-amber-400" },
-                { label: "Apuesta máx.", value: `${config.max_bet} pts`, color: "text-amber-400" },
-                { label: "Comisión", value: `${config.commission}%`, color: "text-emerald-400" },
-                { label: "Puntos bienvenida", value: `${config.welcome_points} pts`, color: "text-blue-400" },
-              ].map((item) => (
-                <div key={item.label} className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-center">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{item.label}</p>
-                  <p className={`text-lg font-bold ${item.color}`}>{item.value}</p>
-                </div>
-              ))}
-            </div>
-
-            <button onClick={handleSaveSettings} className="mt-4 w-full bg-emerald-500 text-slate-950 font-bold rounded-xl py-3 active:scale-95 transition-transform">
-              Guardar configuración
-            </button>
-          </section>
-        )}
-
-        {/* 👥 GESTIÓN DE USUARIOS */}
-        <section className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5">
-          <div className="flex items-center gap-2 mb-4 sm:mb-6">
-            <Users size={18} className="text-blue-400" />
-            <h2 className="text-lg sm:text-xl font-bold">Gestión de usuarios</h2>
-            <span className="ml-auto text-xs text-slate-400">{users.length} usuarios</span>
-          </div>
-
-          {/* Tabla desktop */}
-          <div className="hidden sm:block overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
-                <tr>
-                  <th className="text-left py-2">Email</th>
-                  <th className="text-left py-2">Nombre</th>
-                  <th className="text-left py-2">Puntos</th>
-                  <th className="text-left py-2">Rol</th>
-                  <th className="text-left py-2">Proveedor</th>
-                  <th className="text-left py-2">Estado</th>
-                  <th className="text-left py-2">Puntos ±</th>
-                  <th className="text-left py-2">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((u) => (
-                  <tr key={u.id} className={`border-b border-slate-100 dark:border-slate-900 ${u.suspended ? "opacity-50" : ""}`}>
-                    <td className="py-3 text-xs">{u.email}</td>
-                    <td className="py-3 text-xs">{u.nombre} {u.apellido}</td>
-                    <td className="py-3 text-amber-400 font-bold">{u.points}</td>
-                    <td className="py-3">
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${u.role === "admin" ? "bg-amber-500/20 text-amber-400" : "bg-slate-700 text-slate-300"}`}>{u.role}</span>
-                    </td>
-                    <td className="py-3">
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${u.provider === "google" ? "bg-blue-500/20 text-blue-400" : "bg-slate-700 text-slate-300"}`}>{u.provider}</span>
-                    </td>
-                    <td className="py-3">
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${u.suspended ? "bg-rose-500/20 text-rose-400" : "bg-emerald-500/20 text-emerald-400"}`}>{u.suspended ? "Suspendido" : "Activo"}</span>
-                    </td>
-                    <td className="py-3">
-                      <div className="flex items-center gap-1">
-                        <input type="number" placeholder="0" value={pointsInput[u.id] || ""}
-                          onChange={(e) => setPointsInput((prev) => ({ ...prev, [u.id]: e.target.value }))}
-                          className="w-16 bg-slate-200 dark:bg-slate-800 rounded-lg px-2 py-1 text-xs outline-none text-slate-900 dark:text-white" />
-                        <button onClick={() => handlePoints(u.id, parseFloat(pointsInput[u.id] || "0"))} className="p-1 rounded-lg bg-emerald-500 text-slate-950"><Plus size={12} /></button>
-                        <button onClick={() => handlePoints(u.id, -parseFloat(pointsInput[u.id] || "0"))} className="p-1 rounded-lg bg-rose-500 text-white"><Minus size={12} /></button>
-                      </div>
-                    </td>
-                    <td className="py-3">
-                      <div className="flex gap-2">
-                        <button onClick={() => handleChangeRole(u.id, u.role)} className="p-1.5 rounded-lg bg-amber-500/20 text-amber-400 hover:bg-amber-500/40 transition" title={u.role === "admin" ? "Quitar admin" : "Hacer admin"}>
-                          <ShieldCheck size={14} />
-                        </button>
-                        <button onClick={() => handleSuspend(u.id, !u.suspended)} className={`p-1.5 rounded-lg transition ${u.suspended ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/40" : "bg-rose-500/20 text-rose-400 hover:bg-rose-500/40"}`} title={u.suspended ? "Activar" : "Suspender"}>
-                          <ShieldOff size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Cards móvil — reemplaza la tabla */}
-          <div className="sm:hidden space-y-3">
-            {users.map((u) => (
-              <div key={u.id} className={`bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-3 ${u.suspended ? "opacity-60" : ""}`}>
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="font-semibold text-sm truncate">{u.nombre} {u.apellido}</p>
-                    <p className="text-xs text-slate-400 truncate">{u.email}</p>
-                  </div>
-                  <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full ${u.suspended ? "bg-rose-500/20 text-rose-400" : "bg-emerald-500/20 text-emerald-400"}`}>
-                    {u.suspended ? "Suspendido" : "Activo"}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-amber-400 font-bold text-sm">{u.points} pts</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${u.role === "admin" ? "bg-amber-500/20 text-amber-400" : "bg-slate-700 text-slate-300"}`}>{u.role}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${u.provider === "google" ? "bg-blue-500/20 text-blue-400" : "bg-slate-700 text-slate-300"}`}>{u.provider}</span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <input type="number" placeholder="pts" value={pointsInput[u.id] || ""}
-                    onChange={(e) => setPointsInput((prev) => ({ ...prev, [u.id]: e.target.value }))}
-                    className="w-20 bg-slate-200 dark:bg-slate-800 rounded-lg px-3 py-1.5 text-xs outline-none text-slate-900 dark:text-white" />
-                  <button onClick={() => handlePoints(u.id, parseFloat(pointsInput[u.id] || "0"))} className="p-1.5 rounded-lg bg-emerald-500 text-slate-950"><Plus size={13} /></button>
-                  <button onClick={() => handlePoints(u.id, -parseFloat(pointsInput[u.id] || "0"))} className="p-1.5 rounded-lg bg-rose-500 text-white"><Minus size={13} /></button>
-                  <div className="ml-auto flex gap-2">
-                    <button onClick={() => handleChangeRole(u.id, u.role)} className="p-1.5 rounded-lg bg-amber-500/20 text-amber-400"><ShieldCheck size={14} /></button>
-                    <button onClick={() => handleSuspend(u.id, !u.suspended)} className={`p-1.5 rounded-lg ${u.suspended ? "bg-emerald-500/20 text-emerald-400" : "bg-rose-500/20 text-rose-400"}`}><ShieldOff size={14} /></button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* 👑 GESTIÓN DE MERCADOS */}
-        {isAdmin && (
-          <section className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5">
-            <div className="flex items-center justify-between gap-4 mb-4">
+          <div className="px-5 py-5 border-b border-white/[0.06] flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="h-7 w-7 rounded-lg bg-emerald-500 grid place-items-center text-black font-black text-xs">P</div>
               <div>
-                <h2 className="text-lg sm:text-2xl font-bold">Gestión de mercados</h2>
-                <p className="text-xs sm:text-sm text-slate-400">Crear y gestionar mercados</p>
+                <p className="text-[11px] font-bold text-white tracking-wider uppercase">Predicciones</p>
+                <p className="text-[9px] text-white/30 tracking-widest uppercase">Admin Console</p>
               </div>
-              <span className="text-xs px-3 py-1 rounded-full bg-amber-500/15 text-amber-400 shrink-0">Administrador</span>
             </div>
+            <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-white/30 hover:text-white">
+              <X size={14} />
+            </button>
+          </div>
 
-            <div className="flex flex-col sm:grid sm:grid-cols-3 gap-3">
-              <input value={newQuestion} onChange={(e) => setNewQuestion(e.target.value)}
-                placeholder="Nueva pregunta de mercado..."
-                className="sm:col-span-2 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 outline-none text-sm text-slate-900 dark:text-white" />
-              <button onClick={handleCreateMarket} className="bg-emerald-500 text-slate-950 font-bold rounded-xl px-4 py-3 text-sm active:scale-95 transition-transform">
-                Crear mercado
+          {/* Nav */}
+          <nav className="flex-1 px-3 py-4 space-y-0.5">
+            {navItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => { setActiveSection(item.id as Section); setSidebarOpen(false); }}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left transition-all duration-150 group ${
+                  activeSection === item.id
+                    ? "bg-white/[0.08] text-white"
+                    : "text-white/40 hover:text-white/70 hover:bg-white/[0.04]"
+                }`}
+              >
+                <div className="flex items-center gap-2.5 text-[13px]">
+                  <span className={activeSection === item.id ? "text-emerald-400" : ""}>{item.icon}</span>
+                  {item.label}
+                </div>
+                {item.badge !== undefined && item.badge > 0 && (
+                  <span className="text-[10px] bg-white/[0.08] text-white/50 px-1.5 py-0.5 rounded-md tabular-nums">{item.badge}</span>
+                )}
               </button>
-            </div>
+            ))}
+          </nav>
 
-            {/* Tabla desktop */}
-            <div className="hidden sm:block mt-4 overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
-                  <tr>
-                    <th className="text-left py-2">ID</th>
-                    <th className="text-left py-2">Pregunta</th>
-                    <th className="text-left py-2">Sí (pts)</th>
-                    <th className="text-left py-2">No (pts)</th>
-                    <th className="text-left py-2">Total</th>
-                    <th className="text-left py-2">Acción</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {markets.map((m) => (
-                    <tr key={m.id} className="border-b border-slate-900">
-                      <td className="py-2">{m.id}</td>
-                      <td className="py-2">{m.question}</td>
-                      <td className="py-2 text-emerald-400">{m.yes}</td>
-                      <td className="py-2 text-rose-400">{m.no}</td>
-                      <td className="py-2 text-amber-400 font-bold">{(Number(m.yes) + Number(m.no)).toFixed(2)}</td>
-                      <td className="py-2">
-                        {m.resolved ? (
-                          <div className="text-xs rounded-xl bg-slate-800 px-3 py-2 inline-block">
-                            <p className="font-bold text-white">Cerrado</p>
-                            <p className="text-slate-300 mt-1">Ganó: <span className="text-emerald-400 font-bold">{m.winner === "yes" ? "Sí" : "No"}</span></p>
-                          </div>
-                        ) : (
-                          <div className="flex flex-wrap gap-2">
-                            <button onClick={() => handleDeleteMarket(m.id)} className="px-3 py-1 rounded-lg bg-rose-500 text-white text-xs">Eliminar</button>
-                            <button onClick={() => resolveMarket(m.id, "yes")} className="px-3 py-1 rounded-lg bg-emerald-500 text-slate-950 text-xs font-bold">Ganó Sí</button>
-                            <button onClick={() => resolveMarket(m.id, "no")} className="px-3 py-1 rounded-lg bg-blue-500 text-white text-xs font-bold">Ganó No</button>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
+          {/* Footer sidebar */}
+          <div className="px-3 py-4 border-t border-white/[0.06] space-y-1">
+            <Link href="/" className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/40 hover:text-white/70 hover:bg-white/[0.04] transition text-[13px]">
+              <ArrowUpRight size={15} /> Ir al sitio
+            </Link>
+            <button
+              onClick={() => { localStorage.removeItem("token"); localStorage.removeItem("role"); localStorage.removeItem("points"); window.location.href = "/login"; }}
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-rose-400/70 hover:text-rose-400 hover:bg-rose-500/[0.08] transition text-[13px]"
+            >
+              <LogOut size={15} /> Cerrar sesión
+            </button>
+          </div>
+        </aside>
+      </>
+
+      {/* ===== MAIN ===== */}
+      <div className="flex-1 flex flex-col min-w-0">
+
+        {/* Topbar */}
+        <header className="sticky top-0 z-30 bg-[#0a0a0a]/80 backdrop-blur border-b border-white/[0.06] px-4 sm:px-6 py-3 flex items-center gap-4">
+          <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-white/40 hover:text-white">
+            <LayoutDashboard size={18} />
+          </button>
+
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-1.5 text-[12px] text-white/30">
+            <span>Admin</span>
+            <ChevronRight size={12} />
+            <span className="text-white/70 capitalize">{navItems.find(n => n.id === activeSection)?.label}</span>
+          </div>
+
+          {/* Search */}
+          <div className="ml-auto flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-1.5 w-48 sm:w-64">
+            <Search size={13} className="text-white/30 shrink-0" />
+            <input
+              placeholder="Buscar..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-transparent outline-none w-full text-[12px] text-white placeholder-white/20"
+            />
+            {searchQuery && <button onClick={() => setSearchQuery("")}><X size={12} className="text-white/30" /></button>}
+          </div>
+
+          <ThemeToggle />
+
+          <div className="h-7 w-7 rounded-full bg-emerald-500/20 border border-emerald-500/30 grid place-items-center">
+            <span className="text-[10px] text-emerald-400 font-bold">A</span>
+          </div>
+        </header>
+
+        {/* Content */}
+        <main className="flex-1 px-4 sm:px-6 py-6 space-y-6 overflow-auto">
+
+          {/* ===== OVERVIEW ===== */}
+          {activeSection === "overview" && (
+            <>
+              <div>
+                <h1 className="text-lg font-bold text-white tracking-tight">Resumen general</h1>
+                <p className="text-[12px] text-white/30 mt-0.5">Vista de métricas en tiempo real</p>
+              </div>
+
+              {/* KPI Grid */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                {[
+                  { label: "Usuarios totales", value: stats?.totalUsers ?? "—", sub: `+${stats?.newUsersToday ?? 0} hoy`, icon: <Users size={13} />, color: "text-blue-400", up: true },
+                  { label: "Puntos circulando", value: stats ? `${stats.totalPoints}` : "—", sub: "suma total", icon: <Wallet size={13} />, color: "text-emerald-400", up: true },
+                  { label: "Total apostado", value: stats ? `${stats.totalBetted}` : "—", sub: `${stats?.betsToday ?? 0} apuestas hoy`, icon: <DollarSign size={13} />, color: "text-amber-400", up: true },
+                  { label: "Mercados activos", value: stats?.activeMarkets ?? "—", sub: `${stats?.closedMarkets ?? 0} cerrados`, icon: <Activity size={13} />, color: "text-rose-400", up: false },
+                ].map((kpi) => (
+                  <div key={kpi.label} className="bg-[#111111] border border-white/[0.06] rounded-xl p-4 group hover:border-white/[0.12] transition">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className={`${kpi.color} opacity-60`}>{kpi.icon}</span>
+                      {kpi.up
+                        ? <ArrowUpRight size={12} className="text-emerald-400/50" />
+                        : <ArrowDownRight size={12} className="text-rose-400/50" />
+                      }
+                    </div>
+                    <p className="text-2xl font-bold text-white tabular-nums">{kpi.value}</p>
+                    <p className="text-[11px] text-white/30 mt-1">{kpi.label}</p>
+                    <p className="text-[10px] text-white/20 mt-0.5">{kpi.sub}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Charts */}
+              {charts.length > 0 && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div className="bg-[#111111] border border-white/[0.06] rounded-xl p-5">
+                    <div className="flex items-center justify-between mb-5">
+                      <div>
+                        <p className="text-[12px] font-semibold text-white/70">Apuestas / día</p>
+                        <p className="text-[10px] text-white/25 mt-0.5">Últimos 7 días</p>
+                      </div>
+                      <Zap size={13} className="text-emerald-400/50" />
+                    </div>
+                    <ResponsiveContainer width="100%" height={160}>
+                      <BarChart data={charts} barSize={16}>
+                        <CartesianGrid strokeDasharray="2 4" stroke="#ffffff08" vertical={false} />
+                        <XAxis dataKey="day" tick={{ fill: "#ffffff25", fontSize: 9 }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fill: "#ffffff25", fontSize: 9 }} axisLine={false} tickLine={false} width={25} />
+                        <Tooltip
+                          contentStyle={{ backgroundColor: "#1a1a1a", border: "1px solid #ffffff10", borderRadius: "8px", fontSize: "11px" }}
+                          labelStyle={{ color: "#ffffff60" }}
+                          itemStyle={{ color: "#10b981" }}
+                        />
+                        <Bar dataKey="apuestas" fill="#10b981" radius={[3, 3, 0, 0]} opacity={0.8} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  <div className="bg-[#111111] border border-white/[0.06] rounded-xl p-5">
+                    <div className="flex items-center justify-between mb-5">
+                      <div>
+                        <p className="text-[12px] font-semibold text-white/70">Volumen (pts)</p>
+                        <p className="text-[10px] text-white/25 mt-0.5">Últimos 7 días</p>
+                      </div>
+                      <TrendingUp size={13} className="text-amber-400/50" />
+                    </div>
+                    <ResponsiveContainer width="100%" height={160}>
+                      <LineChart data={charts}>
+                        <CartesianGrid strokeDasharray="2 4" stroke="#ffffff08" vertical={false} />
+                        <XAxis dataKey="day" tick={{ fill: "#ffffff25", fontSize: 9 }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fill: "#ffffff25", fontSize: 9 }} axisLine={false} tickLine={false} width={25} />
+                        <Tooltip
+                          contentStyle={{ backgroundColor: "#1a1a1a", border: "1px solid #ffffff10", borderRadius: "8px", fontSize: "11px" }}
+                          labelStyle={{ color: "#ffffff60" }}
+                          itemStyle={{ color: "#f59e0b" }}
+                        />
+                        <Line type="monotone" dataKey="volumen" stroke="#f59e0b" strokeWidth={1.5} dot={false} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+
+              {/* Recent winners */}
+              <div className="bg-[#111111] border border-white/[0.06] rounded-xl">
+                <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
+                  <p className="text-[12px] font-semibold text-white/70">Ganadores recientes</p>
+                  <button onClick={() => setActiveSection("winners")} className="text-[11px] text-white/25 hover:text-white/50 transition flex items-center gap-1">
+                    Ver todos <ChevronRight size={11} />
+                  </button>
+                </div>
+                <div className="divide-y divide-white/[0.04]">
+                  {winners.slice(0, 5).map((w) => (
+                    <div key={w.id} className="px-5 py-3 flex items-center justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="text-[12px] text-white/70 truncate">{w.users?.email}</p>
+                        <p className="text-[11px] text-white/25 truncate mt-0.5">{w.markets?.question}</p>
+                      </div>
+                      <span className="text-[12px] text-emerald-400 font-bold tabular-nums shrink-0">+{w.reward} pts</span>
+                    </div>
                   ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Cards móvil para mercados */}
-            <div className="sm:hidden mt-4 space-y-3">
-              {markets.map((m) => (
-                <div key={m.id} className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="font-semibold text-sm leading-snug flex-1">{m.question}</p>
-                    <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full ${m.resolved ? "bg-slate-700 text-white" : "bg-emerald-500/10 text-emerald-400"}`}>
-                      {m.resolved ? "Cerrado" : "En vivo"}
-                    </span>
-                  </div>
-                  <div className="flex gap-4 text-xs">
-                    <span className="text-emerald-400">Sí: {m.yes}</span>
-                    <span className="text-rose-400">No: {m.no}</span>
-                    <span className="text-amber-400 font-bold">Total: {(Number(m.yes) + Number(m.no)).toFixed(2)}</span>
-                  </div>
-                  {m.resolved ? (
-                    <div className="text-xs rounded-xl bg-slate-800 px-3 py-2 text-center">
-                      Cerrado · Ganó <span className="text-emerald-400 font-bold">{m.winner === "yes" ? "Sí" : "No"}</span>
-                    </div>
-                  ) : (
-                    <div className="flex gap-2">
-                      <button onClick={() => handleDeleteMarket(m.id)} className="flex-1 py-2 rounded-xl bg-rose-500 text-white text-xs font-bold">Eliminar</button>
-                      <button onClick={() => resolveMarket(m.id, "yes")} className="flex-1 py-2 rounded-xl bg-emerald-500 text-slate-950 text-xs font-bold">Ganó Sí</button>
-                      <button onClick={() => resolveMarket(m.id, "no")} className="flex-1 py-2 rounded-xl bg-blue-500 text-white text-xs font-bold">Ganó No</button>
-                    </div>
+                  {winners.length === 0 && (
+                    <p className="px-5 py-8 text-[12px] text-white/20 text-center">Sin ganadores aún</p>
                   )}
                 </div>
-              ))}
-            </div>
-          </section>
-        )}
+              </div>
+            </>
+          )}
 
-        {/* 📊 VISTA PREVIA MERCADOS */}
-        <section>
-          <h2 className="text-xl sm:text-2xl font-bold mb-4">Vista previa de mercados</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-            {markets.map((market) => {
-              const total = (market.yes ?? 0) + (market.no ?? 0) || 1;
-              const yesPct = ((market.yes / total) * 100).toFixed(0);
-              const noPct = ((market.no / total) * 100).toFixed(0);
-              return (
-                <div key={market.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 hover:border-slate-700 transition">
-                  <div className="flex items-start justify-between gap-3">
-                    <h3 className="font-semibold text-sm sm:text-base leading-snug">{market.question}</h3>
-                    <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full ${market.resolved ? "bg-slate-700 text-white" : "bg-emerald-500/10 text-emerald-400"}`}>
-                      {market.resolved ? "Cerrado" : "En vivo"}
-                    </span>
-                  </div>
-                  <div className="mt-4 h-2 bg-slate-800 rounded-full overflow-hidden flex">
-                    <div className="bg-emerald-500" style={{ width: `${yesPct}%` }} />
-                    <div className="bg-rose-500" style={{ width: `${noPct}%` }} />
-                  </div>
-                  <p className="text-xs mt-2 text-slate-500 dark:text-slate-400">Sí {yesPct}% • No {noPct}% • {total} pts</p>
-                  <div className="mt-4">
-                    {market.resolved ? (
-                      <div className="text-center text-sm px-3 py-2 rounded-xl bg-slate-800 text-white">
-                        Ganó {market.winner === "yes" ? "Sí" : "No"}
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-2 gap-2">
-                        <button onClick={() => resolveMarket(market.id, "yes")} className="bg-emerald-500 text-slate-950 font-bold rounded-xl py-2.5 text-sm active:scale-95 transition-transform">Ganó Sí</button>
-                        <button onClick={() => resolveMarket(market.id, "no")} className="bg-blue-500 text-white font-bold rounded-xl py-2.5 text-sm active:scale-95 transition-transform">Ganó No</button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* 🏆 HISTORIAL GANADORES */}
-        <section className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5">
-          <h2 className="text-lg sm:text-2xl font-bold mb-4">Historial de Ganadores</h2>
-
-          {/* Tabla desktop */}
-          <div className="hidden sm:block overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
-                <tr>
-                  <th className="text-left py-2">Usuario</th>
-                  <th className="text-left py-2">Mercado</th>
-                  <th className="text-left py-2">Predicción</th>
-                  <th className="text-left py-2">Premio</th>
-                  <th className="text-left py-2">Fecha</th>
-                </tr>
-              </thead>
-              <tbody>
-                {winners.map((w) => (
-                  <tr key={w.id} className="border-b border-slate-800">
-                    <td className="py-2">{w.users?.email}</td>
-                    <td className="py-2">{w.markets?.question}</td>
-                    <td className="py-2">{w.prediction === "yes" ? "Sí" : "No"}</td>
-                    <td className="py-2 text-amber-400 font-bold">+{w.reward}</td>
-                    <td className="py-2 text-slate-400">{new Date(w.created_at).toLocaleString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Cards móvil para ganadores */}
-          <div className="sm:hidden space-y-3">
-            {winners.map((w) => (
-              <div key={w.id} className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-1">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-slate-400 truncate flex-1">{w.users?.email}</p>
-                  <span className="text-amber-400 font-bold text-sm shrink-0 ml-2">+{w.reward} pts</span>
-                </div>
-                <p className="text-sm font-semibold leading-snug">{w.markets?.question}</p>
-                <div className="flex items-center justify-between text-xs text-slate-400">
-                  <span>Predicción: <span className="text-emerald-400 font-semibold">{w.prediction === "yes" ? "Sí" : "No"}</span></span>
-                  <span>{new Date(w.created_at).toLocaleDateString()}</span>
+          {/* ===== MERCADOS ===== */}
+          {activeSection === "markets" && (
+            <>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-lg font-bold text-white">Mercados</h1>
+                  <p className="text-[12px] text-white/30 mt-0.5">{markets.filter(m => !m.resolved).length} activos · {markets.filter(m => m.resolved).length} cerrados</p>
                 </div>
               </div>
-            ))}
-          </div>
-        </section>
 
-      </div>
-    </main>
-  );
-}
+              {/* Crear mercado */}
+              <div className="bg-[#111111] border border-white/[0.06] rounded-xl p-4">
+                <p className="text-[11px] text-white/30 uppercase tracking-widest mb-3">Nuevo mercado</p>
+                <div className="flex gap-2">
+                  <input
+                    value={newQuestion}
+                    onChange={(e) => setNewQuestion(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleCreateMarket(); }}
+                    placeholder="¿Cuál es la pregunta del mercado?"
+                    className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-lg px-4 py-2.5 outline-none text-[13px] text-white placeholder-white/20 focus:border-emerald-500/40 transition"
+                  />
+                  <button onClick={handleCreateMarket} className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg px-5 py-2.5 text-[13px] transition active:scale-95">
+                    Crear
+                  </button>
+                </div>
+              </div>
 
-function Card({ title, value, icon }: any) {
-  return (
-    <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 sm:p-4">
-      <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs sm:text-sm">
-        <span>{title}</span>{icon}
-      </div>
-      <p className="text-xl sm:text-2xl font-bold mt-2">{value}</p>
-    </div>
-  );
-}
+              {/* Lista mercados */}
+              <div className="bg-[#111111] border border-white/[0.06] rounded-xl overflow-hidden">
+                <div className="px-5 py-3 border-b border-white/[0.06]">
+                  <div className="grid grid-cols-12 text-[10px] text-white/25 uppercase tracking-widest">
+                    <span className="col-span-1">#</span>
+                    <span className="col-span-5">Pregunta</span>
+                    <span className="col-span-2 text-center">Sí / No</span>
+                    <span className="col-span-1 text-center">Total</span>
+                    <span className="col-span-3 text-right">Acciones</span>
+                  </div>
+                </div>
+                <div className="divide-y divide-white/[0.03]">
+                  {filteredMarkets.map((m) => (
+                    <div key={m.id} className="px-5 py-3.5 grid grid-cols-12 items-center gap-2 hover:bg-white/[0.02] transition">
+                      <span className="col-span-1 text-[11px] text-white/20 tabular-nums">{m.id}</span>
+                      <div className="col-span-5 flex items-center gap-2 min-w-0">
+                        <Circle size={6} className={m.resolved ? "text-white/20 shrink-0" : "text-emerald-400 shrink-0"} fill="currentColor" />
+                        <p className="text-[12px] text-white/70 truncate">{m.question}</p>
+                      </div>
+                      <div className="col-span-2 flex items-center justify-center gap-1 text-[11px] tabular-nums">
+                        <span className="text-emerald-400">{m.yes}</span>
+                        <span className="text-white/20">/</span>
+                        <span className="text-rose-400">{m.no}</span>
+                      </div>
+                      <span className="col-span-1 text-center text-[11px] text-amber-400 tabular-nums font-bold">{(Number(m.yes) + Number(m.no)).toFixed(1)}</span>
+                      <div className="col-span-3 flex items-center justify-end gap-1.5">
+                        {m.resolved ? (
+                          <span className="text-[10px] text-white/25 bg-white/[0.04] px-2 py-1 rounded-md">
+                            Ganó {m.winner === "yes" ? "Sí ✓" : "No ✗"}
+                          </span>
+                        ) : (
+                          <>
+                            <button onClick={() => resolveMarket(m.id, "yes")} className="text-[10px] bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20 px-2.5 py-1 rounded-md transition">Sí gana</button>
+                            <button onClick={() => resolveMarket(m.id, "no")} className="text-[10px] bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/20 px-2.5 py-1 rounded-md transition">No gana</button>
+                            <button onClick={() => handleDeleteMarket(m.id)} className="text-[10px] bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/20 px-2 py-1 rounded-md transition">✕</button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
 
-function StatCard({ title, value, sub, icon, color }: any) {
-  return (
-    <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 sm:p-4">
-      <div className={`flex items-center gap-2 ${color} mb-2`}>
-        {icon}<span className="text-xs sm:text-sm font-medium">{title}</span>
+          {/* ===== USUARIOS ===== */}
+          {activeSection === "users" && (
+            <>
+              <div>
+                <h1 className="text-lg font-bold text-white">Usuarios</h1>
+                <p className="text-[12px] text-white/30 mt-0.5">{users.length} registrados</p>
+              </div>
+
+              <div className="bg-[#111111] border border-white/[0.06] rounded-xl overflow-hidden">
+                {/* Header tabla */}
+                <div className="px-5 py-3 border-b border-white/[0.06] hidden sm:block">
+                  <div className="grid grid-cols-12 text-[10px] text-white/25 uppercase tracking-widest">
+                    <span className="col-span-3">Email</span>
+                    <span className="col-span-2">Nombre</span>
+                    <span className="col-span-1 text-center">Pts</span>
+                    <span className="col-span-1 text-center">Rol</span>
+                    <span className="col-span-1 text-center">Estado</span>
+                    <span className="col-span-2 text-center">Ajustar pts</span>
+                    <span className="col-span-2 text-right">Acciones</span>
+                  </div>
+                </div>
+
+                <div className="divide-y divide-white/[0.03]">
+                  {filteredUsers.map((u) => (
+                    <div key={u.id} className={`px-5 py-3.5 transition hover:bg-white/[0.02] ${u.suspended ? "opacity-40" : ""}`}>
+                      {/* Desktop */}
+                      <div className="hidden sm:grid grid-cols-12 items-center gap-2">
+                        <p className="col-span-3 text-[12px] text-white/60 truncate">{u.email}</p>
+                        <p className="col-span-2 text-[12px] text-white/50 truncate">{u.nombre} {u.apellido}</p>
+                        <p className="col-span-1 text-center text-[12px] text-amber-400 font-bold tabular-nums">{u.points}</p>
+                        <div className="col-span-1 flex justify-center">
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-md ${u.role === "admin" ? "bg-amber-500/15 text-amber-400" : "bg-white/[0.06] text-white/30"}`}>{u.role}</span>
+                        </div>
+                        <div className="col-span-1 flex justify-center">
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-md ${u.suspended ? "bg-rose-500/15 text-rose-400" : "bg-emerald-500/15 text-emerald-400"}`}>
+                            {u.suspended ? "Susp." : "Activo"}
+                          </span>
+                        </div>
+                        <div className="col-span-2 flex items-center justify-center gap-1">
+                          <input type="number" placeholder="0" value={pointsInput[u.id] || ""}
+                            onChange={(e) => setPointsInput((prev) => ({ ...prev, [u.id]: e.target.value }))}
+                            className="w-14 bg-white/[0.04] border border-white/[0.08] rounded-md px-2 py-1 text-[11px] outline-none text-white text-center" />
+                          <button onClick={() => handlePoints(u.id, parseFloat(pointsInput[u.id] || "0"))} className="p-1 rounded-md bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition"><Plus size={11} /></button>
+                          <button onClick={() => handlePoints(u.id, -parseFloat(pointsInput[u.id] || "0"))} className="p-1 rounded-md bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 transition"><Minus size={11} /></button>
+                        </div>
+                        <div className="col-span-2 flex items-center justify-end gap-1.5">
+                          <button onClick={() => handleChangeRole(u.id, u.role)} className="p-1.5 rounded-md bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition" title="Cambiar rol">
+                            <ShieldCheck size={12} />
+                          </button>
+                          <button onClick={() => handleSuspend(u.id, !u.suspended)} className={`p-1.5 rounded-md transition ${u.suspended ? "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20" : "bg-rose-500/10 text-rose-400 hover:bg-rose-500/20"}`} title={u.suspended ? "Activar" : "Suspender"}>
+                            <ShieldOff size={12} />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Mobile */}
+                      <div className="sm:hidden space-y-2.5">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-[12px] text-white/70 font-medium truncate">{u.nombre} {u.apellido}</p>
+                            <p className="text-[11px] text-white/30 truncate">{u.email}</p>
+                          </div>
+                          <span className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded-md ${u.suspended ? "bg-rose-500/15 text-rose-400" : "bg-emerald-500/15 text-emerald-400"}`}>
+                            {u.suspended ? "Susp." : "Activo"}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-amber-400 font-bold text-[12px]">{u.points} pts</span>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-md ${u.role === "admin" ? "bg-amber-500/15 text-amber-400" : "bg-white/[0.06] text-white/30"}`}>{u.role}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <input type="number" placeholder="pts" value={pointsInput[u.id] || ""}
+                            onChange={(e) => setPointsInput((prev) => ({ ...prev, [u.id]: e.target.value }))}
+                            className="w-16 bg-white/[0.04] border border-white/[0.08] rounded-md px-2 py-1.5 text-[11px] outline-none text-white text-center" />
+                          <button onClick={() => handlePoints(u.id, parseFloat(pointsInput[u.id] || "0"))} className="p-1.5 rounded-md bg-emerald-500/20 text-emerald-400"><Plus size={12} /></button>
+                          <button onClick={() => handlePoints(u.id, -parseFloat(pointsInput[u.id] || "0"))} className="p-1.5 rounded-md bg-rose-500/20 text-rose-400"><Minus size={12} /></button>
+                          <div className="ml-auto flex gap-1.5">
+                            <button onClick={() => handleChangeRole(u.id, u.role)} className="p-1.5 rounded-md bg-amber-500/10 text-amber-400"><ShieldCheck size={13} /></button>
+                            <button onClick={() => handleSuspend(u.id, !u.suspended)} className={`p-1.5 rounded-md ${u.suspended ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"}`}><ShieldOff size={13} /></button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* ===== GANADORES ===== */}
+          {activeSection === "winners" && (
+            <>
+              <div>
+                <h1 className="text-lg font-bold text-white">Ganadores</h1>
+                <p className="text-[12px] text-white/30 mt-0.5">{winners.length} registros</p>
+              </div>
+
+              <div className="bg-[#111111] border border-white/[0.06] rounded-xl overflow-hidden">
+                <div className="px-5 py-3 border-b border-white/[0.06] hidden sm:block">
+                  <div className="grid grid-cols-12 text-[10px] text-white/25 uppercase tracking-widest">
+                    <span className="col-span-3">Usuario</span>
+                    <span className="col-span-5">Mercado</span>
+                    <span className="col-span-1 text-center">Pred.</span>
+                    <span className="col-span-2 text-right">Premio</span>
+                    <span className="col-span-1 text-right">Fecha</span>
+                  </div>
+                </div>
+                <div className="divide-y divide-white/[0.03]">
+                  {winners.map((w) => (
+                    <div key={w.id} className="px-5 py-3.5 hover:bg-white/[0.02] transition">
+                      <div className="hidden sm:grid grid-cols-12 items-center gap-2">
+                        <p className="col-span-3 text-[12px] text-white/50 truncate">{w.users?.email}</p>
+                        <p className="col-span-5 text-[12px] text-white/60 truncate">{w.markets?.question}</p>
+                        <div className="col-span-1 flex justify-center">
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-md ${w.prediction === "yes" ? "bg-emerald-500/15 text-emerald-400" : "bg-rose-500/15 text-rose-400"}`}>
+                            {w.prediction === "yes" ? "Sí" : "No"}
+                          </span>
+                        </div>
+                        <p className="col-span-2 text-right text-[12px] text-amber-400 font-bold tabular-nums">+{w.reward} pts</p>
+                        <p className="col-span-1 text-right text-[10px] text-white/20">{new Date(w.created_at).toLocaleDateString()}</p>
+                      </div>
+                      {/* Mobile */}
+                      <div className="sm:hidden space-y-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-[12px] text-white/50 truncate">{w.users?.email}</p>
+                          <span className="text-[12px] text-amber-400 font-bold shrink-0">+{w.reward} pts</span>
+                        </div>
+                        <p className="text-[11px] text-white/30 truncate">{w.markets?.question}</p>
+                      </div>
+                    </div>
+                  ))}
+                  {winners.length === 0 && (
+                    <p className="px-5 py-10 text-[12px] text-white/20 text-center">Sin ganadores registrados</p>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* ===== CONFIGURACIÓN ===== */}
+          {activeSection === "settings" && config && (
+            <>
+              <div>
+                <h1 className="text-lg font-bold text-white">Configuración</h1>
+                <p className="text-[12px] text-white/30 mt-0.5">
+                  {config.updated_at ? `Actualizado ${new Date(config.updated_at).toLocaleString()}` : "Parámetros de la plataforma"}
+                </p>
+              </div>
+
+              {/* Config actual */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { label: "Apuesta mín.", value: `${config.min_bet} pts`, color: "text-amber-400" },
+                  { label: "Apuesta máx.", value: `${config.max_bet} pts`, color: "text-amber-400" },
+                  { label: "Comisión", value: `${config.commission}%`, color: "text-emerald-400" },
+                  { label: "Pts bienvenida", value: `${config.welcome_points}`, color: "text-blue-400" },
+                ].map((item) => (
+                  <div key={item.label} className="bg-[#111111] border border-white/[0.06] rounded-xl p-4 text-center">
+                    <p className="text-[10px] text-white/25 uppercase tracking-widest mb-2">{item.label}</p>
+                    <p className={`text-xl font-bold ${item.color} tabular-nums`}>{item.value}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Form */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {[
+                  { key: "min_bet", label: "Apuesta mínima (pts)", step: "0.01" },
+                  { key: "max_bet", label: "Apuesta máxima (pts)", step: "0.01" },
+                  { key: "commission", label: "Comisión (%)", step: "0.1" },
+                  { key: "welcome_points", label: "Puntos de bienvenida", step: "1" },
+                ].map((field) => (
+                  <div key={field.key} className="bg-[#111111] border border-white/[0.06] rounded-xl p-4 space-y-2">
+                    <label className="text-[11px] text-white/30 uppercase tracking-widest block">{field.label}</label>
+                    <input
+                      type="number"
+                      step={field.step}
+                      value={(settingsForm as any)[field.key]}
+                      onChange={(e) => setSettingsForm((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                      className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-4 py-2.5 outline-none text-[14px] text-white focus:border-emerald-500/40 transition tabular-nums"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <button onClick={handleSaveSettings} className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl py-3 text-[13px] transition active:scale-[0.99]">
+                Guardar configuración
+              </button>
+            </>
+          )}
+
+        </main>
       </div>
-      <p className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
-      <p className="text-xs text-slate-400 mt-1">{sub}</p>
     </div>
   );
 }
