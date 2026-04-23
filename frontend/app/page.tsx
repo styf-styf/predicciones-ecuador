@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Bell, Search, TrendingUp, Trophy, Wallet, LogOut, LogIn, Flame, Menu, X } from "lucide-react";
+import { Bell, Search, TrendingUp, Trophy, LogOut, LogIn, Flame, Menu, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import ThemeToggle from "@/components/ThemeToggle";
 import Header from "@/components/Header";
@@ -66,10 +66,10 @@ export default function Home() {
 
         {/* Cards */}
         <section className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-          <Card title="Balance" value={`${points ?? 0} pts`} icon={<Wallet size={16} />} />
           <Card title="Mercados" value={`${markets.length}`} icon={<TrendingUp size={16} />} />
-          <Card title="Ranking" value="#12" icon={<Trophy size={16} />} />
-          <Card title="Estado" value={isLogged ? "Online" : "Invitado"} icon={<Bell size={16} />} />
+          <Card title="Activos" value={`${markets.filter((m) => !m.resolved).length}`} icon={<Flame size={16} />} />
+          <Card title="Resueltos" value={`${markets.filter((m) => m.resolved).length}`} icon={<Trophy size={16} />} />
+          <Card title="En vivo" value="Ahora" icon={<Bell size={16} />} />
         </section>
 
         {/* Tendencias */}
