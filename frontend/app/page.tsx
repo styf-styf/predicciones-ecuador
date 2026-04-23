@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Bell, Search, TrendingUp, Trophy, Wallet, LogOut, LogIn, Flame, Menu, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function Home() {
   const [markets, setMarkets] = useState<any[]>([]);
@@ -118,10 +119,10 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
+    <main className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
 
       {/* ===== HEADER ===== */}
-      <header className="sticky top-0 z-50 border-b border-slate-800 bg-slate-950/90 backdrop-blur">
+      <header className="sticky top-0 z-50 border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-3">
 
           {/* Logo */}
@@ -136,13 +137,14 @@ export default function Home() {
           </div>
 
           {/* Search — solo desktop */}
-          <div className="hidden md:flex items-center gap-3 bg-slate-900 px-4 py-2 rounded-2xl w-80 lg:w-96">
+          <div className="hidden md:flex items-center gap-3 bg-slate-100 dark:bg-slate-900 px-4 py-2 rounded-2xl w-80 lg:w-96">
             <Search size={18} className="text-slate-400 shrink-0" />
             <input placeholder="Buscar mercados..." className="bg-transparent outline-none w-full text-sm" />
           </div>
 
           {/* Acciones */}
           <div className="flex items-center gap-2 sm:gap-3">
+            <ThemeToggle />
             {/* Notificaciones */}
             <div className="relative" ref={notifRef}>
               <button
@@ -158,7 +160,7 @@ export default function Home() {
                     setNotifications((prev: any) => prev.map((n: any) => ({ ...n, read: true })));
                   }
                 }}
-                className="p-2 rounded-xl bg-slate-900 relative"
+                className="p-2 rounded-xl bg-slate-100 dark:bg-slate-900 relative"
               >
                 <Bell size={18} />
                 {notifications.filter((n: any) => !n.read).length > 0 && (
@@ -169,7 +171,7 @@ export default function Home() {
               </button>
 
               {showNotifications && (
-                <div className="absolute right-0 top-14 w-80 sm:w-96 max-h-[70vh] overflow-y-auto bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-3 z-50">
+                <div className="absolute right-0 top-14 w-80 sm:w-96 max-h-[70vh] overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-3 z-50">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="font-bold text-sm">Notificaciones</h3>
                     <button onClick={() => setShowNotifications(false)} className="text-xs text-slate-400 hover:text-white">Cerrar</button>
@@ -179,7 +181,7 @@ export default function Home() {
                   ) : (
                     <div className="space-y-2">
                       {notifications.map((n: any) => (
-                        <div key={n.id} className={`p-3 rounded-xl border ${n.read ? "bg-slate-950 border-slate-800" : "bg-emerald-500/10 border-emerald-500/30"}`}>
+                        <div key={n.id} className={`p-3 rounded-xl border ${n.read ? "bg-slate-100 dark:bg-slate-950 border-slate-200 dark:border-slate-800" : "bg-emerald-500/10 border-emerald-500/30"}`}>
                           <p className="font-semibold text-sm">{n.title}</p>
                           <p className="text-xs text-slate-300 mt-1">{n.message}</p>
                           <p className="text-[10px] text-slate-500 mt-2">{new Date(n.created_at).toLocaleString()}</p>
@@ -223,9 +225,9 @@ export default function Home() {
 
         {/* Menú móvil desplegable */}
         {showMobileMenu && (
-          <div className="sm:hidden border-t border-slate-800 bg-slate-950 px-4 py-4 space-y-3">
+          <div className="sm:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-4 space-y-3">
             {/* Search móvil */}
-            <div className="flex items-center gap-3 bg-slate-900 px-4 py-2.5 rounded-2xl">
+            <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-900 px-4 py-2.5 rounded-2xl">
               <Search size={16} className="text-slate-400 shrink-0" />
               <input placeholder="Buscar mercados..." className="bg-transparent outline-none w-full text-sm" />
             </div>
@@ -289,7 +291,7 @@ export default function Home() {
                   <button
                     key={market.id}
                     onClick={() => scrollToMarket(market.id)}
-                    className="bg-slate-900 border border-orange-500/30 rounded-2xl p-4 flex items-center gap-3 hover:border-orange-400 transition text-left w-full"
+                    className="bg-slate-100 dark:bg-slate-900 border border-orange-500/30 rounded-2xl p-4 flex items-center gap-3 hover:border-orange-400 transition text-left w-full"
                   >
                     <span className="text-xl sm:text-2xl font-black text-orange-400 shrink-0">#{index + 1}</span>
                     <div className="flex-1 min-w-0">
@@ -322,7 +324,7 @@ export default function Home() {
                 <div
                   key={market.id}
                   ref={(el) => { marketRefs.current[market.id] = el; }}
-                  className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 hover:border-slate-700 transition"
+                  className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 hover:border-slate-300 dark:hover:border-slate-700 transition"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="font-semibold text-sm sm:text-base mt-0.5 leading-snug">{market.question}</h3>
@@ -335,11 +337,11 @@ export default function Home() {
                     <div className="bg-emerald-500" style={{ width: `${yesPct}%` }} />
                     <div className="bg-rose-500" style={{ width: `${noPct}%` }} />
                   </div>
-                  <p className="text-xs mt-2 text-slate-400">Sí {yesPct}% • No {noPct}% • {total} pts</p>
+                  <p className="text-xs mt-2 text-slate-500 dark:text-slate-400">Sí {yesPct}% • No {noPct}% • {total} pts</p>
 
                   <div className="mt-4">
                     {isResolved ? (
-                      <div className="text-center text-sm px-3 py-3 rounded-xl bg-slate-800 text-white">
+                      <div className="text-center text-sm px-3 py-3 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-white">
                         <p className="font-bold">Mercado resuelto</p>
                         <p className="mt-1 text-slate-300">
                           Ganó <span className="text-emerald-400 font-bold">{market.winner === "yes" ? "Sí" : "No"}</span>
@@ -347,7 +349,7 @@ export default function Home() {
                       </div>
                     ) : (
                       <div className="space-y-2">
-                        <div className="flex items-center gap-2 bg-slate-800 rounded-xl px-3 py-2">
+                        <div className="flex items-center gap-2 bg-slate-200 dark:bg-slate-800 rounded-xl px-3 py-2">
                           <span className="text-slate-400 text-xs">pts</span>
                           <input
                             type="number" min="1" max="10" step="0.01" placeholder="1.00 - 10.00"
@@ -381,8 +383,8 @@ export default function Home() {
 
 function Card({ title, value, icon }: any) {
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3 sm:p-4">
-      <div className="flex items-center justify-between text-slate-400 text-xs sm:text-sm">
+    <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 sm:p-4">
+      <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs sm:text-sm">
         <span>{title}</span>
         {icon}
       </div>

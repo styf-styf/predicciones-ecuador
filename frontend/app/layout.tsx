@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { GoogleOAuthProvider } from "@react-oauth/google";
-
+import { ThemeProvider } from "next-themes";  // ← añade esto
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,14 +27,15 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning  // ← añade esto
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        
-        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
-          {children}
-        </GoogleOAuthProvider>
-
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>  {/* ← añade esto */}
+          <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
+            {children}
+          </GoogleOAuthProvider>
+        </ThemeProvider>  {/* ← y este cierre */}
       </body>
     </html>
   );

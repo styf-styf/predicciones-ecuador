@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function AdminPage() {
   const [markets, setMarkets] = useState<any[]>([]);
@@ -204,10 +205,10 @@ export default function AdminPage() {
   // 🎨 RENDER
   // =======================
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
+    <main className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
 
       {/* ===== HEADER ===== */}
-      <header className="sticky top-0 z-50 border-b border-slate-800 bg-slate-950/90 backdrop-blur">
+      <header className="sticky top-0 z-50 border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-3">
 
           {/* Logo */}
@@ -220,13 +221,14 @@ export default function AdminPage() {
           </div>
 
           {/* Search — solo desktop */}
-          <div className="hidden md:flex items-center gap-3 bg-slate-900 px-4 py-2 rounded-2xl w-80 lg:w-96">
+          <div className="hidden md:flex items-center gap-3 bg-slate-100 dark:bg-slate-900 px-4 py-2 rounded-2xl w-80 lg:w-96">
             <Search size={18} className="text-slate-400 shrink-0" />
             <input placeholder="Buscar..." className="bg-transparent outline-none w-full text-sm" />
           </div>
 
           {/* Acciones */}
           <div className="flex items-center gap-2 sm:gap-3">
+            <ThemeToggle />
             <button className="p-2 rounded-xl bg-slate-900"><Bell size={18} /></button>
 
             {/* Auth — desktop */}
@@ -258,8 +260,8 @@ export default function AdminPage() {
 
         {/* Menú móvil */}
         {showMobileMenu && (
-          <div className="sm:hidden border-t border-slate-800 bg-slate-950 px-4 py-4 space-y-3">
-            <div className="flex items-center gap-3 bg-slate-900 px-4 py-2.5 rounded-2xl">
+          <div className="sm:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-4 space-y-3">
+            <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-900 px-4 py-2.5 rounded-2xl">
               <Search size={16} className="text-slate-400 shrink-0" />
               <input placeholder="Buscar..." className="bg-transparent outline-none w-full text-sm" />
             </div>
@@ -294,7 +296,7 @@ export default function AdminPage() {
 
         {/* 📈 ESTADÍSTICAS */}
         {stats && (
-          <section className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5">
+          <section className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5">
             <div className="flex items-center gap-2 mb-4 sm:mb-6">
               <BarChart2 size={18} className="text-emerald-400" />
               <h2 className="text-lg sm:text-xl font-bold">Estadísticas generales</h2>
@@ -327,15 +329,15 @@ export default function AdminPage() {
 
         {/* 📈 GRÁFICAS */}
         {charts.length > 0 && (
-          <section className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5">
+          <section className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5">
             <div className="flex items-center gap-2 mb-4 sm:mb-6">
               <TrendingUp size={18} className="text-emerald-400" />
               <h2 className="text-lg sm:text-xl font-bold">Actividad últimos 7 días</h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-              <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4">
-                <h3 className="text-sm font-semibold text-slate-300 mb-4">Apuestas por día</h3>
+              <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4">
+                <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-4">Apuestas por día</h3>
                 <ResponsiveContainer width="100%" height={180}>
                   <BarChart data={charts}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
@@ -347,8 +349,8 @@ export default function AdminPage() {
                 </ResponsiveContainer>
               </div>
 
-              <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4">
-                <h3 className="text-sm font-semibold text-slate-300 mb-4">Volumen apostado (pts)</h3>
+              <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4">
+                <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-4">Volumen apostado (pts)</h3>
                 <ResponsiveContainer width="100%" height={180}>
                   <LineChart data={charts}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
@@ -361,7 +363,7 @@ export default function AdminPage() {
               </div>
 
               <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 md:col-span-2">
-                <h3 className="text-sm font-semibold text-slate-300 mb-4">Nuevos usuarios por día</h3>
+                <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-4">Nuevos usuarios por día</h3>
                 <ResponsiveContainer width="100%" height={180}>
                   <BarChart data={charts}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
@@ -380,7 +382,7 @@ export default function AdminPage() {
 
         {/* ⚙️ CONFIGURACIÓN */}
         {config && (
-          <section className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5">
+          <section className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5">
             <div className="flex flex-wrap items-center gap-2 mb-4 sm:mb-6">
               <Settings size={18} className="text-slate-400" />
               <h2 className="text-lg sm:text-xl font-bold">Configuración de la plataforma</h2>
@@ -400,13 +402,13 @@ export default function AdminPage() {
                   <label className="text-xs text-slate-400 mb-1 block">Apuesta mínima (pts)</label>
                   <input type="number" step="0.01" value={settingsForm.min_bet}
                     onChange={(e) => setSettingsForm((prev) => ({ ...prev, min_bet: e.target.value }))}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 outline-none text-sm" />
+                    className="w-full bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none text-sm text-slate-900 dark:text-white" />
                 </div>
                 <div>
                   <label className="text-xs text-slate-400 mb-1 block">Apuesta máxima (pts)</label>
                   <input type="number" step="0.01" value={settingsForm.max_bet}
                     onChange={(e) => setSettingsForm((prev) => ({ ...prev, max_bet: e.target.value }))}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 outline-none text-sm" />
+                    className="w-full bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none text-sm text-slate-900 dark:text-white" />
                 </div>
               </div>
 
@@ -418,13 +420,13 @@ export default function AdminPage() {
                   <label className="text-xs text-slate-400 mb-1 block">Comisión plataforma (%)</label>
                   <input type="number" step="0.1" min="0" max="100" value={settingsForm.commission}
                     onChange={(e) => setSettingsForm((prev) => ({ ...prev, commission: e.target.value }))}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 outline-none text-sm" />
+                    className="w-full bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none text-sm text-slate-900 dark:text-white" />
                 </div>
                 <div>
                   <label className="text-xs text-slate-400 mb-1 block">Puntos de bienvenida</label>
                   <input type="number" step="1" min="0" value={settingsForm.welcome_points}
                     onChange={(e) => setSettingsForm((prev) => ({ ...prev, welcome_points: e.target.value }))}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 outline-none text-sm" />
+                    className="w-full bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none text-sm text-slate-900 dark:text-white" />
                 </div>
               </div>
             </div>
@@ -437,8 +439,8 @@ export default function AdminPage() {
                 { label: "Comisión", value: `${config.commission}%`, color: "text-emerald-400" },
                 { label: "Puntos bienvenida", value: `${config.welcome_points} pts`, color: "text-blue-400" },
               ].map((item) => (
-                <div key={item.label} className="bg-slate-950 border border-slate-800 rounded-xl p-3 text-center">
-                  <p className="text-xs text-slate-400">{item.label}</p>
+                <div key={item.label} className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-center">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{item.label}</p>
                   <p className={`text-lg font-bold ${item.color}`}>{item.value}</p>
                 </div>
               ))}
@@ -451,7 +453,7 @@ export default function AdminPage() {
         )}
 
         {/* 👥 GESTIÓN DE USUARIOS */}
-        <section className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5">
+        <section className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5">
           <div className="flex items-center gap-2 mb-4 sm:mb-6">
             <Users size={18} className="text-blue-400" />
             <h2 className="text-lg sm:text-xl font-bold">Gestión de usuarios</h2>
@@ -461,7 +463,7 @@ export default function AdminPage() {
           {/* Tabla desktop */}
           <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="text-slate-400 border-b border-slate-800">
+              <thead className="text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
                 <tr>
                   <th className="text-left py-2">Email</th>
                   <th className="text-left py-2">Nombre</th>
@@ -475,7 +477,7 @@ export default function AdminPage() {
               </thead>
               <tbody>
                 {users.map((u) => (
-                  <tr key={u.id} className={`border-b border-slate-900 ${u.suspended ? "opacity-50" : ""}`}>
+                  <tr key={u.id} className={`border-b border-slate-100 dark:border-slate-900 ${u.suspended ? "opacity-50" : ""}`}>
                     <td className="py-3 text-xs">{u.email}</td>
                     <td className="py-3 text-xs">{u.nombre} {u.apellido}</td>
                     <td className="py-3 text-amber-400 font-bold">{u.points}</td>
@@ -492,7 +494,7 @@ export default function AdminPage() {
                       <div className="flex items-center gap-1">
                         <input type="number" placeholder="0" value={pointsInput[u.id] || ""}
                           onChange={(e) => setPointsInput((prev) => ({ ...prev, [u.id]: e.target.value }))}
-                          className="w-16 bg-slate-800 rounded-lg px-2 py-1 text-xs outline-none" />
+                          className="w-16 bg-slate-200 dark:bg-slate-800 rounded-lg px-2 py-1 text-xs outline-none text-slate-900 dark:text-white" />
                         <button onClick={() => handlePoints(u.id, parseFloat(pointsInput[u.id] || "0"))} className="p-1 rounded-lg bg-emerald-500 text-slate-950"><Plus size={12} /></button>
                         <button onClick={() => handlePoints(u.id, -parseFloat(pointsInput[u.id] || "0"))} className="p-1 rounded-lg bg-rose-500 text-white"><Minus size={12} /></button>
                       </div>
@@ -516,7 +518,7 @@ export default function AdminPage() {
           {/* Cards móvil — reemplaza la tabla */}
           <div className="sm:hidden space-y-3">
             {users.map((u) => (
-              <div key={u.id} className={`bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-3 ${u.suspended ? "opacity-60" : ""}`}>
+              <div key={u.id} className={`bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-3 ${u.suspended ? "opacity-60" : ""}`}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="font-semibold text-sm truncate">{u.nombre} {u.apellido}</p>
@@ -536,7 +538,7 @@ export default function AdminPage() {
                 <div className="flex items-center gap-2">
                   <input type="number" placeholder="pts" value={pointsInput[u.id] || ""}
                     onChange={(e) => setPointsInput((prev) => ({ ...prev, [u.id]: e.target.value }))}
-                    className="w-20 bg-slate-800 rounded-lg px-3 py-1.5 text-xs outline-none" />
+                    className="w-20 bg-slate-200 dark:bg-slate-800 rounded-lg px-3 py-1.5 text-xs outline-none text-slate-900 dark:text-white" />
                   <button onClick={() => handlePoints(u.id, parseFloat(pointsInput[u.id] || "0"))} className="p-1.5 rounded-lg bg-emerald-500 text-slate-950"><Plus size={13} /></button>
                   <button onClick={() => handlePoints(u.id, -parseFloat(pointsInput[u.id] || "0"))} className="p-1.5 rounded-lg bg-rose-500 text-white"><Minus size={13} /></button>
                   <div className="ml-auto flex gap-2">
@@ -551,7 +553,7 @@ export default function AdminPage() {
 
         {/* 👑 GESTIÓN DE MERCADOS */}
         {isAdmin && (
-          <section className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5">
+          <section className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5">
             <div className="flex items-center justify-between gap-4 mb-4">
               <div>
                 <h2 className="text-lg sm:text-2xl font-bold">Gestión de mercados</h2>
@@ -563,7 +565,7 @@ export default function AdminPage() {
             <div className="flex flex-col sm:grid sm:grid-cols-3 gap-3">
               <input value={newQuestion} onChange={(e) => setNewQuestion(e.target.value)}
                 placeholder="Nueva pregunta de mercado..."
-                className="sm:col-span-2 bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 outline-none text-sm" />
+                className="sm:col-span-2 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 outline-none text-sm text-slate-900 dark:text-white" />
               <button onClick={handleCreateMarket} className="bg-emerald-500 text-slate-950 font-bold rounded-xl px-4 py-3 text-sm active:scale-95 transition-transform">
                 Crear mercado
               </button>
@@ -572,7 +574,7 @@ export default function AdminPage() {
             {/* Tabla desktop */}
             <div className="hidden sm:block mt-4 overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="text-slate-400 border-b border-slate-800">
+                <thead className="text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
                   <tr>
                     <th className="text-left py-2">ID</th>
                     <th className="text-left py-2">Pregunta</th>
@@ -613,7 +615,7 @@ export default function AdminPage() {
             {/* Cards móvil para mercados */}
             <div className="sm:hidden mt-4 space-y-3">
               {markets.map((m) => (
-                <div key={m.id} className="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-3">
+                <div key={m.id} className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <p className="font-semibold text-sm leading-snug flex-1">{m.question}</p>
                     <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full ${m.resolved ? "bg-slate-700 text-white" : "bg-emerald-500/10 text-emerald-400"}`}>
@@ -662,7 +664,7 @@ export default function AdminPage() {
                     <div className="bg-emerald-500" style={{ width: `${yesPct}%` }} />
                     <div className="bg-rose-500" style={{ width: `${noPct}%` }} />
                   </div>
-                  <p className="text-xs mt-2 text-slate-400">Sí {yesPct}% • No {noPct}% • {total} pts</p>
+                  <p className="text-xs mt-2 text-slate-500 dark:text-slate-400">Sí {yesPct}% • No {noPct}% • {total} pts</p>
                   <div className="mt-4">
                     {market.resolved ? (
                       <div className="text-center text-sm px-3 py-2 rounded-xl bg-slate-800 text-white">
@@ -682,13 +684,13 @@ export default function AdminPage() {
         </section>
 
         {/* 🏆 HISTORIAL GANADORES */}
-        <section className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5">
+        <section className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5">
           <h2 className="text-lg sm:text-2xl font-bold mb-4">Historial de Ganadores</h2>
 
           {/* Tabla desktop */}
           <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="text-slate-400 border-b border-slate-800">
+              <thead className="text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
                 <tr>
                   <th className="text-left py-2">Usuario</th>
                   <th className="text-left py-2">Mercado</th>
@@ -714,7 +716,7 @@ export default function AdminPage() {
           {/* Cards móvil para ganadores */}
           <div className="sm:hidden space-y-3">
             {winners.map((w) => (
-              <div key={w.id} className="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-1">
+              <div key={w.id} className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-1">
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-slate-400 truncate flex-1">{w.users?.email}</p>
                   <span className="text-amber-400 font-bold text-sm shrink-0 ml-2">+{w.reward} pts</span>
@@ -736,8 +738,8 @@ export default function AdminPage() {
 
 function Card({ title, value, icon }: any) {
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3 sm:p-4">
-      <div className="flex items-center justify-between text-slate-400 text-xs sm:text-sm">
+    <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 sm:p-4">
+      <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs sm:text-sm">
         <span>{title}</span>{icon}
       </div>
       <p className="text-xl sm:text-2xl font-bold mt-2">{value}</p>
@@ -747,11 +749,11 @@ function Card({ title, value, icon }: any) {
 
 function StatCard({ title, value, sub, icon, color }: any) {
   return (
-    <div className="bg-slate-950 border border-slate-800 rounded-2xl p-3 sm:p-4">
+    <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 sm:p-4">
       <div className={`flex items-center gap-2 ${color} mb-2`}>
         {icon}<span className="text-xs sm:text-sm font-medium">{title}</span>
       </div>
-      <p className="text-lg sm:text-2xl font-bold text-white">{value}</p>
+      <p className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
       <p className="text-xs text-slate-400 mt-1">{sub}</p>
     </div>
   );
