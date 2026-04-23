@@ -1,9 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Bell, Search, TrendingUp, Trophy, LogOut, LogIn, Flame, Menu, X } from "lucide-react";
+import { Bell, TrendingUp, Trophy, Flame } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import ThemeToggle from "@/components/ThemeToggle";
 import Header from "@/components/Header";
 
 export default function Home() {
@@ -87,9 +86,9 @@ export default function Home() {
                 const yesPct = ((market.yes / total) * 100).toFixed(0);
                 const noPct = ((market.no / total) * 100).toFixed(0);
                 return (
-                  <button
+                  <Link
                     key={market.id}
-                    onClick={() => scrollToMarket(market.id)}
+                    href={`/market/${market.id}`}
                     className="bg-slate-100 dark:bg-slate-900 border border-orange-500/30 rounded-2xl p-4 flex items-center gap-3 hover:border-orange-400 transition text-left w-full"
                   >
                     <span className="text-xl sm:text-2xl font-black text-orange-400 shrink-0">#{index + 1}</span>
@@ -101,7 +100,7 @@ export default function Home() {
                       </div>
                       <p className="text-xs mt-1 text-slate-400">{total} pts • Sí {yesPct}% • No {noPct}%</p>
                     </div>
-                  </button>
+                  </Link>
                 );
               })}
             </div>
