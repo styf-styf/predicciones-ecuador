@@ -23,7 +23,10 @@ export default function MarketPage() {
   const [loadingNews, setLoadingNews] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const [token, setToken] = useState<string | null>(null);
+  useEffect(() => {
+    setToken(localStorage.getItem("token"));
+  }, []);
 
   const fetchMarket = async () => {
     const res = await fetch(`https://predicciones-ecuador.onrender.com/markets`);
@@ -53,11 +56,18 @@ export default function MarketPage() {
   };
 
   useEffect(() => {
+  if (id) {
     fetchMarket();
-    fetchMe();
     fetchComments();
     fetchNews();
-  }, [id]);
+  }
+ }, [id]);
+
+  useEffect(() => {
+    if (token) {
+        fetchMe();
+    }
+ }, [token]);
 
   const handleBet = async () => {
     if (!token) return alert("Debes iniciar sesión");
