@@ -454,25 +454,16 @@ export default function Home() {
                       </div>
                     ) : (
                       <div className="space-y-2">
-                        <div className="flex items-center gap-2 bg-slate-200 dark:bg-slate-800 rounded-xl px-3 py-2">
-                          <span className="text-slate-400 text-xs">pts</span>
-                          <input
-                            type="number" min="1" max="10" step="0.01" placeholder="1.00 - 10.00"
-                            value={betAmounts[market.id] || ""}
-                            onChange={(e) => setBetAmounts((prev) => ({ ...prev, [market.id]: e.target.value }))}
-                            className="bg-transparent outline-none w-full text-sm text-white placeholder-slate-500"
-                          />
-                        </div>
                         <div className="grid grid-cols-2 gap-2">
-                          <button onClick={() => handleBet(market.id, "yes")}
-                            className="bg-emerald-500 text-slate-950 font-bold rounded-xl py-2.5 text-sm active:scale-95 transition-transform">
+                          <Link href={`/market/${market.id}?bet=yes`}
+                          className="bg-emerald-500 text-slate-950 font-bold rounded-xl py-2.5 text-sm text-center active:scale-95 transition-transform">
                             Comprar Sí
-                          </button>
-                          <button onClick={() => handleBet(market.id, "no")}
-                            className="bg-rose-500 text-white font-bold rounded-xl py-2.5 text-sm active:scale-95 transition-transform">
-                            Comprar No
-                          </button>
-                        </div>
+                            </Link>
+                            <Link href={`/market/${market.id}?bet=no`}
+                            className="bg-rose-500 text-white font-bold rounded-xl py-2.5 text-sm text-center active:scale-95 transition-transform">
+                              Comprar No
+                              </Link>
+                              </div>
                       </div>
                     )}
                   </div>

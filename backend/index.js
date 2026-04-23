@@ -746,6 +746,61 @@ app.delete("/admin/markets/:id", auth, async (req, res) => {
 });
 
 // =======================
+// 💬 COMENTARIOS
+// =======================
+app.get("/markets/:id/comments", async (req, res) => {
+  const { id } = req.params;
+  const { data, error } = await supabase
+    .from("comments")
+    .select("*")
+    .eq("market_id", id)
+    .order("created_at", { ascending: false });
+  if (error) return res.status(500).json({ message: "Error" });
+  res.json(data);
+});
+
+app.post("/markets/:id/comments", auth, async (req, res) => {
+  const { id } = req.params;
+  const { content } = req.body;
+  if (!content || content.trim() === "") return res.status(400).json({ message: "Comentario vacío" });
+
+  const { data: user } = await supabase
+    .from("users").select("nombre, email").eq("id", req.userId).single();
+
+  const username = user?.nombre || user?.email || "Anónimo";
+
+  const { data, error } = await supabase
+    .from("comments")
+    .insert({ market_id: id, user_id: req.userId, username, content })
+    .select()
+    .single();
+  if (error) return res.status(500).json({ message: "Error al comentar" });
+  res.json(data);
+});
+
+// =======================
+// 📰 NOTICIAS RELACIONADAS
+// =======================
+app.get("/markets/:id/news", async (req, res) => {
+  const { id } = req.params;
+  const { data: market } = await supabase
+    .from("markets").select("question").eq("id", id).single();
+  if (!market) return res.status(404).json({ message: "Mercado no encontrado" });
+
+  const query = encodeURIComponent(market.question.slice(0, 60));
+  const apiKey = process.env.NEWS_API_KEY;
+  const url = `https://newsapi.org/v2/everything?q=${query}&language=es&sortBy=publishedAt&pageSize=4&apiKey=${apiKey}`;
+
+  try {
+    const newsRes = await fetch(url);
+    const newsData = await newsRes.json();
+    res.json(newsData.articles || []);
+  } catch {
+    res.json([]);
+  }
+});
+
+// =======================
 // 🧪 TEST
 // =======================
 app.get("/", (req, res) => {
