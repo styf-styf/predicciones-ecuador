@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, TrendingUp, MessageCircle, Send, Newspaper } from "lucide-react";
+import Header from "@/components/Header";
+
 
 export default function MarketPage() {
   const { id } = useParams();
@@ -99,7 +101,9 @@ export default function MarketPage() {
   const noPct = ((market.no / total) * 100).toFixed(0);
 
   return (
+    
     <main className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
+        <Header />
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
 
         {/* Back */}

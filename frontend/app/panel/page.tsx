@@ -8,6 +8,7 @@ import {
   Bell, Search, LogOut, LogIn, Menu, X
 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
+import Header from "@/components/Header";
 
 export default function PanelPage() {
   const router = useRouter();
