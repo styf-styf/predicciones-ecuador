@@ -88,6 +88,8 @@ export default function MarketPage() {
   };
 
   const handleComment = async () => {
+    console.log("token:", token);
+    console.log("comment:", newComment);
     if (!token) return alert("Debes iniciar sesión para comentar");
     if (!newComment.trim()) return;
     setSubmitting(true);
@@ -96,7 +98,10 @@ export default function MarketPage() {
       headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
       body: JSON.stringify({ content: newComment }),
     });
+    const data = await res.json();
+    console.log("respuesta backend:", data);
     if (res.ok) { setNewComment(""); fetchComments(); }
+    else alert(data.message);
     setSubmitting(false);
   };
 
