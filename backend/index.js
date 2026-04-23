@@ -205,6 +205,56 @@ app.get("/ranking", async (req, res) => {
   res.json(data);
 });
 
+
+
+app.get("/markets", async (req, res) => {
+  const { data, error } = await supabase
+    .from("markets").select("*").order("id", { ascending: false });
+
+  if (error) return res.status(500).json({ message: error.message });
+  res.json(data);
+});
+
+// =======================
+// 🔍 BUSCAR MERCADOS
+// =======================
+app.get("/markets/search", async (req, res) => {
+  const { q } = req.query;
+
+  if (!q || q.trim() === "") return res.json([]);
+
+  // Detectar si es admin o user
+  let isAdmin = false;
+  const token = req.headers.authorization?.split(" ")[1];
+
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, SECRET);
+      const { data: user } = await supabase
+        .from("users").select("role").eq("id", decoded.id).single();
+      isAdmin = user?.role === "admin";
+    } catch {
+      isAdmin = false;
+    }
+  }
+
+  // Si es admin ve todo, si es user solo mercados en vivo
+  let query = supabase
+    .from("markets")
+    .select("*")
+    .ilike("question", `%${q}%`)
+    .order("created_at", { ascending: false });
+
+  if (!isAdmin) {
+    query = query.eq("resolved", false);
+  }
+
+  const { data, error } = await query;
+
+  if (error) return res.status(500).json({ message: error.message });
+  res.json(data);
+});
+
 // =======================
 // 🏆 ADMIN - WINNERS
 // =======================

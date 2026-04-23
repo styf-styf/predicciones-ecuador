@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import {
   Bell, Search, TrendingUp, Trophy, Wallet,
@@ -10,6 +10,7 @@ import {
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import ThemeToggle from "@/components/ThemeToggle";
+
 
 export default function AdminPage() {
   const [markets, setMarkets] = useState<any[]>([]);
@@ -27,6 +28,10 @@ export default function AdminPage() {
   const [settingsForm, setSettingsForm] = useState({
     min_bet: "", max_bet: "", commission: "", welcome_points: "",
   });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showResults, setShowResults] = useState(false);
+  const searchRef = useRef<any>(null);
 
   // =======================
   // 🔧 FUNCIONES
@@ -196,10 +201,43 @@ export default function AdminPage() {
     if (res.ok) fetchUsers(); else alert(data.message);
   };
 
+  const handleSearch = async (q: string) => {
+  setSearchQuery(q);
+  if (q.trim() === "") {
+    setSearchResults([]);
+    setShowResults(false);
+    return;
+  }
+  const token = localStorage.getItem("token");
+  const res = await fetch(
+    `https://predicciones-ecuador.onrender.com/markets/search?q=${encodeURIComponent(q)}`,
+    { headers: { authorization: `Bearer ${token}` } }
+  );
+  const data = await res.json();
+  setSearchResults(data);
+  setShowResults(true);
+ };
+
   // =======================
   // 🔁 EFECTO
   // =======================
-  useEffect(() => { fetchMarkets(); loadMe(); }, []);
+  useEffect(() => { fetchMarkets(); loadMe(); 
+    const handleClickOutsideSearch = (e: any) => {
+  if (searchRef.current && !searchRef.current.contains(e.target)) {
+    setShowResults(false);
+  }
+ };
+ document.addEventListener("mousedown", handleClickOutsideSearch);
+
+ const debounceTimer = setTimeout(() => {
+  if (searchQuery.trim() !== "") handleSearch(searchQuery);
+ }, 400);
+
+ return () => {
+  document.removeEventListener("mousedown", handleClickOutsideSearch);
+  clearTimeout(debounceTimer);
+ };
+  }, []);
 
   // =======================
   // 🎨 RENDER
@@ -221,10 +259,48 @@ export default function AdminPage() {
           </div>
 
           {/* Search — solo desktop */}
-          <div className="hidden md:flex items-center gap-3 bg-slate-100 dark:bg-slate-900 px-4 py-2 rounded-2xl w-80 lg:w-96">
-            <Search size={18} className="text-slate-400 shrink-0" />
-            <input placeholder="Buscar..." className="bg-transparent outline-none w-full text-sm" />
-          </div>
+          <div className="relative hidden md:block" ref={searchRef}>
+  <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-900 px-4 py-2 rounded-2xl w-80 lg:w-96">
+    <Search size={18} className="text-slate-400 shrink-0" />
+    <input
+      placeholder="Buscar mercados..."
+      value={searchQuery}
+      onChange={(e) => handleSearch(e.target.value)}
+      className="bg-transparent outline-none w-full text-sm text-slate-900 dark:text-white placeholder-slate-400"
+    />
+    {searchQuery && (
+      <button onClick={() => { setSearchQuery(""); setSearchResults([]); setShowResults(false); }}>
+        <X size={14} className="text-slate-400 hover:text-slate-200" />
+      </button>
+    )}
+  </div>
+
+  {/* Dropdown resultados */}
+  {showResults && (
+    <div className="absolute top-12 left-0 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden">
+      {searchResults.length === 0 ? (
+        <p className="text-sm text-slate-400 text-center py-6">Sin resultados para "{searchQuery}"</p>
+      ) : (
+        <div className="max-h-80 overflow-y-auto">
+          {searchResults.map((m) => (
+            <button
+              key={m.id}
+              onClick={() => { setShowResults(false); setSearchQuery(""); }}
+              className="w-full text-left px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition border-b border-slate-100 dark:border-slate-800 last:border-0"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{m.question}</p>
+                <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full ${m.resolved ? "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300" : "bg-emerald-500/10 text-emerald-400"}`}>
+                  {m.resolved ? "Cerrado" : "En vivo"}
+                </span>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )}
+ </div>
 
           {/* Acciones */}
           <div className="flex items-center gap-2 sm:gap-3">
@@ -262,9 +338,33 @@ export default function AdminPage() {
         {showMobileMenu && (
           <div className="sm:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-4 space-y-3">
             <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-900 px-4 py-2.5 rounded-2xl">
-              <Search size={16} className="text-slate-400 shrink-0" />
-              <input placeholder="Buscar..." className="bg-transparent outline-none w-full text-sm" />
-            </div>
+  <Search size={16} className="text-slate-400 shrink-0" />
+  <input
+    placeholder="Buscar mercados..."
+    value={searchQuery}
+    onChange={(e) => handleSearch(e.target.value)}
+    className="bg-transparent outline-none w-full text-sm text-slate-900 dark:text-white"
+  />
+</div>
+
+{showResults && searchResults.length > 0 && (
+  <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
+    {searchResults.map((m) => (
+      <button
+        key={m.id}
+        onClick={() => { setShowResults(false); setSearchQuery(""); setShowMobileMenu(false); }}
+        className="w-full text-left px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition border-b border-slate-100 dark:border-slate-800 last:border-0"
+      >
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{m.question}</p>
+          <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full ${m.resolved ? "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300" : "bg-emerald-500/10 text-emerald-400"}`}>
+            {m.resolved ? "Cerrado" : "En vivo"}
+          </span>
+        </div>
+      </button>
+    ))}
+  </div>
+ )}
             <div className="flex flex-col gap-2">
               <Link href="/" onClick={() => setShowMobileMenu(false)} className="px-4 py-3 rounded-2xl bg-slate-800 font-medium text-sm text-center">Inicio</Link>
               {isLogged ? (
