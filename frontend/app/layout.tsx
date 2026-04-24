@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Providers } from "@/components/Providers";
+import Footer from "@/components/Footer";
+
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -25,6 +27,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {children}
           </GoogleOAuthProvider>
         </Providers>
+      </body>
+    </html>
+  );
+}
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="es">
+      <body>
+        {children}
+        <Footer />   {/* ← aquí */}
       </body>
     </html>
   );

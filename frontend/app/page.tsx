@@ -125,7 +125,11 @@ export default function Home() {
                   className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 hover:border-slate-300 dark:hover:border-slate-700 transition"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <h3 className="font-semibold text-sm sm:text-base mt-0.5 leading-snug">{market.question}</h3>
+                    <Link href={`/market/${market.id}`}>
+                    <h3 className="font-semibold text-sm sm:text-base mt-0.5 leading-snug hover:text-emerald-400 transition-colors cursor-pointer">
+                      {market.question}
+                      </h3>
+                      </Link>
                     <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full ${isResolved ? "bg-slate-700 text-white" : "bg-emerald-500/10 text-emerald-400"}`}>
                       {isResolved ? "Cerrado" : "En vivo"}
                     </span>
