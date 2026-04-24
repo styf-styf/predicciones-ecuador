@@ -235,47 +235,72 @@ export default function Home() {
   );
 }
 
-function Carousel({ markets, renderCard }: {
+function Carousel({ markets, renderCard, autoplayMs = 5000, visibleCount = 1 }: {
   markets: any[];
   renderCard: (market: any, index: number, globalIndex: number) => React.ReactNode;
+  autoplayMs?: number;
+  visibleCount?: number;
 }) {
   const [current, setCurrent] = useState(0);
-  const visibleCount = 2;
+  const [paused, setPaused] = useState(false);
   const maxIndex = Math.max(0, markets.length - visibleCount);
 
-  const prev = () => setCurrent((c) => Math.max(0, c - 1));
-  const next = () => setCurrent((c) => Math.min(maxIndex, c + 1));
+  const prev = () => setCurrent((c) => (c === 0 ? maxIndex : c - 1));
+  const next = () => setCurrent((c) => (c === maxIndex ? 0 : c + 1));
+
+  useEffect(() => {
+    if (paused || markets.length <= visibleCount) return;
+    const timer = setInterval(next, autoplayMs);
+    return () => clearInterval(timer);
+  }, [current, paused, autoplayMs, visibleCount, markets.length]);
 
   const visible = markets.slice(current, current + visibleCount);
+  // wrap-around: si llegamos al final y visible está incompleto
+  const wrapped = visible.length < visibleCount
+    ? [...visible, ...markets.slice(0, visibleCount - visible.length)]
+    : visible;
 
   return (
-    <div>
+    <div onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
       <div className="flex flex-col gap-3">
-        {visible.map((market, index) => renderCard(market, index, current + index))}
+        {wrapped.map((market, index) => renderCard(market, index, current + index))}
       </div>
 
       {markets.length > visibleCount && (
         <div className="flex items-center justify-center gap-3 mt-4">
-          <button onClick={prev} disabled={current === 0}
-            className="w-8 h-8 rounded-full border border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-500 disabled:opacity-30 transition text-lg">
+          <button onClick={prev}
+            className="w-8 h-8 rounded-full border border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-500 transition text-lg">
             ‹
           </button>
           <div className="flex gap-1.5">
-            {Array.from({ length: maxIndex + 1 }).map((_, i) => (
+            {markets.map((_, i) => (
               <button key={i} onClick={() => setCurrent(i)}
                 className={`h-1.5 rounded-full transition-all ${i === current ? "bg-orange-400 w-4" : "bg-slate-300 dark:bg-slate-700 w-1.5"}`}
               />
             ))}
           </div>
-          <button onClick={next} disabled={current === maxIndex}
-            className="w-8 h-8 rounded-full border border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-500 disabled:opacity-30 transition text-lg">
+          <button onClick={next}
+            className="w-8 h-8 rounded-full border border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-500 transition text-lg">
             ›
           </button>
         </div>
       )}
+
+      {/* Barra de progreso autoplay */}
+      {!paused && (
+        <div className="mt-2 mx-auto w-16 h-0.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+          <div
+            key={current}
+            className="h-full bg-orange-400 rounded-full"
+            style={{ animation: `progress ${autoplayMs}ms linear` }}
+          />
+        </div>
+      )}
+
+      <style>{`@keyframes progress { from { width: 0% } to { width: 100% } }`}</style>
     </div>
   );
-}
+ }
 
 function Card({ title, value, icon }: any) {
   return (

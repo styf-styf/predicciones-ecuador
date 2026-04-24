@@ -870,6 +870,37 @@ app.get("/markets/:id/my-bet", auth, async (req, res) => {
 });
 
 // =======================
+// 🎠 CONFIG CARRUSEL
+// =======================
+app.get("/carousel-config", async (req, res) => {
+  const { data, error } = await supabase
+    .from("config").select("trending_count, winners_count, autoplay_ms").eq("id", 1).single();
+  if (error) return res.status(500).json({ message: error.message });
+  res.json({
+    trending_count: data?.trending_count ?? 1,
+    winners_count: data?.winners_count ?? 1,
+    autoplay_ms: data?.autoplay_ms ?? 5000,
+  });
+});
+
+app.put("/admin/carousel-config", auth, async (req, res) => {
+  const { data: admin } = await supabase
+    .from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const { trending_count, winners_count, autoplay_ms } = req.body;
+
+  if (trending_count < 1 || winners_count < 1 || autoplay_ms < 1000) {
+    return res.status(400).json({ message: "Valores inválidos" });
+  }
+
+  const { error } = await supabase
+    .from("config").update({ trending_count, winners_count, autoplay_ms }).eq("id", 1);
+  if (error) return res.status(500).json({ message: error.message });
+  res.json({ message: "Configuración actualizada" });
+});
+
+// =======================
 // 🧪 TEST
 // =======================
 app.get("/", (req, res) => {

@@ -652,6 +652,37 @@ export default function AdminPage() {
                 ))}
               </div>
 
+              // Dentro del formulario de settings del admin
+<div className="border-t border-slate-200 dark:border-slate-800 pt-6 mt-6">
+  <h3 className="font-bold text-base mb-4">Configuración de carruseles</h3>
+  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div>
+      <label className="text-sm text-slate-400 mb-1 block">Cards tendencias</label>
+      <input type="number" min="1" max="5"
+        value={settings.trending_count ?? 1}
+        onChange={(e) => setSettings({ ...settings, trending_count: Number(e.target.value) })}
+        className="w-full bg-slate-100 dark:bg-slate-800 rounded-xl px-4 py-2.5 text-sm outline-none"
+      />
+    </div>
+    <div>
+      <label className="text-sm text-slate-400 mb-1 block">Cards ganadores</label>
+      <input type="number" min="1" max="5"
+        value={settings.winners_count ?? 1}
+        onChange={(e) => setSettings({ ...settings, winners_count: Number(e.target.value) })}
+        className="w-full bg-slate-100 dark:bg-slate-800 rounded-xl px-4 py-2.5 text-sm outline-none"
+      />
+    </div>
+    <div>
+      <label className="text-sm text-slate-400 mb-1 block">Autoplay (ms)</label>
+      <input type="number" min="1000" step="500"
+        value={settings.autoplay_ms ?? 5000}
+        onChange={(e) => setSettings({ ...settings, autoplay_ms: Number(e.target.value) })}
+        className="w-full bg-slate-100 dark:bg-slate-800 rounded-xl px-4 py-2.5 text-sm outline-none"
+      />
+    </div>
+  </div>
+ </div>
+
               <button onClick={handleSaveSettings} className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl py-3 text-[13px] transition active:scale-[0.99]">
                 Guardar configuración
               </button>
