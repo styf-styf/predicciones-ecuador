@@ -28,8 +28,12 @@ export default function AdminPage() {
   const [config, setConfig] = useState<any>(null);
   const [activeSection, setActiveSection] = useState<Section>("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [settingsForm, setSettingsForm] = useState({
+  const [settingsForm, setSettingsForm] = useState<{
+    min_bet: string; max_bet: string; commission: string; welcome_points: string;
+    trending_count: number; winners_count: number; autoplay_ms: number;
+  }>({
     min_bet: "", max_bet: "", commission: "", welcome_points: "",
+    trending_count: 1, winners_count: 1, autoplay_ms: 5000,
   });
   const [searchQuery, setSearchQuery] = useState("");
 
