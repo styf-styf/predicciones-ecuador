@@ -219,7 +219,7 @@ export default function Home() {
             <div className="bg-rose-500 transition-all" style={{ width: `${noPct}%` }} />
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-            Sí {yesPct}% • No {noPct}% • {total} pts
+            Sí {total === 0 ? "—" : `${yesPct}%`} • No {total === 0 ? "—" : `${noPct}%`} • {total} pts
           </p>
 
           {/* Acción */}
