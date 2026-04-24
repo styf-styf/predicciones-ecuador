@@ -72,14 +72,83 @@ export default function Home() {
         </section>
 
         {/* Tendencias - Slider */}
- {trendingMarkets.length > 0 && (
-  <section>
-    <div className="flex items-center gap-2 mb-4">
-      <Flame size={18} className="text-orange-400" />
-      <h2 className="text-lg sm:text-xl font-bold">Tendencias</h2>
-      <span className="text-xs text-slate-400 hidden sm:inline">Mercados con mayor actividad</span>
-    </div>
-    <TrendingSlider markets={trendingMarkets} />
+        {/* Carruseles lado a lado */}
+{(trendingMarkets.length > 0 || markets.filter(m => m.resolved).length > 0) && (
+  <section className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+
+    {/* Carrusel Tendencias */}
+    {trendingMarkets.length > 0 && (
+      <div>
+        <div className="flex items-center gap-2 mb-4">
+          <Flame size={18} className="text-orange-400" />
+          <h2 className="text-lg font-bold">Tendencias</h2>
+        </div>
+        <Carousel
+          markets={trendingMarkets}
+          renderCard={(market, index, globalIndex) => {
+            const total = (market.yes ?? 0) + (market.no ?? 0) || 1;
+            const yesPct = ((market.yes / total) * 100).toFixed(0);
+            const noPct = ((market.no / total) * 100).toFixed(0);
+            return (
+              <Link key={market.id} href={`/market/${market.id}`}
+                className="bg-slate-100 dark:bg-slate-900 border border-orange-500/30 rounded-2xl p-4 flex items-center gap-3 hover:border-orange-400 transition">
+                <span className="text-2xl font-black text-orange-400 shrink-0">#{globalIndex + 1}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm truncate">{market.question}</p>
+                  <div className="mt-2 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden flex">
+                    <div className="bg-emerald-500" style={{ width: `${yesPct}%` }} />
+                    <div className="bg-rose-500" style={{ width: `${noPct}%` }} />
+                  </div>
+                  <p className="text-xs mt-1 text-slate-400">{total} pts • Sí {yesPct}% • No {noPct}%</p>
+                </div>
+              </Link>
+            );
+          }}
+        />
+      </div>
+    )}
+
+    {/* Carrusel Ganadores */}
+    {markets.filter(m => m.resolved).length > 0 && (
+      <div>
+        <div className="flex items-center gap-2 mb-4">
+          <Trophy size={18} className="text-yellow-400" />
+          <h2 className="text-lg font-bold">Ganadores</h2>
+        </div>
+        <Carousel
+          markets={markets.filter(m => m.resolved)}
+          renderCard={(market, index, globalIndex) => {
+            const total = (market.yes ?? 0) + (market.no ?? 0) || 1;
+            const yesPct = ((market.yes / total) * 100).toFixed(0);
+            const noPct = ((market.no / total) * 100).toFixed(0);
+            const wonYes = market.winner === "yes";
+            return (
+              <Link key={market.id} href={`/market/${market.id}`}
+                className={`border rounded-2xl p-4 flex items-center gap-3 transition ${
+                  wonYes
+                    ? "bg-emerald-500/5 border-emerald-500/40 hover:border-emerald-400"
+                    : "bg-rose-500/5 border-rose-500/40 hover:border-rose-400"
+                }`}>
+                <span className={`text-2xl font-black shrink-0 ${wonYes ? "text-emerald-400" : "text-rose-400"}`}>
+                  {wonYes ? "✓" : "✗"}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm truncate">{market.question}</p>
+                  <div className="mt-2 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden flex">
+                    <div className="bg-emerald-500" style={{ width: `${yesPct}%` }} />
+                    <div className="bg-rose-500" style={{ width: `${noPct}%` }} />
+                  </div>
+                  <p className={`text-xs mt-1 font-semibold ${wonYes ? "text-emerald-400" : "text-rose-400"}`}>
+                    Ganó {wonYes ? "Sí" : "No"} • {total} pts apostados
+                  </p>
+                </div>
+              </Link>
+            );
+          }}
+        />
+      </div>
+    )}
+
   </section>
  )}
 
@@ -166,11 +235,13 @@ export default function Home() {
   );
 }
 
-function TrendingSlider({ markets }: { markets: any[] }) {
+function Carousel({ markets, renderCard }: {
+  markets: any[];
+  renderCard: (market: any, index: number, globalIndex: number) => React.ReactNode;
+}) {
   const [current, setCurrent] = useState(0);
   const visibleCount = 2;
-  const total = markets.length;
-  const maxIndex = Math.max(0, total - visibleCount);
+  const maxIndex = Math.max(0, markets.length - visibleCount);
 
   const prev = () => setCurrent((c) => Math.max(0, c - 1));
   const next = () => setCurrent((c) => Math.min(maxIndex, c + 1));
@@ -178,70 +249,26 @@ function TrendingSlider({ markets }: { markets: any[] }) {
   const visible = markets.slice(current, current + visibleCount);
 
   return (
-    <div className="relative">
-      {/* Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-        {visible.map((market, index) => {
-          const total = (market.yes ?? 0) + (market.no ?? 0) || 1;
-          const yesPct = ((market.yes / total) * 100).toFixed(0);
-          const noPct = ((market.no / total) * 100).toFixed(0);
-          const globalIndex = current + index;
-
-          return (
-            <Link
-              key={market.id}
-              href={`/market/${market.id}`}
-              className="bg-slate-100 dark:bg-slate-900 border border-orange-500/30 rounded-2xl p-4 flex items-center gap-3 hover:border-orange-400 transition"
-            >
-              <span className="text-2xl font-black text-orange-400 shrink-0">
-                #{globalIndex + 1}
-              </span>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm truncate">{market.question}</p>
-                <div className="mt-2 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden flex">
-                  <div className="bg-emerald-500" style={{ width: `${yesPct}%` }} />
-                  <div className="bg-rose-500" style={{ width: `${noPct}%` }} />
-                </div>
-                <p className="text-xs mt-1 text-slate-400">
-                  {total} pts • Sí {yesPct}% • No {noPct}%
-                </p>
-              </div>
-            </Link>
-          );
-        })}
+    <div>
+      <div className="flex flex-col gap-3">
+        {visible.map((market, index) => renderCard(market, index, current + index))}
       </div>
 
-      {/* Controles */}
       {markets.length > visibleCount && (
         <div className="flex items-center justify-center gap-3 mt-4">
-          <button
-            onClick={prev}
-            disabled={current === 0}
-            className="w-8 h-8 rounded-full border border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-500 disabled:opacity-30 transition"
-          >
+          <button onClick={prev} disabled={current === 0}
+            className="w-8 h-8 rounded-full border border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-500 disabled:opacity-30 transition text-lg">
             ‹
           </button>
-
-          {/* Dots */}
           <div className="flex gap-1.5">
             {Array.from({ length: maxIndex + 1 }).map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrent(i)}
-                className={`w-1.5 h-1.5 rounded-full transition-all ${
-                  i === current
-                    ? "bg-orange-400 w-4"
-                    : "bg-slate-300 dark:bg-slate-700"
-                }`}
+              <button key={i} onClick={() => setCurrent(i)}
+                className={`h-1.5 rounded-full transition-all ${i === current ? "bg-orange-400 w-4" : "bg-slate-300 dark:bg-slate-700 w-1.5"}`}
               />
             ))}
           </div>
-
-          <button
-            onClick={next}
-            disabled={current === maxIndex}
-            className="w-8 h-8 rounded-full border border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-500 disabled:opacity-30 transition"
-          >
+          <button onClick={next} disabled={current === maxIndex}
+            className="w-8 h-8 rounded-full border border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-500 disabled:opacity-30 transition text-lg">
             ›
           </button>
         </div>
