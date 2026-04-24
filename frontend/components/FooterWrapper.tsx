@@ -1,0 +1,12 @@
+"use client";
+import { usePathname } from "next/navigation";
+import Footer from "./Footer";
+
+export default function FooterWrapper() {
+  const pathname = usePathname();
+  const hideOn = ["/admin"];
+
+  if (hideOn.some((path) => pathname.startsWith(path))) return null;
+
+  return <Footer />;
+}
