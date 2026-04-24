@@ -578,11 +578,8 @@ app.put("/notifications/:id/read", auth, async (req, res) => {
 // =======================
 app.post("/bet", auth, async (req, res) => {
   const { marketId, type, amount } = req.body;
-
-  // ✅ betAmount correctamente definido
   const betAmount = parseFloat(amount);
 
-  // ✅ Obtener límites desde config
   const { data: config } = await supabase
     .from("config").select("min_bet, max_bet").eq("id", 1).single();
 
@@ -599,45 +596,86 @@ app.post("/bet", auth, async (req, res) => {
     .from("users").select("*").eq("id", req.userId).single();
 
   if (userError || !user) return res.status(404).json({ message: "Usuario no encontrado" });
-  if (user.points < betAmount) return res.status(400).json({ message: "Sin puntos suficientes" });
 
   const { data: market, error: marketError } = await supabase
     .from("markets").select("*").eq("id", marketId).single();
 
   if (marketError || !market) return res.status(404).json({ message: "Mercado no encontrado" });
   if (market.resolved) return res.status(400).json({ message: "Este mercado ya está cerrado" });
-  if (market.resolved) return res.status(400).json({ message: "Este mercado ya está cerrado" });
 
- // ✅ Validar máximo de cambios de predicción
- const { count: betCount } = await supabase
-  .from("bets")
-  .select("*", { count: "exact", head: true })
-  .eq("market_id", marketId)
-  .eq("user_id", req.userId);
+  // ✅ Buscar si ya tiene una apuesta en este mercado
+  const { data: existingBet } = await supabase
+    .from("bets")
+    .select("*")
+    .eq("market_id", marketId)
+    .eq("user_id", req.userId)
+    .maybeSingle();
 
- if ((betCount ?? 0) >= 4) {
-  return res.status(400).json({ message: "Alcanzaste el límite de 3 cambios de predicción" });
- }
+  // ✅ Validar máximo 3 cambios (4 apuestas en total: la original + 3 cambios)
+  if (existingBet) {
+    const changes = existingBet.changes ?? 0;
+    if (changes >= 3) {
+      return res.status(400).json({ message: "Alcanzaste el límite de 3 cambios de predicción" });
+    }
+  }
 
-  const newPoints = Number(user.points) - betAmount;
+  // ✅ Calcular diferencia de puntos a descontar
+  // Si ya tenía apuesta, se le devuelve lo anterior y se cobra lo nuevo
+  const previousAmount = existingBet ? Number(existingBet.amount) : 0;
+  const pointsDiff = betAmount - previousAmount;
+
+  if (user.points < pointsDiff) {
+    return res.status(400).json({ message: "Sin puntos suficientes" });
+  }
+
+  // ✅ Actualizar puntos del usuario (solo la diferencia)
+  const newPoints = Number(user.points) - pointsDiff;
   await supabase.from("users").update({ points: newPoints }).eq("id", user.id);
 
-  const updatedValues = type === "yes"
-    ? { yes: Number(market.yes) + betAmount }
-    : { no: Number(market.no) + betAmount };
+  // ✅ Revertir apuesta anterior del mercado y aplicar la nueva
+  let newYes = Number(market.yes);
+  let newNo = Number(market.no);
 
-  await supabase.from("markets").update(updatedValues).eq("id", marketId);
+  if (existingBet) {
+    // Restar la apuesta anterior
+    if (existingBet.type === "yes") newYes -= Number(existingBet.amount);
+    if (existingBet.type === "no") newNo -= Number(existingBet.amount);
+  }
 
-  await supabase.from("bets").insert([{
-    user_id: user.id, market_id: marketId, type, amount: betAmount,
-  }]);
+  // Sumar la nueva
+  if (type === "yes") newYes += betAmount;
+  if (type === "no") newNo += betAmount;
+
+  await supabase.from("markets").update({
+    yes: Math.max(0, newYes),
+    no: Math.max(0, newNo),
+  }).eq("id", marketId);
+
+  // ✅ Insertar o actualizar la apuesta (una sola fila por usuario por mercado)
+  if (existingBet) {
+    await supabase.from("bets")
+      .update({
+        type,
+        amount: betAmount,
+        changes: (existingBet.changes ?? 0) + 1,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", existingBet.id);
+  } else {
+    await supabase.from("bets").insert([{
+      user_id: user.id,
+      market_id: marketId,
+      type,
+      amount: betAmount,
+      changes: 0,
+    }]);
+  }
 
   const { data: updatedMarket } = await supabase
     .from("markets").select("*").eq("id", marketId).single();
 
   res.json({ message: "Apuesta realizada", points: newPoints, market: updatedMarket });
 });
-
 // =======================
 // 💰 RESOLVER MERCADO
 // =======================
@@ -825,21 +863,10 @@ app.get("/markets/:id/my-bet", auth, async (req, res) => {
     .select("*")
     .eq("market_id", req.params.id)
     .eq("user_id", req.userId)
-    .order("created_at", { ascending: false })
-    .limit(1)
     .maybeSingle();
 
   if (error) return res.status(500).json({ message: error.message });
-  if (!data) return res.json({ bet: null });
-
-  // Contar cuántas veces ha apostado en este mercado (cambios)
-  const { count } = await supabase
-    .from("bets")
-    .select("*", { count: "exact", head: true })
-    .eq("market_id", req.params.id)
-    .eq("user_id", req.userId);
-
-  res.json({ bet: { ...data, changes: (count ?? 1) - 1 } });
+  res.json({ bet: data ?? null });
 });
 
 // =======================
