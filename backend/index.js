@@ -606,6 +606,18 @@ app.post("/bet", auth, async (req, res) => {
 
   if (marketError || !market) return res.status(404).json({ message: "Mercado no encontrado" });
   if (market.resolved) return res.status(400).json({ message: "Este mercado ya está cerrado" });
+  if (market.resolved) return res.status(400).json({ message: "Este mercado ya está cerrado" });
+
+ // ✅ Validar máximo de cambios de predicción
+ const { count: betCount } = await supabase
+  .from("bets")
+  .select("*", { count: "exact", head: true })
+  .eq("market_id", marketId)
+  .eq("user_id", req.userId);
+
+ if ((betCount ?? 0) >= 4) {
+  return res.status(400).json({ message: "Alcanzaste el límite de 3 cambios de predicción" });
+ }
 
   const newPoints = Number(user.points) - betAmount;
   await supabase.from("users").update({ points: newPoints }).eq("id", user.id);
@@ -802,6 +814,32 @@ app.get("/markets/:id/news", async (req, res) => {
   } catch {
     res.json([]);
   }
+});
+
+// =======================
+// 🎯 OBTENER MI APUESTA EN UN MERCADO
+// =======================
+app.get("/markets/:id/my-bet", auth, async (req, res) => {
+  const { data, error } = await supabase
+    .from("bets")
+    .select("*")
+    .eq("market_id", req.params.id)
+    .eq("user_id", req.userId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) return res.status(500).json({ message: error.message });
+  if (!data) return res.json({ bet: null });
+
+  // Contar cuántas veces ha apostado en este mercado (cambios)
+  const { count } = await supabase
+    .from("bets")
+    .select("*", { count: "exact", head: true })
+    .eq("market_id", req.params.id)
+    .eq("user_id", req.userId);
+
+  res.json({ bet: { ...data, changes: (count ?? 1) - 1 } });
 });
 
 // =======================

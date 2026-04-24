@@ -13,8 +13,7 @@ export default function MarketPage() {
 
   const [market, setMarket] = useState<any>(null);
   const [betType, setBetType] = useState<"yes" | "no">(
-    (searchParams.get("bet") as "yes" | "no") || "yes"
-  );
+    (searchParams.get("bet") as "yes" | "no") || "yes");
   const [amount, setAmount] = useState("");
   const [points, setPoints] = useState<number | null>(null);
   const [comments, setComments] = useState<any[]>([]);
@@ -23,8 +22,10 @@ export default function MarketPage() {
   const [loadingNews, setLoadingNews] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
-
   const [token, setToken] = useState<string | null>(null);
+  const [userBet, setUserBet] = useState<{ type: "yes" | "no"; amount: number } | null>(null);
+  const [changeCount, setChangeCount] = useState(0);
+  const MAX_CHANGES = 3;
   useEffect(() => {
     setToken(localStorage.getItem("token"));
   }, []);
@@ -56,6 +57,20 @@ export default function MarketPage() {
     setLoadingNews(false);
   };
 
+  const fetchUserBet = async () => {
+  if (!token) return;
+  const res = await fetch(`https://predicciones-ecuador.onrender.com/markets/${id}/my-bet`, {
+    headers: { authorization: `Bearer ${token}` },
+  });
+  if (res.ok) {
+    const data = await res.json();
+    if (data.bet) {
+      setUserBet({ type: data.bet.type, amount: data.bet.amount });
+      setChangeCount(data.bet.changes ?? 0);
+    }
+  }
+ };
+
   useEffect(() => {
   if (id) {
     fetchMarket();
@@ -67,26 +82,30 @@ export default function MarketPage() {
   useEffect(() => {
     if (token) {
         fetchMe();
+        fetchUserBet();
     }
  }, [token]);
 
-  const handleBet = async () => {
-    if (!token) return alert("Debes iniciar sesión");
-    const amt = parseFloat(amount);
-    if (isNaN(amt) || amt < 1 || amt > 10) return alert("El monto debe ser entre 1 y 10 puntos");
-    const res = await fetch("https://predicciones-ecuador.onrender.com/bet", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
-      body: JSON.stringify({ marketId: Number(id), type: betType, amount: amt }),
-    });
-    const data = await res.json();
-    if (data.points !== undefined) {
-      setPoints(data.points);
-      setAmount("");
-      fetchMarket();
-      alert("✅ Apuesta realizada con éxito");
-    } else { alert(data.message); }
-  };
+ const handleBet = async () => {
+  if (!token) return alert("Debes iniciar sesión");
+  const amt = parseFloat(amount);
+  if (isNaN(amt) || amt < 1 || amt > 10) return alert("El monto debe ser entre 1 y 10 puntos");
+  const res = await fetch("https://predicciones-ecuador.onrender.com/bet", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+    body: JSON.stringify({ marketId: Number(id), type: betType, amount: amt }),
+  });
+  const data = await res.json();
+  if (data.points !== undefined) {
+    setPoints(data.points);
+    setAmount("");
+    setUserBet({ type: betType, amount: amt });
+    setChangeCount((prev) => prev + (userBet ? 1 : 0)); // solo suma si ya había apuesta previa
+    fetchMarket();
+  } else {
+    alert(data.message);
+  }
+ };
 
   const handleComment = async () => {
   if (!token) {
@@ -151,14 +170,34 @@ export default function MarketPage() {
 
         {/* Apostar */}
         {!market.resolved && (
-          <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
-            <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
-              <TrendingUp size={18} className="text-emerald-400" /> Realizar apuesta
-            </h2>
-            {points !== null && (
-              <p className="text-sm text-slate-400 mb-4">Tu balance: <span className="text-white font-bold">{points} pts</span></p>
-            )}
-            <div className="grid grid-cols-2 gap-2 mb-4">
+  <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
+    <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
+      <TrendingUp size={18} className="text-emerald-400" /> Realizar apuesta
+    </h2>
+
+    {points !== null && (
+      <p className="text-sm text-slate-400 mb-4">
+        Tu balance: <span className="text-white font-bold">{points} pts</span>
+      </p>
+    )}
+
+    {/* Ya apostó */}
+    {userBet ? (
+      <div className="space-y-4">
+        <div className={`rounded-xl p-4 text-center border ${userBet.type === "yes" ? "border-emerald-500/40 bg-emerald-500/10" : "border-rose-500/40 bg-rose-500/10"}`}>
+          <p className="text-sm text-slate-400 mb-1">Tu predicción actual</p>
+          <p className={`text-2xl font-black ${userBet.type === "yes" ? "text-emerald-400" : "text-rose-400"}`}>
+            {userBet.type === "yes" ? "✅ Sí" : "❌ No"}
+          </p>
+          <p className="text-sm text-slate-400 mt-1">{userBet.amount} pts apostados</p>
+        </div>
+
+        {changeCount < MAX_CHANGES ? (
+          <div className="space-y-3">
+            <p className="text-xs text-slate-400 text-center">
+              Cambios restantes: <span className="font-bold text-white">{MAX_CHANGES - changeCount}</span> de {MAX_CHANGES}
+            </p>
+            <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => setBetType("yes")}
                 className={`py-3 rounded-xl font-bold text-sm transition ${betType === "yes" ? "bg-emerald-500 text-slate-950" : "bg-slate-200 dark:bg-slate-800 text-slate-400"}`}
@@ -172,7 +211,7 @@ export default function MarketPage() {
                 No — {noPct}%
               </button>
             </div>
-            <div className="flex items-center gap-3 bg-slate-200 dark:bg-slate-800 rounded-xl px-4 py-3 mb-4">
+            <div className="flex items-center gap-3 bg-slate-200 dark:bg-slate-800 rounded-xl px-4 py-3">
               <span className="text-slate-400 text-sm">pts</span>
               <input
                 type="number" min="1" max="10" step="0.01"
@@ -186,10 +225,52 @@ export default function MarketPage() {
               onClick={handleBet}
               className={`w-full py-3 rounded-xl font-bold text-sm transition active:scale-95 ${betType === "yes" ? "bg-emerald-500 text-slate-950" : "bg-rose-500 text-white"}`}
             >
-              Confirmar apuesta — {betType === "yes" ? "Sí" : "No"}
+              Cambiar predicción — {betType === "yes" ? "Sí" : "No"}
             </button>
           </div>
+        ) : (
+          <p className="text-center text-sm text-slate-400 bg-slate-200 dark:bg-slate-800 rounded-xl py-3">
+            🔒 Alcanzaste el límite de <span className="text-white font-bold">{MAX_CHANGES} cambios</span>
+          </p>
         )}
+      </div>
+    ) : (
+      /* No ha apostado aún */
+      <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          <button
+            onClick={() => setBetType("yes")}
+            className={`py-3 rounded-xl font-bold text-sm transition ${betType === "yes" ? "bg-emerald-500 text-slate-950" : "bg-slate-200 dark:bg-slate-800 text-slate-400"}`}
+          >
+            Sí — {yesPct}%
+          </button>
+          <button
+            onClick={() => setBetType("no")}
+            className={`py-3 rounded-xl font-bold text-sm transition ${betType === "no" ? "bg-rose-500 text-white" : "bg-slate-200 dark:bg-slate-800 text-slate-400"}`}
+          >
+            No — {noPct}%
+          </button>
+        </div>
+        <div className="flex items-center gap-3 bg-slate-200 dark:bg-slate-800 rounded-xl px-4 py-3 mb-4">
+          <span className="text-slate-400 text-sm">pts</span>
+          <input
+            type="number" min="1" max="10" step="0.01"
+            placeholder="Monto (1 - 10)"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className="bg-transparent outline-none w-full text-sm placeholder-slate-500"
+          />
+        </div>
+        <button
+          onClick={handleBet}
+          className={`w-full py-3 rounded-xl font-bold text-sm transition active:scale-95 ${betType === "yes" ? "bg-emerald-500 text-slate-950" : "bg-rose-500 text-white"}`}
+        >
+          Confirmar apuesta — {betType === "yes" ? "Sí" : "No"}
+        </button>
+      </div>
+    )}
+  </div>
+ )}
 
         {/* Noticias */}
         <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
