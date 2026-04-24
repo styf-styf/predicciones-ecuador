@@ -86,6 +86,9 @@ export default function AdminPage() {
       setSettingsForm({
         min_bet: data.min_bet, max_bet: data.max_bet,
         commission: data.commission, welcome_points: data.welcome_points,
+        trending_count: data.trending_count ?? 1,
+        winners_count: data.winners_count ?? 1,
+        autoplay_ms: data.autoplay_ms ?? 5000,
       });
     }
   };
@@ -100,6 +103,9 @@ export default function AdminPage() {
         max_bet: parseFloat(settingsForm.max_bet),
         commission: parseFloat(settingsForm.commission),
         welcome_points: parseFloat(settingsForm.welcome_points),
+        trending_count: Number((settingsForm as any).trending_count ?? 1),
+        winners_count: Number((settingsForm as any).winners_count ?? 1),
+        autoplay_ms: Number((settingsForm as any).autoplay_ms ?? 5000),
       }),
     });
     const data = await res.json();
@@ -652,34 +658,22 @@ export default function AdminPage() {
                 ))}
               </div>
 
-              // Dentro del formulario de settings del admin
-<div className="border-t border-slate-200 dark:border-slate-800 pt-6 mt-6">
-  <h3 className="font-bold text-base mb-4">Configuración de carruseles</h3>
+              <div className="border-t border-slate-200 dark:border-white/[0.06] pt-6 mt-2">
+  <p className="text-[11px] text-slate-400 dark:text-white/30 uppercase tracking-widest mb-4">Carruseles</p>
   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-    <div>
-      <label className="text-sm text-slate-400 mb-1 block">Cards tendencias</label>
-      <input type="number" min="1" max="5"
-        value={settings.trending_count ?? 1}
-        onChange={(e) => setSettings({ ...settings, trending_count: Number(e.target.value) })}
-        className="w-full bg-slate-100 dark:bg-slate-800 rounded-xl px-4 py-2.5 text-sm outline-none"
-      />
-    </div>
-    <div>
-      <label className="text-sm text-slate-400 mb-1 block">Cards ganadores</label>
-      <input type="number" min="1" max="5"
-        value={settings.winners_count ?? 1}
-        onChange={(e) => setSettings({ ...settings, winners_count: Number(e.target.value) })}
-        className="w-full bg-slate-100 dark:bg-slate-800 rounded-xl px-4 py-2.5 text-sm outline-none"
-      />
-    </div>
-    <div>
-      <label className="text-sm text-slate-400 mb-1 block">Autoplay (ms)</label>
-      <input type="number" min="1000" step="500"
-        value={settings.autoplay_ms ?? 5000}
-        onChange={(e) => setSettings({ ...settings, autoplay_ms: Number(e.target.value) })}
-        className="w-full bg-slate-100 dark:bg-slate-800 rounded-xl px-4 py-2.5 text-sm outline-none"
-      />
-    </div>
+    {[
+      { key: "trending_count", label: "Cards tendencias", min: "1", max: "5", step: "1" },
+      { key: "winners_count", label: "Cards ganadores", min: "1", max: "5", step: "1" },
+      { key: "autoplay_ms", label: "Autoplay (ms)", min: "1000", max: "30000", step: "500" },
+    ].map((field) => (
+      <div key={field.key} className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-4 space-y-2">
+        <label className="text-[11px] text-slate-400 dark:text-white/30 uppercase tracking-widest block">{field.label}</label>
+        <input type="number" min={field.min} max={field.max} step={field.step}
+          value={(settingsForm as any)[field.key] ?? ""}
+          onChange={(e) => setSettingsForm((prev) => ({ ...prev, [field.key]: Number(e.target.value) }))}
+          className="w-full bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-4 py-2.5 outline-none text-[14px] text-slate-900 dark:text-white focus:border-emerald-500/60 transition tabular-nums" />
+      </div>
+    ))}
   </div>
  </div>
 

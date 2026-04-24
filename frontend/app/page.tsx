@@ -8,6 +8,11 @@ import Header from "@/components/Header";
 export default function Home() {
   const [markets, setMarkets] = useState<any[]>([]);
   const [betAmounts, setBetAmounts] = useState<{ [key: number]: string }>({});
+  const [carouselConfig, setCarouselConfig] = useState({ 
+    trending_count: 1, 
+    winners_count: 1, 
+    autoplay_ms: 5000 
+  });
   const marketRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
   const [showResults, setShowResults] = useState(false);
   const fetchMarkets = async () => {
@@ -18,6 +23,14 @@ export default function Home() {
     const shuffled = active.sort(() => Math.random() - 0.5);
     setMarkets([...shuffled, ...resolved]);
   };
+
+  const fetchCarouselConfig = async () => {
+    const res = await fetch("https://predicciones-ecuador.onrender.com/carousel-config");
+      if (res.ok) {
+        const data = await res.json();
+        setCarouselConfig(data);
+      }
+    };
 
 
   const handleBet = async (marketId: number, type: "yes" | "no") => {
@@ -48,6 +61,7 @@ export default function Home() {
 
   useEffect(() => {
   fetchMarkets();
+  fetchCarouselConfig();
   const channel = supabase.channel("markets-live")
     .on("postgres_changes", { event: "*", schema: "public", table: "markets" }, () => fetchMarkets())
     .subscribe();
@@ -84,8 +98,10 @@ export default function Home() {
           <h2 className="text-lg font-bold">Tendencias</h2>
         </div>
         <Carousel
-          markets={trendingMarkets}
-          renderCard={(market, index, globalIndex) => {
+        markets={trendingMarkets}
+        autoplayMs={carouselConfig.autoplay_ms}
+        visibleCount={carouselConfig.trending_count}
+        renderCard={(market, index, globalIndex) => {
             const total = (market.yes ?? 0) + (market.no ?? 0) || 1;
             const yesPct = ((market.yes / total) * 100).toFixed(0);
             const noPct = ((market.no / total) * 100).toFixed(0);
@@ -116,8 +132,10 @@ export default function Home() {
           <h2 className="text-lg font-bold">Ganadores</h2>
         </div>
         <Carousel
-          markets={markets.filter(m => m.resolved)}
-          renderCard={(market, index, globalIndex) => {
+        markets={markets.filter(m => m.resolved)}
+        autoplayMs={carouselConfig.autoplay_ms}
+        visibleCount={carouselConfig.winners_count}
+        renderCard={(market, index, globalIndex) => {
             const total = (market.yes ?? 0) + (market.no ?? 0) || 1;
             const yesPct = ((market.yes / total) * 100).toFixed(0);
             const noPct = ((market.no / total) * 100).toFixed(0);
