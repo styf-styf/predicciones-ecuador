@@ -102,9 +102,9 @@ export default function Home() {
         autoplayMs={carouselConfig.autoplay_ms}
         visibleCount={carouselConfig.trending_count}
         renderCard={(market, index, globalIndex) => {
-            const total = (market.yes ?? 0) + (market.no ?? 0) || 1;
-            const yesPct = ((market.yes / total) * 100).toFixed(0);
-            const noPct = ((market.no / total) * 100).toFixed(0);
+            const total = (market.yes ?? 0) + (market.no ?? 0);
+            const yesPct = total === 0 ? 50 : ((market.yes / total) * 100).toFixed(0);
+            const noPct = total === 0 ? 50 : ((market.no / total) * 100).toFixed(0);
             return (
               <Link key={market.id} href={`/market/${market.id}`}
                 className="bg-slate-100 dark:bg-slate-900 border border-orange-500/30 rounded-2xl p-4 flex items-center gap-3 hover:border-orange-400 transition">
