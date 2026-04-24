@@ -71,106 +71,182 @@ export default function Home() {
           <Card title="En vivo" value="Ahora" icon={<Bell size={16} />} />
         </section>
 
-        {/* Tendencias */}
-        {trendingMarkets.length > 0 && (
-          <section>
-            <div className="flex items-center gap-2 mb-4">
-              <Flame size={18} className="text-orange-400" />
-              <h2 className="text-lg sm:text-xl font-bold">Tendencias</h2>
-              <span className="text-xs text-slate-400 hidden sm:inline">Mercados con mayor actividad</span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-              {trendingMarkets.map((market, index) => {
-                const total = (market.yes ?? 0) + (market.no ?? 0) || 1;
-                const yesPct = ((market.yes / total) * 100).toFixed(0);
-                const noPct = ((market.no / total) * 100).toFixed(0);
-                return (
-                  <Link
-                    key={market.id}
-                    href={`/market/${market.id}`}
-                    className="bg-slate-100 dark:bg-slate-900 border border-orange-500/30 rounded-2xl p-4 flex items-center gap-3 hover:border-orange-400 transition text-left w-full"
-                  >
-                    <span className="text-xl sm:text-2xl font-black text-orange-400 shrink-0">#{index + 1}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm truncate">{market.question}</p>
-                      <div className="mt-2 h-1.5 bg-slate-800 rounded-full overflow-hidden flex">
-                        <div className="bg-emerald-500" style={{ width: `${yesPct}%` }} />
-                        <div className="bg-rose-500" style={{ width: `${noPct}%` }} />
-                      </div>
-                      <p className="text-xs mt-1 text-slate-400">{total} pts • Sí {yesPct}% • No {noPct}%</p>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </section>
-        )}
+        {/* Tendencias - Slider */}
+ {trendingMarkets.length > 0 && (
+  <section>
+    <div className="flex items-center gap-2 mb-4">
+      <Flame size={18} className="text-orange-400" />
+      <h2 className="text-lg sm:text-xl font-bold">Tendencias</h2>
+      <span className="text-xs text-slate-400 hidden sm:inline">Mercados con mayor actividad</span>
+    </div>
+    <TrendingSlider markets={trendingMarkets} />
+  </section>
+ )}
 
         {/* Mercados */}
         <section>
-          <h2 className="text-xl sm:text-2xl font-bold mb-4">Mercados activos</h2>
+  <h2 className="text-xl sm:text-2xl font-bold mb-4">Mercados activos</h2>
+  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+    {markets.map((market) => {
+      const total = (market.yes ?? 0) + (market.no ?? 0) || 1;
+      const yesPct = ((market.yes / total) * 100).toFixed(0);
+      const noPct = ((market.no / total) * 100).toFixed(0);
+      const isResolved = market.resolved;
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-            {markets.map((market) => {
-              const total = (market.yes ?? 0) + (market.no ?? 0) || 1;
-              const yesPct = ((market.yes / total) * 100).toFixed(0);
-              const noPct = ((market.no / total) * 100).toFixed(0);
-              const isResolved = market.resolved;
-
-              return (
-                <div
-                  key={market.id}
-                  ref={(el) => { marketRefs.current[market.id] = el; }}
-                  className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 hover:border-slate-300 dark:hover:border-slate-700 transition"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <Link href={`/market/${market.id}`}>
-                    <h3 className="font-semibold text-sm sm:text-base mt-0.5 leading-snug hover:text-emerald-400 transition-colors cursor-pointer">
-                      {market.question}
-                      </h3>
-                      </Link>
-                    <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full ${isResolved ? "bg-slate-700 text-white" : "bg-emerald-500/10 text-emerald-400"}`}>
-                      {isResolved ? "Cerrado" : "En vivo"}
-                    </span>
-                  </div>
-
-                  <div className="mt-4 h-2 bg-slate-800 rounded-full overflow-hidden flex">
-                    <div className="bg-emerald-500" style={{ width: `${yesPct}%` }} />
-                    <div className="bg-rose-500" style={{ width: `${noPct}%` }} />
-                  </div>
-                  <p className="text-xs mt-2 text-slate-500 dark:text-slate-400">Sí {yesPct}% • No {noPct}% • {total} pts</p>
-
-                  <div className="mt-4">
-                    {isResolved ? (
-                      <div className="text-center text-sm px-3 py-3 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-white">
-                        <p className="font-bold">Mercado resuelto</p>
-                        <p className="mt-1 text-slate-300">
-                          Ganó <span className="text-emerald-400 font-bold">{market.winner === "yes" ? "Sí" : "No"}</span>
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <div className="grid grid-cols-2 gap-2">
-                          <Link href={`/market/${market.id}?bet=yes`}
-                          className="bg-emerald-500 text-slate-950 font-bold rounded-xl py-2.5 text-sm text-center active:scale-95 transition-transform">
-                            Comprar Sí
-                            </Link>
-                            <Link href={`/market/${market.id}?bet=no`}
-                            className="bg-rose-500 text-white font-bold rounded-xl py-2.5 text-sm text-center active:scale-95 transition-transform">
-                              Comprar No
-                              </Link>
-                              </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+      return (
+        <div
+          key={market.id}
+          className={`border rounded-2xl p-4 sm:p-5 transition ${
+            isResolved
+              ? market.winner === "yes"
+                ? "bg-emerald-500/5 border-emerald-500/30"
+                : "bg-rose-500/5 border-rose-500/30"
+              : "bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+          }`}
+        >
+          {/* Badge estado */}
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <Link href={`/market/${market.id}`}>
+              <h3 className="font-semibold text-sm sm:text-base leading-snug hover:text-emerald-400 transition-colors cursor-pointer">
+                {market.question}
+              </h3>
+            </Link>
+            {isResolved ? (
+              <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                market.winner === "yes"
+                  ? "bg-emerald-500/20 text-emerald-400"
+                  : "bg-rose-500/20 text-rose-400"
+              }`}>
+                {market.winner === "yes" ? "Ganó Sí" : "Ganó No"}
+              </span>
+            ) : (
+              <span className="shrink-0 text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400">
+                En vivo
+              </span>
+            )}
           </div>
-        </section>
+
+          {/* Barra */}
+          <div className="h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden flex mb-1">
+            <div className="bg-emerald-500 transition-all" style={{ width: `${yesPct}%` }} />
+            <div className="bg-rose-500 transition-all" style={{ width: `${noPct}%` }} />
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+            Sí {yesPct}% • No {noPct}% • {total} pts
+          </p>
+
+          {/* Acción */}
+          {isResolved ? (
+            <div className={`text-center text-sm px-3 py-3 rounded-xl font-bold ${
+              market.winner === "yes"
+                ? "bg-emerald-500/10 text-emerald-400"
+                : "bg-rose-500/10 text-rose-400"
+            }`}>
+              {market.winner === "yes" ? "✓ Sí ganó este mercado" : "✗ No ganó este mercado"}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              <Link href={`/market/${market.id}?bet=yes`}
+                className="bg-emerald-500 text-slate-950 font-bold rounded-xl py-2.5 text-sm text-center active:scale-95 transition-transform">
+                Comprar Sí
+              </Link>
+              <Link href={`/market/${market.id}?bet=no`}
+                className="bg-rose-500 text-white font-bold rounded-xl py-2.5 text-sm text-center active:scale-95 transition-transform">
+                Comprar No
+              </Link>
+            </div>
+          )}
+        </div>
+      );
+    })}
+  </div>
+ </section>
       </div>
     </main>
+  );
+}
+
+function TrendingSlider({ markets }: { markets: any[] }) {
+  const [current, setCurrent] = useState(0);
+  const visibleCount = 2;
+  const total = markets.length;
+  const maxIndex = Math.max(0, total - visibleCount);
+
+  const prev = () => setCurrent((c) => Math.max(0, c - 1));
+  const next = () => setCurrent((c) => Math.min(maxIndex, c + 1));
+
+  const visible = markets.slice(current, current + visibleCount);
+
+  return (
+    <div className="relative">
+      {/* Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        {visible.map((market, index) => {
+          const total = (market.yes ?? 0) + (market.no ?? 0) || 1;
+          const yesPct = ((market.yes / total) * 100).toFixed(0);
+          const noPct = ((market.no / total) * 100).toFixed(0);
+          const globalIndex = current + index;
+
+          return (
+            <Link
+              key={market.id}
+              href={`/market/${market.id}`}
+              className="bg-slate-100 dark:bg-slate-900 border border-orange-500/30 rounded-2xl p-4 flex items-center gap-3 hover:border-orange-400 transition"
+            >
+              <span className="text-2xl font-black text-orange-400 shrink-0">
+                #{globalIndex + 1}
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm truncate">{market.question}</p>
+                <div className="mt-2 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden flex">
+                  <div className="bg-emerald-500" style={{ width: `${yesPct}%` }} />
+                  <div className="bg-rose-500" style={{ width: `${noPct}%` }} />
+                </div>
+                <p className="text-xs mt-1 text-slate-400">
+                  {total} pts • Sí {yesPct}% • No {noPct}%
+                </p>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* Controles */}
+      {markets.length > visibleCount && (
+        <div className="flex items-center justify-center gap-3 mt-4">
+          <button
+            onClick={prev}
+            disabled={current === 0}
+            className="w-8 h-8 rounded-full border border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-500 disabled:opacity-30 transition"
+          >
+            ‹
+          </button>
+
+          {/* Dots */}
+          <div className="flex gap-1.5">
+            {Array.from({ length: maxIndex + 1 }).map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrent(i)}
+                className={`w-1.5 h-1.5 rounded-full transition-all ${
+                  i === current
+                    ? "bg-orange-400 w-4"
+                    : "bg-slate-300 dark:bg-slate-700"
+                }`}
+              />
+            ))}
+          </div>
+
+          <button
+            onClick={next}
+            disabled={current === maxIndex}
+            className="w-8 h-8 rounded-full border border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-500 disabled:opacity-30 transition"
+          >
+            ›
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 
