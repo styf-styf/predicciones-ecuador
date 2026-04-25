@@ -79,10 +79,10 @@ export default function Home() {
 
         {/* Cards */}
         <section className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-          <Card title="Mercados" value={`${markets.length}`} icon={<TrendingUp size={16} />} />
-          <Card title="Activos" value={`${markets.filter((m) => !m.resolved).length}`} icon={<Flame size={16} />} />
-          <Card title="Resueltos" value={`${markets.filter((m) => m.resolved).length}`} icon={<Trophy size={16} />} />
-          <Card title="En vivo" value="Ahora" icon={<Bell size={16} />} />
+          <Card title="Mercados" value={`${markets.length}`} icon={<TrendingUp size={14} />} />
+          <Card title="Activos" value={`${markets.filter((m) => !m.resolved).length}`} icon={<Flame size={14} />} />
+          <Card title="Resueltos" value={`${markets.filter((m) => m.resolved).length}`} icon={<Trophy size={14} />} />
+          <Card title="En vivo" value="Ahora" icon={<Bell size={14} />} />
         </section>
 
         {/* Tendencias - Slider */}
@@ -94,7 +94,7 @@ export default function Home() {
     {trendingMarkets.length > 0 && (
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <Flame size={18} className="text-orange-400" />
+          <Flame size={16} className="text-orange-400" />
           <h2 className="text-lg font-bold">Tendencias</h2>
         </div>
         <Carousel
@@ -128,7 +128,7 @@ export default function Home() {
     {markets.filter(m => m.resolved).length > 0 && (
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <Trophy size={18} className="text-yellow-400" />
+          <Trophy size={16} className="text-yellow-400" />
           <h2 className="text-lg font-bold">Ganadores</h2>
         </div>
         <Carousel
