@@ -165,6 +165,13 @@ app.post("/auth/google", async (req, res) => {
   }
 });
 
+app.get("/config", async (req, res) => {
+  const { data, error } = await supabase
+    .from("config").select("min_bet, max_bet").eq("id", 1).single();
+  if (error) return res.status(500).json({ message: error.message });
+  res.json(data);
+});
+
 // =======================
 // 📊 OBTENER MERCADOS
 // =======================
@@ -420,7 +427,7 @@ app.put("/admin/settings", auth, async (req, res) => {
     return res.status(403).json({ message: "Solo admin" });
   }
 
-  const { min_bet, max_bet, commission, welcome_points } = req.body;
+  const { min_bet, max_bet, commission, welcome_points, trending_count, winners_count, autoplay_ms } = req.body;
 
   if (min_bet < 0 || max_bet < 0) {
     return res.status(400).json({ message: "Los valores no pueden ser negativos" });
@@ -435,15 +442,18 @@ app.put("/admin/settings", auth, async (req, res) => {
   }
 
   const { error } = await supabase
-    .from("config")
-    .update({
-      min_bet,
-      max_bet,
-      commission,
-      welcome_points,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", 1);
+  .from("config")
+  .update({
+    min_bet,
+    max_bet,
+    commission,
+    welcome_points,
+    trending_count,
+    winners_count,
+    autoplay_ms,
+    updated_at: new Date().toISOString(),
+  })
+  .eq("id", 1);
 
   if (error) return res.status(500).json({ message: error.message });
   res.json({ message: "Configuración actualizada" });

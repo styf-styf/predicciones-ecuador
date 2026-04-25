@@ -26,6 +26,7 @@ export default function MarketPage() {
   const [userBet, setUserBet] = useState<{ type: "yes" | "no"; amount: number } | null>(null);
   const [changeCount, setChangeCount] = useState(0);
   const MAX_CHANGES = 3;
+  const [betConfig, setBetConfig] = useState({ min_bet: 1, max_bet: 10 });
   useEffect(() => {
     setToken(localStorage.getItem("token"));
   }, []);
@@ -57,6 +58,14 @@ export default function MarketPage() {
     setLoadingNews(false);
   };
 
+  const fetchBetConfig = async () => {
+  const res = await fetch("https://predicciones-ecuador.onrender.com/config");
+  if (res.ok) {
+    const data = await res.json();
+    setBetConfig({ min_bet: data.min_bet ?? 1, max_bet: data.max_bet ?? 10 });
+  }
+ };
+
   const fetchUserBet = async () => {
   if (!token) return;
   const res = await fetch(`https://predicciones-ecuador.onrender.com/markets/${id}/my-bet`, {
@@ -76,6 +85,7 @@ export default function MarketPage() {
     fetchMarket();
     fetchComments();
     fetchNews();
+    fetchBetConfig();
   }
  }, [id]);
 
@@ -89,7 +99,8 @@ export default function MarketPage() {
  const handleBet = async () => {
   if (!token) return alert("Debes iniciar sesión");
   const amt = parseFloat(amount);
-  if (isNaN(amt) || amt < 1 || amt > 10) return alert("El monto debe ser entre 1 y 10 puntos");
+  if (isNaN(amt) || amt < betConfig.min_bet || amt > betConfig.max_bet) 
+    return alert(`El monto debe ser entre ${betConfig.min_bet} y ${betConfig.max_bet} puntos`);
   const res = await fetch("https://predicciones-ecuador.onrender.com/bet", {
     method: "POST",
     headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
