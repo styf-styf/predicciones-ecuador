@@ -225,8 +225,8 @@ export default function MarketPage() {
             <div className="flex items-center gap-3 bg-slate-200 dark:bg-slate-800 rounded-xl px-4 py-3">
               <span className="text-slate-400 text-sm">pts</span>
               <input
-                type="number" min="1" max="10" step="0.01"
-                placeholder="Monto (1 - 10)"
+                type="number" min={betConfig.min_bet} max={betConfig.max_bet} step="0.01"
+                placeholder={`Monto (${betConfig.min_bet} - ${betConfig.max_bet})`}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 className="bg-transparent outline-none w-full text-sm placeholder-slate-500"
