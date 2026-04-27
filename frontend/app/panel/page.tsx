@@ -87,8 +87,39 @@ export default function PanelPage() {
   // =======================
   if (loading) {
     return (
-      <main className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-white grid place-items-center">
-        <p className="text-xl animate-pulse">Cargando panel...</p>
+      <main className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
+        <Header />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
+          <div className="flex items-center gap-4">
+            <div className="h-14 w-14 rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse" />
+            <div className="space-y-2">
+              <div className="h-7 w-40 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
+              <div className="h-4 w-56 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
+                <div className="h-3 w-16 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+                <div className="h-7 w-24 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+              </div>
+            ))}
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3">
+              <div className="h-5 w-48 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="h-16 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
+              ))}
+            </div>
+            <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3">
+              <div className="h-5 w-32 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="h-12 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
+              ))}
+            </div>
+          </div>
+        </div>
       </main>
     );
   }
