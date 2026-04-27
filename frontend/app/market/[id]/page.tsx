@@ -211,9 +211,6 @@ export default function MarketPage() {
         <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6">
           <div className="flex items-start justify-between gap-3 mb-4">
             <h1 className="text-xl sm:text-2xl font-bold leading-snug">{market.question}</h1>
-            <span className={`shrink-0 text-xs px-3 py-1 rounded-full ${market.resolved ? "bg-slate-700 text-white" : "bg-emerald-500/10 text-emerald-400"}`}>
-              {market.resolved ? "Cerrado" : "En vivo"}
-            </span>
           </div>
 
           {/* Porcentaje */}
@@ -334,18 +331,27 @@ export default function MarketPage() {
     ) : (
       /* No ha apostado aún */
       <div className="space-y-2">
-        <div className="grid grid-cols-2 gap-2 mb-4">
-          <button
-            onClick={() => setBetType("yes")}
-            className={`py-3 rounded-xl font-bold text-sm transition ${betType === "yes" ? "bg-emerald-500 text-slate-950" : "bg-slate-200 dark:bg-slate-800 text-slate-400"}`}
-          >
-            Sí — {yesPct}%
+        <div className="flex gap-6 mb-4">
+          <button onClick={() => setBetType("yes")} className="flex items-center gap-2.5">
+            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+              betType === "yes" ? "border-emerald-500 bg-emerald-500" : "border-slate-300 dark:border-slate-600"
+            }`}>
+              {betType === "yes" && <div className="w-2 h-2 rounded-full bg-white" />}
+            </div>
+            <span className={`text-sm font-medium transition-colors ${
+              betType === "yes" ? "text-emerald-500" : "text-slate-500 dark:text-slate-400"
+            }`}>Sí — {yesPct}%</span>
           </button>
-          <button
-            onClick={() => setBetType("no")}
-            className={`py-3 rounded-xl font-bold text-sm transition ${betType === "no" ? "bg-rose-500 text-white" : "bg-slate-200 dark:bg-slate-800 text-slate-400"}`}
-          >
-            No — {noPct}%
+
+          <button onClick={() => setBetType("no")} className="flex items-center gap-2.5">
+            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+              betType === "no" ? "border-rose-500 bg-rose-500" : "border-slate-300 dark:border-slate-600"
+            }`}>
+              {betType === "no" && <div className="w-2 h-2 rounded-full bg-white" />}
+            </div>
+            <span className={`text-sm font-medium transition-colors ${
+              betType === "no" ? "text-rose-500" : "text-slate-500 dark:text-slate-400"
+            }`}>No — {noPct}%</span>
           </button>
         </div>
         <div className="flex items-center gap-3 bg-slate-200 dark:bg-slate-800 rounded-xl px-4 py-3 mb-4">
