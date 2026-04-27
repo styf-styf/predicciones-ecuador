@@ -132,6 +132,7 @@ export default function Home() {
       return (
         <div
           key={market.id}
+          id={`market-${market.id}`}
           className={`border rounded-2xl p-4 sm:p-5 transition ${
             isResolved
               ? market.winner === "yes"
@@ -253,7 +254,13 @@ function Carousel({ markets, autoplayMs = 5000 }: {
       onTouchEnd={handleDragEnd}
       style={{ userSelect: "none", cursor: "grab" }}
     >
-      <Link href={`/market/${market.id}`}>
+      <div
+        onClick={() => {
+          const el = document.getElementById(`market-${market.id}`);
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }}
+        style={{ cursor: "pointer" }}
+      >
         <div className={`border rounded-2xl p-4 sm:p-5 transition ${
           isResolved
             ? wonYes
@@ -281,7 +288,7 @@ function Carousel({ markets, autoplayMs = 5000 }: {
           {/* Resultado o indicador */}
           <div className="text-xs text-slate-400 text-right">{total} pts apostados</div>
         </div>
-      </Link>
+      </div>
 
       {markets.length > 1 && (
         <div className="flex justify-center gap-1.5 mt-3">
