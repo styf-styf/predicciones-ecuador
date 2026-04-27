@@ -78,11 +78,52 @@ export default function Home() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
 
         {/* Cards */}
-        <section className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-          <Card title="Mercados" value={`${markets.length}`} icon={<TrendingUp size={14} />} />
-          <Card title="Activos" value={`${markets.filter((m) => !m.resolved).length}`} icon={<Flame size={14} />} />
-          <Card title="Resueltos" value={`${markets.filter((m) => m.resolved).length}`} icon={<Trophy size={14} />} />
-          <Card title="En vivo" value="Ahora" icon={<Bell size={14} />} />
+        <section>
+          {/* Desktop */}
+          <div className="hidden sm:flex flex-wrap gap-2">
+            <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full px-4 py-1.5">
+              <TrendingUp size={13} className="text-slate-400" />
+              <span className="text-xs text-slate-500">Mercados</span>
+              <span className="text-[13px] font-medium">{markets.length}</span>
+            </div>
+            <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full px-4 py-1.5">
+              <Flame size={13} className="text-emerald-500" />
+              <span className="text-xs text-slate-500">Activos</span>
+              <span className="text-[13px] font-medium text-emerald-500">{markets.filter((m) => !m.resolved).length}</span>
+            </div>
+            <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full px-4 py-1.5">
+              <Trophy size={13} className="text-amber-400" />
+              <span className="text-xs text-slate-500">Resueltos</span>
+              <span className="text-[13px] font-medium">{markets.filter((m) => m.resolved).length}</span>
+            </div>
+            <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-full px-4 py-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+              <span className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">En vivo</span>
+            </div>
+          </div>
+
+          {/* Móvil */}
+          <div className="flex sm:hidden gap-1.5">
+            <div className="flex-1 flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full px-3 py-1.5">
+              <TrendingUp size={11} className="text-slate-400 shrink-0" />
+              <span className="text-[11px] text-slate-500 whitespace-nowrap">Merc.</span>
+              <span className="text-[12px] font-medium">{markets.length}</span>
+            </div>
+            <div className="flex-1 flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full px-3 py-1.5">
+              <Flame size={11} className="text-emerald-500 shrink-0" />
+              <span className="text-[11px] text-slate-500 whitespace-nowrap">Act.</span>
+              <span className="text-[12px] font-medium text-emerald-500">{markets.filter((m) => !m.resolved).length}</span>
+            </div>
+            <div className="flex-1 flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full px-3 py-1.5">
+              <Trophy size={11} className="text-amber-400 shrink-0" />
+              <span className="text-[11px] text-slate-500 whitespace-nowrap">Res.</span>
+              <span className="text-[12px] font-medium">{markets.filter((m) => m.resolved).length}</span>
+            </div>
+            <div className="flex-1 flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-full px-3 py-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+              <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 whitespace-nowrap">Live</span>
+            </div>
+          </div>
         </section>
 
         {/* Tendencias - Slider */}
@@ -310,18 +351,6 @@ function Carousel({ markets, autoplayMs = 5000 }: {
           ))}
         </div>
       )}
-    </div>
-  );
-}
-
-function Card({ title, value, icon }: any) {
-  return (
-    <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 sm:p-4">
-      <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs sm:text-sm">
-        <span>{title}</span>
-        {icon}
-      </div>
-      <p className="text-xl sm:text-2xl font-bold mt-2">{value}</p>
     </div>
   );
 }
