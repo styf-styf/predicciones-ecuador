@@ -138,9 +138,58 @@ export default function MarketPage() {
  };
 
   if (!market) return (
-    <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center">
-      <p className="text-slate-400">Cargando mercado...</p>
-    </div>
+    <main className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
+      <Header />
+      <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+        {/* Back */}
+        <div className="h-4 w-32 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+
+        {/* Header mercado */}
+        <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 space-y-4">
+          <div className="flex justify-between gap-3">
+            <div className="flex-1 space-y-2">
+              <div className="h-6 w-3/4 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+              <div className="h-6 w-1/2 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+            </div>
+            <div className="h-6 w-16 bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse shrink-0" />
+          </div>
+          <div className="h-3 w-full bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse" />
+          <div className="flex justify-between">
+            <div className="h-4 w-16 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+            <div className="h-4 w-24 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+            <div className="h-4 w-16 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+          </div>
+        </div>
+
+        {/* Apostar */}
+        <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-4">
+          <div className="h-5 w-36 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+          <div className="grid grid-cols-2 gap-2">
+            <div className="h-12 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
+            <div className="h-12 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
+          </div>
+          <div className="h-12 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
+          <div className="h-12 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
+        </div>
+
+        {/* Noticias */}
+        <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3">
+          <div className="h-5 w-44 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-16 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
+          ))}
+        </div>
+
+        {/* Comentarios */}
+        <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3">
+          <div className="h-5 w-40 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+          <div className="h-12 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="h-20 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
+          ))}
+        </div>
+      </div>
+    </main>
   );
 
   const total = (market.yes ?? 0) + (market.no ?? 0) || 1;
