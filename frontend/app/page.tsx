@@ -275,29 +275,11 @@ function Carousel({ markets, autoplayMs = 5000 }: {
           </div>
 
           {/* Resultado o indicador */}
-          {isResolved ? (
-            <div className={`text-center text-sm px-3 py-3 rounded-xl font-bold ${
-              wonYes ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"
-            }`}>
-              {wonYes ? "✓ Ganó Sí" : "✗ Ganó No"}
-            </div>
-          ) : (
-            <div className="text-xs text-slate-400 text-right">{total} pts apostados</div>
-          )}
+          <div className="text-xs text-slate-400 text-right">{total} pts apostados</div>
         </div>
       </Link>
 
-      {/* Barra de progreso */}
-      {markets.length > 1 && (
-        <div className="mt-3 w-full h-0.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-          <div
-            key={current}
-            className="h-full bg-slate-400 dark:bg-slate-500 rounded-full"
-            style={{ animation: `progress ${autoplayMs}ms linear` }}
-          />
-        </div>
-      )}
-      <style>{`@keyframes progress { from { width: 0% } to { width: 100% } }`}</style>
+     
     </div>
   );
 }
