@@ -216,15 +216,33 @@ export default function MarketPage() {
             </span>
           </div>
 
-          {/* Barra */}
-          <div className="h-3 bg-slate-800 rounded-full overflow-hidden flex mb-2">
-            <div className="bg-emerald-500 transition-all" style={{ width: `${yesPct}%` }} />
-            <div className="bg-rose-500 transition-all" style={{ width: `${noPct}%` }} />
+          {/* Porcentaje */}
+          <div className="flex items-start justify-between gap-3">
+            <div />
+            {(() => {
+              const r = 22;
+              const circ = 2 * Math.PI * r;
+              const offset = circ - (circ * Number(yesPct)) / 100;
+              const color = Number(yesPct) >= 50 ? "#22c55e" : "#ef4444";
+              const label = Number(yesPct) >= 50 ? "Sí" : "No";
+              return (
+                <div className="relative w-14 h-14 shrink-0">
+                  <svg viewBox="0 0 52 52" width="52" height="52">
+                    <circle cx="26" cy="26" r={r} fill="none" stroke="#e2e8f0" strokeWidth="4"/>
+                    <circle cx="26" cy="26" r={r} fill="none" stroke={color} strokeWidth="4"
+                      strokeDasharray={circ} strokeDashoffset={offset}
+                      strokeLinecap="round" transform="rotate(-90 26 26)"/>
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-xs font-semibold text-slate-900 dark:text-white">{yesPct}%</span>
+                    <span className="text-[9px] text-slate-400">{label}</span>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
-          <div className="flex justify-between text-sm text-slate-400">
-            <span className="text-emerald-400 font-semibold">Sí {yesPct}%</span>
-            <span className="text-slate-400">{total} pts apostados</span>
-            <span className="text-rose-400 font-semibold">No {noPct}%</span>
+          <div className="flex justify-end mt-2">
+            <span className="text-xs text-slate-400">{total} pts apostados</span>
           </div>
         </div>
 
@@ -237,7 +255,7 @@ export default function MarketPage() {
 
     {points !== null && (
       <p className="text-sm text-slate-400 mb-4">
-        Tu balance: <span className="text-white font-bold">{points} pts</span>
+        Tu balance: <span className="text-slate-900 dark:text-white font-bold">{points} pts</span>
       </p>
     )}
 
@@ -257,18 +275,37 @@ export default function MarketPage() {
             <p className="text-xs text-slate-400 text-center">
               Cambios restantes: <span className="font-bold text-white">{MAX_CHANGES - changeCount}</span> de {MAX_CHANGES}
             </p>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="flex gap-6">
               <button
                 onClick={() => setBetType("yes")}
-                className={`py-3 rounded-xl font-bold text-sm transition ${betType === "yes" ? "bg-emerald-500 text-slate-950" : "bg-slate-200 dark:bg-slate-800 text-slate-400"}`}
+                className="flex items-center gap-2.5 group"
               >
-                Sí — {yesPct}%
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                  betType === "yes"
+                    ? "border-emerald-500 bg-emerald-500"
+                    : "border-slate-300 dark:border-slate-600"
+                }`}>
+                  {betType === "yes" && <div className="w-2 h-2 rounded-full bg-white" />}
+                </div>
+                <span className={`text-sm font-medium transition-colors ${
+                  betType === "yes" ? "text-emerald-500" : "text-slate-500 dark:text-slate-400"
+                }`}>Sí — {yesPct}%</span>
               </button>
+
               <button
                 onClick={() => setBetType("no")}
-                className={`py-3 rounded-xl font-bold text-sm transition ${betType === "no" ? "bg-rose-500 text-white" : "bg-slate-200 dark:bg-slate-800 text-slate-400"}`}
+                className="flex items-center gap-2.5 group"
               >
-                No — {noPct}%
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                  betType === "no"
+                    ? "border-rose-500 bg-rose-500"
+                    : "border-slate-300 dark:border-slate-600"
+                }`}>
+                  {betType === "no" && <div className="w-2 h-2 rounded-full bg-white" />}
+                </div>
+                <span className={`text-sm font-medium transition-colors ${
+                  betType === "no" ? "text-rose-500" : "text-slate-500 dark:text-slate-400"
+                }`}>No — {noPct}%</span>
               </button>
             </div>
             <div className="flex items-center gap-3 bg-slate-200 dark:bg-slate-800 rounded-xl px-4 py-3">
