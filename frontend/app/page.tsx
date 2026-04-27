@@ -133,7 +133,7 @@ export default function Home() {
         <div
           key={market.id}
           id={`market-${market.id}`}
-          className={`border rounded-2xl p-4 sm:p-5 transition ${
+          className={`border rounded-2xl p-4 sm:p-5 transition transition-all duration-300 ${
             isResolved
               ? market.winner === "yes"
                 ? "bg-emerald-500/5 border-emerald-500/30"
@@ -257,7 +257,12 @@ function Carousel({ markets, autoplayMs = 5000 }: {
       <div
         onClick={() => {
           const el = document.getElementById(`market-${market.id}`);
-          if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+          if (!el) return;
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          el.classList.add("ring-2", "ring-orange-400", "scale-[1.02]");
+          setTimeout(() => {
+            el.classList.remove("ring-2", "ring-orange-400", "scale-[1.02]");
+          }, 1000);
         }}
         style={{ cursor: "pointer" }}
       >
