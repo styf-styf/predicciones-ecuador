@@ -109,8 +109,12 @@ export default function Home() {
           <h2 className="text-lg font-bold">Ganadores</h2>
         </div>
         <Carousel markets={markets.filter(m => m.resolved)} autoplayMs={carouselConfig.autoplay_ms} />
+        
       </div>
+      
     )}
+
+    
 
   </section>
  )}
@@ -279,7 +283,21 @@ function Carousel({ markets, autoplayMs = 5000 }: {
         </div>
       </Link>
 
-     
+      {markets.length > 1 && (
+        <div className="flex justify-center gap-1.5 mt-3">
+          {markets.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrent(i)}
+              className={`rounded-full transition-all duration-300 ${
+                i === current
+                  ? "bg-slate-500 dark:bg-slate-400 w-2 h-2"
+                  : "bg-slate-300 dark:bg-slate-700 w-1.5 h-1.5"
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
