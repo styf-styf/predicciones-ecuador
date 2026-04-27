@@ -211,11 +211,6 @@ export default function MarketPage() {
         <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6">
           <div className="flex items-start justify-between gap-3 mb-4">
             <h1 className="text-xl sm:text-2xl font-bold leading-snug">{market.question}</h1>
-          </div>
-
-          {/* Porcentaje */}
-          <div className="flex items-start justify-between gap-3">
-            <div />
             {(() => {
               const r = 22;
               const circ = 2 * Math.PI * r;
