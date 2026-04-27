@@ -91,17 +91,17 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-3">
 
         {/* Logo */}
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        <Link href="/" className="flex items-center gap-2 sm:gap-3 min-w-0">
           <div className="h-9 w-9 sm:h-10 sm:w-10 shrink-0 rounded-2xl bg-emerald-500 grid place-items-center font-bold text-slate-950 text-sm sm:text-base">P</div>
           <div className="min-w-0">
             <h1 className="text-base sm:text-xl font-bold leading-tight truncate">Predicciones Ecuador</h1>
             <p className="text-[10px] sm:text-xs text-slate-400 hidden sm:block">Mercados predictivos en tiempo real</p>
           </div>
-        </div>
+        </Link>
 
         {/* Search desktop */}
         <div className="relative hidden md:block" ref={searchRef}>
-          <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-900 px-4 py-2 rounded-2xl w-80 lg:w-96">
+          <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-900 px-4 py-3 rounded-2xl w-96 lg:w-[480px]">
             <Search size={18} className="text-slate-400 shrink-0" />
             <input
               placeholder="Buscar mercados..."
@@ -189,25 +189,25 @@ export default function Header() {
           </div>
 
           {/* Auth desktop */}
-          <div className="hidden sm:flex items-center gap-2">
-            {isAdmin && <Link href="/admin" className="px-3 py-2 rounded-2xl bg-amber-500 text-slate-950 font-semibold text-sm">Admin</Link>}
-            <Link href="/panel" className="px-3 py-2 rounded-2xl bg-blue-500 font-semibold text-sm">Panel</Link>
+          <div className="hidden sm:flex items-center gap-4">
+            {isAdmin && <Link href="/admin" className="text-sm font-semibold text-amber-500 hover:text-amber-400 transition-colors">Admin</Link>}
+            <Link href="/panel" className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">Panel</Link>
             {isLogged ? (
               <button
                 onClick={() => { localStorage.removeItem("token"); localStorage.removeItem("role"); localStorage.removeItem("points"); setIsLogged(false); setPoints(null); setIsAdmin(false); }}
-                className="px-3 py-2 rounded-2xl bg-rose-500 font-medium flex items-center gap-1.5 text-sm"
+                className="text-sm font-medium text-rose-500 hover:text-rose-400 transition-colors flex items-center gap-1.5"
               >
                 <LogOut size={15} /> Salir
               </button>
             ) : (
-              <Link href="/login" className="px-3 py-2 rounded-2xl bg-emerald-500 text-slate-950 font-semibold flex items-center gap-1.5 text-sm">
+              <Link href="/login" className="text-sm font-semibold text-emerald-500 hover:text-emerald-400 transition-colors flex items-center gap-1.5">
                 <LogIn size={15} /> Login
               </Link>
             )}
           </div>
 
           {/* Hamburguesa móvil */}
-          <button onClick={() => setShowMobileMenu(!showMobileMenu)} className="sm:hidden p-2 rounded-xl bg-slate-900">
+          <button onClick={() => setShowMobileMenu(!showMobileMenu)} className="sm:hidden p-2 rounded-xl bg-slate-200 dark:bg-slate-900 text-slate-900 dark:text-white">
             {showMobileMenu ? <X size={18} /> : <Menu size={18} />}
           </button>
         </div>
@@ -235,16 +235,16 @@ export default function Header() {
               ))}
             </div>
           )}
-          <div className="flex flex-col gap-2">
-            {isAdmin && <Link href="/admin" onClick={() => setShowMobileMenu(false)} className="px-4 py-3 rounded-2xl bg-amber-500 text-slate-950 font-semibold text-sm text-center">Admin</Link>}
-            <Link href="/panel" onClick={() => setShowMobileMenu(false)} className="px-4 py-3 rounded-2xl bg-blue-500 font-semibold text-sm text-center">Panel</Link>
+          <div className="flex flex-col gap-1">
+            {isAdmin && <Link href="/admin" onClick={() => setShowMobileMenu(false)} className="px-2 py-2.5 text-sm font-semibold text-amber-500 border-b border-slate-100 dark:border-slate-800">Admin</Link>}
+            <Link href="/panel" onClick={() => setShowMobileMenu(false)} className="px-2 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 border-b border-slate-100 dark:border-slate-800">Panel</Link>
             {isLogged ? (
               <button onClick={() => { localStorage.removeItem("token"); localStorage.removeItem("role"); localStorage.removeItem("points"); setIsLogged(false); setPoints(null); setIsAdmin(false); setShowMobileMenu(false); }}
-                className="px-4 py-3 rounded-2xl bg-rose-500 font-medium flex items-center justify-center gap-2 text-sm w-full">
+                className="px-2 py-2.5 text-sm font-medium text-rose-500 flex items-center gap-2 w-full">
                 <LogOut size={15} /> Cerrar sesión
               </button>
             ) : (
-              <Link href="/login" onClick={() => setShowMobileMenu(false)} className="px-4 py-3 rounded-2xl bg-emerald-500 text-slate-950 font-semibold flex items-center justify-center gap-2 text-sm">
+              <Link href="/login" onClick={() => setShowMobileMenu(false)} className="px-2 py-2.5 text-sm font-semibold text-emerald-500 flex items-center gap-2">
                 <LogIn size={15} /> Iniciar sesión
               </Link>
             )}
