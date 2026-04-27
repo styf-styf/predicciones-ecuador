@@ -213,14 +213,31 @@ export default function Home() {
             )}
           </div>
 
-          {/* Barra */}
-          <div className="h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden flex mb-1">
-            <div className="bg-emerald-500 transition-all" style={{ width: `${yesPct}%` }} />
-            <div className="bg-rose-500 transition-all" style={{ width: `${noPct}%` }} />
-          </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-            Sí {total === 0 ? "—" : `${yesPct}%`} • No {total === 0 ? "—" : `${noPct}%`} • {total} pts
-          </p>
+          {/* Círculo porcentaje */}
+
+          {(() => {
+  const r = 22;
+  const circ = 2 * Math.PI * r;
+  const offset = circ - (circ * Number(yesPct)) / 100;
+  const color = Number(yesPct) >= 50 ? "#22c55e" : "#ef4444";
+  const label = Number(yesPct) >= 50 ? "Sí" : "No";
+  return (
+    <div className="flex justify-center mb-4">
+      <div className="relative w-14 h-14">
+        <svg viewBox="0 0 52 52" width="52" height="52">
+          <circle cx="26" cy="26" r={r} fill="none" stroke="#e2e8f0" strokeWidth="4"/>
+          <circle cx="26" cy="26" r={r} fill="none" stroke={color} strokeWidth="4"
+            strokeDasharray={circ} strokeDashoffset={offset}
+            strokeLinecap="round" transform="rotate(-90 26 26)"/>
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-xs font-semibold text-slate-900 dark:text-white">{yesPct}%</span>
+          <span className="text-[9px] text-slate-400">{label}</span>
+        </div>
+      </div>
+    </div>
+  );
+ })()}
 
           {/* Acción */}
           {isResolved ? (
@@ -234,12 +251,12 @@ export default function Home() {
           ) : (
             <div className="grid grid-cols-2 gap-2">
               <Link href={`/market/${market.id}?bet=yes`}
-                className="bg-emerald-500 text-slate-950 font-bold rounded-xl py-2.5 text-sm text-center active:scale-95 transition-transform">
-                Comprar Sí
+                className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium rounded-xl py-2.5 text-sm text-center active:scale-95 transition-transform">
+                Sí
               </Link>
               <Link href={`/market/${market.id}?bet=no`}
-                className="bg-rose-500 text-white font-bold rounded-xl py-2.5 text-sm text-center active:scale-95 transition-transform">
-                Comprar No
+                className="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 font-medium rounded-xl py-2.5 text-sm text-center active:scale-95 transition-transform">
+                No
               </Link>
             </div>
           )}
