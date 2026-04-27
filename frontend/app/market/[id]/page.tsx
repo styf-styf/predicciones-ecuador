@@ -211,6 +211,12 @@ export default function MarketPage() {
         <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6">
           <div className="flex items-start justify-between gap-3 mb-4">
             <h1 className="text-xl sm:text-2xl font-bold leading-snug">{market.question}</h1>
+
+          </div>
+
+          {/* Porcentaje */}
+          <div className="flex items-start justify-between gap-3">
+            <div />
             {(() => {
               const r = 22;
               const circ = 2 * Math.PI * r;
@@ -300,9 +306,9 @@ export default function MarketPage() {
                 }`}>No — {noPct}%</span>
               </button>
             </div>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-400">Monto</span>
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm text-slate-500 dark:text-slate-400">Monto</span>
                 <span className="text-2xl font-bold text-slate-900 dark:text-white">
                   {amount ? `${amount} pts` : "0 pts"}
                 </span>
@@ -316,27 +322,31 @@ export default function MarketPage() {
                       const next = Math.min(current + val, betConfig.max_bet);
                       setAmount(String(next));
                     }}
-                    className="px-3 py-1.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-medium hover:bg-slate-300 dark:hover:bg-slate-700 transition"
+                    className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700"
                   >
                     +{val}
                   </button>
                 ))}
                 <button
                   onClick={() => {
-                    const max = Math.min(points ?? 0, betConfig.max_bet);
+                    const max = points !== null
+                      ? Math.min(points, betConfig.max_bet)
+                      : betConfig.max_bet;
                     setAmount(String(max));
                   }}
-                  className="px-3 py-1.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-medium hover:bg-slate-300 dark:hover:bg-slate-700 transition"
+                  className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700"
                 >
                   Máx.
                 </button>
+                {amount && (
+                  <button
+                    onClick={() => setAmount("")}
+                    className="px-3 py-1.5 rounded-full text-sm font-medium bg-rose-100 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 hover:bg-rose-200 dark:hover:bg-rose-900/40 transition-colors border border-rose-200 dark:border-rose-800"
+                  >
+                    Limpiar
+                  </button>
+                )}
               </div>
-              <button
-                onClick={() => setAmount("")}
-                className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition"
-              >
-                Limpiar
-              </button> 
             </div>
             <button
               onClick={handleBet}
@@ -377,16 +387,48 @@ export default function MarketPage() {
             }`}>No — {noPct}%</span>
           </button>
         </div>
-        <div className="flex items-center gap-3 bg-slate-200 dark:bg-slate-800 rounded-xl px-4 py-3 mb-4">
-          <span className="text-slate-400 text-sm">pts</span>
-          <input
-            type="number" min={betConfig.min_bet} max={betConfig.max_bet} step="0.01"
-            placeholder={`Monto (${betConfig.min_bet} - ${betConfig.max_bet})`}
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className="bg-transparent outline-none w-full text-sm placeholder-slate-500"
-          />
-        </div>
+        <div>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm text-slate-500 dark:text-slate-400">Monto</span>
+                <span className="text-2xl font-bold text-slate-900 dark:text-white">
+                  {amount ? `${amount} pts` : "0 pts"}
+                </span>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                {[1, 5, 10, 50, 100].map((val) => (
+                  <button
+                    key={val}
+                    onClick={() => {
+                      const current = parseFloat(amount) || 0;
+                      const next = Math.min(current + val, betConfig.max_bet);
+                      setAmount(String(next));
+                    }}
+                    className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700"
+                  >
+                    +{val}
+                  </button>
+                ))}
+                <button
+                  onClick={() => {
+                    const max = points !== null
+                      ? Math.min(points, betConfig.max_bet)
+                      : betConfig.max_bet;
+                    setAmount(String(max));
+                  }}
+                  className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700"
+                >
+                  Máx.
+                </button>
+                {amount && (
+                  <button
+                    onClick={() => setAmount("")}
+                    className="px-3 py-1.5 rounded-full text-sm font-medium bg-rose-100 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 hover:bg-rose-200 dark:hover:bg-rose-900/40 transition-colors border border-rose-200 dark:border-rose-800"
+                  >
+                    Limpiar
+                  </button>
+                )}
+              </div>
+            </div>
         <button
           onClick={handleBet}
           className={`w-full py-3 rounded-xl font-bold text-sm transition active:scale-95 ${betType === "yes" ? "bg-emerald-500 text-slate-950" : "bg-rose-500 text-white"}`}
