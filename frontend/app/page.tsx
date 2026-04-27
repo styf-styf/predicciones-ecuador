@@ -97,30 +97,7 @@ export default function Home() {
           <Flame size={16} className="text-orange-400" />
           <h2 className="text-lg font-bold">Tendencias</h2>
         </div>
-        <Carousel
-        markets={trendingMarkets}
-        autoplayMs={carouselConfig.autoplay_ms}
-        visibleCount={carouselConfig.trending_count}
-        renderCard={(market, index, globalIndex) => {
-            const total = (market.yes ?? 0) + (market.no ?? 0);
-            const yesPct = total === 0 ? 50 : ((market.yes / total) * 100).toFixed(0);
-            const noPct = total === 0 ? 50 : ((market.no / total) * 100).toFixed(0);
-            return (
-              <Link key={market.id} href={`/market/${market.id}`}
-                className="bg-slate-100 dark:bg-slate-900 border border-orange-500/30 rounded-2xl p-4 flex items-center gap-3 hover:border-orange-400 transition">
-                <span className="text-2xl font-black text-orange-400 shrink-0">#{globalIndex + 1}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm truncate">{market.question}</p>
-                  <div className="mt-2 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden flex">
-                    <div className="bg-emerald-500" style={{ width: `${yesPct}%` }} />
-                    <div className="bg-rose-500" style={{ width: `${noPct}%` }} />
-                  </div>
-                  <p className="text-xs mt-1 text-slate-400">{total} pts • Sí {yesPct}% • No {noPct}%</p>
-                </div>
-              </Link>
-            );
-          }}
-        />
+        <Carousel markets={trendingMarkets} autoplayMs={carouselConfig.autoplay_ms} />
       </div>
     )}
 
@@ -131,39 +108,7 @@ export default function Home() {
           <Trophy size={16} className="text-yellow-400" />
           <h2 className="text-lg font-bold">Ganadores</h2>
         </div>
-        <Carousel
-        markets={markets.filter(m => m.resolved)}
-        autoplayMs={carouselConfig.autoplay_ms}
-        visibleCount={carouselConfig.winners_count}
-        renderCard={(market, index, globalIndex) => {
-            const total = (market.yes ?? 0) + (market.no ?? 0) || 1;
-            const yesPct = ((market.yes / total) * 100).toFixed(0);
-            const noPct = ((market.no / total) * 100).toFixed(0);
-            const wonYes = market.winner === "yes";
-            return (
-              <Link key={market.id} href={`/market/${market.id}`}
-                className={`border rounded-2xl p-4 flex items-center gap-3 transition ${
-                  wonYes
-                    ? "bg-emerald-500/5 border-emerald-500/40 hover:border-emerald-400"
-                    : "bg-rose-500/5 border-rose-500/40 hover:border-rose-400"
-                }`}>
-                <span className={`text-2xl font-black shrink-0 ${wonYes ? "text-emerald-400" : "text-rose-400"}`}>
-                  {wonYes ? "✓" : "✗"}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm truncate">{market.question}</p>
-                  <div className="mt-2 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden flex">
-                    <div className="bg-emerald-500" style={{ width: `${yesPct}%` }} />
-                    <div className="bg-rose-500" style={{ width: `${noPct}%` }} />
-                  </div>
-                  <p className={`text-xs mt-1 font-semibold ${wonYes ? "text-emerald-400" : "text-rose-400"}`}>
-                    Ganó {wonYes ? "Sí" : "No"} • {total} pts apostados
-                  </p>
-                </div>
-              </Link>
-            );
-          }}
-        />
+        <Carousel markets={markets.filter(m => m.resolved)} autoplayMs={carouselConfig.autoplay_ms} />
       </div>
     )}
 
@@ -228,7 +173,7 @@ export default function Home() {
                 ? "bg-emerald-500/10 text-emerald-400"
                 : "bg-rose-500/10 text-rose-400"
             }`}>
-              {market.winner === "yes" ? "✓ Sí ganó este mercado" : "✗ No ganó este mercado"}
+              {market.winner === "yes" ? "Ganó SI" : "Ganó NO"}
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-2">
@@ -252,72 +197,110 @@ export default function Home() {
   );
 }
 
-function Carousel({ markets, renderCard, autoplayMs = 5000, visibleCount = 1 }: {
+function Carousel({ markets, autoplayMs = 5000 }: {
   markets: any[];
-  renderCard: (market: any, index: number, globalIndex: number) => React.ReactNode;
   autoplayMs?: number;
-  visibleCount?: number;
 }) {
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);
-  const maxIndex = Math.max(0, markets.length - visibleCount);
+  const dragStart = useRef<number | null>(null);
 
-  const prev = () => setCurrent((c) => (c === 0 ? maxIndex : c - 1));
-  const next = () => setCurrent((c) => (c === maxIndex ? 0 : c + 1));
+  const prev = () => setCurrent((c) => (c === 0 ? markets.length - 1 : c - 1));
+  const next = () => setCurrent((c) => (c === markets.length - 1 ? 0 : c + 1));
 
   useEffect(() => {
-    if (paused || markets.length <= visibleCount) return;
+    if (paused || markets.length <= 1) return;
     const timer = setInterval(next, autoplayMs);
     return () => clearInterval(timer);
-  }, [current, paused, autoplayMs, visibleCount, markets.length]);
+  }, [current, paused, autoplayMs, markets.length]);
 
-  const visible = markets.slice(current, current + visibleCount);
-  // wrap-around: si llegamos al final y visible está incompleto
-  const wrapped = visible.length < visibleCount
-    ? [...visible, ...markets.slice(0, visibleCount - visible.length)]
-    : visible;
+  const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
+    dragStart.current = "touches" in e ? e.touches[0].clientX : e.clientX;
+    setPaused(true);
+  };
+  const handleDragEnd = (e: React.MouseEvent | React.TouchEvent) => {
+    if (dragStart.current === null) return;
+    const endX = "changedTouches" in e ? e.changedTouches[0].clientX : e.clientX;
+    const diff = dragStart.current - endX;
+    if (Math.abs(diff) > 40) diff > 0 ? next() : prev();
+    dragStart.current = null;
+    setPaused(false);
+  };
+
+  const market = markets[current];
+  const total = (market.yes ?? 0) + (market.no ?? 0) || 1;
+  const yesPct = ((market.yes / total) * 100).toFixed(0);
+  const isResolved = market.resolved;
+  const wonYes = market.winner === "yes";
+
+  const r = 22;
+  const circ = 2 * Math.PI * r;
+  const offset = circ - (circ * Number(yesPct)) / 100;
+  const color = Number(yesPct) >= 50 ? "#22c55e" : "#ef4444";
+  const label = Number(yesPct) >= 50 ? "Sí" : "No";
 
   return (
-    <div onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
-      <div className="flex flex-col gap-3">
-        {wrapped.map((market, index) => renderCard(market, index, current + index))}
-      </div>
-
-      {markets.length > visibleCount && (
-        <div className="flex items-center justify-center gap-3 mt-4">
-          <button onClick={prev}
-            className="w-8 h-8 rounded-full border border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-500 transition text-lg">
-            ‹
-          </button>
-          <div className="flex gap-1.5">
-            {markets.map((_, i) => (
-              <button key={i} onClick={() => setCurrent(i)}
-                className={`h-1.5 rounded-full transition-all ${i === current ? "bg-orange-400 w-4" : "bg-slate-300 dark:bg-slate-700 w-1.5"}`}
-              />
-            ))}
+    <div
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onMouseDown={handleDragStart}
+      onMouseUp={handleDragEnd}
+      onTouchStart={handleDragStart}
+      onTouchEnd={handleDragEnd}
+      style={{ userSelect: "none", cursor: "grab" }}
+    >
+      <Link href={`/market/${market.id}`}>
+        <div className={`border rounded-2xl p-4 sm:p-5 transition ${
+          isResolved
+            ? wonYes
+              ? "bg-emerald-500/5 border-emerald-500/30"
+              : "bg-rose-500/5 border-rose-500/30"
+            : "bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+        }`}>
+          {/* Título + Círculo */}
+          <div className="flex items-start justify-between gap-3 mb-4">
+            <p className="text-[14px] font-semibold leading-snug">{market.question}</p>
+            <div className="relative w-14 h-14 shrink-0">
+              <svg viewBox="0 0 52 52" width="52" height="52">
+                <circle cx="26" cy="26" r={r} fill="none" stroke="#e2e8f0" strokeWidth="4"/>
+                <circle cx="26" cy="26" r={r} fill="none" stroke={color} strokeWidth="4"
+                  strokeDasharray={circ} strokeDashoffset={offset}
+                  strokeLinecap="round" transform="rotate(-90 26 26)"/>
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-xs font-semibold text-slate-900 dark:text-white">{yesPct}%</span>
+                <span className="text-[9px] text-slate-400">{label}</span>
+              </div>
+            </div>
           </div>
-          <button onClick={next}
-            className="w-8 h-8 rounded-full border border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-500 transition text-lg">
-            ›
-          </button>
-        </div>
-      )}
 
-      {/* Barra de progreso autoplay */}
-      {!paused && (
-        <div className="mt-2 mx-auto w-16 h-0.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+          {/* Resultado o indicador */}
+          {isResolved ? (
+            <div className={`text-center text-sm px-3 py-3 rounded-xl font-bold ${
+              wonYes ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"
+            }`}>
+              {wonYes ? "✓ Ganó Sí" : "✗ Ganó No"}
+            </div>
+          ) : (
+            <div className="text-xs text-slate-400 text-right">{total} pts apostados</div>
+          )}
+        </div>
+      </Link>
+
+      {/* Barra de progreso */}
+      {markets.length > 1 && (
+        <div className="mt-3 w-full h-0.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
           <div
             key={current}
-            className="h-full bg-orange-400 rounded-full"
+            className="h-full bg-slate-400 dark:bg-slate-500 rounded-full"
             style={{ animation: `progress ${autoplayMs}ms linear` }}
           />
         </div>
       )}
-
       <style>{`@keyframes progress { from { width: 0% } to { width: 100% } }`}</style>
     </div>
   );
- }
+}
 
 function Card({ title, value, icon }: any) {
   return (
