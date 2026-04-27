@@ -191,53 +191,35 @@ export default function Home() {
               : "bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
           }`}
         >
-          {/* Badge estado */}
-          <div className="flex items-start justify-between gap-3 mb-3">
+          {/* Título + Círculo arriba a la derecha */}
+          <div className="flex items-start justify-between gap-3 mb-4">
             <Link href={`/market/${market.id}`}>
-              <h3 className="font-semibold text-sm sm:text-base leading-snug hover:text-emerald-400 transition-colors cursor-pointer">
+              <h3 className="text-[14px] font-semibold leading-snug hover:text-emerald-400 transition-colors cursor-pointer">
                 {market.question}
               </h3>
             </Link>
-            {isResolved ? (
-              <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                market.winner === "yes"
-                  ? "bg-emerald-500/20 text-emerald-400"
-                  : "bg-rose-500/20 text-rose-400"
-              }`}>
-                {market.winner === "yes" ? "Ganó Sí" : "Ganó No"}
-              </span>
-            ) : (
-              <span className="shrink-0 text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400">
-                En vivo
-              </span>
-            )}
+            {(() => {
+              const r = 22;
+              const circ = 2 * Math.PI * r;
+              const offset = circ - (circ * Number(yesPct)) / 100;
+              const color = Number(yesPct) >= 50 ? "#22c55e" : "#ef4444";
+              const label = Number(yesPct) >= 50 ? "Sí" : "No";
+              return (
+                <div className="relative w-14 h-14 shrink-0">
+                  <svg viewBox="0 0 52 52" width="52" height="52">
+                    <circle cx="26" cy="26" r={r} fill="none" stroke="#e2e8f0" strokeWidth="4"/>
+                    <circle cx="26" cy="26" r={r} fill="none" stroke={color} strokeWidth="4"
+                      strokeDasharray={circ} strokeDashoffset={offset}
+                      strokeLinecap="round" transform="rotate(-90 26 26)"/>
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-xs font-semibold text-slate-900 dark:text-white">{yesPct}%</span>
+                    <span className="text-[9px] text-slate-400">{label}</span>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
-
-          {/* Círculo porcentaje */}
-
-          {(() => {
-  const r = 22;
-  const circ = 2 * Math.PI * r;
-  const offset = circ - (circ * Number(yesPct)) / 100;
-  const color = Number(yesPct) >= 50 ? "#22c55e" : "#ef4444";
-  const label = Number(yesPct) >= 50 ? "Sí" : "No";
-  return (
-    <div className="flex justify-center mb-4">
-      <div className="relative w-14 h-14">
-        <svg viewBox="0 0 52 52" width="52" height="52">
-          <circle cx="26" cy="26" r={r} fill="none" stroke="#e2e8f0" strokeWidth="4"/>
-          <circle cx="26" cy="26" r={r} fill="none" stroke={color} strokeWidth="4"
-            strokeDasharray={circ} strokeDashoffset={offset}
-            strokeLinecap="round" transform="rotate(-90 26 26)"/>
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-xs font-semibold text-slate-900 dark:text-white">{yesPct}%</span>
-          <span className="text-[9px] text-slate-400">{label}</span>
-        </div>
-      </div>
-    </div>
-  );
- })()}
 
           {/* Acción */}
           {isResolved ? (
