@@ -336,7 +336,7 @@ export default function MarketPage() {
                 className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition"
               >
                 Limpiar
-              </button>
+              </button> 
             </div>
             <button
               onClick={handleBet}
