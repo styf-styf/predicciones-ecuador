@@ -28,11 +28,11 @@ export default function AdminPage() {
   const [config, setConfig] = useState<any>(null);
   const [activeSection, setActiveSection] = useState<Section>("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [settingsForm, setSettingsForm] = useState<{
-    min_bet: string; max_bet: string; commission: string; welcome_points: string;
+   const [settingsForm, setSettingsForm] = useState<{
+    commission: string; welcome_points: string;
     trending_count: number; winners_count: number; autoplay_ms: number;
   }>({
-    min_bet: "", max_bet: "", commission: "", welcome_points: "",
+    commission: "", welcome_points: "",
     trending_count: 1, winners_count: 1, autoplay_ms: 5000,
   });
   const [searchQuery, setSearchQuery] = useState("");
@@ -88,7 +88,6 @@ export default function AdminPage() {
     if (res.ok) {
       setConfig(data);
       setSettingsForm({
-        min_bet: data.min_bet, max_bet: data.max_bet,
         commission: data.commission, welcome_points: data.welcome_points,
         trending_count: data.trending_count ?? 1,
         winners_count: data.winners_count ?? 1,
@@ -103,8 +102,7 @@ export default function AdminPage() {
       method: "PUT",
       headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` || "" },
       body: JSON.stringify({
-        min_bet: parseFloat(settingsForm.min_bet),
-        max_bet: parseFloat(settingsForm.max_bet),
+        
         commission: parseFloat(settingsForm.commission),
         welcome_points: parseFloat(settingsForm.welcome_points),
         trending_count: Number((settingsForm as any).trending_count ?? 1),
@@ -631,10 +629,8 @@ export default function AdminPage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-2 gap-3">
                 {[
-                  { label: "Apuesta mín.", value: `${config.min_bet} pts`, color: "text-amber-500 dark:text-amber-400" },
-                  { label: "Apuesta máx.", value: `${config.max_bet} pts`, color: "text-amber-500 dark:text-amber-400" },
                   { label: "Comisión", value: `${config.commission}%`, color: "text-emerald-600 dark:text-emerald-400" },
                   { label: "Pts bienvenida", value: `${config.welcome_points}`, color: "text-blue-500 dark:text-blue-400" },
                 ].map((item) => (
@@ -647,8 +643,6 @@ export default function AdminPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
-                  { key: "min_bet", label: "Apuesta mínima (pts)", step: "0.01" },
-                  { key: "max_bet", label: "Apuesta máxima (pts)", step: "0.01" },
                   { key: "commission", label: "Comisión (%)", step: "0.1" },
                   { key: "welcome_points", label: "Puntos de bienvenida", step: "1" },
                 ].map((field) => (
