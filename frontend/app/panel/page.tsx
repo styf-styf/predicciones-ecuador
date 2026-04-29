@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -507,7 +508,7 @@ export default function PanelPage() {
 
 function MovimientoRow({ mov, full }: { mov: any; full?: boolean }) {
   const isPositive = mov.monto > 0;
-  const icons: Record<string, JSX.Element> = {
+  const icons: Record<string, React.ReactElement> = {
     ganada: <CheckCircle size={14} className="text-emerald-500" />,
     perdida: <XCircle size={14} className="text-rose-500" />,
     pendiente: <Clock size={14} className="text-amber-500" />,
