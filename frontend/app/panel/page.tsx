@@ -26,6 +26,8 @@ export default function PanelPage() {
   // Wallet state (maqueta)
   const [walletAction, setWalletAction] = useState<"recarga" | "retiro">("recarga");
   const [walletAmount, setWalletAmount] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<"transferencia" | "tarjeta">("transferencia");
+  const [payingCard, setPayingCard] = useState(false);
 
   // Perfil state
   const [profileForm, setProfileForm] = useState({
@@ -94,6 +96,29 @@ export default function PanelPage() {
       });
       if (res.ok) { setProfileSaved(true); setTimeout(() => setProfileSaved(false), 3000); loadPanel(); }
     } finally { setSavingProfile(false); }
+  };
+
+  const handlePayphone = async () => {
+    if (!walletAmount || parseFloat(walletAmount) < 1) return;
+    setPayingCard(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("https://predicciones-ecuador.onrender.com/payphone/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+        body: JSON.stringify({ amount: walletAmount }),
+      });
+      const data = await res.json();
+      if (data.paymentUrl) {
+        window.location.href = data.paymentUrl;
+      } else {
+        alert(data.message || "Error iniciando pago");
+      }
+    } catch {
+      alert("Error conectando con el servidor");
+    } finally {
+      setPayingCard(false);
+    }
   };
 
   if (loading) {
@@ -353,10 +378,46 @@ export default function PanelPage() {
                     className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500 transition" />
                 </div>
 
-                <button className="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-3 rounded-xl text-sm transition active:scale-[0.99]">
-                  Enviar comprobante
-                </button>
-                <p className="text-xs text-slate-400 text-center">Tu recarga será procesada en menos de 24 horas hábiles</p>
+                {/* Selector método de pago */}
+                <div>
+                  <label className="text-xs text-slate-400 uppercase tracking-widest block mb-2">Método de pago</label>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setPaymentMethod("transferencia")}
+                      className={`flex-1 py-2.5 rounded-xl text-sm font-medium border transition-all ${paymentMethod === "transferencia" ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-transparent" : "border-slate-200 dark:border-slate-700 text-slate-500"}`}
+                    >
+                      Transferencia
+                    </button>
+                    <button
+                      onClick={() => setPaymentMethod("tarjeta")}
+                      className={`flex-1 py-2.5 rounded-xl text-sm font-medium border transition-all ${paymentMethod === "tarjeta" ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-transparent" : "border-slate-200 dark:border-slate-700 text-slate-500"}`}
+                    >
+                      💳 Tarjeta
+                    </button>
+                  </div>
+                </div>
+
+                {paymentMethod === "transferencia" && (
+                  <>
+                    <button className="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-3 rounded-xl text-sm transition active:scale-[0.99]">
+                      Enviar comprobante
+                    </button>
+                    <p className="text-xs text-slate-400 text-center">Tu recarga será procesada en menos de 24 horas hábiles</p>
+                  </>
+                )}
+
+                {paymentMethod === "tarjeta" && (
+                  <>
+                    <button
+                      onClick={handlePayphone}
+                      disabled={!walletAmount || payingCard}
+                      className="w-full bg-blue-500 hover:bg-blue-400 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl text-sm transition active:scale-[0.99] flex items-center justify-center gap-2"
+                    >
+                      {payingCard ? "Procesando..." : `Pagar $${walletAmount || "0"} con tarjeta`}
+                    </button>
+                    <p className="text-xs text-slate-400 text-center">Serás redirigido a Payphone para completar el pago</p>
+                  </>
+                )}
               </div>
             )}
 
