@@ -1026,16 +1026,35 @@ app.post("/payphone/create", auth, async (req, res) => {
 // 💳 PAYPHONE - CALLBACK
 // =======================
 app.get("/payphone/callback", async (req, res) => {
-  const { clientTransactionId, transactionStatus, id } = req.query;
+  const { clientTransactionId, id } = req.query;
   console.log("Payphone callback GET:", req.query);
 
-  if (transactionStatus !== "Approved") {
+  if (!id || !clientTransactionId) {
     return res.redirect("https://predicciones-ecuador.vercel.app/panel?status=cancelado");
   }
 
-  // Verificar y procesar el pago
-  await procesarPagoPayphone(clientTransactionId, id);
-  return res.redirect("https://predicciones-ecuador.vercel.app/panel?status=exitoso");
+  // Verificar el pago directamente con Payphone
+  try {
+    const verifyRes = await fetch(`https://pay.payphonetodoesposible.com/api/button/V3/Confirm?id=${id}&clientTransactionId=${clientTransactionId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.PAYPHONE_TOKEN}`,
+      },
+    });
+    const verifyData = await verifyRes.json();
+    console.log("Payphone verify:", verifyData);
+
+    if (verifyData.transactionStatus === "Approved") {
+      await procesarPagoPayphone(clientTransactionId, id);
+      return res.redirect("https://predicciones-ecuador.vercel.app/panel?status=exitoso");
+    } else {
+      return res.redirect("https://predicciones-ecuador.vercel.app/panel?status=cancelado");
+    }
+  } catch (err) {
+    console.error("Error verificando pago:", err);
+    return res.redirect("https://predicciones-ecuador.vercel.app/panel?status=cancelado");
+  }
 });
 
 app.post("/payphone/callback", async (req, res) => {
