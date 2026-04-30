@@ -973,6 +973,7 @@ app.get("/payphone/callback", async (req, res) => {
 
   // Verificar el pago directamente con Payphone
   try {
+    console.log("Enviando a Payphone confirm:", { id: parseInt(id), clientTxId: String(clientTransactionId) });
     const verifyRes = await fetch(`https://pay.payphonetodoesposible.com/api/button/V2/Confirm`, {
       method: "POST",
       headers: {
@@ -981,7 +982,7 @@ app.get("/payphone/callback", async (req, res) => {
       },
       body: JSON.stringify({
         id: parseInt(id),
-        clientTxId: clientTransactionId,
+        clientTxId: String(clientTransactionId),
       }),
     });
     const rawText = await verifyRes.text();
