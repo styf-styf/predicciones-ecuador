@@ -945,7 +945,7 @@ app.post("/payphone/create", auth, async (req, res) => {
   }]);
 
   try {
-    const response = await fetch("https://pay.payphonetodoesposible.com/api/v3/button/pay", {
+    const response = await fetch("https://pay.payphonetodoesposible.com/api/button/Prepare", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -956,23 +956,26 @@ app.post("/payphone/create", auth, async (req, res) => {
         amountWithoutTax: amountCents,
         amountWithTax: 0,
         tax: 0,
+        service: 0,
+        tip: 0,
         currency: "USD",
         clientTransactionId,
+        reference: `Recarga puntos - ${user.email}`,
         responseUrl: "https://predicciones-ecuador.onrender.com/payphone/callback",
-        cancellationUrl: "https://predicciones-ecuador.vercel.app/panel?tab=wallet&status=cancelado",
-        reference: user.email,
+        cancellationUrl: "https://predicciones-ecuador.vercel.app/panel?status=cancelado",
         lang: "es",
       }),
     });
 
     const data = await response.json();
+    console.log("Payphone response:", data);
 
-    if (!response.ok || !data.paymentUrl) {
+    if (!response.ok || !data.payWithCard) {
       console.error("Payphone error:", data);
       return res.status(500).json({ message: "Error creando pago en Payphone" });
     }
 
-    res.json({ paymentUrl: data.paymentUrl });
+    res.json({ paymentUrl: data.payWithCard });
   } catch (err) {
     console.error("Payphone fetch error:", err);
     res.status(500).json({ message: "Error conectando con Payphone" });
@@ -996,7 +999,8 @@ app.post("/payphone/callback", async (req, res) => {
 
   // Verificar con Payphone que el pago es real
   try {
-    const verifyRes = await fetch(`https://pay.payphonetodoesposible.com/api/v3/button/C/${id}`, {
+    const verifyRes = await fetch(`https://pay.payphonetodoesposible.com/api/button/V3/Confirm?id=${id}&clientTransactionId=${clientTransactionId}`, {
+      method: "POST",
       headers: { "Authorization": `Bearer ${process.env.PAYPHONE_TOKEN}` },
     });
     const verifyData = await verifyRes.json();
