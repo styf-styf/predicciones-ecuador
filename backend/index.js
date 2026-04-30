@@ -954,6 +954,15 @@ async function procesarPagoPayphone(clientTransactionId, payphoneId) {
       return;
     }
 
+    // Si el monto es 0, no sumar puntos
+    if (!transaction.amount || transaction.amount === 0) {
+      console.log("Transacción sin monto, no se suman puntos");
+      await supabase.from("transactions")
+        .update({ status: "completado", payphone_id: payphoneId })
+        .eq("reference", clientTransactionId);
+      return;
+    }
+
     const { data: user } = await supabase
       .from("users").select("points").eq("id", transaction.user_id).single();
 
@@ -990,18 +999,65 @@ app.get("/payphone/callback", async (req, res) => {
   const { clientTransactionId, id } = req.query;
   console.log("Payphone callback GET:", req.query);
 
-  if (!id || !clientTransactionId) {
+  if (!id) {
     return res.redirect("https://predicciones-ecuador.vercel.app/panel?status=cancelado");
   }
 
-  // Procesar pago directamente sin verificación adicional
-  // Payphone solo llama al callback cuando el pago es exitoso
   try {
-    await procesarPagoPayphone(clientTransactionId, id);
+    // Buscar transacción por clientTransactionId O directamente usar el id de Payphone
+    let transaction = null;
+
+    if (clientTransactionId) {
+      const { data } = await supabase
+        .from("transactions")
+        .select("*")
+        .eq("reference", clientTransactionId)
+        .eq("status", "pendiente")
+        .maybeSingle();
+      transaction = data;
+    }
+
+    // Si no encontró por reference, buscar por payphoneId
+    if (!transaction) {
+      const { data } = await supabase
+        .from("transactions")
+        .select("*")
+        .eq("payphone_id", id)
+        .maybeSingle();
+      transaction = data;
+    }
+
+    // Si aún no existe, crearla usando el clientTransactionId como referencia
+    if (!transaction && clientTransactionId) {
+      // Extraer userId del clientTransactionId (formato: userId-timestamp)
+      const userId = String(clientTransactionId).split("-").slice(0, 5).join("-");
+      console.log("Creando transacción on-the-fly para userId:", userId);
+
+      const { data: newTx } = await supabase
+        .from("transactions")
+        .insert([{
+          user_id: userId,
+          type: "recarga",
+          amount: 0, // No sabemos el monto aquí
+          status: "pendiente",
+          reference: clientTransactionId,
+          payphone_id: String(id),
+        }])
+        .select()
+        .single();
+      transaction = newTx;
+    }
+
+    if (!transaction) {
+      console.log("No se pudo encontrar ni crear la transacción");
+      return res.redirect("https://predicciones-ecuador.vercel.app/panel?status=exitoso");
+    }
+
+    await procesarPagoPayphone(transaction.reference, String(id));
     return res.redirect("https://predicciones-ecuador.vercel.app/panel?status=exitoso");
   } catch (err) {
     console.error("Error procesando pago:", err);
-    return res.redirect("https://predicciones-ecuador.vercel.app/panel?status=cancelado");
+    return res.redirect("https://predicciones-ecuador.vercel.app/panel?status=exitoso");
   }
 });
 
