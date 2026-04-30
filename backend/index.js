@@ -958,69 +958,7 @@ async function procesarPagoPayphone(clientTransactionId, payphoneId) {
 // =======================
 // 💳 PAYPHONE - INICIAR PAGO
 // =======================
-app.post("/payphone/create", auth, async (req, res) => { 
-  const { amount } = req.body;
-  const amountCents = Math.round(parseFloat(amount) * 100);
 
-  if (!amount || isNaN(amountCents) || amountCents < 100) {
-    return res.status(400).json({ message: "Monto mínimo $1" });
-  }
-
-  const { data: user } = await supabase
-    .from("users").select("id, email").eq("id", req.userId).single();
-
-  if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
-
-  const clientTransactionId = `${req.userId}-${Date.now()}`;
-
-  // Guardar transacción pendiente en Supabase
-  await supabase.from("transactions").insert([{
-    user_id: req.userId,
-    type: "recarga",
-    amount: parseFloat(amount),
-    status: "pendiente",
-    reference: clientTransactionId,
-  }]);
-
-  try {
-    console.log("PAYPHONE_TOKEN:", process.env.PAYPHONE_TOKEN ? `${process.env.PAYPHONE_TOKEN.slice(0, 6)}...` : "NO DEFINIDO");
-    console.log("Intentando crear pago:", { amountCents, clientTransactionId });
-    const response = await fetch("https://pay.payphonetodoesposible.com/api/button/Prepare", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.PAYPHONE_TOKEN}`,
-      },
-      body: JSON.stringify({
-        amount: amountCents,
-        amountWithoutTax: amountCents,
-        amountWithTax: 0,
-        tax: 0,
-        service: 0,
-        tip: 0,
-        currency: "USD",
-        clientTransactionId,
-        reference: `Recarga puntos - ${user.email}`,
-        responseUrl: "https://predicciones-ecuador.onrender.com/payphone/callback",
-        cancellationUrl: "https://predicciones-ecuador.vercel.app/panel?status=cancelado",
-        lang: "es",
-      }),
-    });
-
-    const data = await response.json();
-    console.log("Payphone response:", data);
-
-    if (!response.ok || !data.payWithCard) {
-      console.error("Payphone error:", data);
-      return res.status(500).json({ message: "Error creando pago en Payphone" });
-    }
-
-    res.json({ paymentUrl: data.payWithCard });
-  } catch (err) {
-    console.error("Payphone fetch error:", err);
-    res.status(500).json({ message: "Error conectando con Payphone" });
-  }
-});
 
 // =======================
 // 💳 PAYPHONE - CALLBACK
@@ -1039,7 +977,7 @@ app.get("/payphone/callback", async (req, res) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.PAYPHONE_TOKEN}`,
+        "Authorization": `Bearer ${process.env.PAYPHONE_TOKEN_API}`,
       },
       body: JSON.stringify({
         id: parseInt(id),
@@ -1078,7 +1016,7 @@ app.post("/payphone/callback", async (req, res) => {
   try {
     const verifyRes = await fetch(`https://pay.payphonetodoesposible.com/api/button/V3/Confirm?id=${id}&clientTransactionId=${clientTransactionId}`, {
       method: "POST",
-      headers: { "Authorization": `Bearer ${process.env.PAYPHONE_TOKEN}` },
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${process.env.PAYPHONE_TOKEN_API}` },
     });
     const verifyData = await verifyRes.json();
 
