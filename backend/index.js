@@ -945,6 +945,8 @@ app.post("/payphone/create", auth, async (req, res) => {
   }]);
 
   try {
+    console.log("PAYPHONE_TOKEN:", process.env.PAYPHONE_TOKEN ? `${process.env.PAYPHONE_TOKEN.slice(0, 6)}...` : "NO DEFINIDO");
+    console.log("Intentando crear pago:", { amountCents, clientTransactionId });
     const response = await fetch("https://pay.payphonetodoesposible.com/api/button/Prepare", {
       method: "POST",
       headers: {
