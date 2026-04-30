@@ -922,6 +922,7 @@ app.get("/", (req, res) => {
 // =======================
 app.post("/payphone/prepare", auth, async (req, res) => {
   const { amount, clientTransactionId } = req.body;
+  console.log("Prepare recibido:", { amount, clientTransactionId, userId: req.userId });
   if (!amount || !clientTransactionId) return res.status(400).json({ message: "Datos inválidos" });
 
   const { error } = await supabase.from("transactions").insert([{
