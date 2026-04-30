@@ -922,14 +922,21 @@ app.get("/", (req, res) => {
 // =======================
 async function procesarPagoPayphone(clientTransactionId, payphoneId) {
   try {
-    const { data: transaction } = await supabase
+    console.log("Procesando pago:", { clientTransactionId, payphoneId });
+    
+    const { data: transaction, error: txError } = await supabase
       .from("transactions")
       .select("*")
       .eq("reference", clientTransactionId)
       .eq("status", "pendiente")
       .maybeSingle();
 
-    if (!transaction) return;
+    console.log("Transacción encontrada:", transaction, "Error:", txError);
+
+    if (!transaction) {
+      console.log("No se encontró transacción pendiente para:", clientTransactionId);
+      return;
+    }
 
     const { data: user } = await supabase
       .from("users").select("points").eq("id", transaction.user_id).single();
