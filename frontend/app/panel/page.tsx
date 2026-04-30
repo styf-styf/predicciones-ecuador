@@ -29,7 +29,7 @@ export default function PanelPage() {
   const [paymentMethod, setPaymentMethod] = useState<"transferencia" | "tarjeta">("transferencia");
   const [payingCard, setPayingCard] = useState(false);
   const [showPayphoneBox, setShowPayphoneBox] = useState(false);
-
+  const [payphoneClientId, setPayphoneClientId] = useState("");
   // Perfil state
   const [profileForm, setProfileForm] = useState({
     nombre: "", apellido: "", cedula: "", celular: "", pais: "", ciudad: "", direccion: ""
@@ -390,8 +390,21 @@ export default function PanelPage() {
                   <>
                     {!showPayphoneBox ? (
                       <button
-                        onClick={() => {
+                        onClick={async () => {
+                          console.log("Click pagar", { walletAmount, userId: user.id });
                           if (!walletAmount || parseFloat(walletAmount) < 1) return;
+                          const clientId = `${user.id}-${Date.now()}`;
+                          console.log("ClientId generado:", clientId);
+                          setPayphoneClientId(clientId);
+                          const token = localStorage.getItem("token");
+                          await fetch("https://predicciones-ecuador.onrender.com/payphone/prepare", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+                            body: JSON.stringify({ 
+                              amount: parseFloat(walletAmount),
+                              clientTransactionId: clientId,
+                            }),
+                          });
                           setShowPayphoneBox(true);
                         }}
                         disabled={!walletAmount || parseFloat(walletAmount) < 1}
@@ -404,6 +417,7 @@ export default function PanelPage() {
                         <PayphoneBox
                           amount={Math.round(parseFloat(walletAmount) * 100)}
                           userId={user.id}
+                          clientTransactionId={payphoneClientId}
                           onClose={() => setShowPayphoneBox(false)}
                         />
                       </div>
@@ -560,8 +574,7 @@ export default function PanelPage() {
   );
 }
 
- function PayphoneBox({ amount, userId, onClose }: { amount: number; userId: string; onClose: () => void }) {
-  const clientTransactionId = `${userId}-${Date.now()}`;
+ function PayphoneBox({ amount, userId, clientTransactionId, onClose }: { amount: number; userId: string; clientTransactionId: string; onClose: () => void }) {
 
   useEffect(() => {
     // Cargar CSS de Payphone
