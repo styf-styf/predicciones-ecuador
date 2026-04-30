@@ -945,7 +945,7 @@ app.post("/payphone/create", auth, async (req, res) => {
   }]);
 
   try {
-    const response = await fetch("https://pay.payphone.com.ec/api/v3/button/pay", {
+    const response = await fetch("https://pay.payphonetodoesposible.com/api/v3/button/pay", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -996,7 +996,7 @@ app.post("/payphone/callback", async (req, res) => {
 
   // Verificar con Payphone que el pago es real
   try {
-    const verifyRes = await fetch(`https://pay.payphone.com.ec/api/v3/button/C/${id}`, {
+    const verifyRes = await fetch(`https://pay.payphonetodoesposible.com/api/v3/button/C/${id}`, {
       headers: { "Authorization": `Bearer ${process.env.PAYPHONE_TOKEN}` },
     });
     const verifyData = await verifyRes.json();
