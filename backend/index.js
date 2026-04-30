@@ -925,7 +925,7 @@ app.post("/payphone/prepare", auth, async (req, res) => {
   console.log("Prepare recibido:", { amount, clientTransactionId, userId: req.userId });
   if (!amount || !clientTransactionId) return res.status(400).json({ message: "Datos inválidos" });
 
-  const { error } = await supabase.from("transactions").insert([{
+  const { data, error } = await supabase.from("transactions").insert([{
     user_id: req.userId,
     type: "recarga",
     amount: parseFloat(amount),
@@ -933,6 +933,7 @@ app.post("/payphone/prepare", auth, async (req, res) => {
     reference: clientTransactionId,
   }]);
 
+  console.log("Insert resultado:", { data, error });
   if (error) return res.status(500).json({ message: error.message });
   res.json({ message: "Transacción preparada" });
 });
