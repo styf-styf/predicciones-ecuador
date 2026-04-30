@@ -917,6 +917,151 @@ app.get("/", (req, res) => {
   res.send("API funcionando 🚀");
 });
 
+// =======================
+// 💳 PAYPHONE - INICIAR PAGO
+// =======================
+app.post("/payphone/create", auth, async (req, res) => { 
+  const { amount } = req.body;
+  const amountCents = Math.round(parseFloat(amount) * 100);
+
+  if (!amount || isNaN(amountCents) || amountCents < 100) {
+    return res.status(400).json({ message: "Monto mínimo $1" });
+  }
+
+  const { data: user } = await supabase
+    .from("users").select("id, email").eq("id", req.userId).single();
+
+  if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
+
+  const clientTransactionId = `${req.userId}-${Date.now()}`;
+
+  // Guardar transacción pendiente en Supabase
+  await supabase.from("transactions").insert([{
+    user_id: req.userId,
+    type: "recarga",
+    amount: parseFloat(amount),
+    status: "pendiente",
+    reference: clientTransactionId,
+  }]);
+
+  try {
+    const response = await fetch("https://pay.payfone.com/api/v3/button/pay", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.PAYPHONE_TOKEN}`,
+      },
+      body: JSON.stringify({
+        amount: amountCents,
+        amountWithoutTax: amountCents,
+        amountWithTax: 0,
+        tax: 0,
+        currency: "USD",
+        clientTransactionId,
+        responseUrl: "https://predicciones-ecuador.onrender.com/payphone/callback",
+        cancellationUrl: "https://predicciones-ecuador.vercel.app/panel?tab=wallet&status=cancelado",
+        reference: user.email,
+        lang: "es",
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.paymentUrl) {
+      console.error("Payphone error:", data);
+      return res.status(500).json({ message: "Error creando pago en Payphone" });
+    }
+
+    res.json({ paymentUrl: data.paymentUrl });
+  } catch (err) {
+    console.error("Payphone fetch error:", err);
+    res.status(500).json({ message: "Error conectando con Payphone" });
+  }
+});
+
+// =======================
+// 💳 PAYPHONE - CALLBACK
+// =======================
+app.post("/payphone/callback", async (req, res) => {
+  const { clientTransactionId, transactionStatus, id } = req.body;
+
+  console.log("Payphone callback:", req.body);
+
+  if (transactionStatus !== "Approved") {
+    await supabase.from("transactions")
+      .update({ status: "rechazado" })
+      .eq("reference", clientTransactionId);
+    return res.json({ message: "Pago no aprobado" });
+  }
+
+  // Verificar con Payphone que el pago es real
+  try {
+    const verifyRes = await fetch(`https://pay.payfone.com/api/v3/button/C/${id}`, {
+      headers: { "Authorization": `Bearer ${process.env.PAYPHONE_TOKEN}` },
+    });
+    const verifyData = await verifyRes.json();
+
+    if (verifyData.transactionStatus !== "Approved") {
+      return res.status(400).json({ message: "Pago no verificado" });
+    }
+
+    // Obtener transacción pendiente
+    const { data: transaction } = await supabase
+      .from("transactions")
+      .select("*")
+      .eq("reference", clientTransactionId)
+      .eq("status", "pendiente")
+      .maybeSingle();
+
+    if (!transaction) {
+      return res.status(400).json({ message: "Transacción no encontrada o ya procesada" });
+    }
+
+    // Sumar puntos al usuario (1 USD = 1 punto)
+    const { data: user } = await supabase
+      .from("users").select("points").eq("id", transaction.user_id).single();
+
+    const newPoints = Number(user.points) + Number(transaction.amount);
+
+    await supabase.from("users")
+      .update({ points: newPoints })
+      .eq("id", transaction.user_id);
+
+    // Marcar transacción como completada
+    await supabase.from("transactions")
+      .update({ status: "completado", payphone_id: id })
+      .eq("reference", clientTransactionId);
+
+    // Notificar al usuario
+    await supabase.from("notifications").insert([{
+      user_id: transaction.user_id,
+      title: "✅ Recarga exitosa",
+      message: `Se acreditaron ${transaction.amount} puntos a tu cuenta.`,
+      read: false,
+    }]);
+
+    res.json({ message: "Pago procesado correctamente" });
+  } catch (err) {
+    console.error("Error verificando pago:", err);
+    res.status(500).json({ message: "Error verificando pago" });
+  }
+});
+
+// =======================
+// 💳 PAYPHONE - ESTADO PAGO
+// =======================
+app.get("/payphone/status", auth, async (req, res) => {
+  const { data, error } = await supabase
+    .from("transactions")
+    .select("*")
+    .eq("user_id", req.userId)
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  if (error) return res.status(500).json({ message: error.message });
+  res.json(data);
+});
+
 app.listen(4000, () => {
   console.log("Servidor en https://predicciones-ecuador.onrender.com");
 });
