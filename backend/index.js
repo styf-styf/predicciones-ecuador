@@ -1035,12 +1035,16 @@ app.get("/payphone/callback", async (req, res) => {
 
   // Verificar el pago directamente con Payphone
   try {
-    const verifyRes = await fetch(`https://pay.payphonetodoesposible.com/api/button/V3/Confirm?id=${id}&clientTransactionId=${clientTransactionId}`, {
+    const verifyRes = await fetch(`https://pay.payphonetodoesposible.com/api/button/V2/Confirm`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${process.env.PAYPHONE_TOKEN}`,
       },
+      body: JSON.stringify({
+        id: parseInt(id),
+        clientTxId: clientTransactionId,
+      }),
     });
     const verifyData = await verifyRes.json();
     console.log("Payphone verify:", verifyData);
