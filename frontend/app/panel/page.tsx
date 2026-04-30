@@ -602,7 +602,7 @@ export default function PanelPage() {
             tip: 0,
             currency: "USD",
             clientTransactionId,
-            reference: `Recarga puntos - ${userId}`,
+            reference: "Recarga - Ecuapred",
             storeId: "a4682baf-b1d9-4df4-8ab4-71bc7ba44700",
             lang: "es",
             defaultMethod: "card",
