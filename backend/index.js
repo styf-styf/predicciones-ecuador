@@ -951,7 +951,19 @@ async function procesarPagoPayphone(clientTransactionId, payphoneId) {
     console.log("Transacción encontrada:", transaction, "Error:", txError);
 
     if (!transaction) {
-      console.log("No se encontró transacción pendiente para:", clientTransactionId);
+      console.log("Transacción ya procesada o no encontrada:", clientTransactionId);
+      return;
+    }
+
+    // Marcar como procesando ANTES de sumar puntos para evitar doble procesamiento
+    const { error: lockError } = await supabase
+      .from("transactions")
+      .update({ status: "procesando" })
+      .eq("reference", clientTransactionId)
+      .eq("status", "pendiente");
+
+    if (lockError || !lockError === null) {
+      console.log("No se pudo bloquear la transacción, puede ya estar procesada");
       return;
     }
 
