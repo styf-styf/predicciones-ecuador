@@ -39,6 +39,7 @@ export default function PanelPage() {
 
   const loadPanel = async () => {
     const token = localStorage.getItem("token");
+    console.log("Token en loadPanel:", token ? "existe" : "NO existe");
     if (!token) { router.push("/login"); return; }
     const headers = { authorization: `Bearer ${token}` };
     try {
