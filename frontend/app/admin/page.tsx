@@ -367,7 +367,7 @@ export default function AdminPage() {
                   <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-5">
                     <div className="flex items-center justify-between mb-4">
                       <div>
-                        <p className="text-[12px] font-semibold text-slate-700 dark:text-white/70">Volumen (pts)</p>
+                        <p className="text-[12px] font-semibold text-slate-700 dark:text-white/70">Volumen ($)</p>
                         <p className="text-[10px] text-slate-400 dark:text-white/25 mt-0.5">Últimos 7 días</p>
                       </div>
                       <TrendingUp size={13} className="text-amber-500/50" />
@@ -399,7 +399,7 @@ export default function AdminPage() {
                         <p className="text-[12px] text-slate-600 dark:text-white/60 truncate">{w.users?.email}</p>
                         <p className="text-[11px] text-slate-400 dark:text-white/25 truncate mt-0.5">{w.markets?.question}</p>
                       </div>
-                      <span className="text-[12px] text-emerald-600 dark:text-emerald-400 font-bold tabular-nums shrink-0">+{w.reward} pts</span>
+                      <span className="text-[12px] text-emerald-600 dark:text-emerald-400 font-bold tabular-nums shrink-0">+{w.reward} $</span>
                     </div>
                   ))}
                   {winners.length === 0 && <p className="px-5 py-8 text-[12px] text-slate-400 dark:text-white/20 text-center">Sin ganadores aún</p>}
@@ -505,10 +505,10 @@ export default function AdminPage() {
                   <div className="grid grid-cols-12 text-[10px] text-slate-400 dark:text-white/25 uppercase tracking-widest">
                     <span className="col-span-3">Email</span>
                     <span className="col-span-2">Nombre</span>
-                    <span className="col-span-1 text-center">Pts</span>
+                    <span className="col-span-1 text-center">$</span>
                     <span className="col-span-1 text-center">Rol</span>
                     <span className="col-span-1 text-center">Estado</span>
-                    <span className="col-span-2 text-center">Ajustar pts</span>
+                    <span className="col-span-2 text-center">Ajustar $</span>
                     <span className="col-span-2 text-right">Acciones</span>
                   </div>
                 </div>
@@ -551,11 +551,11 @@ export default function AdminPage() {
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-amber-500 dark:text-amber-400 font-bold text-[12px]">{u.points} pts</span>
+                          <span className="text-amber-500 dark:text-amber-400 font-bold text-[12px]">{u.points} $</span>
                           <span className={`text-[10px] px-1.5 py-0.5 rounded-md ${u.role === "admin" ? "bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400" : "bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-white/30"}`}>{u.role}</span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <input type="number" placeholder="pts" value={pointsInput[u.id] || ""}
+                          <input type="number" placeholder="$" value={pointsInput[u.id] || ""}
                             onChange={(e) => setPointsInput((prev) => ({ ...prev, [u.id]: e.target.value }))}
                             className="w-16 bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-md px-2 py-1.5 text-[11px] outline-none text-slate-900 dark:text-white text-center" />
                           <button onClick={() => handlePoints(u.id, parseFloat(pointsInput[u.id] || "0"))} className="p-1.5 rounded-md bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"><Plus size={12} /></button>
@@ -601,13 +601,13 @@ export default function AdminPage() {
                             {w.prediction === "yes" ? "Sí" : "No"}
                           </span>
                         </div>
-                        <p className="col-span-2 text-right text-[12px] text-amber-500 dark:text-amber-400 font-bold tabular-nums">+{w.reward} pts</p>
+                        <p className="col-span-2 text-right text-[12px] text-amber-500 dark:text-amber-400 font-bold tabular-nums">+{w.reward} $</p>
                         <p className="col-span-1 text-right text-[10px] text-slate-400 dark:text-white/20">{new Date(w.created_at).toLocaleDateString()}</p>
                       </div>
                       <div className="sm:hidden space-y-1">
                         <div className="flex items-center justify-between gap-2">
                           <p className="text-[12px] text-slate-500 dark:text-white/50 truncate">{w.users?.email}</p>
-                          <span className="text-[12px] text-amber-500 dark:text-amber-400 font-bold shrink-0">+{w.reward} pts</span>
+                          <span className="text-[12px] text-amber-500 dark:text-amber-400 font-bold shrink-0">+{w.reward} $</span>
                         </div>
                         <p className="text-[11px] text-slate-400 dark:text-white/30 truncate">{w.markets?.question}</p>
                       </div>
@@ -632,7 +632,7 @@ export default function AdminPage() {
               <div className="grid grid-cols-2 sm:grid-cols-2 gap-3">
                 {[
                   { label: "Comisión", value: `${config.commission}%`, color: "text-emerald-600 dark:text-emerald-400" },
-                  { label: "Pts bienvenida", value: `${config.welcome_points}`, color: "text-blue-500 dark:text-blue-400" },
+                  { label: "$ bienvenida", value: `${config.welcome_points}`, color: "text-blue-500 dark:text-blue-400" },
                 ].map((item) => (
                   <div key={item.label} className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-4 text-center">
                     <p className="text-[10px] text-slate-400 dark:text-white/25 uppercase tracking-widest mb-2">{item.label}</p>

@@ -240,7 +240,7 @@ export default function MarketPage() {
             })()}
           </div>
           <div className="flex justify-end mt-2">
-            <span className="text-xs text-slate-400">{total} pts apostados</span>
+            <span className="text-xs text-slate-400">{total} $ apostados</span>
           </div>
         </div>
 
@@ -253,7 +253,7 @@ export default function MarketPage() {
 
     {points !== null && (
       <p className="text-sm text-slate-400 mb-4">
-        Tu balance: <span className="text-slate-900 dark:text-white font-bold">{points} pts</span>
+        Tu balance: <span className="text-slate-900 dark:text-white font-bold">{points} $</span>
       </p>
     )}
 
@@ -265,7 +265,7 @@ export default function MarketPage() {
           <p className={`text-2xl font-black ${userBet.type === "yes" ? "text-emerald-400" : "text-rose-400"}`}>
             {userBet.type === "yes" ? "✅ Sí" : "❌ No"}
           </p>
-          <p className="text-sm text-slate-400 mt-1">{userBet.amount} pts apostados</p>
+          <p className="text-sm text-slate-400 mt-1">{userBet.amount} $ apostados</p>
         </div>
 
         {changeCount < MAX_CHANGES ? (
@@ -310,7 +310,7 @@ export default function MarketPage() {
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm text-slate-500 dark:text-slate-400">Monto</span>
                 <span className="text-2xl font-bold text-slate-900 dark:text-white">
-                  {amount ? `${amount} pts` : "0 pts"}
+                  {amount ? `${amount} $` : "0 $"}
                 </span>
               </div>
               <div className="flex gap-2 flex-wrap">
@@ -391,7 +391,7 @@ export default function MarketPage() {
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm text-slate-500 dark:text-slate-400">Monto</span>
                 <span className="text-2xl font-bold text-slate-900 dark:text-white">
-                  {amount ? `${amount} pts` : "0 pts"}
+                  {amount ? `${amount} $` : "0 $"}
                 </span>
               </div>
               <div className="flex gap-2 flex-wrap">
