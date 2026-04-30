@@ -920,6 +920,21 @@ app.get("/", (req, res) => {
 // =======================
 // 💳 PAYPHONE - INICIAR PAGO
 // =======================
+app.post("/payphone/prepare", auth, async (req, res) => {
+  const { amount, clientTransactionId } = req.body;
+  if (!amount || !clientTransactionId) return res.status(400).json({ message: "Datos inválidos" });
+
+  const { error } = await supabase.from("transactions").insert([{
+    user_id: req.userId,
+    type: "recarga",
+    amount: parseFloat(amount),
+    status: "pendiente",
+    reference: clientTransactionId,
+  }]);
+
+  if (error) return res.status(500).json({ message: error.message });
+  res.json({ message: "Transacción preparada" });
+});
 async function procesarPagoPayphone(clientTransactionId, payphoneId) {
   try {
     console.log("Procesando pago:", { clientTransactionId, payphoneId });
