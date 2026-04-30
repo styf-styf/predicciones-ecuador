@@ -920,6 +920,44 @@ app.get("/", (req, res) => {
 // =======================
 // 💳 PAYPHONE - INICIAR PAGO
 // =======================
+async function procesarPagoPayphone(clientTransactionId, payphoneId) {
+  try {
+    const { data: transaction } = await supabase
+      .from("transactions")
+      .select("*")
+      .eq("reference", clientTransactionId)
+      .eq("status", "pendiente")
+      .maybeSingle();
+
+    if (!transaction) return;
+
+    const { data: user } = await supabase
+      .from("users").select("points").eq("id", transaction.user_id).single();
+
+    const newPoints = Number(user.points) + Number(transaction.amount);
+
+    await supabase.from("users")
+      .update({ points: newPoints })
+      .eq("id", transaction.user_id);
+
+    await supabase.from("transactions")
+      .update({ status: "completado", payphone_id: payphoneId })
+      .eq("reference", clientTransactionId);
+
+    await supabase.from("notifications").insert([{
+      user_id: transaction.user_id,
+      title: "✅ Recarga exitosa",
+      message: `Se acreditaron ${transaction.amount} puntos a tu cuenta.`,
+      read: false,
+    }]);
+  } catch (err) {
+    console.error("Error procesando pago:", err);
+  }
+}
+
+// =======================
+// 💳 PAYPHONE - INICIAR PAGO
+// =======================
 app.post("/payphone/create", auth, async (req, res) => { 
   const { amount } = req.body;
   const amountCents = Math.round(parseFloat(amount) * 100);
@@ -987,9 +1025,22 @@ app.post("/payphone/create", auth, async (req, res) => {
 // =======================
 // 💳 PAYPHONE - CALLBACK
 // =======================
+app.get("/payphone/callback", async (req, res) => {
+  const { clientTransactionId, transactionStatus, id } = req.query;
+  console.log("Payphone callback GET:", req.query);
+
+  if (transactionStatus !== "Approved") {
+    return res.redirect("https://predicciones-ecuador.vercel.app/panel?status=cancelado");
+  }
+
+  // Verificar y procesar el pago
+  await procesarPagoPayphone(clientTransactionId, id);
+  return res.redirect("https://predicciones-ecuador.vercel.app/panel?status=exitoso");
+});
+
 app.post("/payphone/callback", async (req, res) => {
   const { clientTransactionId, transactionStatus, id, amount } = req.body;
-console.log("Payphone callback body:", req.body);
+  console.log("Payphone callback body:", req.body);
 
   console.log("Payphone callback:", req.body);
 
