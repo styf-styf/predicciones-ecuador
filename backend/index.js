@@ -984,7 +984,10 @@ app.get("/payphone/callback", async (req, res) => {
         clientTxId: clientTransactionId,
       }),
     });
-    const verifyData = await verifyRes.json();
+    const rawText = await verifyRes.text();
+    console.log("Payphone verify status:", verifyRes.status);
+    console.log("Payphone verify raw:", rawText.slice(0, 500));
+    const verifyData = JSON.parse(rawText);
     console.log("Payphone verify:", verifyData);
 
     if (verifyData.transactionStatus === "Approved") {
@@ -1018,7 +1021,10 @@ app.post("/payphone/callback", async (req, res) => {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${process.env.PAYPHONE_TOKEN_API}` },
     });
-    const verifyData = await verifyRes.json();
+    const rawText = await verifyRes.text();
+    console.log("Payphone verify status:", verifyRes.status);
+    console.log("Payphone verify raw:", rawText.slice(0, 500));
+    const verifyData = JSON.parse(rawText);
 
     if (verifyData.transactionStatus !== "Approved") {
       return res.status(400).json({ message: "Pago no verificado" });
