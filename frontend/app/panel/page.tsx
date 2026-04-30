@@ -28,6 +28,7 @@ export default function PanelPage() {
   const [walletAmount, setWalletAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"transferencia" | "tarjeta">("transferencia");
   const [payingCard, setPayingCard] = useState(false);
+  const [showPayphoneBox, setShowPayphoneBox] = useState(false);
 
   // Perfil state
   const [profileForm, setProfileForm] = useState({
@@ -98,28 +99,7 @@ export default function PanelPage() {
     } finally { setSavingProfile(false); }
   };
 
-  const handlePayphone = async () => {
-    if (!walletAmount || parseFloat(walletAmount) < 1) return;
-    setPayingCard(true);
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch("https://predicciones-ecuador.onrender.com/payphone/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
-        body: JSON.stringify({ amount: walletAmount }),
-      });
-      const data = await res.json();
-      if (data.paymentUrl) {
-        window.location.href = data.paymentUrl;
-      } else {
-        alert(data.message || "Error iniciando pago");
-      }
-    } catch {
-      alert("Error conectando con el servidor");
-    } finally {
-      setPayingCard(false);
-    }
-  };
+  
 
   if (loading) {
     return (
@@ -408,14 +388,27 @@ export default function PanelPage() {
 
                 {paymentMethod === "tarjeta" && (
                   <>
-                    <button
-                      onClick={handlePayphone}
-                      disabled={!walletAmount || payingCard}
-                      className="w-full bg-blue-500 hover:bg-blue-400 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl text-sm transition active:scale-[0.99] flex items-center justify-center gap-2"
-                    >
-                      {payingCard ? "Procesando..." : `Pagar $${walletAmount || "0"} con tarjeta`}
-                    </button>
-                    <p className="text-xs text-slate-400 text-center">Serás redirigido a Payphone para completar el pago</p>
+                    {!showPayphoneBox ? (
+                      <button
+                        onClick={() => {
+                          if (!walletAmount || parseFloat(walletAmount) < 1) return;
+                          setShowPayphoneBox(true);
+                        }}
+                        disabled={!walletAmount || parseFloat(walletAmount) < 1}
+                        className="w-full bg-blue-500 hover:bg-blue-400 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl text-sm transition active:scale-[0.99]"
+                      >
+                        Pagar ${walletAmount || "0"} con tarjeta
+                      </button>
+                    ) : (
+                      <div>
+                        <PayphoneBox
+                          amount={Math.round(parseFloat(walletAmount) * 100)}
+                          userId={user.id}
+                          onClose={() => setShowPayphoneBox(false)}
+                        />
+                      </div>
+                    )}
+                    <p className="text-xs text-slate-400 text-center">Pago seguro procesado por Payphone</p>
                   </>
                 )}
               </div>
@@ -567,6 +560,64 @@ export default function PanelPage() {
   );
 }
 
+ function PayphoneBox({ amount, userId, onClose }: { amount: number; userId: string; onClose: () => void }) {
+  const clientTransactionId = `${userId}-${Date.now()}`;
+
+  useEffect(() => {
+    // Cargar CSS de Payphone
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "https://cdn.payphonetodoesposible.com/box/v1.1/payphone-payment-box.css";
+    document.head.appendChild(link);
+
+    // Cargar JS de Payphone
+    const script = document.createElement("script");
+    script.type = "module";
+    script.src = "https://cdn.payphonetodoesposible.com/box/v1.1/payphone-payment-box.js";
+    script.onload = () => {
+      setTimeout(() => {
+        try {
+          // @ts-ignore
+          const ppb = new window.PPaymentButtonBox({
+            token: "ouTRhGNFATo6jNYHkr-NNnRwhRL6Lif2y1pb0-73PKUVZOO5GmckAHoaCewMQ9sT-OpYL2lxOmJgpJQSW3nDJOq-ymeTEX376GqGZnmXSvlE81zjMjiDOhuWGS2MI9pIiBhUFvcv3e3xuBD8KaF6oNF-cSVFRr52smC_0VLzmUbg_JBKmVLaIVSbWDi4nFYmbkn5cIhVsaICDOUfd3Hj6UXmJ_pqP9mXRJ1p272kV5EUD67JIiXYus23ZPm6dRuQaW1IzVPMRW6BfN4dUzw_fFOQtD25NvVPprvO4ltJ9Tmdidne5SiiG-G7xZBteLJPRrxZZnqgLfKQuoExYHfy-zIvELg",
+            amount,
+            amountWithoutTax: amount,
+            amountWithTax: 0,
+            tax: 0,
+            service: 0,
+            tip: 0,
+            currency: "USD",
+            clientTransactionId,
+            reference: `Recarga puntos - ${userId}`,
+            storeId: "a4682baf-b1d9-4df4-8ab4-71bc7ba44700",
+            lang: "es",
+            defaultMethod: "card",
+            timeZone: -5,
+          }).render("pp-button");
+        } catch (e) {
+          console.error("Payphone init error:", e);
+        }
+      }, 500);
+    };
+    document.head.appendChild(script);
+
+    return () => {
+      document.head.removeChild(link);
+      document.head.removeChild(script);
+    };
+  }, []);
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-medium">Pago con tarjeta</p>
+        <button onClick={onClose} className="text-xs text-slate-400 hover:text-slate-600">Cancelar</button>
+      </div>
+      <div id="pp-button" className="min-h-[200px]" />
+    </div>
+  );
+}
+
 function MovimientoRow({ mov, full }: { mov: any; full?: boolean }) {
   const isPositive = mov.monto > 0;
   const icons: Record<string, React.ReactElement> = {
@@ -601,4 +652,6 @@ function MovimientoRow({ mov, full }: { mov: any; full?: boolean }) {
       </span>
     </div>
   );
+
+ 
 }

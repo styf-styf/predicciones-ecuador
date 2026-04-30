@@ -988,7 +988,8 @@ app.post("/payphone/create", auth, async (req, res) => {
 // 💳 PAYPHONE - CALLBACK
 // =======================
 app.post("/payphone/callback", async (req, res) => {
-  const { clientTransactionId, transactionStatus, id } = req.body;
+  const { clientTransactionId, transactionStatus, id, amount } = req.body;
+console.log("Payphone callback body:", req.body);
 
   console.log("Payphone callback:", req.body);
 
