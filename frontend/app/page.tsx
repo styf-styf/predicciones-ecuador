@@ -236,6 +236,12 @@ export default function Home() {
                 <h2 className="text-xl sm:text-2xl font-bold">Resueltos</h2>
                 <span className="ml-1 text-sm text-slate-400">({visibleMarkets.length})</span>
               </>
+            ) : activeCategory === "mercados" ? (
+              <>
+                <TrendingUp size={18} className="text-slate-400" />
+                <h2 className="text-xl sm:text-2xl font-bold">Todos los mercados</h2>
+                <span className="ml-1 text-sm text-slate-400">({visibleMarkets.length})</span>
+              </>
             ) : ((() => {
               const cat = CATEGORIES.find((c) => c.id === activeCategory)!;
               const Icon = cat.icon;
@@ -260,6 +266,8 @@ export default function Home() {
             <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-3">
               {activeCategory === "resueltos"
                 ? <Trophy size={40} className="opacity-30" />
+                : activeCategory === "mercados"
+                ? <TrendingUp size={40} className="opacity-30" />
                 : (() => {
                     const cat = CATEGORIES.find((c) => c.id === activeCategory)!;
                     const Icon = cat.icon;
