@@ -228,7 +228,13 @@ export default function Home() {
         <section>
           {/* Encabezado dinámico según categoría */}
           <div className="flex items-center gap-2 mb-4">
-            {(() => {
+            {activeCategory === "resueltos" ? (
+              <>
+                <Trophy size={18} className="text-amber-400" />
+                <h2 className="text-xl sm:text-2xl font-bold">Resueltos</h2>
+                <span className="ml-1 text-sm text-slate-400">({visibleMarkets.length})</span>
+              </>
+            ) : ((() => {
               const cat = CATEGORIES.find((c) => c.id === activeCategory)!;
               const Icon = cat.icon;
               return (
@@ -244,17 +250,20 @@ export default function Home() {
                   )}
                 </>
               );
-            })()}
+            })())}
           </div>
 
           {/* Empty state */}
           {visibleMarkets.length === 0 && (
             <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-3">
-              {(() => {
-                const cat = CATEGORIES.find((c) => c.id === activeCategory)!;
-                const Icon = cat.icon;
-                return <Icon size={40} className="opacity-30" />;
-              })()}
+              {activeCategory === "resueltos"
+                ? <Trophy size={40} className="opacity-30" />
+                : (() => {
+                    const cat = CATEGORIES.find((c) => c.id === activeCategory)!;
+                    const Icon = cat.icon;
+                    return <Icon size={40} className="opacity-30" />;
+                  })()
+              }
               <p className="text-sm">No hay mercados en esta categoría aún.</p>
             </div>
           )}
