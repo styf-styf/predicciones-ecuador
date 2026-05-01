@@ -23,7 +23,7 @@ function CategoryBar({ active, onChange, markets }: { active: string; onChange: 
   const resueltos = markets.filter((m) => m.resolved).length;
 
   return (
-    <div className="sticky top-0 z-20 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+    <div className="sticky top-0 z-20 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md">
       <div
         ref={scrollRef}
         className="max-w-7xl mx-auto px-4 sm:px-6 flex gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-2.5"
@@ -44,6 +44,7 @@ function CategoryBar({ active, onChange, markets }: { active: string; onChange: 
                 }
               `}
             >
+              <cat.icon size={13} />
               {cat.label}
             </button>
           );
@@ -73,6 +74,11 @@ function CategoryBar({ active, onChange, markets }: { active: string; onChange: 
           <Trophy size={11} className="text-amber-400" />
           {resueltos} resueltos
         </button>
+
+        <div className="ml-auto shrink-0 flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-full px-3.5 py-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+          <span className="text-[12px] font-medium text-emerald-700 dark:text-emerald-400 whitespace-nowrap">En vivo</span>
+        </div>
       </div>
     </div>
   );
