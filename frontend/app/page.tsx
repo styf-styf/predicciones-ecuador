@@ -15,8 +15,12 @@ const CATEGORIES = [
   { id: "pais",      label: "País",        icon: Globe,      color: "text-emerald-400", activeBg: "bg-emerald-500",   activeText: "text-white" },
 ];
 
-function CategoryBar({ active, onChange }: { active: string; onChange: (id: string) => void }) {
+function CategoryBar({ active, onChange, markets }: { active: string; onChange: (id: string) => void; markets: any[] }) {
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const total = markets.length;
+  const activos = markets.filter((m) => !m.resolved).length;
+  const resueltos = markets.filter((m) => m.resolved).length;
 
   return (
     <div className="sticky top-0 z-20 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
@@ -26,7 +30,6 @@ function CategoryBar({ active, onChange }: { active: string; onChange: (id: stri
         style={{ scrollbarWidth: "none" }}
       >
         {CATEGORIES.map((cat) => {
-          const Icon = cat.icon;
           const isActive = active === cat.id;
           return (
             <button
@@ -36,16 +39,40 @@ function CategoryBar({ active, onChange }: { active: string; onChange: (id: stri
                 flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[12px] sm:text-[13px] font-medium
                 transition-all duration-200 shrink-0 border
                 ${isActive
-                  ? `${cat.activeBg} ${cat.activeText} border-transparent shadow-sm scale-[1.03]`
+                  ? `${cat.activeBg} text-white border-transparent shadow-sm scale-[1.03]`
                   : "bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700"
                 }
               `}
             >
-              <Icon size={13} className={isActive ? "text-white" : cat.color} />
               {cat.label}
             </button>
           );
         })}
+
+        
+
+        {/* Stats clickeables */}
+        <button
+          onClick={() => onChange("all")}
+          className="flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[12px] font-medium bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700 shrink-0 transition"
+        >
+          <TrendingUp size={11} className="text-slate-400" />
+          {total} mercados
+        </button>
+        <button
+          onClick={() => onChange("all")}
+          className="flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[12px] font-medium bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-emerald-600 dark:text-emerald-400 hover:border-slate-300 dark:hover:border-slate-700 shrink-0 transition"
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+          {activos} activos
+        </button>
+        <button
+          onClick={() => onChange("resueltos")}
+          className="flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[12px] font-medium bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700 shrink-0 transition"
+        >
+          <Trophy size={11} className="text-amber-400" />
+          {resueltos} resueltos
+        </button>
       </div>
     </div>
   );
@@ -109,6 +136,8 @@ export default function Home() {
   // Mercados filtrados por categoría
   const visibleMarkets = activeCategory === "all"
     ? [...markets].filter((m) => !m.resolved).sort((a, b) => (b.yes + b.no) - (a.yes + a.no))
+    : activeCategory === "resueltos"
+    ? [...markets].filter((m) => m.resolved)
     : filterByCategory(markets, activeCategory);
   useEffect(() => {
     fetchMarkets();
@@ -187,57 +216,12 @@ export default function Home() {
       <Header />
 
       {/* ── Barra de categorías ── */}
-      <CategoryBar active={activeCategory} onChange={setActiveCategory} />
+      <CategoryBar active={activeCategory} onChange={setActiveCategory} markets={markets} />
 
       {/* ── Contenido ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
 
-        {/* Stats chips */}
-        <section>
-          <div className="hidden sm:flex flex-wrap gap-2">
-            <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full px-4 py-1.5">
-              <TrendingUp size={13} className="text-slate-400" />
-              <span className="text-xs text-slate-500">Mercados</span>
-              <span className="text-[13px] font-medium">{markets.length}</span>
-            </div>
-            <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full px-4 py-1.5">
-              <Flame size={13} className="text-emerald-500" />
-              <span className="text-xs text-slate-500">Activos</span>
-              <span className="text-[13px] font-medium text-emerald-500">{markets.filter((m) => !m.resolved).length}</span>
-            </div>
-            <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full px-4 py-1.5">
-              <Trophy size={13} className="text-amber-400" />
-              <span className="text-xs text-slate-500">Resueltos</span>
-              <span className="text-[13px] font-medium">{markets.filter((m) => m.resolved).length}</span>
-            </div>
-            <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-full px-4 py-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-              <span className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">En vivo</span>
-            </div>
-          </div>
-
-          <div className="flex sm:hidden gap-1.5">
-            <div className="flex-1 flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full px-3 py-1.5">
-              <TrendingUp size={11} className="text-slate-400 shrink-0" />
-              <span className="text-[11px] text-slate-500 whitespace-nowrap">Merc.</span>
-              <span className="text-[12px] font-medium">{markets.length}</span>
-            </div>
-            <div className="flex-1 flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full px-3 py-1.5">
-              <Flame size={11} className="text-emerald-500 shrink-0" />
-              <span className="text-[11px] text-slate-500 whitespace-nowrap">Act.</span>
-              <span className="text-[12px] font-medium text-emerald-500">{markets.filter((m) => !m.resolved).length}</span>
-            </div>
-            <div className="flex-1 flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full px-3 py-1.5">
-              <Trophy size={11} className="text-amber-400 shrink-0" />
-              <span className="text-[11px] text-slate-500 whitespace-nowrap">Res.</span>
-              <span className="text-[12px] font-medium">{markets.filter((m) => m.resolved).length}</span>
-            </div>
-            <div className="flex-1 flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-full px-3 py-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-              <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 whitespace-nowrap">Live</span>
-            </div>
-          </div>
-        </section>
+        
 
         
         {/* Mercados filtrados */}
