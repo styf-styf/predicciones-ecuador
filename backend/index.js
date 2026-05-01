@@ -811,6 +811,36 @@ app.put("/admin/markets/:id/category", auth, async (req, res) => {
 });
 
 // =======================
+// ❤️ FAVORITOS
+// =======================
+app.get("/favorites", auth, async (req, res) => {
+  const { data, error } = await supabase
+    .from("favorites").select("market_id").eq("user_id", req.userId);
+  if (error) return res.status(500).json({ message: error.message });
+  res.json(data.map((f) => f.market_id));
+});
+
+app.post("/favorites/:marketId", auth, async (req, res) => {
+  const { data: existing } = await supabase
+    .from("favorites")
+    .select("id")
+    .eq("user_id", req.userId)
+    .eq("market_id", req.params.marketId)
+    .maybeSingle();
+
+  if (existing) {
+    await supabase.from("favorites").delete().eq("id", existing.id);
+    return res.json({ favorited: false });
+  }
+
+  await supabase.from("favorites").insert([{
+    user_id: req.userId,
+    market_id: req.params.marketId,
+  }]);
+  res.json({ favorited: true });
+});
+
+// =======================
 // 💬 COMENTARIOS
 // =======================
 app.get("/markets/:id/comments", async (req, res) => {

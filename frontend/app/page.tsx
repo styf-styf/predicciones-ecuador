@@ -96,6 +96,7 @@ function filterByCategory(markets: any[], category: string) {
 export default function Home() {
   const [markets, setMarkets] = useState<any[]>([]);
   const [betAmounts, setBetAmounts] = useState<{ [key: number]: string }>({});
+  const [favorites, setFavorites] = useState<number[]>([]);
   const [activeCategory, setActiveCategory] = useState("all");
   const [carouselConfig, setCarouselConfig] = useState({
     trending_count: 1,
@@ -111,6 +112,28 @@ export default function Home() {
     const resolved = data.filter((m: any) => m.resolved);
     const shuffled = active.sort(() => Math.random() - 0.5);
     setMarkets([...shuffled, ...resolved]);
+  };
+
+  const fetchFavorites = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    const res = await fetch("https://predicciones-ecuador.onrender.com/favorites", {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setFavorites(data);
+    }
+  };
+
+  const toggleFavorite = async (marketId: number) => {
+    const token = localStorage.getItem("token");
+    if (!token) return alert("Debes iniciar sesión ❌");
+    const res = await fetch(`https://predicciones-ecuador.onrender.com/favorites/${marketId}`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${token}` },
+    });
+    if (res.ok) fetchFavorites();
   };
 
   const fetchCarouselConfig = async () => {
@@ -152,6 +175,7 @@ export default function Home() {
   useEffect(() => {
     fetchMarkets();
     fetchCarouselConfig();
+    fetchFavorites();
     const channel = supabase
       .channel("markets-live")
       .on("postgres_changes", { event: "*", schema: "public", table: "markets" }, () => fetchMarkets())
@@ -339,6 +363,21 @@ export default function Home() {
                         </div>
                       );
                     })()}
+                  </div>
+
+                  {/* Favorito */}
+                  <div className="flex justify-end mb-2">
+                    <button
+                      onClick={(e) => { e.preventDefault(); toggleFavorite(market.id); }}
+                      className="text-slate-300 dark:text-slate-600 hover:text-rose-400 dark:hover:text-rose-400 transition-colors"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                        fill={favorites.includes(market.id) ? "#f43f5e" : "none"}
+                        stroke={favorites.includes(market.id) ? "#f43f5e" : "currentColor"}
+                        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                      </svg>
+                    </button>
                   </div>
 
                   {/* Acción */}
