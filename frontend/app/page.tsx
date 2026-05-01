@@ -78,6 +78,14 @@ function CategoryBar({ active, onChange, markets }: { active: string; onChange: 
   );
 }
 
+const CATEGORY_COLORS: { [key: string]: string } = {
+  deporte:    "hover:border-sky-400 dark:hover:border-sky-500",
+  farandula:  "hover:border-pink-400 dark:hover:border-pink-500",
+  politica:   "hover:border-violet-400 dark:hover:border-violet-500",
+  elecciones: "hover:border-amber-400 dark:hover:border-amber-500",
+  pais:       "hover:border-emerald-400 dark:hover:border-emerald-500",
+  general:    "hover:border-slate-400 dark:hover:border-slate-500",
+};
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 function filterByCategory(markets: any[], category: string) {
   if (category === "all") return markets;
@@ -293,7 +301,7 @@ export default function Home() {
                       ? market.winner === "yes"
                         ? "bg-emerald-500/5 border-emerald-500/30"
                         : "bg-rose-500/5 border-rose-500/30"
-                      : "bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+                      : `bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 ${CATEGORY_COLORS[market.category] ?? "hover:border-slate-300 dark:hover:border-slate-700"}`
                   }`}
                 >
                   {/* Categoría badge */}
