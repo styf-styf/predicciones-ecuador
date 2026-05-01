@@ -61,6 +61,7 @@ export default function PanelPage() {
       .from("transactions")
       .select("*")
       .eq("user_id", payload2.id)
+      .in("payment_method", ["transferencia", "tarjeta"])
       .order("created_at", { ascending: false });
 
       setUser(meData);
@@ -721,19 +722,26 @@ export default function PanelPage() {
 }
 
 function MovimientoRow({ mov, full }: { mov: any; full?: boolean }) {
-  const isPositive = mov.monto > 0;
   const icons: Record<string, React.ReactElement> = {
-    ganada: <CheckCircle size={14} className="text-emerald-500" />,
-    perdida: <XCircle size={14} className="text-rose-500" />,
-    pendiente: <Clock size={14} className="text-amber-500" />,
-    recarga: <ArrowDownLeft size={14} className="text-blue-500" />,
-    retiro: <ArrowUpLeft size={14} className="text-rose-500" />,
-  };
-  const badges: Record<string, string> = {
-    ganada: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800",
-    perdida: "bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800",
-    pendiente: "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800",
-  };
+  ganada: <CheckCircle size={14} className="text-emerald-500" />,
+  perdida: <XCircle size={14} className="text-rose-500" />,
+  pendiente: <Clock size={14} className="text-amber-500" />,
+  aprobado: <CheckCircle size={14} className="text-emerald-500" />,
+  completado: <CheckCircle size={14} className="text-emerald-500" />,
+  rechazado: <XCircle size={14} className="text-rose-500" />,
+  procesando: <Clock size={14} className="text-amber-500" />,
+  recarga: <ArrowDownLeft size={14} className="text-blue-500" />,
+  retiro: <ArrowUpLeft size={14} className="text-rose-500" />,
+};
+const badges: Record<string, string> = {
+  ganada: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800",
+  perdida: "bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800",
+  pendiente: "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800",
+  aprobado: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800",
+  completado: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800",
+  rechazado: "bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800",
+  procesando: "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800",
+};
 
   return (
     <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-xl">
