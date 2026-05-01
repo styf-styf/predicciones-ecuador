@@ -39,9 +39,9 @@ export default function PanelPage() {
   const [payphoneClientId, setPayphoneClientId] = useState("");
   // Perfil state
   const [profileForm, setProfileForm] = useState({
-  nombre: "", apellido: "", cedula: "", celular: "", pais: "", ciudad: "", direccion: "",
-  banco: "", numero_cuenta: "", tipo_cuenta: ""
-});
+  nombre: "", apellido: "", cedula: "", celular: "", pais: "Ecuador", ciudad: "", direccion: "",
+  banco: "", numero_cuenta: "", tipo_cuenta: "", provincia: ""
+ });
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
   const [editingProfile, setEditingProfile] = useState(false);
@@ -84,6 +84,7 @@ export default function PanelPage() {
   banco: meData.banco || "",
   numero_cuenta: meData.numero_cuenta || "",
   tipo_cuenta: meData.tipo_cuenta || "",
+  provincia: meData.provincia || "",
  });
       setLoading(false);
     } catch (error) {
@@ -739,11 +740,20 @@ export default function PanelPage() {
       <div key={field.key}>
         <label className="text-xs text-slate-400 uppercase tracking-widest block mb-1">{field.label}</label>
         {editingProfile ? (
-          <input
-            value={(profileForm as any)[field.key]}
-            onChange={(e) => setProfileForm((prev) => ({ ...prev, [field.key]: e.target.value }))}
-            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500 transition text-slate-900 dark:text-white"
-          />
+  field.key === "pais" ? (
+    <input
+      value={profileForm.pais}
+      disabled
+      className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-400 dark:text-slate-500 cursor-not-allowed"
+    />
+  ) : (
+    <input
+      value={(profileForm as any)[field.key]}
+      onChange={(e) => setProfileForm((prev) => ({ ...prev, [field.key]: e.target.value }))}
+      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500 transition text-slate-900 dark:text-white"
+    /> 
+  )
+
         ) : (
           <div className={`px-4 py-3 rounded-xl text-sm border ${(user as any)[field.key] ? "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" : "bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800 text-amber-500 dark:text-amber-400"}`}>
             {(user as any)[field.key] || "Sin completar"}
@@ -752,6 +762,27 @@ export default function PanelPage() {
       </div>
     ))}
   </div>
+
+  {/* Provincia */}
+<div>
+  <label className="text-xs text-slate-400 uppercase tracking-widest block mb-1">Provincia</label>
+  {editingProfile ? (
+    <select
+      value={profileForm.provincia}
+      onChange={(e) => setProfileForm((prev) => ({ ...prev, provincia: e.target.value }))}
+      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500 transition text-slate-900 dark:text-white"
+    >
+      <option value="">Seleccionar...</option>
+      {["Azuay","Bolívar","Cañar","Carchi","Chimborazo","Cotopaxi","El Oro","Esmeraldas","Galápagos","Guayas","Imbabura","Loja","Los Ríos","Manabí","Morona Santiago","Napo","Orellana","Pastaza","Pichincha","Santa Elena","Santo Domingo de los Tsáchilas","Sucumbíos","Tungurahua","Zamora Chinchipe"].map((p) => (
+        <option key={p} value={p}>{p}</option>
+      ))}
+    </select>
+  ) : (
+    <div className={`px-4 py-3 rounded-xl text-sm border ${user.provincia ? "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" : "bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800 text-amber-500 dark:text-amber-400"}`}>
+      {user.provincia || "Sin completar"}
+    </div>
+  )}
+ </div>
 
   {/* Tipo de cuenta */}
   <div>
