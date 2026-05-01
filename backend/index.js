@@ -1194,6 +1194,23 @@ app.get("/payphone/status", auth, async (req, res) => {
   res.json(data);
 });
 
+// =======================
+// 🧹 CRON - LIMPIAR TRANSACCIONES PENDIENTES
+// =======================
+setInterval(async () => {
+  const diezMinutosAtras = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+  
+  const { data, error } = await supabase
+    .from("transactions")
+    .update({ status: "cancelada" })
+    .eq("status", "pendiente")
+    .lt("created_at", diezMinutosAtras);
+
+  if (data?.length > 0) {
+    console.log(`🧹 ${data.length} transacciones pendientes canceladas automáticamente`);
+  }
+}, 5 * 60 * 1000); // Corre cada 5 minutos
+
 app.listen(4000, () => {
   console.log("Servidor en https://predicciones-ecuador.onrender.com");
 });
