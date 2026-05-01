@@ -775,15 +775,8 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
 // 👑 ADMIN - CREAR MERCADO
 // =======================
 app.post("/admin/markets", auth, async (req, res) => {
-  const { question } = req.body;
-
-  const { data: user, error: userError } = await supabase
-    .from("users").select("*").eq("id", req.userId).single();
-
-  if (userError || !user) return res.status(404).json({ message: "Usuario no encontrado" });
-  if (user.role !== "admin") return res.status(403).json({ message: "Solo admin" });
-
-  const { error } = await supabase.from("markets").insert([{ question }]);
+  const { question, category } = req.body;
+  const { error } = await supabase.from("markets").insert([{ question, category: category || "general" }]);
   if (error) return res.status(400).json({ message: error.message });
 
   res.json({ message: "Mercado creado" });

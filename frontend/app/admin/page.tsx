@@ -20,6 +20,7 @@ export default function AdminPage() {
   const [isLogged, setIsLogged] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [newQuestion, setNewQuestion] = useState("");
+  const [newCategory, setNewCategory] = useState("deporte");
   const [winners, setWinners] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [users, setUsers] = useState<any[]>([]);
@@ -139,7 +140,7 @@ export default function AdminPage() {
     const res = await fetch("https://predicciones-ecuador.onrender.com/admin/markets", {
       method: "POST",
       headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` || "" },
-      body: JSON.stringify({ question: newQuestion }),
+      body: JSON.stringify({ question: newQuestion, category: newCategory }),
     });
     const data = await res.json();
     if (res.ok) { setNewQuestion(""); fetchMarkets(); fetchStats(); }
@@ -419,11 +420,21 @@ export default function AdminPage() {
               <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-4">
                 <p className="text-[11px] text-slate-400 dark:text-white/30 uppercase tracking-widest mb-3">Nuevo mercado</p>
                 <div className="flex gap-2">
-                  <input value={newQuestion} onChange={(e) => setNewQuestion(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter") handleCreateMarket(); }}
-                    placeholder="¿Cuál es la pregunta del mercado?"
-                    className="flex-1 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-4 py-2.5 outline-none text-[13px] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:border-emerald-500/60 transition" />
-                  <button onClick={handleCreateMarket} className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg px-5 py-2.5 text-[13px] transition active:scale-95">Crear</button>
+                  <div className="flex flex-col sm:flex-row gap-2 flex-1">
+  <input value={newQuestion} onChange={(e) => setNewQuestion(e.target.value)}
+    onKeyDown={(e) => { if (e.key === "Enter") handleCreateMarket(); }}
+    placeholder="¿Cuál es la pregunta del mercado?"
+    className="flex-1 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-4 py-2.5 outline-none text-[13px] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:border-emerald-500/60 transition" />
+  <select value={newCategory} onChange={(e) => setNewCategory(e.target.value)}
+    className="bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2.5 outline-none text-[13px] text-slate-900 dark:text-white focus:border-emerald-500/60 transition shrink-0">
+    <option value="deporte">🏋️ Deporte</option>
+    <option value="farandula">🎤 Farándula</option>
+    <option value="politica">🗳️ Política</option>
+    <option value="elecciones">🚩 Elecciones</option>
+    <option value="pais">🌐 País</option>
+  </select>
+ </div>
+ <button onClick={handleCreateMarket} className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg px-5 py-2.5 text-[13px] transition active:scale-95">Crear</button>
                 </div>
               </div>
 
