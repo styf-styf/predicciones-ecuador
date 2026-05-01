@@ -193,12 +193,11 @@ app.get("/me", auth, async (req, res) => {
 });
 
 app.put("/me/profile", auth, async (req, res) => {
-  const { nombre, apellido, cedula, celular, pais, ciudad, direccion, banco, numero_cuenta, tipo_cuenta, provincia } = req.body;
-  console.log("Datos recibidos:", req.body);
+  const { nombre, apellido, cedula, celular, ciudad, direccion, banco, numero_cuenta, tipo_cuenta, provincia } = req.body;
 
 const { error } = await supabase
   .from("users")
-  .update({ nombre, apellido, cedula, celular, pais, ciudad, direccion, banco, numero_cuenta, tipo_cuenta, provincia })
+  .update({ nombre, apellido, cedula, celular, pais: "Ecuador", ciudad, direccion, banco, numero_cuenta, tipo_cuenta, provincia })
   .eq("id", req.userId);
 
   if (error) return res.status(500).json({ message: error.message });

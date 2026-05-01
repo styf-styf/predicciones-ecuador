@@ -78,7 +78,7 @@ export default function PanelPage() {
   apellido: meData.apellido || "",
   cedula: meData.cedula || "",
   celular: meData.celular || "",
-  pais: meData.pais || "",
+  pais: meData.pais || "Ecuador",
   ciudad: meData.ciudad || "",
   direccion: meData.direccion || "",
   banco: meData.banco || "",
@@ -741,11 +741,11 @@ export default function PanelPage() {
         <label className="text-xs text-slate-400 uppercase tracking-widest block mb-1">{field.label}</label>
         {editingProfile ? (
   field.key === "pais" ? (
-    <input
-      value={profileForm.pais}
-      disabled
-      className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-400 dark:text-slate-500 cursor-not-allowed"
-    />
+  <input
+    value="Ecuador"
+    disabled
+    className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-400 dark:text-slate-500 cursor-not-allowed"
+  />
   ) : (
     <input
       value={(profileForm as any)[field.key]}
