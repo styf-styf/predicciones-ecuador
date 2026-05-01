@@ -68,6 +68,16 @@ function CategoryBar({ active, onChange, markets }: { active: string; onChange: 
           <Trophy size={11} className="text-amber-400" />
           {resueltos} resueltos
         </button>
+        <button
+          onClick={() => onChange("favoritos")}
+          className="flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[12px] font-medium bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-rose-400 dark:text-rose-400 hover:border-rose-300 dark:hover:border-rose-700 shrink-0 transition"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24"
+            fill="#f43f5e" stroke="#f43f5e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+          Favoritos
+        </button>
 
         <div className="ml-auto shrink-0 flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-full px-3.5 py-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
@@ -126,7 +136,9 @@ export default function Home() {
     }
   };
 
-  const toggleFavorite = async (marketId: number) => {
+  const toggleFavorite = async (e: React.MouseEvent, marketId: number) => {
+    e.preventDefault();
+    e.stopPropagation();
     const token = localStorage.getItem("token");
     if (!token) return alert("Debes iniciar sesión ❌");
     const res = await fetch(`https://predicciones-ecuador.onrender.com/favorites/${marketId}`, {
@@ -171,6 +183,8 @@ export default function Home() {
     ? [...markets].filter((m) => !m.resolved)
     : activeCategory === "resueltos"
     ? [...markets].filter((m) => m.resolved)
+    : activeCategory === "favoritos"
+    ? markets.filter((m) => favorites.includes(m.id))
     : filterByCategory(markets, activeCategory);
   useEffect(() => {
     fetchMarkets();
@@ -268,6 +282,15 @@ export default function Home() {
                 <h2 className="text-xl sm:text-2xl font-bold">Resueltos</h2>
                 <span className="ml-1 text-sm text-slate-400">({visibleMarkets.length})</span>
               </>
+              ) : activeCategory === "favoritos" ? (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                  fill="#f43f5e" stroke="#f43f5e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+                <h2 className="text-xl sm:text-2xl font-bold">Favoritos</h2>
+                <span className="ml-1 text-sm text-slate-400">({visibleMarkets.length})</span>
+              </>
             ) : activeCategory === "mercados" ? (
               <>
                 <TrendingUp size={18} className="text-slate-400" />
@@ -298,6 +321,8 @@ export default function Home() {
             <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-3">
               {activeCategory === "resueltos"
                 ? <Trophy size={40} className="opacity-30" />
+                : activeCategory === "favoritos"
+                ? <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                 : activeCategory === "mercados"
                 ? <TrendingUp size={40} className="opacity-30" />
                 : (() => {
@@ -365,20 +390,7 @@ export default function Home() {
                     })()}
                   </div>
 
-                  {/* Favorito */}
-                  <div className="flex justify-end mb-2">
-                    <button
-                      onClick={(e) => { e.preventDefault(); toggleFavorite(market.id); }}
-                      className="text-slate-300 dark:text-slate-600 hover:text-rose-400 dark:hover:text-rose-400 transition-colors"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                        fill={favorites.includes(market.id) ? "#f43f5e" : "none"}
-                        stroke={favorites.includes(market.id) ? "#f43f5e" : "currentColor"}
-                        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                      </svg>
-                    </button>
-                  </div>
+                  
 
                   {/* Acción */}
                   {isResolved ? (
@@ -401,6 +413,20 @@ export default function Home() {
                       </Link>
                     </div>
                   )}
+                  {/* Favorito */}
+                  <div className="flex justify-end mt-2">
+                    <button
+                      onClick={(e) => toggleFavorite(e, market.id)}
+                      className="text-slate-300 dark:text-slate-600 hover:text-rose-400 dark:hover:text-rose-400 transition-colors"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                        fill={favorites.includes(market.id) ? "#f43f5e" : "none"}
+                        stroke={favorites.includes(market.id) ? "#f43f5e" : "currentColor"}
+                        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               );
             })}
