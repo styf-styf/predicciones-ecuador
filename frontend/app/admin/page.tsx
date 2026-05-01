@@ -95,20 +95,34 @@ export default function AdminPage() {
   if (!confirm(`¿Deseas ${label} esta recarga?`)) return;
 
   const { error } = await supabase
-    .from("transactions")
-    .update({ status })
-    .eq("id", id);
+  .from("transactions")
+  .update({ status })
+  .eq("id", id);
 
-  if (error) { alert("Error al actualizar"); return; }
+if (error) { alert("Error al actualizar"); return; }
 
-  if (status === "aprobado") {
-    const token = localStorage.getItem("token");
-    await fetch(`https://predicciones-ecuador.onrender.com/admin/users/${userId}/points`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
-      body: JSON.stringify({ points: amount }),
-    });
-  }
+if (status === "aprobado") {
+  const token = localStorage.getItem("token");
+  await fetch(`https://predicciones-ecuador.onrender.com/admin/users/${userId}/points`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+    body: JSON.stringify({ points: amount }),
+  });
+
+  await supabase.from("notifications").insert([{
+    user_id: userId,
+    title: "✅ Recarga exitosa",
+    message: `Se acreditaron ${amount} puntos a tu cuenta por transferencia bancaria.`,
+    read: false,
+  }]);
+} else if (status === "rechazado") {
+  await supabase.from("notifications").insert([{
+    user_id: userId,
+    title: "❌ Recarga rechazada",
+    message: `Tu solicitud de recarga por $${amount} fue rechazada. Contáctanos si crees que es un error.`,
+    read: false,
+  }]);
+}
 
   fetchTransactions();
   fetchUsers();
