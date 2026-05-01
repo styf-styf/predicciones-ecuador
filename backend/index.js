@@ -185,7 +185,7 @@ app.get("/markets", async (req, res) => {
 
 app.get("/me", auth, async (req, res) => {
   const { data, error } = await supabase
-    .from("users").select("id,email,points,role,created_at,nombre,apellido,cedula,celular,pais,ciudad,direccion,banco,numero_cuenta,tipo_cuenta,provider,suspended")
+    .from("users").select("id,email,points,role,created_at,nombre,apellido,cedula,celular,pais,ciudad,direccion,banco,numero_cuenta,tipo_cuenta,provincia,provider,suspended")
     .eq("id", req.userId).single();
 
   if (error) return res.status(400).json({ message: error.message });
@@ -193,12 +193,13 @@ app.get("/me", auth, async (req, res) => {
 });
 
 app.put("/me/profile", auth, async (req, res) => {
-  const { nombre, apellido, cedula, celular, pais, ciudad, direccion, banco, numero_cuenta, tipo_cuenta } = req.body;
+  const { nombre, apellido, cedula, celular, pais, ciudad, direccion, banco, numero_cuenta, tipo_cuenta, provincia } = req.body;
+  console.log("Datos recibidos:", req.body);
 
-  const { error } = await supabase
-    .from("users")
-    .update({ nombre, apellido, cedula, celular, pais, ciudad, direccion, banco, numero_cuenta, tipo_cuenta })
-    .eq("id", req.userId);
+const { error } = await supabase
+  .from("users")
+  .update({ nombre, apellido, cedula, celular, pais, ciudad, direccion, banco, numero_cuenta, tipo_cuenta, provincia })
+  .eq("id", req.userId);
 
   if (error) return res.status(500).json({ message: error.message });
   res.json({ message: "Perfil actualizado" });
