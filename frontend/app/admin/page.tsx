@@ -821,9 +821,12 @@ if (status === "aprobado") {
  )}
  {method === "retiro" && (
   <div className="col-span-2 flex flex-col justify-center gap-0.5">
-    <span className="text-[11px] text-slate-600 dark:text-white/50">{tx.users?.banco || "—"} · {tx.users?.tipo_cuenta || "—"}</span>
+    <span className="text-[11px] font-semibold text-slate-700 dark:text-white/60">
+  {tx.payment_method === "transferencia" ? "Transferencia" : tx.payment_method === "payphone" ? "Payphone" : "Deuna"}
+</span>
+<span className="text-[11px] text-slate-600 dark:text-white/50">{tx.users?.banco || "—"} · {tx.users?.tipo_cuenta || "—"}</span>
 <span className="text-[11px] font-mono text-slate-400 dark:text-white/30">{tx.users?.numero_cuenta || "—"}</span>
-<span className="text-[11px] text-slate-400 dark:text-white/30">CI: {tx.users?.cedula || "—"}</span>
+<span className="text-[11px] text-slate-400 dark:text-white/30">CI: {tx.users?.cedula || "—"} · 📱 {tx.users?.celular || "—"}</span>
   </div>
  )}
  <div className={`${method === "transferencia" || method === "retiro" ? "col-span-2" : "col-span-4"} flex justify-center`}>
