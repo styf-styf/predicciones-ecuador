@@ -107,12 +107,9 @@ export default function Home() {
   };
 
   // Mercados filtrados por categoría
-  const visibleMarkets = filterByCategory(markets, activeCategory);
-  const trendingMarkets =
-    activeCategory === "all"
-      ? [...markets].filter((m) => !m.resolved).sort((a, b) => (b.yes + b.no) - (a.yes + a.no)).slice(0, 3)
-      : [];
-
+  const visibleMarkets = activeCategory === "all"
+    ? [...markets].filter((m) => !m.resolved).sort((a, b) => (b.yes + b.no) - (a.yes + a.no))
+    : filterByCategory(markets, activeCategory);
   useEffect(() => {
     fetchMarkets();
     fetchCarouselConfig();
@@ -242,31 +239,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Carruseles — sólo en "Tendencias" (all) */}
-        {activeCategory === "all" &&
-          (trendingMarkets.length > 0 || markets.filter((m) => m.resolved).length > 0) && (
-            <section className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {trendingMarkets.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-2 mb-4">
-                    <Flame size={16} className="text-orange-400" />
-                    <h2 className="text-lg font-bold">Tendencias</h2>
-                  </div>
-                  <Carousel markets={trendingMarkets} autoplayMs={carouselConfig.autoplay_ms} />
-                </div>
-              )}
-              {markets.filter((m) => m.resolved).length > 0 && (
-                <div>
-                  <div className="flex items-center gap-2 mb-4">
-                    <Trophy size={16} className="text-yellow-400" />
-                    <h2 className="text-lg font-bold">Ganadores</h2>
-                  </div>
-                  <Carousel markets={markets.filter((m) => m.resolved)} autoplayMs={carouselConfig.autoplay_ms} />
-                </div>
-              )}
-            </section>
-          )}
-
+        
         {/* Mercados filtrados */}
         <section>
           {/* Encabezado dinámico según categoría */}
