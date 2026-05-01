@@ -44,6 +44,7 @@ export default function PanelPage() {
 });
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
+  const [editingProfile, setEditingProfile] = useState(false);
 
   const loadPanel = async () => {
     const token = localStorage.getItem("token");
@@ -712,62 +713,92 @@ export default function PanelPage() {
               </div>
             </div>
 
-            {/* Editar perfil */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-4">
-              <h3 className="font-bold">Información personal</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {[
-                  { key: "nombre", label: "Nombre" },
-                  { key: "apellido", label: "Apellido" },
-                  { key: "cedula", label: "Cédula / Pasaporte" },
-                  { key: "celular", label: "Celular" },
-                  { key: "pais", label: "País" },
-                  { key: "ciudad", label: "Ciudad" },
-                  { key: "banco", label: "Banco" },
-                  { key: "numero_cuenta", label: "Número de cuenta" },
-                ].map((field) => (
-                  <div key={field.key}>
-                    <label className="text-xs text-slate-400 uppercase tracking-widest block mb-1">{field.label}</label>
-                    <input
-                      value={(profileForm as any)[field.key]}
-                      onChange={(e) => setProfileForm((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500 transition text-slate-900 dark:text-white"
-                    />
-                  </div>
-                ))}
-              </div>
-              {/* Tipo de cuenta */}
- <div>
-  <label className="text-xs text-slate-400 uppercase tracking-widest block mb-1">Tipo de cuenta</label>
-  <select
-    value={profileForm.tipo_cuenta}
-    onChange={(e) => setProfileForm((prev) => ({ ...prev, tipo_cuenta: e.target.value }))}
-    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500 transition text-slate-900 dark:text-white"
-  >
-    <option value="">Seleccionar...</option>
-    <option value="ahorros">Ahorros</option>
-    <option value="corriente">Corriente</option>
-  </select>
+           {/* Información personal */}
+<div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-4">
+  <div className="flex items-center justify-between">
+    <h3 className="font-bold">Información personal</h3>
+    <button
+      onClick={() => setEditingProfile((prev) => !prev)}
+      className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg transition flex items-center gap-1.5"
+    >
+      <Settings size={12} /> {editingProfile ? "Cancelar" : "Editar información"}
+    </button>
+  </div>
+
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    {[
+      { key: "nombre", label: "Nombre" },
+      { key: "apellido", label: "Apellido" },
+      { key: "cedula", label: "Cédula / Pasaporte" },
+      { key: "celular", label: "Celular" },
+      { key: "pais", label: "País" },
+      { key: "ciudad", label: "Ciudad" },
+      { key: "banco", label: "Banco" },
+      { key: "numero_cuenta", label: "Número de cuenta" },
+    ].map((field) => (
+      <div key={field.key}>
+        <label className="text-xs text-slate-400 uppercase tracking-widest block mb-1">{field.label}</label>
+        {editingProfile ? (
+          <input
+            value={(profileForm as any)[field.key]}
+            onChange={(e) => setProfileForm((prev) => ({ ...prev, [field.key]: e.target.value }))}
+            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500 transition text-slate-900 dark:text-white"
+          />
+        ) : (
+          <div className={`px-4 py-3 rounded-xl text-sm border ${(user as any)[field.key] ? "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" : "bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800 text-amber-500 dark:text-amber-400"}`}>
+            {(user as any)[field.key] || "Sin completar"}
+          </div>
+        )}
+      </div>
+    ))}
+  </div>
+
+  {/* Tipo de cuenta */}
+  <div>
+    <label className="text-xs text-slate-400 uppercase tracking-widest block mb-1">Tipo de cuenta</label>
+    {editingProfile ? (
+      <select
+        value={profileForm.tipo_cuenta}
+        onChange={(e) => setProfileForm((prev) => ({ ...prev, tipo_cuenta: e.target.value }))}
+        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500 transition text-slate-900 dark:text-white"
+      >
+        <option value="">Seleccionar...</option>
+        <option value="ahorros">Ahorros</option>
+        <option value="corriente">Corriente</option>
+      </select>
+    ) : (
+      <div className={`px-4 py-3 rounded-xl text-sm border ${user.tipo_cuenta ? "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" : "bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800 text-amber-500 dark:text-amber-400"}`}>
+        {user.tipo_cuenta || "Sin completar"}
+      </div>
+    )}
+  </div>
+
+  {/* Dirección */}
+  <div>
+    <label className="text-xs text-slate-400 uppercase tracking-widest block mb-1">Dirección</label>
+    {editingProfile ? (
+      <input
+        value={profileForm.direccion}
+        onChange={(e) => setProfileForm((prev) => ({ ...prev, direccion: e.target.value }))}
+        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500 transition text-slate-900 dark:text-white"
+      />
+    ) : (
+      <div className={`px-4 py-3 rounded-xl text-sm border ${user.direccion ? "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" : "bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800 text-amber-500 dark:text-amber-400"}`}>
+        {user.direccion || "Sin completar"}
+      </div>
+    )}
+  </div>
+
+  {editingProfile && (
+    <button
+      onClick={async () => { await handleSaveProfile(); setEditingProfile(false); }}
+      disabled={savingProfile}
+      className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 text-white font-bold py-3 rounded-xl text-sm transition active:scale-[0.99] flex items-center justify-center gap-2"
+    >
+      {profileSaved ? <><Check size={15} /> Guardado</> : savingProfile ? "Guardando..." : "Guardar cambios"}
+    </button>
+  )}
  </div>
-
-              {/* Dirección full width */}
-              <div>
-                <label className="text-xs text-slate-400 uppercase tracking-widest block mb-1">Dirección</label>
-                <input
-                  value={profileForm.direccion}
-                  onChange={(e) => setProfileForm((prev) => ({ ...prev, direccion: e.target.value }))}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500 transition text-slate-900 dark:text-white"
-                />
-              </div>
-
-              <button
-                onClick={handleSaveProfile}
-                disabled={savingProfile}
-                className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 text-white font-bold py-3 rounded-xl text-sm transition active:scale-[0.99] flex items-center justify-center gap-2"
-              >
-                {profileSaved ? <><Check size={15} /> Guardado</> : savingProfile ? "Guardando..." : "Guardar cambios"}
-              </button>
-            </div>
 
           </div>
         )}
