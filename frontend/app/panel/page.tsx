@@ -582,21 +582,32 @@ export default function PanelPage() {
     </div>
 
     {/* Método de retiro */}
-    <div>
-      <label className="text-xs text-slate-400 uppercase tracking-widest block mb-2">Método de retiro</label>
-      <div className="flex gap-2">
-        {[
-          { id: "transferencia", label: "🏦 Transferencia" },
-          { id: "payphone", label: "💳 Payphone" },
-          { id: "deuna", label: "⚡ Deuna" },
-        ].map((m) => (
-          <button key={m.id} onClick={() => setRetiroMethod(m.id as any)}
-            className={`flex-1 py-2.5 rounded-xl text-xs font-medium border transition-all ${retiroMethod === m.id ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-transparent" : "border-slate-200 dark:border-slate-700 text-slate-500"}`}>
-            {m.label}
-          </button>
-        ))}
-      </div>
-    </div>
+<div>
+  <label className="text-xs text-slate-400 uppercase tracking-widest block mb-2">¿Cómo deseas recibir tu dinero?</label>
+  <div className="space-y-2">
+    {[
+      { id: "transferencia", label: "Transferencia bancaria", desc: "Recibes en tu cuenta bancaria registrada", icon: "🏦" },
+      { id: "payphone", label: "Payphone", desc: "Recibes en tu cuenta Payphone", icon: "💳" },
+      { id: "deuna", label: "Deuna", desc: "Recibes vía tu número de celular", icon: "⚡" },
+    ].map((m) => (
+      <label key={m.id} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${retiroMethod === m.id ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20" : "border-slate-200 dark:border-slate-700"}`}>
+        <input
+          type="radio"
+          name="retiroMethod"
+          value={m.id}
+          checked={retiroMethod === m.id}
+          onChange={() => setRetiroMethod(m.id as any)}
+          className="accent-emerald-500"
+        />
+        <span className="text-lg">{m.icon}</span>
+        <div>
+          <p className="text-sm font-medium text-slate-900 dark:text-white">{m.label}</p>
+          <p className="text-xs text-slate-400">{m.desc}</p>
+        </div>
+      </label>
+    ))}
+  </div>
+ </div>
 
                 {/* Advertencia Google sin info */}
                 {isGoogleUser && !hasPaymentInfo && (
