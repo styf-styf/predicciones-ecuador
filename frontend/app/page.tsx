@@ -54,19 +54,13 @@ function CategoryBar({ active, onChange, markets }: { active: string; onChange: 
 
         {/* Stats clickeables */}
         <button
-          onClick={() => onChange("all")}
+          onClick={() => onChange("mercados")}
           className="flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[12px] font-medium bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700 shrink-0 transition"
         >
           <TrendingUp size={11} className="text-slate-400" />
           {total} mercados
         </button>
-        <button
-          onClick={() => onChange("all")}
-          className="flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[12px] font-medium bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-emerald-600 dark:text-emerald-400 hover:border-slate-300 dark:hover:border-slate-700 shrink-0 transition"
-        >
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-          {activos} activos
-        </button>
+        
         <button
           onClick={() => onChange("resueltos")}
           className="flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[12px] font-medium bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700 shrink-0 transition"
@@ -77,7 +71,7 @@ function CategoryBar({ active, onChange, markets }: { active: string; onChange: 
 
         <div className="ml-auto shrink-0 flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-full px-3.5 py-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-          <span className="text-[12px] font-medium text-emerald-700 dark:text-emerald-400 whitespace-nowrap">En vivo</span>
+          <span className="text-[12px] font-medium text-emerald-700 dark:text-emerald-400 whitespace-nowrap">{activos} En vivo</span>
         </div>
       </div>
     </div>
@@ -142,6 +136,8 @@ export default function Home() {
   // Mercados filtrados por categoría
   const visibleMarkets = activeCategory === "all"
     ? [...markets].filter((m) => !m.resolved).sort((a, b) => (b.yes + b.no) - (a.yes + a.no))
+    : activeCategory === "mercados"
+    ? [...markets].filter((m) => !m.resolved)
     : activeCategory === "resueltos"
     ? [...markets].filter((m) => m.resolved)
     : filterByCategory(markets, activeCategory);
