@@ -271,8 +271,9 @@ if (status === "aprobado") {
     { id: "markets", label: "Mercados", icon: <TrendingUp size={15} />, badge: markets.filter(m => !m.resolved).length },
     { id: "users", label: "Usuarios", icon: <Users size={15} />, badge: users.length },
     { id: "winners", label: "Ganadores", icon: <Trophy size={15} /> },
-    { id: "settings", label: "Configuración", icon: <Settings size={15} /> },
     { id: "transacciones", label: "Transacciones", icon: <Wallet size={15} />, badge: transactions.filter(t => t.status === "pendiente").length },
+    { id: "settings", label: "Configuración", icon: <Settings size={15} /> },
+    
   ];
 
   return (
@@ -456,6 +457,34 @@ if (status === "aprobado") {
                   {winners.length === 0 && <p className="px-5 py-8 text-[12px] text-slate-400 dark:text-white/20 text-center">Sin ganadores aún</p>}
                 </div>
               </div>
+
+              <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl">
+  <div className="px-5 py-4 border-b border-slate-100 dark:border-white/[0.06] flex items-center justify-between">
+    <p className="text-[12px] font-semibold text-slate-700 dark:text-white/70">Transacciones pendientes</p>
+    <button onClick={() => setActiveSection("transacciones")} className="text-[11px] text-slate-400 dark:text-white/25 hover:text-slate-600 dark:hover:text-white/50 transition flex items-center gap-1">
+      Ver todas <ChevronRight size={11} />
+    </button>
+  </div>
+  <div className="divide-y divide-slate-100 dark:divide-white/[0.04]">
+    {transactions.filter(t => t.status === "pendiente").slice(0, 5).map((tx) => (
+      <div key={tx.id} className="px-5 py-3 flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-[12px] text-slate-600 dark:text-white/60 truncate">{tx.users?.email}</p>
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className="text-[11px] text-slate-400 dark:text-white/25">{tx.payment_method === "transferencia" ? "🏦 Transferencia" : "💳 Tarjeta"}</span>
+            <span className={`text-[10px] px-1.5 py-0.5 rounded-md ${
+              tx.status === "aprobado" || tx.status === "completado" ? "bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" :
+              tx.status === "rechazado" ? "bg-rose-50 dark:bg-rose-500/15 text-rose-500 dark:text-rose-400" :
+              "bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400"
+            }`}>{tx.status}</span>
+          </div>
+        </div>
+        <span className="text-[12px] text-emerald-600 dark:text-emerald-400 font-bold tabular-nums shrink-0">${tx.amount}</span>
+      </div>
+    ))}
+    {transactions.length === 0 && <p className="px-5 py-8 text-[12px] text-slate-400 dark:text-white/20 text-center">Sin transacciones aún</p>}
+  </div>
+</div>
             </>
           )}
 
