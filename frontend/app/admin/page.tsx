@@ -11,8 +11,9 @@ import {
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import ThemeToggle from "@/components/ThemeToggle";
+import { supabase } from "@/lib/supabase";
 
-type Section = "overview" | "markets" | "users" | "settings" | "winners";
+type Section = "overview" | "markets" | "users" | "settings" | "winners" | "transacciones";
 
 export default function AdminPage() {
   const [markets, setMarkets] = useState<any[]>([]);
@@ -37,6 +38,7 @@ export default function AdminPage() {
     trending_count: 1, winners_count: 1, autoplay_ms: 5000,
   });
   const [searchQuery, setSearchQuery] = useState("");
+  const [transactions, setTransactions] = useState<any[]>([]);
 
   const fetchMarkets = async () => {
     const res = await fetch("https://predicciones-ecuador.onrender.com/markets");
@@ -79,6 +81,39 @@ export default function AdminPage() {
     const data = await res.json();
     if (res.ok) setUsers(data);
   };
+
+  const fetchTransactions = async () => {
+  const { data } = await supabase
+    .from("transactions")
+    .select("*, users(email, nombre, apellido)")
+    .order("created_at", { ascending: false });
+  setTransactions(data || []);
+ };
+
+ const handleTransactionStatus = async (id: string, status: "aprobado" | "rechazado", userId: string, amount: number) => {
+  const label = status === "aprobado" ? "aprobar" : "rechazar";
+  if (!confirm(`¿Deseas ${label} esta recarga?`)) return;
+
+  const { error } = await supabase
+    .from("transactions")
+    .update({ status })
+    .eq("id", id);
+
+  if (error) { alert("Error al actualizar"); return; }
+
+  if (status === "aprobado") {
+    const token = localStorage.getItem("token");
+    await fetch(`https://predicciones-ecuador.onrender.com/admin/users/${userId}/points`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+      body: JSON.stringify({ points: amount }),
+    });
+  }
+
+  fetchTransactions();
+  fetchUsers();
+  fetchStats();
+};
 
   const fetchSettings = async () => {
     const token = localStorage.getItem("token");
@@ -127,7 +162,7 @@ export default function AdminPage() {
       const data = await res.json();
       if (data.role !== "admin") { window.location.href = "/"; return; }
       setIsLogged(true); setIsAdmin(true); setPoints(data.points || 0);
-      fetchWinners(); fetchStats(); fetchUsers(); fetchSettings(); fetchCharts();
+      fetchWinners(); fetchStats(); fetchUsers(); fetchSettings(); fetchCharts(); fetchTransactions();
     } catch {
       localStorage.removeItem("token");
       window.location.href = "/login";
@@ -223,6 +258,7 @@ export default function AdminPage() {
     { id: "users", label: "Usuarios", icon: <Users size={15} />, badge: users.length },
     { id: "winners", label: "Ganadores", icon: <Trophy size={15} /> },
     { id: "settings", label: "Configuración", icon: <Settings size={15} /> },
+    { id: "transacciones", label: "Transacciones", icon: <Wallet size={15} />, badge: transactions.filter(t => t.status === "pendiente").length },
   ];
 
   return (
@@ -651,6 +687,127 @@ export default function AdminPage() {
               </div>
             </>
           )}
+
+          {/* TRANSACCIONES */}
+{activeSection === "transacciones" && (
+  <>
+    <div>
+      <h1 className="text-lg font-bold">Transacciones</h1>
+      <p className="text-[12px] text-slate-400 dark:text-white/30 mt-0.5">
+        {transactions.filter(t => t.status === "pendiente").length} pendientes · {transactions.length} total
+      </p>
+    </div>
+
+    {/* Tabs transferencia / tarjeta */}
+    {["transferencia", "tarjeta"].map((method) => (
+      <div key={method} className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl overflow-hidden">
+        <div className="px-5 py-3 border-b border-slate-100 dark:border-white/[0.06] flex items-center justify-between">
+          <p className="text-[12px] font-semibold text-slate-700 dark:text-white/70 capitalize">
+            {method === "transferencia" ? "🏦 Transferencias bancarias" : "💳 Pagos con tarjeta"}
+          </p>
+          <span className="text-[10px] bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-white/30 px-2 py-0.5 rounded-md">
+            {transactions.filter(t => t.payment_method === method).length} registros
+          </span>
+        </div>
+
+        <div className="px-5 py-3 border-b border-slate-100 dark:border-white/[0.04] hidden sm:block">
+          <div className="grid grid-cols-12 text-[10px] text-slate-400 dark:text-white/25 uppercase tracking-widest">
+            <span className="col-span-3">Usuario</span>
+            <span className="col-span-2 text-center">Monto</span>
+            {method === "transferencia" && <span className="col-span-2 text-center">Código</span>}
+            <span className={`${method === "transferencia" ? "col-span-2" : "col-span-4"} text-center`}>Estado</span>
+            <span className="col-span-2 text-center">Fecha</span>
+            {method === "transferencia" && <span className="col-span-1 text-right">Acción</span>}
+          </div>
+        </div>
+
+        <div className="divide-y divide-slate-100 dark:divide-white/[0.03]">
+          {transactions.filter(t => t.payment_method === method).length === 0 && (
+            <p className="px-5 py-8 text-[12px] text-slate-400 dark:text-white/20 text-center">Sin registros</p>
+          )}
+          {transactions.filter(t => t.payment_method === method).map((tx) => (
+            <div key={tx.id} className="px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition">
+              {/* Desktop */}
+              <div className="hidden sm:grid grid-cols-12 items-center gap-2">
+                <div className="col-span-3 min-w-0">
+                  <p className="text-[12px] text-slate-600 dark:text-white/60 truncate">{tx.users?.email}</p>
+                  <p className="text-[11px] text-slate-400 dark:text-white/25 truncate">{tx.users?.nombre} {tx.users?.apellido}</p>
+                </div>
+                <p className="col-span-2 text-center text-[12px] text-emerald-600 dark:text-emerald-400 font-bold tabular-nums">${tx.amount}</p>
+                {method === "transferencia" && (
+                  <div className="col-span-2 flex justify-center">
+                    <span className="text-[11px] bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-white/50 px-2 py-0.5 rounded-md font-mono">{tx.transfer_code || "—"}</span>
+                  </div>
+                )}
+                <div className={`${method === "transferencia" ? "col-span-2" : "col-span-4"} flex justify-center`}>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-md font-medium ${
+                    tx.status === "aprobado" ? "bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" :
+                    tx.status === "rechazado" ? "bg-rose-50 dark:bg-rose-500/15 text-rose-500 dark:text-rose-400" :
+                    "bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                  }`}>{tx.status}</span>
+                </div>
+                <p className="col-span-2 text-center text-[10px] text-slate-400 dark:text-white/20">{new Date(tx.created_at).toLocaleDateString()}</p>
+                {method === "transferencia" && (
+                  <div className="col-span-1 flex justify-end gap-1">
+                    {tx.status === "pendiente" ? (
+                      <>
+                        <button
+                          onClick={() => handleTransactionStatus(tx.id, "aprobado", tx.user_id, tx.amount)}
+                          className="p-1.5 rounded-md bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition text-[10px] font-bold"
+                          title="Aprobar"
+                        >✓</button>
+                        <button
+                          onClick={() => handleTransactionStatus(tx.id, "rechazado", tx.user_id, tx.amount)}
+                          className="p-1.5 rounded-md bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 transition text-[10px] font-bold"
+                          title="Rechazar"
+                        >✕</button>
+                      </>
+                    ) : (
+                      <span className="text-[10px] text-slate-300 dark:text-white/20">—</span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Mobile */}
+              <div className="sm:hidden space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-[12px] text-slate-600 dark:text-white/60 truncate">{tx.users?.email}</p>
+                    <p className="text-[11px] text-slate-400 dark:text-white/30">{new Date(tx.created_at).toLocaleDateString()}</p>
+                  </div>
+                  <span className="text-[12px] text-emerald-600 dark:text-emerald-400 font-bold shrink-0">${tx.amount}</span>
+                </div>
+                {method === "transferencia" && (
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-white/50 px-2 py-0.5 rounded-md font-mono">{tx.transfer_code || "—"}</span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-md ${
+                      tx.status === "aprobado" ? "bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" :
+                      tx.status === "rechazado" ? "bg-rose-50 dark:bg-rose-500/15 text-rose-500 dark:text-rose-400" :
+                      "bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                    }`}>{tx.status}</span>
+                  </div>
+                )}
+                {method === "transferencia" && tx.status === "pendiente" && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleTransactionStatus(tx.id, "aprobado", tx.user_id, tx.amount)}
+                      className="flex-1 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-[11px] font-bold"
+                    >Aprobar</button>
+                    <button
+                      onClick={() => handleTransactionStatus(tx.id, "rechazado", tx.user_id, tx.amount)}
+                      className="flex-1 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 text-[11px] font-bold"
+                    >Rechazar</button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    ))}
+  </>
+ )}
 
           {/* CONFIGURACIÓN */}
           {activeSection === "settings" && config && (
