@@ -720,7 +720,7 @@ if (status === "aprobado") {
             {method === "transferencia" ? "🏦 Transferencias bancarias" : "💳 Pagos con tarjeta"}
           </p>
           <span className="text-[10px] bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-white/30 px-2 py-0.5 rounded-md">
-            {transactions.filter(t => t.payment_method === method).length} registros
+            {transactions.filter(t => method === "tarjeta" ? (t.payment_method === "tarjeta" || t.payment_method === null) : t.payment_method === method).length} registros
           </span>
         </div>
 
@@ -736,10 +736,10 @@ if (status === "aprobado") {
         </div>
 
         <div className="divide-y divide-slate-100 dark:divide-white/[0.03]">
-          {transactions.filter(t => t.payment_method === method).length === 0 && (
+          {transactions.filter(t => method === "tarjeta" ? (t.payment_method === "tarjeta" || t.payment_method === null) : t.payment_method === method).length === 0 && (
             <p className="px-5 py-8 text-[12px] text-slate-400 dark:text-white/20 text-center">Sin registros</p>
           )}
-          {transactions.filter(t => t.payment_method === method).map((tx) => (
+          {transactions.filter(t => method === "tarjeta" ? (t.payment_method === "tarjeta" || t.payment_method === null) : t.payment_method === method).map((tx) => (
             <div key={tx.id} className="px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition">
               {/* Desktop */}
               <div className="hidden sm:grid grid-cols-12 items-center gap-2">
