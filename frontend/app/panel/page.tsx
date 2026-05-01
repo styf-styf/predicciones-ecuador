@@ -19,6 +19,7 @@ export default function PanelPage() {
   const [tab, setTab] = useState<Tab>("inicio");
   const [user, setUser] = useState<any>(null);
   const [bets, setBets] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<any[]>([]);
   const [ranking, setRanking] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -29,6 +30,9 @@ export default function PanelPage() {
   const [paymentMethod, setPaymentMethod] = useState<"transferencia" | "tarjeta">("transferencia");
   const [payingCard, setPayingCard] = useState(false);
   const [showPayphoneBox, setShowPayphoneBox] = useState(false);
+  const [transferCode, setTransferCode] = useState("");
+  const [sendingTransfer, setSendingTransfer] = useState(false);
+  const [transferSent, setTransferSent] = useState(false);
   const [payphoneClientId, setPayphoneClientId] = useState("");
   // Perfil state
   const [profileForm, setProfileForm] = useState({
@@ -51,9 +55,18 @@ export default function PanelPage() {
       const meData = await meRes.json();
       const betsData = await betsRes.json();
       const rankData = await rankRes.json();
+      const token2 = localStorage.getItem("token");
+      const payload2 = JSON.parse(atob(token2!.split(".")[1]));
+      const { data: txData } = await supabase
+      .from("transactions")
+      .select("*")
+      .eq("user_id", payload2.id)
+      .order("created_at", { ascending: false });
+
       setUser(meData);
       setBets(betsData || []);
       setRanking(rankData || []);
+      setTransactions(txData || []);
       setProfileForm({
         nombre: meData.nombre || "",
         apellido: meData.apellido || "",
@@ -100,6 +113,32 @@ export default function PanelPage() {
     } finally { setSavingProfile(false); }
   };
 
+  const handleSendTransfer = async () => {
+  if (!transferCode.trim() || !walletAmount || parseFloat(walletAmount) < 1) return;
+  setSendingTransfer(true);
+  try {
+    const token = localStorage.getItem("token");
+    const payload = JSON.parse(atob(token!.split(".")[1]));
+    const { error } = await supabase.from("transactions").insert({
+      user_id: payload.id,
+      type: "recarga",
+      amount: parseFloat(walletAmount),
+      status: "pendiente",
+      payment_method: "transferencia",
+      transfer_code: transferCode.trim(),
+    });
+    if (!error) {
+      setTransferSent(true);
+      setTransferCode("");
+      setWalletAmount("");
+      setTimeout(() => setTransferSent(false), 4000);
+      loadPanel();
+    }
+  } finally {
+    setSendingTransfer(false);
+  }
+};
+
   
 
   if (loading) {
@@ -135,7 +174,8 @@ export default function PanelPage() {
   const hasPaymentInfo = user?.cedula && user?.celular && user?.nombre;
 
   // Movimientos unificados (por ahora solo apuestas, luego se agregan recargas/retiros)
-  const movimientos = bets.map((bet) => ({
+  const movimientos = [
+  ...bets.map((bet) => ({
     id: bet.id,
     tipo: "apuesta",
     descripcion: bet.markets?.question || "Mercado",
@@ -145,7 +185,17 @@ export default function PanelPage() {
     estado: bet.markets?.resolved
       ? bet.markets?.winner === bet.type ? "ganada" : "perdida"
       : "pendiente",
-  })).sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+  })),
+  ...transactions.map((tx) => ({
+    id: tx.id,
+    tipo: tx.type,
+    descripcion: tx.type === "recarga" ? "Recarga de saldo" : "Retiro de saldo",
+    subtipo: tx.payment_method === "transferencia" ? "Transferencia" : "Tarjeta",
+    monto: tx.type === "recarga" ? Number(tx.amount) : -Number(tx.amount),
+    fecha: tx.created_at,
+    estado: tx.status,
+  })),
+ ].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
 
   const tabs = [
     { id: "inicio", label: "Inicio", icon: <Home size={15} /> },
@@ -379,13 +429,51 @@ export default function PanelPage() {
                 </div>
 
                 {paymentMethod === "transferencia" && (
-                  <>
-                    <button className="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-3 rounded-xl text-sm transition active:scale-[0.99]">
-                      Enviar comprobante
-                    </button>
-                    <p className="text-xs text-slate-400 text-center">Tu recarga será procesada en menos de 24 horas hábiles</p>
-                  </>
-                )}
+  <>
+    {/* Explicación número de comprobante */}
+    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 space-y-2">
+      <p className="text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-widest">¿Dónde encuentro el número de comprobante?</p>
+      <p className="text-xs text-blue-600 dark:text-blue-400">
+        Después de realizar la transferencia, el banco te muestra un <strong>comprobante de pago</strong>. Busca el número que aparece como:
+      </p>
+      <ul className="text-xs text-blue-600 dark:text-blue-400 space-y-1 list-none">
+        <li>🏦 <strong>Pichincha:</strong> "Número de operación"</li>
+        <li>🏦 <strong>Pacífico:</strong> "Número de transacción"</li>
+        <li>🏦 <strong>Produbanco:</strong> "Código de transacción"</li>
+        <li>🏦 <strong>Guayaquil:</strong> "Número de referencia"</li>
+        <li>🏦 <strong>Otros bancos:</strong> "Número de control" o "Código de operación"</li>
+      </ul>
+      <p className="text-xs text-blue-600 dark:text-blue-400">Puedes encontrarlo en el <strong>correo de confirmación</strong> o en el <strong>historial de tu app bancaria</strong>.</p>
+    </div>
+
+    {/* Input número de comprobante */}
+    <div>
+      <label className="text-xs text-slate-400 uppercase tracking-widest block mb-2">Número de comprobante</label>
+      <input
+        type="text"
+        placeholder="Ej: 0034521789"
+        value={transferCode}
+        onChange={(e) => setTransferCode(e.target.value)}
+        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500 transition"
+      />
+    </div>
+
+    {transferSent ? (
+      <div className="w-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl py-3 text-center text-sm font-semibold text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-2">
+        <Check size={15} /> Comprobante enviado — aparecerá como pendiente en tus movimientos
+      </div>
+    ) : (
+      <button
+        onClick={handleSendTransfer}
+        disabled={sendingTransfer || !transferCode.trim() || !walletAmount || parseFloat(walletAmount) < 1}
+        className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl text-sm transition active:scale-[0.99]"
+      >
+        {sendingTransfer ? "Enviando..." : "Enviar comprobante"}
+      </button>
+    )}
+    <p className="text-xs text-slate-400 text-center">Tu recarga será procesada en menos de 24 horas hábiles</p>
+  </>
+ )}
 
                 {paymentMethod === "tarjeta" && (
                   <>
