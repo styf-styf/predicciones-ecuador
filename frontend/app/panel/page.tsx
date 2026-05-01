@@ -756,7 +756,7 @@ export default function PanelPage() {
 
         ) : (
           <div className={`px-4 py-3 rounded-xl text-sm border ${(user as any)[field.key] ? "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" : "bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800 text-amber-500 dark:text-amber-400"}`}>
-            {(user as any)[field.key] || "Sin completar"}
+            {field.key === "pais" ? ((user as any)[field.key] || "Ecuador") : ((user as any)[field.key] || "Sin completar")}
           </div>
         )}
       </div>
