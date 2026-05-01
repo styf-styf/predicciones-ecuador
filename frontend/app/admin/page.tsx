@@ -90,7 +90,7 @@ export default function AdminPage() {
   setTransactions(data || []);
  };
 
- const handleTransactionStatus = async (id: string, status: "aprobado" | "rechazado", userId: string, amount: number) => {
+ const handleTransactionStatus = async (id: string, status: "aprobado" | "rechazado", userId: string, amount: number, tx: any) => {
   const label = status === "aprobado" ? "aprobar" : "rechazar";
   if (!confirm(`¿Deseas ${label} esta recarga?`)) return;
 
@@ -101,27 +101,51 @@ export default function AdminPage() {
 
 if (error) { alert("Error al actualizar"); return; }
 
-if (status === "aprobado") {
-  const token = localStorage.getItem("token");
-  await fetch(`https://predicciones-ecuador.onrender.com/admin/users/${userId}/points`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
-    body: JSON.stringify({ points: amount }),
-  });
+const token = localStorage.getItem("token");
 
-  await supabase.from("notifications").insert([{
-    user_id: userId,
-    title: "✅ Recarga exitosa",
-    message: `Se acreditaron ${amount} puntos a tu cuenta por transferencia bancaria.`,
-    read: false,
-  }]);
+if (status === "aprobado") {
+  if (tx.type === "recarga") {
+    await fetch(`https://predicciones-ecuador.onrender.com/admin/users/${userId}/points`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+      body: JSON.stringify({ points: amount }),
+    });
+    await supabase.from("notifications").insert([{
+      user_id: userId,
+      title: "✅ Recarga exitosa",
+      message: `Se acreditaron ${amount} puntos a tu cuenta por transferencia bancaria.`,
+      read: false,
+    }]);
+  } else if (tx.type === "retiro") {
+    await supabase.from("notifications").insert([{
+      user_id: userId,
+      title: "✅ Retiro aprobado",
+      message: `Tu retiro de $${amount} fue aprobado y será transferido a tu cuenta bancaria.`,
+      read: false,
+    }]);
+  }
 } else if (status === "rechazado") {
-  await supabase.from("notifications").insert([{
-    user_id: userId,
-    title: "❌ Recarga rechazada",
-    message: `Tu solicitud de recarga por $${amount} fue rechazada. Contáctanos si crees que es un error.`,
-    read: false,
-  }]);
+  if (tx.type === "retiro") {
+    // Devolver puntos al usuario
+    await fetch(`https://predicciones-ecuador.onrender.com/admin/users/${userId}/points`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+      body: JSON.stringify({ points: amount }),
+    });
+    await supabase.from("notifications").insert([{
+      user_id: userId,
+      title: "❌ Retiro rechazado",
+      message: `Tu solicitud de retiro por $${amount} fue rechazada. Los puntos fueron devueltos a tu cuenta.`,
+      read: false,
+    }]);
+  } else {
+    await supabase.from("notifications").insert([{
+      user_id: userId,
+      title: "❌ Recarga rechazada",
+      message: `Tu solicitud de recarga por $${amount} fue rechazada. Contáctanos si crees que es un error.`,
+      read: false,
+    }]);
+  }
 }
 
   fetchTransactions();
@@ -742,14 +766,18 @@ if (status === "aprobado") {
     </div>
 
     {/* Tabs transferencia / tarjeta */}
-    {["transferencia", "tarjeta"].map((method) => (
+    {["transferencia", "tarjeta", "retiro"].map((method) => (
       <div key={method} className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl overflow-hidden">
         <div className="px-5 py-3 border-b border-slate-100 dark:border-white/[0.06] flex items-center justify-between">
           <p className="text-[12px] font-semibold text-slate-700 dark:text-white/70 capitalize">
-            {method === "transferencia" ? "🏦 Transferencias bancarias" : "💳 Pagos con tarjeta"}
+          {method === "transferencia" ? "🏦 Recargas por transferencia" : method === "tarjeta" ? "💳 Recargas con tarjeta" : "📤 Solicitudes de retiro"}
           </p>
           <span className="text-[10px] bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-white/30 px-2 py-0.5 rounded-md">
-            {transactions.filter(t => method === "tarjeta" ? (t.payment_method === "tarjeta" || t.payment_method === null) : t.payment_method === method).length} registros
+            {transactions.filter(t => 
+  method === "retiro" ? t.type === "retiro" :
+  method === "tarjeta" ? (t.payment_method === "tarjeta" || t.payment_method === null) && t.type === "recarga" :
+  t.payment_method === method && t.type === "recarga"
+ ).length} registros
           </span>
         </div>
 
@@ -758,17 +786,26 @@ if (status === "aprobado") {
             <span className="col-span-3">Usuario</span>
             <span className="col-span-2 text-center">Monto</span>
             {method === "transferencia" && <span className="col-span-2 text-center">Código</span>}
-            <span className={`${method === "transferencia" ? "col-span-2" : "col-span-4"} text-center`}>Estado</span>
-            <span className="col-span-2 text-center">Fecha</span>
-            {method === "transferencia" && <span className="col-span-1 text-right">Acción</span>}
+ {method === "retiro" && <span className="col-span-2 text-center">Banco / Cuenta</span>}
+ <span className={`${method === "transferencia" || method === "retiro" ? "col-span-2" : "col-span-4"} text-center`}>Estado</span>
+ <span className="col-span-2 text-center">Fecha</span>
+ {(method === "transferencia" || method === "retiro") && <span className="col-span-1 text-right">Acción</span>}
           </div>
         </div>
 
         <div className="divide-y divide-slate-100 dark:divide-white/[0.03]">
-          {transactions.filter(t => method === "tarjeta" ? (t.payment_method === "tarjeta" || t.payment_method === null) : t.payment_method === method).length === 0 && (
+          {transactions.filter(t => 
+  method === "retiro" ? t.type === "retiro" :
+  method === "tarjeta" ? (t.payment_method === "tarjeta" || t.payment_method === null) && t.type === "recarga" :
+  t.payment_method === method && t.type === "recarga"
+ ).length === 0 && (
             <p className="px-5 py-8 text-[12px] text-slate-400 dark:text-white/20 text-center">Sin registros</p>
           )}
-          {transactions.filter(t => method === "tarjeta" ? (t.payment_method === "tarjeta" || t.payment_method === null) : t.payment_method === method).map((tx) => (
+          {transactions.filter(t => 
+  method === "retiro" ? t.type === "retiro" :
+  method === "tarjeta" ? (t.payment_method === "tarjeta" || t.payment_method === null) && t.type === "recarga" :
+  t.payment_method === method && t.type === "recarga"
+ ).map((tx) => (
             <div key={tx.id} className="px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition">
               {/* Desktop */}
               <div className="hidden sm:grid grid-cols-12 items-center gap-2">
@@ -778,11 +815,17 @@ if (status === "aprobado") {
                 </div>
                 <p className="col-span-2 text-center text-[12px] text-emerald-600 dark:text-emerald-400 font-bold tabular-nums">${tx.amount}</p>
                 {method === "transferencia" && (
-                  <div className="col-span-2 flex justify-center">
-                    <span className="text-[11px] bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-white/50 px-2 py-0.5 rounded-md font-mono">{tx.transfer_code || "—"}</span>
-                  </div>
-                )}
-                <div className={`${method === "transferencia" ? "col-span-2" : "col-span-4"} flex justify-center`}>
+  <div className="col-span-2 flex justify-center">
+    <span className="text-[11px] bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-white/50 px-2 py-0.5 rounded-md font-mono">{tx.transfer_code || "—"}</span>
+  </div>
+ )}
+ {method === "retiro" && (
+  <div className="col-span-2 flex flex-col justify-center gap-0.5">
+    <span className="text-[11px] text-slate-600 dark:text-white/50">{tx.users?.banco || "—"} · {tx.users?.tipo_cuenta || "—"}</span>
+    <span className="text-[11px] font-mono text-slate-400 dark:text-white/30">{tx.users?.numero_cuenta || "—"}</span>
+  </div>
+ )}
+ <div className={`${method === "transferencia" || method === "retiro" ? "col-span-2" : "col-span-4"} flex justify-center`}>
                   <span className={`text-[10px] px-2 py-0.5 rounded-md font-medium ${
                     tx.status === "aprobado" ? "bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" :
                     tx.status === "rechazado" ? "bg-rose-50 dark:bg-rose-500/15 text-rose-500 dark:text-rose-400" :
@@ -790,26 +833,26 @@ if (status === "aprobado") {
                   }`}>{tx.status}</span>
                 </div>
                 <p className="col-span-2 text-center text-[10px] text-slate-400 dark:text-white/20">{new Date(tx.created_at).toLocaleDateString()}</p>
-                {method === "transferencia" && (
-                  <div className="col-span-1 flex justify-end gap-1">
-                    {tx.status === "pendiente" ? (
-                      <>
-                        <button
-                          onClick={() => handleTransactionStatus(tx.id, "aprobado", tx.user_id, tx.amount)}
-                          className="p-1.5 rounded-md bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition text-[10px] font-bold"
-                          title="Aprobar"
-                        >✓</button>
-                        <button
-                          onClick={() => handleTransactionStatus(tx.id, "rechazado", tx.user_id, tx.amount)}
-                          className="p-1.5 rounded-md bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 transition text-[10px] font-bold"
-                          title="Rechazar"
-                        >✕</button>
-                      </>
-                    ) : (
-                      <span className="text-[10px] text-slate-300 dark:text-white/20">—</span>
-                    )}
-                  </div>
-                )}
+                {(method === "transferencia" || method === "retiro") && (
+  <div className="col-span-1 flex justify-end gap-1">
+    {tx.status === "pendiente" ? (
+      <>
+        <button
+          onClick={() => handleTransactionStatus(tx.id, "aprobado", tx.user_id, tx.amount, tx)}
+          className="p-1.5 rounded-md bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition text-[10px] font-bold"
+          title="Aprobar"
+        >✓</button>
+        <button
+          onClick={() => handleTransactionStatus(tx.id, "rechazado", tx.user_id, tx.amount, tx)}
+          className="p-1.5 rounded-md bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 transition text-[10px] font-bold"
+          title="Rechazar"
+        >✕</button>
+      </>
+    ) : (
+      <span className="text-[10px] text-slate-300 dark:text-white/20">—</span>
+    )}
+  </div>
+ )}
               </div>
 
               {/* Mobile */}
@@ -834,11 +877,11 @@ if (status === "aprobado") {
                 {method === "transferencia" && tx.status === "pendiente" && (
                   <div className="flex gap-2">
                     <button
-                      onClick={() => handleTransactionStatus(tx.id, "aprobado", tx.user_id, tx.amount)}
+                      onClick={() => handleTransactionStatus(tx.id, "aprobado", tx.user_id, tx.amount, tx)}
                       className="flex-1 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-[11px] font-bold"
                     >Aprobar</button>
                     <button
-                      onClick={() => handleTransactionStatus(tx.id, "rechazado", tx.user_id, tx.amount)}
+                      onClick={() => handleTransactionStatus(tx.id, "rechazado", tx.user_id, tx.amount, tx)}
                       className="flex-1 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 text-[11px] font-bold"
                     >Rechazar</button>
                   </div>
