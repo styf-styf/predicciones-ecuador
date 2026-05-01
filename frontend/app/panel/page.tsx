@@ -61,7 +61,7 @@ export default function PanelPage() {
       .from("transactions")
       .select("*")
       .eq("user_id", payload2.id)
-      .in("payment_method", ["transferencia", "tarjeta"])
+      .or("payment_method.eq.transferencia,payment_method.eq.tarjeta,payment_method.is.null")
       .order("created_at", { ascending: false });
 
       setUser(meData);
