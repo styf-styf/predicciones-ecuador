@@ -1204,6 +1204,7 @@ setInterval(async () => {
     .from("transactions")
     .update({ status: "cancelada" })
     .eq("status", "pendiente")
+    .eq("payment_method", "tarjeta")
     .lt("created_at", diezMinutosAtras);
 
   if (data?.length > 0) {
