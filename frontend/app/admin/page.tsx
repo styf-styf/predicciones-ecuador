@@ -427,11 +427,11 @@ export default function AdminPage() {
     className="flex-1 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-4 py-2.5 outline-none text-[13px] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:border-emerald-500/60 transition" />
   <select value={newCategory} onChange={(e) => setNewCategory(e.target.value)}
     className="bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2.5 outline-none text-[13px] text-slate-900 dark:text-white focus:border-emerald-500/60 transition shrink-0">
-    <option value="deporte">🏋️ Deporte</option>
-    <option value="farandula">🎤 Farándula</option>
-    <option value="politica">🗳️ Política</option>
-    <option value="elecciones">🚩 Elecciones</option>
-    <option value="pais">🌐 País</option>
+    <option value="deporte">Deporte</option>
+    <option value="farandula">Farándula</option>
+    <option value="politica">Política</option>
+    <option value="elecciones">Elecciones</option>
+    <option value="pais">País</option>
   </select>
  </div>
  <button onClick={handleCreateMarket} className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg px-5 py-2.5 text-[13px] transition active:scale-95">Crear</button>
@@ -443,6 +443,7 @@ export default function AdminPage() {
                   <div className="grid grid-cols-12 text-[10px] text-slate-400 dark:text-white/25 uppercase tracking-widest">
                     <span className="col-span-1">#</span>
                     <span className="col-span-5">Pregunta</span>
+                    <span className="col-span-2 text-center">Categoría</span>
                     <span className="col-span-2 text-center">Sí / No</span>
                     <span className="col-span-1 text-center">Total</span>
                     <span className="col-span-3 text-right">Acciones</span>
@@ -453,10 +454,31 @@ export default function AdminPage() {
                     <div key={m.id} className="px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition">
                       <div className="hidden sm:grid grid-cols-12 items-center gap-2">
                         <span className="col-span-1 text-[11px] text-slate-300 dark:text-white/20 tabular-nums">{m.id}</span>
-                        <div className="col-span-5 flex items-center gap-2 min-w-0">
+                        <div className="col-span-3 flex items-center gap-2 min-w-0">
                           <Circle size={6} className={m.resolved ? "text-slate-300 dark:text-white/20 shrink-0" : "text-emerald-500 dark:text-emerald-400 shrink-0"} fill="currentColor" />
                           <p className="text-[12px] text-slate-600 dark:text-white/70 truncate">{m.question}</p>
                         </div>
+                        <div className="col-span-2 flex justify-center">
+  <select
+    value={m.category || "deporte"}
+    onChange={async (e) => {
+      const token = localStorage.getItem("token");
+      await fetch(`https://predicciones-ecuador.onrender.com/admin/markets/${m.id}/category`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+        body: JSON.stringify({ category: e.target.value }),
+      });
+      fetchMarkets();
+    }}
+    className="bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-md px-2 py-1 text-[11px] text-slate-700 dark:text-white/60 outline-none focus:border-emerald-500/60 transition w-full"
+  >
+    <option value="deporte">Deporte</option>
+    <option value="farandula">Farándula</option>
+    <option value="politica">Política</option>
+    <option value="elecciones">Elecciones</option>
+    <option value="pais">País</option>
+  </select>
+</div>
                         <div className="col-span-2 flex justify-center gap-1 text-[11px] tabular-nums">
                           <span className="text-emerald-600 dark:text-emerald-400">{m.yes}</span>
                           <span className="text-slate-300 dark:text-white/20">/</span>

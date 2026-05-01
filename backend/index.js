@@ -798,6 +798,18 @@ app.delete("/admin/markets/:id", auth, async (req, res) => {
   res.json({ message: "Mercado eliminado" });
 });
 
+app.put("/admin/markets/:id/category", auth, async (req, res) => {
+  const { data: user } = await supabase
+    .from("users").select("role").eq("id", req.userId).single();
+  if (!user || user.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const { category } = req.body;
+  const { error } = await supabase
+    .from("markets").update({ category }).eq("id", req.params.id);
+  if (error) return res.status(500).json({ message: error.message });
+  res.json({ message: "Categoría actualizada" });
+});
+
 // =======================
 // 💬 COMENTARIOS
 // =======================
