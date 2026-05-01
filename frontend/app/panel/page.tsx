@@ -28,6 +28,9 @@ export default function PanelPage() {
   const [walletAction, setWalletAction] = useState<"recarga" | "retiro">("recarga");
   const [walletAmount, setWalletAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"transferencia" | "tarjeta">("transferencia");
+  const [retiroMethod, setRetiroMethod] = useState<"transferencia" | "payphone" | "deuna">("transferencia");
+  const [sendingRetiro, setSendingRetiro] = useState(false);
+  const [retiroSent, setRetiroSent] = useState(false);
   const [payingCard, setPayingCard] = useState(false);
   const [showPayphoneBox, setShowPayphoneBox] = useState(false);
   const [transferCode, setTransferCode] = useState("");
@@ -36,8 +39,9 @@ export default function PanelPage() {
   const [payphoneClientId, setPayphoneClientId] = useState("");
   // Perfil state
   const [profileForm, setProfileForm] = useState({
-    nombre: "", apellido: "", cedula: "", celular: "", pais: "", ciudad: "", direccion: ""
-  });
+  nombre: "", apellido: "", cedula: "", celular: "", pais: "", ciudad: "", direccion: "",
+  banco: "", numero_cuenta: "", tipo_cuenta: ""
+});
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
 
@@ -69,14 +73,17 @@ export default function PanelPage() {
       setRanking(rankData || []);
       setTransactions(txData || []);
       setProfileForm({
-        nombre: meData.nombre || "",
-        apellido: meData.apellido || "",
-        cedula: meData.cedula || "",
-        celular: meData.celular || "",
-        pais: meData.pais || "",
-        ciudad: meData.ciudad || "",
-        direccion: meData.direccion || "",
-      });
+  nombre: meData.nombre || "",
+  apellido: meData.apellido || "",
+  cedula: meData.cedula || "",
+  celular: meData.celular || "",
+  pais: meData.pais || "",
+  ciudad: meData.ciudad || "",
+  direccion: meData.direccion || "",
+  banco: meData.banco || "",
+  numero_cuenta: meData.numero_cuenta || "",
+  tipo_cuenta: meData.tipo_cuenta || "",
+ });
       setLoading(false);
     } catch (error) {
       setLoading(false);
@@ -113,6 +120,52 @@ export default function PanelPage() {
       if (res.ok) { setProfileSaved(true); setTimeout(() => setProfileSaved(false), 3000); loadPanel(); }
     } finally { setSavingProfile(false); }
   };
+
+  const handleSolicitarRetiro = async () => {
+  if (!walletAmount || parseFloat(walletAmount) < 10) return;
+  if (parseFloat(walletAmount) > user.points) return alert("Saldo insuficiente");
+  if (!user.banco || !user.numero_cuenta || !user.tipo_cuenta) return alert("Completa tus datos bancarios en la pestaña Perfil");
+  setSendingRetiro(true);
+  try {
+    const token = localStorage.getItem("token");
+    const payload = JSON.parse(atob(token!.split(".")[1]));
+
+    // Descontar puntos inmediatamente
+    const { error: pointsError } = await supabase
+      .from("users")
+      .update({ points: user.points - parseFloat(walletAmount) })
+      .eq("id", payload.id);
+
+    if (pointsError) { alert("Error al procesar"); return; }
+
+    // Crear transacción de retiro
+    const { error: txError } = await supabase.from("transactions").insert({
+      user_id: payload.id,
+      type: "retiro",
+      amount: parseFloat(walletAmount),
+      status: "pendiente",
+      payment_method: retiroMethod,
+      transfer_code: null,
+    });
+
+    if (txError) { alert("Error al crear solicitud"); return; }
+
+    // Notificación al usuario
+    await supabase.from("notifications").insert([{
+      user_id: payload.id,
+      title: "📤 Solicitud de retiro enviada",
+      message: `Tu solicitud de retiro por $${walletAmount} está siendo procesada.`,
+      read: false,
+    }]);
+
+    setRetiroSent(true);
+    setWalletAmount("");
+    setTimeout(() => setRetiroSent(false), 4000);
+    loadPanel();
+  } finally {
+    setSendingRetiro(false);
+  }
+ };
 
   const handleSendTransfer = async () => {
   if (!transferCode.trim() || !walletAmount || parseFloat(walletAmount) < 1) return;
@@ -519,12 +572,29 @@ export default function PanelPage() {
             )}
 
             {/* Retiro */}
-            {walletAction === "retiro" && (
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-5">
-                <div>
-                  <h3 className="font-bold mb-1">Retirar puntos</h3>
-                  <p className="text-xs text-slate-400">Los retiros se procesan en 1-3 días hábiles</p>
-                </div>
+{walletAction === "retiro" && (
+  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-5">
+    <div>
+      <h3 className="font-bold mb-1">Retirar puntos</h3>
+      <p className="text-xs text-slate-400">Los retiros se procesan en 1-3 días hábiles</p>
+    </div>
+
+    {/* Método de retiro */}
+    <div>
+      <label className="text-xs text-slate-400 uppercase tracking-widest block mb-2">Método de retiro</label>
+      <div className="flex gap-2">
+        {[
+          { id: "transferencia", label: "🏦 Transferencia" },
+          { id: "payphone", label: "💳 Payphone" },
+          { id: "deuna", label: "⚡ Deuna" },
+        ].map((m) => (
+          <button key={m.id} onClick={() => setRetiroMethod(m.id as any)}
+            className={`flex-1 py-2.5 rounded-xl text-xs font-medium border transition-all ${retiroMethod === m.id ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-transparent" : "border-slate-200 dark:border-slate-700 text-slate-500"}`}>
+            {m.label}
+          </button>
+        ))}
+      </div>
+    </div>
 
                 {/* Advertencia Google sin info */}
                 {isGoogleUser && !hasPaymentInfo && (
@@ -567,13 +637,41 @@ export default function PanelPage() {
                   </div>
                 )}
 
-                <button
-                  disabled={isGoogleUser && !hasPaymentInfo}
-                  className="w-full bg-rose-500 hover:bg-rose-400 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl text-sm transition active:scale-[0.99]"
-                >
-                  Solicitar retiro
-                </button>
-                <p className="text-xs text-slate-400 text-center">Mínimo de retiro: 10 puntos</p>
+                {/* Datos bancarios del usuario */}
+{user.banco && user.numero_cuenta ? (
+  <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 space-y-2">
+    <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">Datos de retiro</p>
+    <p className="text-sm font-medium">{user.nombre} {user.apellido}</p>
+    <p className="text-sm text-slate-400">Cédula: {user.cedula}</p>
+    <p className="text-sm text-slate-400">{user.banco} · {user.tipo_cuenta} · {user.numero_cuenta}</p>
+    <p className="text-sm text-slate-400">Celular: {user.celular}</p>
+    <button onClick={() => setTab("perfil")} className="text-xs text-slate-400 hover:text-slate-600 underline">Editar información</button>
+  </div>
+) : (
+  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex gap-3">
+    <AlertCircle size={16} className="text-amber-500 shrink-0 mt-0.5" />
+    <div>
+      <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">Completa tus datos bancarios</p>
+      <p className="text-xs text-amber-600 dark:text-amber-500 mt-1">Para retirar necesitas agregar tu banco y número de cuenta en tu perfil.</p>
+      <button onClick={() => setTab("perfil")} className="text-xs text-amber-700 dark:text-amber-400 font-semibold underline mt-2">Ir a Perfil →</button>
+    </div>
+  </div>
+)}
+
+{retiroSent ? (
+  <div className="w-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl py-3 text-center text-sm font-semibold text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-2">
+    <Check size={15} /> Solicitud enviada — aparecerá como pendiente en tus movimientos
+  </div>
+) : (
+  <button
+    onClick={handleSolicitarRetiro}
+    disabled={sendingRetiro || !user.banco || !user.numero_cuenta || !walletAmount || parseFloat(walletAmount) < 10}
+    className="w-full bg-rose-500 hover:bg-rose-400 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl text-sm transition active:scale-[0.99]"
+  >
+    {sendingRetiro ? "Enviando..." : "Solicitar retiro"}
+  </button>
+)}
+<p className="text-xs text-slate-400 text-center">Mínimo de retiro: 10 puntos</p>
               </div>
             )}
           </div>
@@ -625,6 +723,8 @@ export default function PanelPage() {
                   { key: "celular", label: "Celular" },
                   { key: "pais", label: "País" },
                   { key: "ciudad", label: "Ciudad" },
+                  { key: "banco", label: "Banco" },
+                  { key: "numero_cuenta", label: "Número de cuenta" },
                 ].map((field) => (
                   <div key={field.key}>
                     <label className="text-xs text-slate-400 uppercase tracking-widest block mb-1">{field.label}</label>
@@ -636,6 +736,19 @@ export default function PanelPage() {
                   </div>
                 ))}
               </div>
+              {/* Tipo de cuenta */}
+ <div>
+  <label className="text-xs text-slate-400 uppercase tracking-widest block mb-1">Tipo de cuenta</label>
+  <select
+    value={profileForm.tipo_cuenta}
+    onChange={(e) => setProfileForm((prev) => ({ ...prev, tipo_cuenta: e.target.value }))}
+    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500 transition text-slate-900 dark:text-white"
+  >
+    <option value="">Seleccionar...</option>
+    <option value="ahorros">Ahorros</option>
+    <option value="corriente">Corriente</option>
+  </select>
+ </div>
 
               {/* Dirección full width */}
               <div>
