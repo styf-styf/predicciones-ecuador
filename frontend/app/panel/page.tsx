@@ -188,7 +188,7 @@ export default function PanelPage() {
               )}
               <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-3 py-1.5 rounded-xl">
                 <Wallet size={14} className="text-emerald-500" />
-                <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{user.points} pts</span>
+                <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{user.points} $</span>
               </div>
             </div>
           </div>
@@ -220,7 +220,7 @@ export default function PanelPage() {
               {[
                 { label: "Puntos", value: `${user.points}`, icon: <Wallet size={14} />, color: "text-emerald-500" },
                 { label: "Apuestas", value: totalBets, icon: <BarChart3 size={14} />, color: "text-blue-500" },
-                { label: "Total apostado", value: `${totalBet.toFixed(0)} pts`, icon: <ArrowUpRight size={14} />, color: "text-amber-500" },
+                { label: "Total apostado", value: `${totalBet.toFixed(0)} $`, icon: <ArrowUpRight size={14} />, color: "text-amber-500" },
                 { label: "Ranking", value: userRankIndex !== -1 ? `#${userRankIndex + 1}` : "—", icon: <Trophy size={14} />, color: "text-rose-500" },
               ].map((stat) => (
                 <div key={stat.label} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4">
@@ -265,7 +265,7 @@ export default function PanelPage() {
                         </span>
                         <span className="text-sm truncate">{nombre} {isMe && <span className="text-emerald-500 text-xs">(tú)</span>}</span>
                       </div>
-                      <span className="text-sm font-semibold shrink-0">{item.points} pts</span>
+                      <span className="text-sm font-semibold shrink-0">{item.points} $</span>
                     </div>
                   );
                 })}
@@ -361,7 +361,7 @@ export default function PanelPage() {
 
                 {/* Selector método de pago */}
                 <div>
-                  <label className="text-xs text-slate-400 uppercase tracking-widest block mb-2">Método de pago</label>
+                  <label className="text-xs text-slate-400 uppercase tracking-widest block mb-2">Método de recarga</label>
                   <div className="flex gap-2">
                     <button
                       onClick={() => setPaymentMethod("transferencia")}
@@ -662,7 +662,7 @@ function MovimientoRow({ mov, full }: { mov: any; full?: boolean }) {
         </div>
       </div>
       <span className={`text-sm font-bold shrink-0 ${mov.estado === "ganada" ? "text-emerald-500" : mov.estado === "perdida" ? "text-rose-500" : "text-slate-400"}`}>
-        {mov.estado === "ganada" ? "+" : ""}{Math.abs(mov.monto)} pts
+        {mov.estado === "ganada" ? "+" : ""}{Math.abs(mov.monto)} $
       </span>
     </div>
   );
