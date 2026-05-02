@@ -1276,22 +1276,16 @@ Tu tarea es responder SOLO en JSON con esta estructura exacta, sin texto adicion
 }`;
 
   try {
-    const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-opus-4-5",
-        max_tokens: 500,
-        messages: [{ role: "user", content: prompt }],
-      }),
-    });
+    const aiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    contents: [{ parts: [{ text: prompt }] }],
+  }),
+});
 
-    const aiData = await aiRes.json();
-    const rawText = aiData.content?.[0]?.text || "{}";
+const aiData = await aiRes.json();
+const rawText = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
     const clean = rawText.replace(/```json|```/g, "").trim();
     const parsed = JSON.parse(clean);
 
