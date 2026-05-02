@@ -1470,46 +1470,18 @@ Responde SOLO en JSON sin markdown:
     const parsed = JSON.parse(clean);
 
     const { error } = await supabase
-  .from("news_suggestions")
-  .update({
-    new_market_question: parsed.new_market_question,
-    probability_yes: parsed.probability_yes || null,
-    probability_no: parsed.probability_no || null,
-    probability_reasoning: parsed.probability_reasoning || null,
-    suggested_close_date: parsed.suggested_close_date || null,
-  })
-  .eq("id", req.params.id);
+      .from("news_suggestions")
+      .update({
+        new_market_question: parsed.new_market_question,
+        probability_yes: parsed.probability_yes || null,
+        probability_no: parsed.probability_no || null,
+        probability_reasoning: parsed.probability_reasoning || null,
+        suggested_close_date: parsed.suggested_close_date || null,
+      })
+      .eq("id", req.params.id);
 
-if (error) throw error;
-
-// Si la sugerencia está aprobada, actualizar también el mercado
-const { data: suggestion } = await supabase
-  .from("news_suggestions").select("status").eq("id", req.params.id).single();
-
-if (suggestion?.status === "approved" && parsed.new_market_question) {
-  // Buscar el mercado que tiene la misma pregunta original
-  const { data: markets } = await supabase
-    .from("markets")
-    .select("id, question")
-    .eq("news_url", req.body.current_question)
-    .limit(1);
-
-  // Buscar por pregunta similar
-  const { data: marketByQuestion } = await supabase
-    .from("markets")
-    .select("id")
-    .eq("question", req.body.current_question)
-    .single();
-
-  if (marketByQuestion) {
-    await supabase
-      .from("markets")
-      .update({ question: parsed.new_market_question })
-      .eq("id", marketByQuestion.id);
-  }
-}
-
-res.json({ message: "Pregunta refinada ✅" });
+    if (error) throw error;
+    res.json({ message: "Pregunta refinada ✅" });
   } catch (err) {
     console.error("Error refinando:", err);
     res.status(500).json({ message: "Error refinando con IA" });
