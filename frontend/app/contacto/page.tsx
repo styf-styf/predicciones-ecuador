@@ -1,6 +1,7 @@
 "use client";
 import Header from "@/components/Header";
 import { useState } from "react";
+import { supabase } from "@/lib/supabase";
 import { Mail, MessageSquare, Clock, CheckCircle } from "lucide-react";
 
 export default function ContactoPage() {
@@ -9,15 +10,23 @@ export default function ContactoPage() {
   const [sent, setSent] = useState(false);
 
   const handleSubmit = async () => {
-    if (!form.nombre || !form.email || !form.mensaje) return;
-    setSending(true);
-    // Aquí puedes conectar con un servicio de email como Resend, Nodemailer, etc.
-    await new Promise((r) => setTimeout(r, 1500)); // simulación
+  if (!form.nombre || !form.email || !form.mensaje) return;
+  setSending(true);
+  try {
+    const { error } = await supabase.from("contactos").insert({
+      nombre: form.nombre,
+      email: form.email,
+      asunto: form.asunto,
+      mensaje: form.mensaje,
+    });
+    if (error) { alert("Error al enviar el mensaje"); return; }
     setSent(true);
-    setSending(false);
     setForm({ nombre: "", email: "", asunto: "", mensaje: "" });
     setTimeout(() => setSent(false), 5000);
-  };
+  } finally {
+    setSending(false);
+  }
+};
 
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white">
