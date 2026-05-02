@@ -998,11 +998,38 @@ if (status === "aprobado") {
           {/* Sugerencias IA */}
           <div className="space-y-2 mb-4">
             {s.new_market_question && (
-              <div className="bg-emerald-50 dark:bg-emerald-500/[0.08] border border-emerald-200 dark:border-emerald-500/20 rounded-lg px-4 py-3">
-                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-1">💡 Nuevo mercado sugerido</p>
-                <p className="text-[13px] text-slate-900 dark:text-white font-medium">{s.new_market_question}</p>
-              </div>
-            )}
+  <div className="bg-emerald-50 dark:bg-emerald-500/[0.08] border border-emerald-200 dark:border-emerald-500/20 rounded-lg px-4 py-3 space-y-3">
+    <p className="text-[10px] text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">💡 Mercado sugerido</p>
+    <p className="text-[13px] text-slate-900 dark:text-white font-semibold">{s.new_market_question}</p>
+
+    {/* Probabilidades */}
+    {s.probability_yes && (
+      <div className="space-y-1.5">
+        <div className="flex justify-between text-[11px]">
+          <span className="text-emerald-600 dark:text-emerald-400 font-bold">Sí {s.probability_yes}%</span>
+          <span className="text-rose-500 dark:text-rose-400 font-bold">No {s.probability_no}%</span>
+        </div>
+        <div className="h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden flex">
+          <div className="bg-emerald-500 transition-all" style={{ width: `${s.probability_yes}%` }} />
+          <div className="bg-rose-500 flex-1" />
+        </div>
+        {s.probability_reasoning && (
+          <p className="text-[11px] text-slate-500 dark:text-white/40 italic">{s.probability_reasoning}</p>
+        )}
+      </div>
+    )}
+
+    {/* Fecha sugerida */}
+    {s.suggested_close_date && (
+      <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-white/40">
+        <span>📅 Fecha sugerida de cierre:</span>
+        <span className="text-slate-700 dark:text-white/60 font-semibold">
+          {new Date(s.suggested_close_date).toLocaleDateString("es-EC", { day: "numeric", month: "long", year: "numeric" })}
+        </span>
+      </div>
+    )}
+  </div>
+)}
             {s.resolves_market_id && (
               <div className="bg-blue-50 dark:bg-blue-500/[0.08] border border-blue-200 dark:border-blue-500/20 rounded-lg px-4 py-3">
                 <p className="text-[10px] text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-1">🔔 Resuelve mercado #{s.resolves_market_id}</p>
