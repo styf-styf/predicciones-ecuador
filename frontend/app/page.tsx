@@ -378,7 +378,7 @@ export default function Home() {
                   {/* Stats */}
                   <div className="flex items-center justify-end text-[11px] text-slate-400 dark:text-slate-500 mb-3">
                     <span className="flex items-center gap-1">
-                      <DollarSign size={11} />
+                      
                       {(Number(market.yes) + Number(market.no)).toFixed(1)} $ apostados
                     </span>
                   </div>
