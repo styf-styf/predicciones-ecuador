@@ -194,7 +194,7 @@ export default function Header() {
             <Link href="/panel" className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">Panel</Link>
             {isLogged ? (
               <button
-                onClick={() => { localStorage.removeItem("token"); localStorage.removeItem("role"); localStorage.removeItem("points"); setIsLogged(false); setPoints(null); setIsAdmin(false); }}
+                onClick={() => { localStorage.removeItem("token"); localStorage.removeItem("role"); localStorage.removeItem("points"); setIsLogged(false); setPoints(null); setIsAdmin(false); window.location.href = "/"; }}
                 className="text-sm font-medium text-rose-500 hover:text-rose-400 transition-colors flex items-center gap-1.5"
               >
                 <LogOut size={15} /> Salir
@@ -239,7 +239,7 @@ export default function Header() {
             {isAdmin && <Link href="/admin" onClick={() => setShowMobileMenu(false)} className="px-2 py-2.5 text-sm font-semibold text-amber-500 border-b border-slate-100 dark:border-slate-800">Admin</Link>}
             <Link href="/panel" onClick={() => setShowMobileMenu(false)} className="px-2 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 border-b border-slate-100 dark:border-slate-800">Panel</Link>
             {isLogged ? (
-              <button onClick={() => { localStorage.removeItem("token"); localStorage.removeItem("role"); localStorage.removeItem("points"); setIsLogged(false); setPoints(null); setIsAdmin(false); setShowMobileMenu(false); }}
+              <button onClick={() => { localStorage.removeItem("token"); localStorage.removeItem("role"); localStorage.removeItem("points"); setIsLogged(false); setPoints(null); setIsAdmin(false); setShowMobileMenu(false); window.location.href = "/"; }}
                 className="px-2 py-2.5 text-sm font-medium text-rose-500 flex items-center gap-2 w-full">
                 <LogOut size={15} /> Cerrar sesión
               </button>
