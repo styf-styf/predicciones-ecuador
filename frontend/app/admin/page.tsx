@@ -994,7 +994,7 @@ if (status === "aprobado") {
   </>
  )}
 
- {/* SUGERENCIAS */}
+{/* SUGERENCIAS */}
 {activeSection === "suggestions" && (
   <>
     <div>
@@ -1018,6 +1018,7 @@ if (status === "aprobado") {
             ? "border-emerald-200 dark:border-emerald-500/20 opacity-60"
             : "border-slate-200 dark:border-white/[0.06] opacity-40"
         }`}>
+
           {/* Header */}
           <div className="flex items-start justify-between gap-3 mb-3">
             <div className="min-w-0 flex-1">
@@ -1045,127 +1046,132 @@ if (status === "aprobado") {
             </p>
           )}
 
-          {/* Sugerencias IA */}
-          <div className="space-y-2 mb-4">
-            {s.new_market_question && (
-  <div className="bg-emerald-50 dark:bg-emerald-500/[0.08] border border-emerald-200 dark:border-emerald-500/20 rounded-lg px-4 py-3 space-y-3">
-    <p className="text-[10px] text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">💡 Mercado sugerido</p>
-    <p className="text-[13px] text-slate-900 dark:text-white font-semibold">{s.new_market_question}</p>
-    {s.status === "pending" && (
-  <div className="flex gap-2 mt-2">
-    <input
-      placeholder="Ej: hazla más específica, cambia el plazo a agosto..."
-      value={refinPrompts[s.id] || ""}
-      onChange={(e) => setRefinPrompts((prev) => ({ ...prev, [s.id]: e.target.value }))}
-      onKeyDown={(e) => { if (e.key === "Enter") handleRefine(s.id, s.new_market_question); }}
-      className="flex-1 bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-[12px] outline-none text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:border-emerald-500/40 transition"
-    />
-    <button
-      onClick={() => handleRefine(s.id, s.new_market_question)}
-      disabled={refining[s.id]}
-      className="bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-white/60 px-3 py-2 rounded-lg text-[12px] transition disabled:opacity-50 shrink-0"
-    >
-      {refining[s.id] ? "⏳" : "✨ Refinar"}
-    </button>
-  </div>
-)}
+          {/* Mercado sugerido */}
+          {s.new_market_question && (
+            <div className="bg-emerald-50 dark:bg-emerald-500/[0.08] border border-emerald-200 dark:border-emerald-500/20 rounded-lg px-4 py-3 space-y-3 mb-4">
+              <p className="text-[10px] text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">💡 Mercado sugerido</p>
+              <p className="text-[13px] text-slate-900 dark:text-white font-semibold">{s.new_market_question}</p>
 
-    {/* Probabilidades */}
-    {s.probability_yes && (
-      <div className="space-y-1.5">
-        <div className="flex justify-between text-[11px]">
-          <span className="text-emerald-600 dark:text-emerald-400 font-bold">Sí {s.probability_yes}%</span>
-          <span className="text-rose-500 dark:text-rose-400 font-bold">No {s.probability_no}%</span>
-        </div>
-        <div className="h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden flex">
-          <div className="bg-emerald-500 transition-all" style={{ width: `${s.probability_yes}%` }} />
-          <div className="bg-rose-500 flex-1" />
-        </div>
-        {s.probability_reasoning && (
-          <p className="text-[11px] text-slate-500 dark:text-white/40 italic">{s.probability_reasoning}</p>
-        )}
-      </div>
-    )}
+              {/* Probabilidades */}
+              {s.probability_yes && (
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-emerald-600 dark:text-emerald-400 font-bold">Sí {s.probability_yes}%</span>
+                    <span className="text-rose-500 dark:text-rose-400 font-bold">No {s.probability_no}%</span>
+                  </div>
+                  <div className="h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden flex">
+                    <div className="bg-emerald-500 transition-all" style={{ width: `${s.probability_yes}%` }} />
+                    <div className="bg-rose-500 flex-1" />
+                  </div>
+                  {s.probability_reasoning && (
+                    <p className="text-[11px] text-slate-500 dark:text-white/40 italic">{s.probability_reasoning}</p>
+                  )}
+                </div>
+              )}
 
-    {/* Fecha sugerida */}
-    {s.suggested_close_date && (
-      <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-white/40">
-        <span>📅 Fecha sugerida de cierre:</span>
-        <span className="text-slate-700 dark:text-white/60 font-semibold">
-          {new Date(s.suggested_close_date).toLocaleDateString("es-EC", { day: "numeric", month: "long", year: "numeric" })}
-        </span>
-      </div>
-    )}
-  </div>
-)}
-            {s.resolves_market_id && (
-              <div className="bg-blue-50 dark:bg-blue-500/[0.08] border border-blue-200 dark:border-blue-500/20 rounded-lg px-4 py-3">
-                <p className="text-[10px] text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-1">🔔 Resuelve mercado #{s.resolves_market_id}</p>
-                <p className="text-[13px] text-slate-900 dark:text-white font-medium">
-                  Ganó: <span className={s.resolves_as === "yes" ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-rose-500 dark:text-rose-400 font-bold"}>
-                    {s.resolves_as === "yes" ? "Sí" : "No"}
+              {/* Fecha sugerida */}
+              {s.suggested_close_date && (
+                <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-white/40">
+                  <span>📅 Fecha sugerida de cierre:</span>
+                  <span className="text-slate-700 dark:text-white/60 font-semibold">
+                    {new Date(s.suggested_close_date).toLocaleDateString("es-EC", { day: "numeric", month: "long", year: "numeric" })}
                   </span>
-                </p>
-              </div>
-            )}
-          </div>
+                </div>
+              )}
+            </div>
+          )}
 
-          {/* Acciones */}
+          {/* Resuelve mercado */}
+          {s.resolves_market_id && (
+            <div className="bg-blue-50 dark:bg-blue-500/[0.08] border border-blue-200 dark:border-blue-500/20 rounded-lg px-4 py-3 mb-4">
+              <p className="text-[10px] text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-1">🔔 Resuelve mercado #{s.resolves_market_id}</p>
+              <p className="text-[13px] text-slate-900 dark:text-white font-medium">
+                Ganó: <span className={s.resolves_as === "yes" ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-rose-500 dark:text-rose-400 font-bold"}>
+                  {s.resolves_as === "yes" ? "Sí" : "No"}
+                </span>
+              </p>
+            </div>
+          )}
+
+          {/* Acciones — PENDING */}
           {s.status === "pending" && (
-  <div className="flex gap-2 mt-2">
-    <input
-      placeholder="Ej: hazla más específica, cambia el plazo a agosto..."
-      value={refinPrompts[s.id] || ""}
-      onChange={(e) => setRefinPrompts((prev) => ({ ...prev, [s.id]: e.target.value }))}
-      onKeyDown={(e) => { if (e.key === "Enter") handleRefine(s.id, s.new_market_question); }}
-      className="flex-1 bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-[12px] outline-none text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:border-emerald-500/40 transition"
-    />
-    <button
-      onClick={() => handleRefine(s.id, s.new_market_question)}
-      disabled={refining[s.id]}
-      className="bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-white/60 px-3 py-2 rounded-lg text-[12px] transition disabled:opacity-50 shrink-0"
-    >
-      {refining[s.id] ? "⏳" : "✨ Refinar"}
-    </button>
-  </div>
-)}
+            <div className="space-y-2">
+              {/* Refinar */}
+              <div className="flex gap-2">
+                <input
+                  placeholder="Ej: hazla más específica, cambia el plazo a agosto..."
+                  value={refinPrompts[s.id] || ""}
+                  onChange={(e) => setRefinPrompts((prev) => ({ ...prev, [s.id]: e.target.value }))}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleRefine(s.id, s.new_market_question); }}
+                  className="flex-1 bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-[12px] outline-none text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:border-emerald-500/40 transition"
+                />
+                <button
+                  onClick={() => handleRefine(s.id, s.new_market_question)}
+                  disabled={refining[s.id]}
+                  className="bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-white/60 px-3 py-2 rounded-lg text-[12px] transition disabled:opacity-50 shrink-0"
+                >
+                  {refining[s.id] ? "⏳" : "✨ Refinar"}
+                </button>
+              </div>
+              {/* Botones aprobar/rechazar */}
+              <div className="flex flex-wrap gap-2">
+                {s.new_market_question && (
+                  <button onClick={() => handleSuggestion(s.id, "approve_market")}
+                    className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 px-4 py-2 rounded-lg text-[12px] font-bold transition">
+                    ✅ Crear mercado
+                  </button>
+                )}
+                {s.resolves_market_id && (
+                  <button onClick={() => handleSuggestion(s.id, "approve_resolve")}
+                    className="bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 hover:bg-blue-100 dark:hover:bg-blue-500/20 px-4 py-2 rounded-lg text-[12px] font-bold transition">
+                    🔔 Resolver mercado
+                  </button>
+                )}
+                <button onClick={() => handleSuggestion(s.id, "reject")}
+                  className="bg-slate-100 dark:bg-white/[0.04] text-slate-500 dark:text-white/30 border border-slate-200 dark:border-white/[0.08] hover:bg-slate-200 dark:hover:bg-white/[0.08] px-4 py-2 rounded-lg text-[12px] transition ml-auto">
+                  Rechazar
+                </button>
+              </div>
+            </div>
+          )}
 
-{s.status === "approved" && (
-  <>
-    {editingSuggestion === s.id ? (
-      <div className="flex gap-2 mt-2">
-        <input
-          placeholder="Ej: hazla más específica, cambia el plazo a agosto..."
-          value={refinPrompts[s.id] || ""}
-          onChange={(e) => setRefinPrompts((prev) => ({ ...prev, [s.id]: e.target.value }))}
-          onKeyDown={(e) => { if (e.key === "Enter") handleRefine(s.id, s.new_market_question); }}
-          className="flex-1 bg-slate-100 dark:bg-white/[0.04] border border-amber-500/40 rounded-lg px-3 py-2 text-[12px] outline-none text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:border-amber-500/60 transition"
-          autoFocus
-        />
-        <button
-          onClick={async () => { await handleRefine(s.id, s.new_market_question); setEditingSuggestion(null); }}
-          disabled={refining[s.id]}
-          className="bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 hover:bg-amber-100 dark:hover:bg-amber-500/20 px-3 py-2 rounded-lg text-[12px] font-bold transition disabled:opacity-50 shrink-0"
-        >
-          {refining[s.id] ? "⏳" : "✅ Re-aprobar"}
-        </button>
-        <button
-          onClick={() => { setEditingSuggestion(null); setRefinPrompts((prev) => ({ ...prev, [s.id]: "" })); }}
-          className="bg-slate-100 dark:bg-white/[0.04] text-slate-500 dark:text-white/30 border border-slate-200 dark:border-white/[0.08] px-3 py-2 rounded-lg text-[12px] transition shrink-0"
-        >
-          Cancelar
-        </button>
-      </div>
-    ) : (
-      <button
-        onClick={() => setEditingSuggestion(s.id)}
-        className="mt-2 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 hover:bg-amber-100 dark:hover:bg-amber-500/20 px-3 py-2 rounded-lg text-[12px] font-bold transition"
-      >
-        ✏️ Editar con IA
-      </button>
-    )}
-  </>
-)}
+          {/* Acciones — APPROVED */}
+          {s.status === "approved" && (
+            <>
+              {editingSuggestion === s.id ? (
+                <div className="flex gap-2 mt-2">
+                  <input
+                    placeholder="Ej: hazla más específica, cambia el plazo a agosto..."
+                    value={refinPrompts[s.id] || ""}
+                    onChange={(e) => setRefinPrompts((prev) => ({ ...prev, [s.id]: e.target.value }))}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleRefine(s.id, s.new_market_question); }}
+                    className="flex-1 bg-slate-100 dark:bg-white/[0.04] border border-amber-500/40 rounded-lg px-3 py-2 text-[12px] outline-none text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:border-amber-500/60 transition"
+                    autoFocus
+                  />
+                  <button
+                    onClick={async () => { await handleRefine(s.id, s.new_market_question); setEditingSuggestion(null); }}
+                    disabled={refining[s.id]}
+                    className="bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 hover:bg-amber-100 dark:hover:bg-amber-500/20 px-3 py-2 rounded-lg text-[12px] font-bold transition disabled:opacity-50 shrink-0"
+                  >
+                    {refining[s.id] ? "⏳" : "✅ Re-aprobar"}
+                  </button>
+                  <button
+                    onClick={() => { setEditingSuggestion(null); setRefinPrompts((prev) => ({ ...prev, [s.id]: "" })); }}
+                    className="bg-slate-100 dark:bg-white/[0.04] text-slate-500 dark:text-white/30 border border-slate-200 dark:border-white/[0.08] px-3 py-2 rounded-lg text-[12px] transition shrink-0"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setEditingSuggestion(s.id)}
+                  className="mt-2 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 hover:bg-amber-100 dark:hover:bg-amber-500/20 px-3 py-2 rounded-lg text-[12px] font-bold transition"
+                >
+                  ✏️ Editar con IA
+                </button>
+              )}
+            </>
+          )}
 
           <p className="text-[10px] text-slate-300 dark:text-white/15 mt-3">{new Date(s.created_at).toLocaleString()}</p>
         </div>
