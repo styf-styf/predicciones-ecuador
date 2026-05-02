@@ -88,13 +88,13 @@ function CategoryBar({ active, onChange, markets }: { active: string; onChange: 
   );
 }
 
-const CATEGORY_COLORS: { [key: string]: string } = {
-  deporte:    "hover:border-sky-400 dark:hover:border-sky-500",
-  farandula:  "hover:border-pink-400 dark:hover:border-pink-500",
-  politica:   "hover:border-violet-400 dark:hover:border-violet-500",
-  elecciones: "hover:border-amber-400 dark:hover:border-amber-500",
-  pais:       "hover:border-emerald-400 dark:hover:border-emerald-500",
-  general:    "hover:border-slate-400 dark:hover:border-slate-500",
+const CATEGORY_COLORS: { [key: string]: { border: string; bg: string } } = {
+  deporte:    { border: "hover:border-sky-400 dark:hover:border-sky-500",     bg: "bg-sky-500/[0.03] dark:bg-sky-500/[0.05]" },
+  farandula:  { border: "hover:border-pink-400 dark:hover:border-pink-500",   bg: "bg-pink-500/[0.03] dark:bg-pink-500/[0.05]" },
+  politica:   { border: "hover:border-violet-400 dark:hover:border-violet-500", bg: "bg-violet-500/[0.03] dark:bg-violet-500/[0.05]" },
+  elecciones: { border: "hover:border-amber-400 dark:hover:border-amber-500", bg: "bg-amber-500/[0.03] dark:bg-amber-500/[0.05]" },
+  pais:       { border: "hover:border-emerald-400 dark:hover:border-emerald-500", bg: "bg-emerald-500/[0.03] dark:bg-emerald-500/[0.05]" },
+  general:    { border: "hover:border-slate-400 dark:hover:border-slate-500", bg: "" },
 };
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 function filterByCategory(markets: any[], category: string) {
@@ -239,7 +239,7 @@ export default function Home() {
           </div>
           <div className="space-y-4">
             <div className="h-7 w-48 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
               {[...Array(8)].map((_, i) => (
                 <div key={i} className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
                   <div className="flex justify-between gap-3">
@@ -339,7 +339,7 @@ export default function Home() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {visibleMarkets.map((market) => {
               const total = (market.yes ?? 0) + (market.no ?? 0) || 1;
               const yesPct = ((market.yes / total) * 100).toFixed(0);
@@ -349,12 +349,12 @@ export default function Home() {
                 <div
                   key={market.id}
                   id={`market-${market.id}`}
-                  className={`border rounded-xl p-3 sm:p-4 transition transition-all duration-300 ${
+                  className={`border rounded-xl p-3 sm:p-4 transition transition-all duration-300 hover:shadow-md dark:hover:shadow-black/30 ${
                     isResolved
                       ? market.winner === "yes"
                         ? "bg-emerald-500/5 border-emerald-500/30"
                         : "bg-rose-500/5 border-rose-500/30"
-                      : `bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 ${CATEGORY_COLORS[market.category] ?? "hover:border-slate-300 dark:hover:border-slate-700"}`
+                      : `${CATEGORY_COLORS[market.category]?.bg ?? ""} border-slate-200 dark:border-slate-800 ${CATEGORY_COLORS[market.category]?.border ?? "hover:border-slate-300 dark:hover:border-slate-700"}`
                   }`}
                 >
                   {/* Categoría badge */}
@@ -414,12 +414,14 @@ export default function Home() {
                   ) : (
                     <div className="grid grid-cols-2 gap-2">
                       <Link href={`/market/${market.id}?bet=yes`}
-                        className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium rounded-xl py-2.5 text-sm text-center active:scale-95 transition-transform">
-                        Sí
+                        className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium rounded-xl py-2.5 text-sm text-center active:scale-95 transition-transform flex flex-col items-center leading-tight">
+                        <span className="text-[11px] opacity-70">Sí</span>
+                        <span className="font-bold">{yesPct}%</span>
                       </Link>
                       <Link href={`/market/${market.id}?bet=no`}
-                        className="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 font-medium rounded-xl py-2.5 text-sm text-center active:scale-95 transition-transform">
-                        No
+                        className="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 font-medium rounded-xl py-2.5 text-sm text-center active:scale-95 transition-transform flex flex-col items-center leading-tight">
+                        <span className="text-[11px] opacity-70">No</span>
+                        <span className="font-bold">{(100 - Number(yesPct))}%</span>
                       </Link>
                     </div>
                   )}
