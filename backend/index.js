@@ -1281,10 +1281,16 @@ Tu tarea es responder SOLO en JSON con esta estructura exacta, sin texto adicion
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
     contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: {
+      temperature: 0.3,
+      responseMimeType: "application/json",
+    }
   }),
 });
 
 const aiData = await aiRes.json();
+console.log("Prompt enviado a Gemini:", prompt.slice(0, 200));
+console.log("Respuesta Gemini completa:", JSON.stringify(aiData, null, 2));
 const rawText = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
 console.log("Respuesta IA raw:", rawText);
 const clean = rawText.replace(/```json|```/g, "").trim();
