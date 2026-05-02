@@ -1306,8 +1306,9 @@ const rawText = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
     if (error) throw error;
     res.json({ message: "Sugerencia procesada", suggestion });
   } catch (err) {
-    console.error("Error IA:", err);
-    res.status(500).json({ message: "Error procesando con IA" });
+    console.error("Error IA completo:", JSON.stringify(err, null, 2));
+    console.error("Error mensaje:", err.message);
+    res.status(500).json({ message: err.message || "Error procesando con IA" });
   }
 });
 
