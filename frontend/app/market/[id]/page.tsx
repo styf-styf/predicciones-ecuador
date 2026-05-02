@@ -227,8 +227,8 @@ export default function MarketPage() {
               />
             </div>
             <div className="flex justify-between text-[11px] text-slate-400 mt-1">
-              <span>{market.yes} pts apostados a Sí</span>
-              <span>{market.no} pts apostados a No</span>
+              <span>{market.yes} $ apostados a Sí</span>
+              <span>{market.no} $ apostados a No</span>
             </div>
           </div>
         </div>
