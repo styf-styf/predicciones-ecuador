@@ -1276,22 +1276,23 @@ Tu tarea es responder SOLO en JSON con esta estructura exacta, sin texto adicion
 }`;
 
   try {
-    const aiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
+
+    const aiRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
   method: "POST",
-  headers: { "Content-Type": "application/json" },
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+  },
   body: JSON.stringify({
-    contents: [{ parts: [{ text: prompt }] }],
-    generationConfig: {
-      temperature: 0.3,
-      responseMimeType: "application/json",
-    }
+    model: "llama-3.3-70b-versatile",
+    temperature: 0.3,
+    messages: [{ role: "user", content: prompt }],
   }),
 });
 
 const aiData = await aiRes.json();
-console.log("Prompt enviado a Gemini:", prompt.slice(0, 200));
-console.log("Respuesta Gemini completa:", JSON.stringify(aiData, null, 2));
-const rawText = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+console.log("Respuesta Groq completa:", JSON.stringify(aiData, null, 2));
+const rawText = aiData.choices?.[0]?.message?.content || "{}";
 console.log("Respuesta IA raw:", rawText);
 const clean = rawText.replace(/```json|```/g, "").trim();
 let parsed;
