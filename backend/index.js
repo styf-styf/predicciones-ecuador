@@ -838,11 +838,13 @@ app.get("/favorites", auth, async (req, res) => {
 });
 
 app.post("/favorites/:marketId", auth, async (req, res) => {
+  const marketId = Number(req.params.marketId);
+
   const { data: existing } = await supabase
     .from("favorites")
     .select("id")
     .eq("user_id", req.userId)
-    .eq("market_id", req.params.marketId)
+    .eq("market_id", marketId)
     .maybeSingle();
 
   if (existing) {
@@ -852,11 +854,10 @@ app.post("/favorites/:marketId", auth, async (req, res) => {
 
   await supabase.from("favorites").insert([{
     user_id: req.userId,
-    market_id: req.params.marketId,
+    market_id: marketId,
   }]);
   res.json({ favorited: true });
 });
-
 // =======================
 // 💬 COMENTARIOS
 // =======================
