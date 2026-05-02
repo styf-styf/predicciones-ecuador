@@ -214,33 +214,22 @@ export default function MarketPage() {
 
           </div>
 
-          {/* Porcentaje */}
-          <div className="flex items-start justify-between gap-3">
-            <div />
-            {(() => {
-              const r = 22;
-              const circ = 2 * Math.PI * r;
-              const offset = circ - (circ * Number(yesPct)) / 100;
-              const color = Number(yesPct) >= 50 ? "#22c55e" : "#ef4444";
-              const label = Number(yesPct) >= 50 ? "Sí" : "No";
-              return (
-                <div className="relative w-14 h-14 shrink-0">
-                  <svg viewBox="0 0 52 52" width="52" height="52">
-                    <circle cx="26" cy="26" r={r} fill="none" stroke="#e2e8f0" strokeWidth="4"/>
-                    <circle cx="26" cy="26" r={r} fill="none" stroke={color} strokeWidth="4"
-                      strokeDasharray={circ} strokeDashoffset={offset}
-                      strokeLinecap="round" transform="rotate(-90 26 26)"/>
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-xs font-semibold text-slate-900 dark:text-white">{yesPct}%</span>
-                    <span className="text-[9px] text-slate-400">{label}</span>
-                  </div>
-                </div>
-              );
-            })()}
-          </div>
-          <div className="flex justify-end mt-2">
-            <span className="text-xs text-slate-400">{total} $ apostados</span>
+          {/* Barra de progreso */}
+          <div className="mt-4 space-y-2">
+            <div className="flex justify-between text-sm font-bold mb-1">
+              <span className="text-emerald-500">Sí {yesPct}%</span>
+              <span className="text-rose-500">No {noPct}%</span>
+            </div>
+            <div className="w-full h-3 rounded-full bg-rose-200 dark:bg-rose-900/40 overflow-hidden">
+              <div
+                className="h-full bg-emerald-500 rounded-full transition-all duration-700"
+                style={{ width: `${yesPct}%` }}
+              />
+            </div>
+            <div className="flex justify-between text-[11px] text-slate-400 mt-1">
+              <span>{market.yes} pts apostados a Sí</span>
+              <span>{market.no} pts apostados a No</span>
+            </div>
           </div>
         </div>
 

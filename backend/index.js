@@ -175,13 +175,7 @@ app.get("/config", async (req, res) => {
 // =======================
 // 📊 OBTENER MERCADOS
 // =======================
-app.get("/markets", async (req, res) => {
-  const { data, error } = await supabase
-    .from("markets").select("*").order("id", { ascending: false });
 
-  if (error) return res.status(500).json({ message: error.message });
-  res.json(data);
-});
 
 app.get("/me", auth, async (req, res) => {
   const { data, error } = await supabase
@@ -228,10 +222,16 @@ app.get("/ranking", async (req, res) => {
 
 app.get("/markets", async (req, res) => {
   const { data, error } = await supabase
-    .from("markets").select("*").order("id", { ascending: false });
+    .from("markets").select("*, bets(count)").order("id", { ascending: false });
 
   if (error) return res.status(500).json({ message: error.message });
-  res.json(data);
+
+  const markets = data.map((m) => ({
+    ...m,
+    betters_count: m.bets[0]?.count ?? 0,
+  }));
+
+  res.json(markets);
 });
 
 // =======================
