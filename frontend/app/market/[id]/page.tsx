@@ -27,6 +27,7 @@ export default function MarketPage() {
   const [changeCount, setChangeCount] = useState(0);
   const MAX_CHANGES = 3;
   const [betConfig, setBetConfig] = useState({ min_bet: 1, max_bet: 10 });
+  const [allMarkets, setAllMarkets] = useState<any[]>([]);
   useEffect(() => {
     setToken(localStorage.getItem("token"));
   }, []);
@@ -86,6 +87,9 @@ export default function MarketPage() {
     fetchComments();
     fetchNews();
     fetchBetConfig();
+    fetch("https://predicciones-ecuador.onrender.com/markets")
+      .then((r) => r.json())
+      .then((data) => setAllMarkets(data));
   }
  }, [id]);
 
@@ -191,22 +195,14 @@ export default function MarketPage() {
       </div>
     </main>
   );
-
   const total = (market.yes ?? 0) + (market.no ?? 0) || 1;
   const yesPct = ((market.yes / total) * 100).toFixed(0);
   const noPct = ((market.no / total) * 100).toFixed(0);
-
-  const [allMarkets, setAllMarkets] = useState<any[]>([]);
-
-  useEffect(() => {
-    fetch("https://predicciones-ecuador.onrender.com/markets")
-      .then((r) => r.json())
-      .then((data) => setAllMarkets(data));
-  }, []);
-
   const relatedMarkets = allMarkets.filter(
     (m) => m.category === market.category && m.id !== market.id && !m.resolved
   ).slice(0, 4);
+
+  
 
   return (
     
