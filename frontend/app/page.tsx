@@ -416,7 +416,7 @@ export default function Home() {
                   {/* Favorito */}
                   <div className="flex justify-end mt-2">
                     <button
-                      onClick={(e) => toggleFavorite(e, market.id)}
+                      onClick={(e) => { console.log("click corazon", market.id); toggleFavorite(e, market.id); }}
                       className="text-slate-300 dark:text-slate-600 hover:text-rose-400 dark:hover:text-rose-400 transition-colors"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
