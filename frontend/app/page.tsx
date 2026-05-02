@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Bell, TrendingUp, Trophy, Flame, Globe, Mic2, Vote, Flag, Dumbbell } from "lucide-react";
+import { Bell, TrendingUp, Trophy, Flame, Globe, Mic2, Vote, Flag, Dumbbell, Users, DollarSign } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import Header from "@/components/Header";
 
@@ -395,7 +395,17 @@ export default function Home() {
                   </div>
 
                   
-
+                  {/* Stats */}
+                  <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500 mb-3">
+                    <span className="flex items-center gap-1">
+                      <Users size={11} />
+                      {market.betters_count} personas
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <DollarSign size={11} />
+                      {(Number(market.yes) + Number(market.no)).toFixed(1)} pts
+                    </span>
+                  </div>
                   {/* Acción */}
                   {isResolved ? (
                     <div className={`text-center text-sm px-3 py-3 rounded-xl font-bold ${
