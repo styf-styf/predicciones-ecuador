@@ -1408,6 +1408,73 @@ app.put("/admin/news-suggestions/:id", async (req, res) => {
   res.status(400).json({ message: "Acción inválida" });
 });
 
+// Refinar pregunta de sugerencia con IA
+app.put("/admin/news-suggestions/:id/refine", async (req, res) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ message: "No autorizado" });
+  try {
+    const decoded = jwt.verify(token, SECRET);
+    const { data: admin } = await supabase
+      .from("users").select("role").eq("id", decoded.id).single();
+    if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+  } catch { return res.status(401).json({ message: "Token inválido" }); }
+
+  const { current_question, refine_prompt } = req.body;
+  if (!current_question || !refine_prompt) return res.status(400).json({ message: "Faltan datos" });
+
+  const prompt = `Eres un experto en mercados de predicción de Ecuador.
+
+Pregunta actual: "${current_question}"
+
+El administrador quiere refinarla con esta instrucción: "${refine_prompt}"
+
+Responde SOLO en JSON sin markdown:
+{
+  "new_market_question": "la pregunta refinada según la instrucción del administrador",
+  "probability_yes": número entre 0 y 100,
+  "probability_no": número entre 0 y 100,
+  "probability_reasoning": "explicación breve",
+  "suggested_close_date": "fecha en formato YYYY-MM-DD"
+}`;
+
+  try {
+    const aiRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        temperature: 0.3,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+
+    const aiData = await aiRes.json();
+    const rawText = aiData.choices?.[0]?.message?.content || "{}";
+    const clean = rawText.replace(/```json|```/g, "").trim();
+    const parsed = JSON.parse(clean);
+
+    const { error } = await supabase
+      .from("news_suggestions")
+      .update({
+        new_market_question: parsed.new_market_question,
+        probability_yes: parsed.probability_yes || null,
+        probability_no: parsed.probability_no || null,
+        probability_reasoning: parsed.probability_reasoning || null,
+        suggested_close_date: parsed.suggested_close_date || null,
+      })
+      .eq("id", req.params.id);
+
+    if (error) throw error;
+    res.json({ message: "Pregunta refinada ✅" });
+  } catch (err) {
+    console.error("Error refinando:", err);
+    res.status(500).json({ message: "Error refinando con IA" });
+  }
+});
+
 app.listen(4000, () => {
   console.log("Servidor en https://predicciones-ecuador.onrender.com");
 });
