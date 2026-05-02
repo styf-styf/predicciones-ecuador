@@ -371,27 +371,7 @@ export default function Home() {
                         {market.question}
                       </h3>
                     </Link>
-                    {(() => {
-                      const r = 22;
-                      const circ = 2 * Math.PI * r;
-                      const offset = circ - (circ * Number(yesPct)) / 100;
-                      const color = Number(yesPct) >= 50 ? "#22c55e" : "#ef4444";
-                      const label = Number(yesPct) >= 50 ? "Sí" : "No";
-                      return (
-                        <div className="relative w-11 h-11 shrink-0">
-                          <svg viewBox="0 0 52 52" width="44" height="44">
-                            <circle cx="26" cy="26" r={r} fill="none" stroke="#e2e8f0" strokeWidth="4" />
-                            <circle cx="26" cy="26" r={r} fill="none" stroke={color} strokeWidth="4"
-                              strokeDasharray={circ} strokeDashoffset={offset}
-                              strokeLinecap="round" transform="rotate(-90 26 26)" />
-                          </svg>
-                          <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="text-xs font-semibold text-slate-900 dark:text-white">{yesPct}%</span>
-                            <span className="text-[9px] text-slate-400">{label}</span>
-                          </div>
-                        </div>
-                      );
-                    })()}
+                    
                   </div>
 
                   
