@@ -1257,7 +1257,7 @@ app.post("/admin/news-suggest", async (req, res) => {
   const marketsText = activeMarkets?.map(m => `ID ${m.id}: ${m.question}`).join("\n") || "Ninguno";
 
   // Llamar a Claude para analizar
-  const prompt = `Eres un asistente para una plataforma de predicciones de Ecuador.
+ const prompt = `Eres un experto analista político y económico de Ecuador con conocimiento profundo del contexto nacional.
 
 Noticia recibida:
 Título: ${title}
@@ -1267,13 +1267,24 @@ Contenido adicional: ${content || "No disponible"}
 Mercados activos actualmente:
 ${marketsText}
 
-Tu tarea es responder SOLO en JSON con esta estructura exacta, sin texto adicional:
+Tu tarea es analizar la noticia y responder SOLO en JSON con esta estructura exacta, sin texto adicional, sin markdown:
 {
-  "new_market_question": "pregunta en forma de predicción futura, o null si la noticia no da para un mercado",
+  "new_market_question": "una sola pregunta de predicción futura, concreta y verificable, o null si la noticia no da para un mercado",
+  "probability_yes": número entre 0 y 100 indicando qué tan probable es que la respuesta sea SÍ,
+  "probability_no": número entre 0 y 100 indicando qué tan probable es que la respuesta sea NO,
+  "probability_reasoning": "explicación breve de por qué asignaste esas probabilidades basándote en el contexto ecuatoriano",
+  "suggested_close_date": "fecha estimada en formato YYYY-MM-DD para cerrar el mercado, basada en cuándo se podría verificar el resultado",
   "resolves_market_id": número del ID del mercado que esta noticia resuelve, o null si ninguno,
   "resolves_as": "yes" o "no" según si el mercado se cumplió, o null si no resuelve ninguno,
   "summary": "resumen de la noticia en máximo 2 oraciones"
-}`;
+}
+
+Reglas para generar buenas preguntas:
+- La pregunta debe ser sobre un evento futuro verificable con Sí o No
+- Debe ser relevante para Ecuador y su contexto político, económico, social, farandula, deporte, etc.
+- Debe poder resolverse en un plazo razonable (días, semanas o meses 1-3)
+- Ejemplos buenos: "¿Aprobará la Asamblea Nacional la ley X antes de junio?", "¿Ganará X las elecciones de Y?", "¿Superará el precio del petróleo los $80 antes de julio?"
+- Ejemplos malos: preguntas ambiguas, sin fecha, o que no se puedan verificar claramente`;
 
   try {
 
@@ -1304,16 +1315,20 @@ try {
 }
     // Guardar sugerencia en Supabase
     const { data: suggestion, error } = await supabase
-      .from("news_suggestions")
-      .insert({
-        title,
-        url: url || null,
-        summary: parsed.summary || null,
-        new_market_question: parsed.new_market_question || null,
-        resolves_market_id: parsed.resolves_market_id || null,
-        resolves_as: parsed.resolves_as || null,
-        status: "pending",
-      })
+  .from("news_suggestions")
+  .insert({
+    title,
+    url: url || null,
+    summary: parsed.summary || null,
+    new_market_question: parsed.new_market_question || null,
+    probability_yes: parsed.probability_yes || null,
+    probability_no: parsed.probability_no || null,
+    probability_reasoning: parsed.probability_reasoning || null,
+    suggested_close_date: parsed.suggested_close_date || null,
+    resolves_market_id: parsed.resolves_market_id || null,
+    resolves_as: parsed.resolves_as || null,
+    status: "pending",
+  })
       .select().single();
 
     if (error) throw error;
