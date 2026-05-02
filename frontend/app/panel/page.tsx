@@ -432,22 +432,7 @@ export default function PanelPage() {
                   <p className="text-xs text-slate-400">Transfiere al número de cuenta y envía el comprobante</p>
                 </div>
 
-                {/* Datos de pago */}
-                <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4 space-y-3">
-                  <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest">Datos de transferencia</p>
-                  {[
-                    { label: "Banco", value: "Banco Pichincha" },
-                    { label: "Tipo de cuenta", value: "Ahorros" },
-                    { label: "Número de cuenta", value: "2209XXXXXXXX" },
-                    { label: "Titular", value: "Nombre del Titular" },
-                    { label: "Cédula", value: "XXXXXXXXXX" },
-                  ].map((item) => (
-                    <div key={item.label} className="flex justify-between items-center text-sm">
-                      <span className="text-slate-500 dark:text-slate-400">{item.label}</span>
-                      <span className="font-medium">{item.value}</span>
-                    </div>
-                  ))}
-                </div>
+                
 
                 {/* Monto */}
                 <div>
@@ -486,6 +471,25 @@ export default function PanelPage() {
 
                 {paymentMethod === "transferencia" && (
   <>
+
+  {/* Datos de pago */}
+                <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4 space-y-3">
+                  <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest">Datos de transferencia</p>
+                  {[
+                    { label: "Banco", value: "Banco Pichincha" },
+                    { label: "Tipo de cuenta", value: "Ahorros" },
+                    { label: "Número de cuenta", value: "2209XXXXXXXX" },
+                    { label: "Titular", value: "Nombre del Titular" },
+                    { label: "Cédula", value: "XXXXXXXXXX" },
+                  ].map((item) => (
+                    <div key={item.label} className="flex justify-between items-center text-sm">
+                      <span className="text-slate-500 dark:text-slate-400">{item.label}</span>
+                      <span className="font-medium">{item.value}</span>
+                    </div>
+                  ))}
+                </div>
+
+
     {/* Explicación número de comprobante */}
     <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 space-y-2">
       <p className="text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-widest">¿Dónde encuentro el número de comprobante?</p>
