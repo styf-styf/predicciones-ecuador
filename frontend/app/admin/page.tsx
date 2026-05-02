@@ -40,6 +40,7 @@ export default function AdminPage() {
   banco_nombre: "", banco_tipo: "", banco_cuenta: "", banco_titular: "", banco_cedula: "",
  });
   const [searchQuery, setSearchQuery] = useState("");
+  const [editingMarket, setEditingMarket] = useState<{ id: number, question: string } | null>(null);
   const [refinPrompts, setRefinPrompts] = useState<{ [key: number]: string }>({});
   const [refining, setRefining] = useState<{ [key: number]: boolean }>({});
   const [suggestions, setSuggestions] = useState<any[]>([]);
@@ -267,6 +268,19 @@ if (status === "aprobado") {
       window.location.href = "/login";
     }
   };
+
+  const handleEditMarket = async () => {
+  if (!editingMarket || !editingMarket.question.trim()) return;
+  const token = localStorage.getItem("token");
+  const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/markets/${editingMarket.id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` || "" },
+    body: JSON.stringify({ question: editingMarket.question }),
+  });
+  const data = await res.json();
+  if (res.ok) { setEditingMarket(null); fetchMarkets(); }
+  else alert(data.message);
+};
 
   const handleCreateMarket = async () => {
     const token = localStorage.getItem("token");
@@ -622,7 +636,17 @@ if (status === "aprobado") {
                         <span className="col-span-1 text-[11px] text-slate-300 dark:text-white/20 tabular-nums">{m.id}</span>
                         <div className="col-span-3 flex items-center gap-2 min-w-0">
                           <Circle size={6} className={m.resolved ? "text-slate-300 dark:text-white/20 shrink-0" : "text-emerald-500 dark:text-emerald-400 shrink-0"} fill="currentColor" />
-                          <p className="text-[12px] text-slate-600 dark:text-white/70 truncate">{m.question}</p>
+                          {editingMarket?.id === m.id ? (
+  <input
+    value={editingMarket?.question ?? ""}
+    onChange={(e) => setEditingMarket((prev) => prev ? { ...prev, question: e.target.value } : null)}
+    onKeyDown={(e) => { if (e.key === "Enter") handleEditMarket(); if (e.key === "Escape") setEditingMarket(null); }}
+    className="flex-1 bg-slate-100 dark:bg-white/[0.06] border border-emerald-500/40 rounded-lg px-2 py-1 text-[12px] outline-none text-slate-900 dark:text-white"
+    autoFocus
+  />
+) : (
+  <p className="text-[12px] text-slate-600 dark:text-white/70 truncate">{m.question}</p>
+)}
                         </div>
                         <div className="col-span-2 flex justify-center">
   <select
@@ -658,7 +682,14 @@ if (status === "aprobado") {
                             <>
                               <button onClick={() => resolveMarket(m.id, "yes")} className="text-[10px] bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/20 px-2.5 py-1 rounded-md transition">Sí gana</button>
                               <button onClick={() => resolveMarket(m.id, "no")} className="text-[10px] bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/20 border border-blue-200 dark:border-blue-500/20 px-2.5 py-1 rounded-md transition">No gana</button>
-                              <button onClick={() => handleDeleteMarket(m.id)} className="text-[10px] bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 border border-rose-200 dark:border-rose-500/20 px-2 py-1 rounded-md transition">✕</button>
+                              {editingMarket?.id === m.id ? (
+  <>
+    <button onClick={handleEditMarket} className="text-[10px] bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 px-2.5 py-1 rounded-md transition">✓ Guardar</button>
+    <button onClick={() => setEditingMarket(null)} className="text-[10px] bg-slate-100 dark:bg-white/[0.04] text-slate-500 dark:text-white/30 border border-slate-200 dark:border-white/[0.08] px-2 py-1 rounded-md transition">✕</button>
+  </>
+) : (
+  <button onClick={() => setEditingMarket({ id: m.id, question: m.question })} className="text-[10px] bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-500/20 border border-amber-200 dark:border-amber-500/20 px-2.5 py-1 rounded-md transition">✏️ Editar</button>
+)}
                             </>
                           )}
                         </div>

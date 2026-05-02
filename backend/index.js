@@ -1488,6 +1488,24 @@ Responde SOLO en JSON sin markdown:
   }
 });
 
+// =======================
+// ✏️ EDITAR MERCADO
+// =======================
+app.put("/admin/markets/:id", auth, async (req, res) => {
+  const { data: user } = await supabase
+    .from("users").select("role").eq("id", req.userId).single();
+  if (!user || user.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const { question } = req.body;
+  if (!question?.trim()) return res.status(400).json({ message: "Pregunta vacía" });
+
+  const { error } = await supabase
+    .from("markets").update({ question }).eq("id", req.params.id);
+
+  if (error) return res.status(500).json({ message: error.message });
+  res.json({ message: "Mercado actualizado ✅" });
+});
+
 app.listen(4000, () => {
   console.log("Servidor en https://predicciones-ecuador.onrender.com");
 });
