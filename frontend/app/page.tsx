@@ -132,7 +132,9 @@ export default function Home() {
     });
     if (res.ok) {
       const data = await res.json();
-      setFavorites(data.map((id: any) => Number(id)));
+      const nums = data.map((id: any) => Number(id));
+      console.log("favoritos:", nums);
+      setFavorites(nums);
     }
   };
 
