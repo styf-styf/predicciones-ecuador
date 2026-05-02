@@ -136,18 +136,20 @@ export default function Home() {
     }
   };
 
-  const toggleFavorite = async (e: React.MouseEvent, marketId: number) => {
+ const toggleFavorite = async (e: React.MouseEvent, marketId: number) => {
     e.preventDefault();
     e.stopPropagation();
     const token = localStorage.getItem("token");
+    console.log("token:", token);
     if (!token) return alert("Debes iniciar sesión ❌");
     const res = await fetch(`https://predicciones-ecuador.onrender.com/favorites/${marketId}`, {
       method: "POST",
       headers: { authorization: `Bearer ${token}` },
     });
+    const data = await res.json();
+    console.log("respuesta favorito:", res.status, data);
     if (res.ok) fetchFavorites();
   };
-
   const fetchCarouselConfig = async () => {
     const res = await fetch("https://predicciones-ecuador.onrender.com/carousel-config");
     if (res.ok) {
