@@ -833,6 +833,7 @@ app.put("/admin/markets/:id/category", auth, async (req, res) => {
 app.get("/favorites", auth, async (req, res) => {
   const { data, error } = await supabase
     .from("favorites").select("market_id").eq("user_id", req.userId);
+  console.log("favorites data:", data, "error:", error, "userId:", req.userId);
   if (error) return res.status(500).json({ message: error.message });
   res.json(data.map((f) => f.market_id));
 });
