@@ -196,6 +196,18 @@ export default function MarketPage() {
   const yesPct = ((market.yes / total) * 100).toFixed(0);
   const noPct = ((market.no / total) * 100).toFixed(0);
 
+  const [allMarkets, setAllMarkets] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch("https://predicciones-ecuador.onrender.com/markets")
+      .then((r) => r.json())
+      .then((data) => setAllMarkets(data));
+  }, []);
+
+  const relatedMarkets = allMarkets.filter(
+    (m) => m.category === market.category && m.id !== market.id && !m.resolved
+  ).slice(0, 4);
+
   return (
     
     <main className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
@@ -498,6 +510,34 @@ export default function MarketPage() {
             </div>
           )}
         </div>
+        {/* Mercados relacionados */}
+        {relatedMarkets.length > 0 && (
+          <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
+            <h2 className="font-bold text-lg mb-4">
+              Más de {market.category}
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {relatedMarkets.map((m) => {
+                const t = (m.yes ?? 0) + (m.no ?? 0) || 1;
+                const yPct = ((m.yes / t) * 100).toFixed(0);
+                const nPct = ((m.no / t) * 100).toFixed(0);
+                return (
+                  <Link key={m.id} href={`/market/${m.id}`}
+                    className="bg-slate-200 dark:bg-slate-800 rounded-xl p-4 hover:bg-slate-300 dark:hover:bg-slate-700 transition space-y-3">
+                    <p className="text-[13px] font-semibold leading-snug">{m.question}</p>
+                    <div className="w-full h-2 rounded-full bg-rose-200 dark:bg-rose-900/40 overflow-hidden">
+                      <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${yPct}%` }} />
+                    </div>
+                    <div className="flex justify-between text-[11px] font-bold">
+                      <span className="text-emerald-500">Sí {yPct}%</span>
+                      <span className="text-rose-500">No {nPct}%</span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );
