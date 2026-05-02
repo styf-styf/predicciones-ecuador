@@ -349,7 +349,7 @@ export default function Home() {
                 <div
                   key={market.id}
                   id={`market-${market.id}`}
-                  className={`border rounded-2xl p-4 sm:p-5 transition transition-all duration-300 ${
+                  className={`border rounded-xl p-3 sm:p-4 transition transition-all duration-300 ${
                     isResolved
                       ? market.winner === "yes"
                         ? "bg-emerald-500/5 border-emerald-500/30"
@@ -359,7 +359,7 @@ export default function Home() {
                 >
                   {/* Categoría badge */}
                   {market.category && (
-                    <span className="inline-block mb-2 text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                    <span className="inline-block mb-1.5 text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                       {market.category}
                     </span>
                   )}
@@ -367,7 +367,7 @@ export default function Home() {
                   {/* Título + Círculo */}
                   <div className="flex items-start justify-between gap-3 mb-4">
                     <Link href={`/market/${market.id}`}>
-                      <h3 className="text-[14px] font-semibold leading-snug hover:text-emerald-400 transition-colors cursor-pointer">
+                      <h3 className="text-[13px] font-semibold leading-snug hover:text-emerald-400 transition-colors cursor-pointer">
                         {market.question}
                       </h3>
                     </Link>
@@ -378,8 +378,8 @@ export default function Home() {
                       const color = Number(yesPct) >= 50 ? "#22c55e" : "#ef4444";
                       const label = Number(yesPct) >= 50 ? "Sí" : "No";
                       return (
-                        <div className="relative w-14 h-14 shrink-0">
-                          <svg viewBox="0 0 52 52" width="52" height="52">
+                        <div className="relative w-11 h-11 shrink-0">
+                          <svg viewBox="0 0 52 52" width="44" height="44">
                             <circle cx="26" cy="26" r={r} fill="none" stroke="#e2e8f0" strokeWidth="4" />
                             <circle cx="26" cy="26" r={r} fill="none" stroke={color} strokeWidth="4"
                               strokeDasharray={circ} strokeDashoffset={offset}
@@ -396,14 +396,10 @@ export default function Home() {
 
                   
                   {/* Stats */}
-                  <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500 mb-3">
-                    <span className="flex items-center gap-1">
-                      <Users size={11} />
-                      {market.betters_count} personas
-                    </span>
+                  <div className="flex items-center justify-end text-[11px] text-slate-400 dark:text-slate-500 mb-3">
                     <span className="flex items-center gap-1">
                       <DollarSign size={11} />
-                      {(Number(market.yes) + Number(market.no)).toFixed(1)} pts
+                      {(Number(market.yes) + Number(market.no)).toFixed(1)} $ apostados
                     </span>
                   </div>
                   {/* Acción */}
