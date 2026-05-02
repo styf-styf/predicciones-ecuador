@@ -438,26 +438,64 @@ export default function MarketPage() {
  )}
 
         {/* Noticias */}
-        <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
-          <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
-            <Newspaper size={18} className="text-blue-400" /> Noticias relacionadas
-          </h2>
-          {loadingNews ? (
-            <p className="text-slate-400 text-sm">Buscando noticias...</p>
-          ) : news.length === 0 ? (
-            <p className="text-slate-400 text-sm">No se encontraron noticias relacionadas.</p>
-          ) : (
-            <div className="space-y-3">
-              {news.map((n, i) => (
-                <a key={i} href={n.url} target="_blank" rel="noopener noreferrer"
-                  className="block bg-slate-200 dark:bg-slate-800 rounded-xl p-4 hover:bg-slate-300 dark:hover:bg-slate-700 transition">
-                  <p className="font-semibold text-sm leading-snug">{n.title}</p>
-                  <p className="text-xs text-slate-400 mt-1">{n.source?.name} • {new Date(n.publishedAt).toLocaleDateString()}</p>
-                </a>
-              ))}
-            </div>
-          )}
-        </div>
+<div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
+  <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
+    <Newspaper size={18} className="text-blue-400" /> Noticia relacionada
+  </h2>
+
+  {/* Noticia de la plataforma (origen del mercado) */}
+  {market.news_title && (
+    <div className="mb-4 bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[10px] text-blue-400 uppercase tracking-widest font-semibold">📰 Noticia origen del mercado</span>
+        {market.news_date && (
+          <span className="text-[10px] text-slate-400 dark:text-slate-500">
+            {new Date(market.news_date).toLocaleDateString("es-EC", { day: "numeric", month: "long", year: "numeric" })}
+          </span>
+        )}
+      </div>
+
+      <p className="font-bold text-sm text-slate-900 dark:text-white leading-snug">{market.news_title}</p>
+
+      {market.news_summary && (
+        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-l-2 border-blue-400 pl-3">
+          {market.news_summary}
+        </p>
+      )}
+
+      <div className="flex items-center justify-between gap-2 pt-1">
+        {market.news_source && (
+          <span className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
+            🌐 <span className="font-medium">{market.news_source}</span>
+          </span>
+        )}
+        {market.news_url && (
+          <a href={market.news_url} target="_blank" rel="noopener noreferrer"
+            className="text-[11px] text-blue-400 hover:text-blue-300 hover:underline transition flex items-center gap-1">
+            Ver noticia completa →
+          </a>
+        )}
+      </div>
+    </div>
+  )}
+
+  {/* Noticias adicionales de NewsAPI */}
+  {loadingNews ? (
+    <p className="text-slate-400 text-sm">Buscando noticias adicionales...</p>
+  ) : news.length === 0 && !market.news_title ? (
+    <p className="text-slate-400 text-sm">No se encontraron noticias relacionadas.</p>
+  ) : (
+    <div className="space-y-3">
+      {news.map((n, i) => (
+        <a key={i} href={n.url} target="_blank" rel="noopener noreferrer"
+          className="block bg-slate-200 dark:bg-slate-800 rounded-xl p-4 hover:bg-slate-300 dark:hover:bg-slate-700 transition">
+          <p className="font-semibold text-sm leading-snug">{n.title}</p>
+          <p className="text-xs text-slate-400 mt-1">{n.source?.name} • {new Date(n.publishedAt).toLocaleDateString()}</p>
+        </a>
+      ))}
+    </div>
+  )}
+ </div>
 
         {/* Comentarios */}
         <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
