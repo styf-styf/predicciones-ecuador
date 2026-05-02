@@ -532,7 +532,7 @@ export default function MarketPage() {
                       </Link>
                     </div>
                     <div className="flex justify-end text-[11px] text-slate-400 mb-3">
-                      <span>{(Number(m.yes) + Number(m.no)).toFixed(1)} pts apostados</span>
+                      <span>{(Number(m.yes) + Number(m.no)).toFixed(1)} $ apostados</span>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <Link href={`/market/${m.id}?bet=yes`}
