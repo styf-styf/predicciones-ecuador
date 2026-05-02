@@ -1380,10 +1380,23 @@ app.put("/admin/news-suggestions/:id", async (req, res) => {
   if (!suggestion) return res.status(404).json({ message: "Sugerencia no encontrada" });
 
   if (action === "approve_market" && suggestion.new_market_question) {
-    await supabase.from("markets").insert([{ question: suggestion.new_market_question }]);
-    await supabase.from("news_suggestions").update({ status: "approved" }).eq("id", suggestionId);
-    return res.json({ message: "Mercado creado ✅" });
-  }
+  console.log("Sugerencia completa:", JSON.stringify(suggestion, null, 2));
+  
+  const { data: newMarket, error: marketError } = await supabase.from("markets").insert([{
+    question: suggestion.new_market_question,
+    news_title: suggestion.title || null,
+    news_url: suggestion.url || null,
+    news_summary: suggestion.summary || null,
+    news_source: suggestion.url ? new URL(suggestion.url).hostname.replace("www.", "") : null,
+    news_date: new Date().toISOString().split("T")[0],
+  }]).select().single();
+
+  console.log("Mercado creado:", JSON.stringify(newMarket, null, 2));
+  console.log("Error mercado:", JSON.stringify(marketError, null, 2));
+
+  await supabase.from("news_suggestions").update({ status: "approved" }).eq("id", suggestionId);
+  return res.json({ message: "Mercado creado ✅" });
+}
 
   if (action === "approve_resolve" && suggestion.resolves_market_id) {
     // Reutiliza la lógica de resolución llamando internamente
