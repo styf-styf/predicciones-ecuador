@@ -30,13 +30,15 @@ export default function AdminPage() {
   const [config, setConfig] = useState<any>(null);
   const [activeSection, setActiveSection] = useState<Section>("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-   const [settingsForm, setSettingsForm] = useState<{
-    commission: string; welcome_points: string;
-    trending_count: number; winners_count: number; autoplay_ms: number;
-  }>({
-    commission: "", welcome_points: "",
-    trending_count: 1, winners_count: 1, autoplay_ms: 5000,
-  });
+  const [settingsForm, setSettingsForm] = useState<{
+  commission: string; welcome_points: string;
+  trending_count: number; winners_count: number; autoplay_ms: number;
+  banco_nombre: string; banco_tipo: string; banco_cuenta: string; banco_titular: string; banco_cedula: string;
+ }>({
+  commission: "", welcome_points: "",
+  trending_count: 1, winners_count: 1, autoplay_ms: 5000,
+  banco_nombre: "", banco_tipo: "", banco_cuenta: "", banco_titular: "", banco_cedula: "",
+ });
   const [searchQuery, setSearchQuery] = useState("");
   const [transactions, setTransactions] = useState<any[]>([]);
 
@@ -162,11 +164,16 @@ if (status === "aprobado") {
     if (res.ok) {
       setConfig(data);
       setSettingsForm({
-        commission: data.commission, welcome_points: data.welcome_points,
-        trending_count: data.trending_count ?? 1,
-        winners_count: data.winners_count ?? 1,
-        autoplay_ms: data.autoplay_ms ?? 5000,
-      });
+  commission: data.commission, welcome_points: data.welcome_points,
+  trending_count: data.trending_count ?? 1,
+  winners_count: data.winners_count ?? 1,
+  autoplay_ms: data.autoplay_ms ?? 5000,
+  banco_nombre: data.banco_nombre || "",
+  banco_tipo: data.banco_tipo || "",
+  banco_cuenta: data.banco_cuenta || "",
+  banco_titular: data.banco_titular || "",
+  banco_cedula: data.banco_cedula || "",
+ });
     }
   };
 
@@ -176,13 +183,17 @@ if (status === "aprobado") {
       method: "PUT",
       headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` || "" },
       body: JSON.stringify({
-        
-        commission: parseFloat(settingsForm.commission),
-        welcome_points: parseFloat(settingsForm.welcome_points),
-        trending_count: Number((settingsForm as any).trending_count ?? 1),
-        winners_count: Number((settingsForm as any).winners_count ?? 1),
-        autoplay_ms: Number((settingsForm as any).autoplay_ms ?? 5000),
-      }),
+  commission: parseFloat(settingsForm.commission),
+  welcome_points: parseFloat(settingsForm.welcome_points),
+  trending_count: Number((settingsForm as any).trending_count ?? 1),
+  winners_count: Number((settingsForm as any).winners_count ?? 1),
+  autoplay_ms: Number((settingsForm as any).autoplay_ms ?? 5000),
+  banco_nombre: settingsForm.banco_nombre,
+  banco_tipo: settingsForm.banco_tipo,
+  banco_cuenta: settingsForm.banco_cuenta,
+  banco_titular: settingsForm.banco_titular,
+  banco_cedula: settingsForm.banco_cedula,
+ }),
     });
     const data = await res.json();
     if (res.ok) { alert("✅ Configuración guardada"); fetchSettings(); }
@@ -955,6 +966,38 @@ if (status === "aprobado") {
   </div>
  </div>
 
+       <div className="border-t border-slate-200 dark:border-white/[0.06] pt-6 mt-2">
+  <p className="text-[11px] text-slate-400 dark:text-white/30 uppercase tracking-widest mb-4">Datos bancarios para recargas</p>
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    {[
+      { key: "banco_nombre", label: "Nombre del banco" },
+      { key: "banco_titular", label: "Titular de la cuenta" },
+      { key: "banco_cuenta", label: "Número de cuenta" },
+      { key: "banco_cedula", label: "Cédula del titular" },
+    ].map((field) => (
+      <div key={field.key} className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-4 space-y-2">
+        <label className="text-[11px] text-slate-400 dark:text-white/30 uppercase tracking-widest block">{field.label}</label>
+        <input
+          type="text"
+          value={(settingsForm as any)[field.key]}
+          onChange={(e) => setSettingsForm((prev) => ({ ...prev, [field.key]: e.target.value }))}
+          className="w-full bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-4 py-2.5 outline-none text-[14px] text-slate-900 dark:text-white focus:border-emerald-500/60 transition"
+        />
+      </div>
+    ))}
+    <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-4 space-y-2">
+      <label className="text-[11px] text-slate-400 dark:text-white/30 uppercase tracking-widest block">Tipo de cuenta</label>
+      <select
+        value={settingsForm.banco_tipo}
+        onChange={(e) => setSettingsForm((prev) => ({ ...prev, banco_tipo: e.target.value }))}
+        className="w-full bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-4 py-2.5 outline-none text-[14px] text-slate-900 dark:text-white focus:border-emerald-500/60 transition"
+      >
+        <option value="ahorros">Ahorros</option>
+        <option value="corriente">Corriente</option>
+      </select>
+    </div>
+  </div>
+ </div>
               <button onClick={handleSaveSettings} className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl py-3 text-[13px] transition active:scale-[0.99]">
                 Guardar configuración
               </button>

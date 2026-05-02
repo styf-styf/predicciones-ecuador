@@ -23,6 +23,7 @@ export default function PanelPage() {
   const [ranking, setRanking] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [bankConfig, setBankConfig] = useState<any>(null);
 
   // Wallet state (maqueta)
   const [walletAction, setWalletAction] = useState<"recarga" | "retiro">("recarga");
@@ -86,6 +87,10 @@ export default function PanelPage() {
   tipo_cuenta: meData.tipo_cuenta || "",
   provincia: meData.provincia || "",
  });
+
+ const configRes = await fetch("https://predicciones-ecuador.onrender.com/config");
+const configData = await configRes.json();
+setBankConfig(configData);
       setLoading(false);
     } catch (error) {
       setLoading(false);
@@ -476,17 +481,17 @@ export default function PanelPage() {
                 <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4 space-y-3">
                   <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest">Datos de transferencia</p>
                   {[
-                    { label: "Banco", value: "Banco Pichincha" },
-                    { label: "Tipo de cuenta", value: "Ahorros" },
-                    { label: "Número de cuenta", value: "2209XXXXXXXX" },
-                    { label: "Titular", value: "Nombre del Titular" },
-                    { label: "Cédula", value: "XXXXXXXXXX" },
-                  ].map((item) => (
-                    <div key={item.label} className="flex justify-between items-center text-sm">
-                      <span className="text-slate-500 dark:text-slate-400">{item.label}</span>
-                      <span className="font-medium">{item.value}</span>
-                    </div>
-                  ))}
+  { label: "Banco", value: bankConfig?.banco_nombre || "—" },
+  { label: "Tipo de cuenta", value: bankConfig?.banco_tipo || "—" },
+  { label: "Número de cuenta", value: bankConfig?.banco_cuenta || "—" },
+  { label: "Titular", value: bankConfig?.banco_titular || "—" },
+  { label: "Cédula", value: bankConfig?.banco_cedula || "—" },
+].map((item) => (
+  <div key={item.label} className="flex justify-between items-center text-sm">
+    <span className="text-slate-500 dark:text-slate-400">{item.label}</span>
+    <span className="font-medium">{item.value}</span>
+  </div>
+))}
                 </div>
 
 
