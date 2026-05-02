@@ -1286,9 +1286,15 @@ Tu tarea es responder SOLO en JSON con esta estructura exacta, sin texto adicion
 
 const aiData = await aiRes.json();
 const rawText = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-    const clean = rawText.replace(/```json|```/g, "").trim();
-    const parsed = JSON.parse(clean);
-
+console.log("Respuesta IA raw:", rawText);
+const clean = rawText.replace(/```json|```/g, "").trim();
+let parsed;
+try {
+  parsed = JSON.parse(clean);
+} catch (e) {
+  console.error("Error parseando JSON de IA:", clean);
+  parsed = { new_market_question: null, resolves_market_id: null, resolves_as: null, summary: clean };
+}
     // Guardar sugerencia en Supabase
     const { data: suggestion, error } = await supabase
       .from("news_suggestions")
