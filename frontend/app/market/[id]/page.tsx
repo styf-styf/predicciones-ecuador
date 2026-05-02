@@ -508,27 +508,45 @@ export default function MarketPage() {
         </div>
         {/* Mercados relacionados */}
         {relatedMarkets.length > 0 && (
-          <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
-            <h2 className="font-bold text-lg mb-4">
-              Más de {market.category}
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <h2 className="font-bold text-xl mb-4">Más de {market.category}</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
               {relatedMarkets.map((m) => {
                 const t = (m.yes ?? 0) + (m.no ?? 0) || 1;
                 const yPct = ((m.yes / t) * 100).toFixed(0);
                 const nPct = ((m.no / t) * 100).toFixed(0);
                 return (
-                  <Link key={m.id} href={`/market/${m.id}`}
-                    className="bg-slate-200 dark:bg-slate-800 rounded-xl p-4 hover:bg-slate-300 dark:hover:bg-slate-700 transition space-y-3">
-                    <p className="text-[13px] font-semibold leading-snug">{m.question}</p>
-                    <div className="w-full h-2 rounded-full bg-rose-200 dark:bg-rose-900/40 overflow-hidden">
-                      <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${yPct}%` }} />
+                  <div key={m.id} className="border rounded-xl p-3 sm:p-4 transition-all duration-300 hover:shadow-md dark:hover:shadow-black/30 bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700">
+                    {m.category && (
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                          {m.category}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <Link href={`/market/${m.id}`}>
+                        <h3 className="text-[13px] font-semibold leading-snug hover:text-emerald-400 transition-colors cursor-pointer">
+                          {m.question}
+                        </h3>
+                      </Link>
                     </div>
-                    <div className="flex justify-between text-[11px] font-bold">
-                      <span className="text-emerald-500">Sí {yPct}%</span>
-                      <span className="text-rose-500">No {nPct}%</span>
+                    <div className="flex justify-end text-[11px] text-slate-400 mb-3">
+                      <span>{(Number(m.yes) + Number(m.no)).toFixed(1)} pts apostados</span>
                     </div>
-                  </Link>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Link href={`/market/${m.id}?bet=yes`}
+                        className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium rounded-xl py-2.5 text-sm text-center active:scale-95 transition-transform flex flex-col items-center leading-tight">
+                        <span className="text-[11px] opacity-70">Sí</span>
+                        <span className="font-bold">{yPct}%</span>
+                      </Link>
+                      <Link href={`/market/${m.id}?bet=no`}
+                        className="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 font-medium rounded-xl py-2.5 text-sm text-center active:scale-95 transition-transform flex flex-col items-center leading-tight">
+                        <span className="text-[11px] opacity-70">No</span>
+                        <span className="font-bold">{nPct}%</span>
+                      </Link>
+                    </div>
+                  </div>
                 );
               })}
             </div>
