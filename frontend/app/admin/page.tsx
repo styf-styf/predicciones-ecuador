@@ -43,6 +43,7 @@ export default function AdminPage() {
   const [editingMarket, setEditingMarket] = useState<{ id: number, question: string } | null>(null);
   const [refinPrompts, setRefinPrompts] = useState<{ [key: number]: string }>({});
   const [refining, setRefining] = useState<{ [key: number]: boolean }>({});
+  const [editingSuggestion, setEditingSuggestion] = useState<number | null>(null);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [contactos, setContactos] = useState<any[]>([]);
@@ -1111,25 +1112,60 @@ if (status === "aprobado") {
 
           {/* Acciones */}
           {s.status === "pending" && (
-            <div className="flex flex-wrap gap-2">
-              {s.new_market_question && (
-                <button onClick={() => handleSuggestion(s.id, "approve_market")}
-                  className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 px-4 py-2 rounded-lg text-[12px] font-bold transition">
-                  ✅ Crear mercado
-                </button>
-              )}
-              {s.resolves_market_id && (
-                <button onClick={() => handleSuggestion(s.id, "approve_resolve")}
-                  className="bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 hover:bg-blue-100 dark:hover:bg-blue-500/20 px-4 py-2 rounded-lg text-[12px] font-bold transition">
-                  🔔 Resolver mercado
-                </button>
-              )}
-              <button onClick={() => handleSuggestion(s.id, "reject")}
-                className="bg-slate-100 dark:bg-white/[0.04] text-slate-500 dark:text-white/30 border border-slate-200 dark:border-white/[0.08] hover:bg-slate-200 dark:hover:bg-white/[0.08] px-4 py-2 rounded-lg text-[12px] transition ml-auto">
-                Rechazar
-              </button>
-            </div>
-          )}
+  <div className="flex gap-2 mt-2">
+    <input
+      placeholder="Ej: hazla más específica, cambia el plazo a agosto..."
+      value={refinPrompts[s.id] || ""}
+      onChange={(e) => setRefinPrompts((prev) => ({ ...prev, [s.id]: e.target.value }))}
+      onKeyDown={(e) => { if (e.key === "Enter") handleRefine(s.id, s.new_market_question); }}
+      className="flex-1 bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-[12px] outline-none text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:border-emerald-500/40 transition"
+    />
+    <button
+      onClick={() => handleRefine(s.id, s.new_market_question)}
+      disabled={refining[s.id]}
+      className="bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-white/60 px-3 py-2 rounded-lg text-[12px] transition disabled:opacity-50 shrink-0"
+    >
+      {refining[s.id] ? "⏳" : "✨ Refinar"}
+    </button>
+  </div>
+)}
+
+{s.status === "approved" && (
+  <>
+    {editingSuggestion === s.id ? (
+      <div className="flex gap-2 mt-2">
+        <input
+          placeholder="Ej: hazla más específica, cambia el plazo a agosto..."
+          value={refinPrompts[s.id] || ""}
+          onChange={(e) => setRefinPrompts((prev) => ({ ...prev, [s.id]: e.target.value }))}
+          onKeyDown={(e) => { if (e.key === "Enter") handleRefine(s.id, s.new_market_question); }}
+          className="flex-1 bg-slate-100 dark:bg-white/[0.04] border border-amber-500/40 rounded-lg px-3 py-2 text-[12px] outline-none text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:border-amber-500/60 transition"
+          autoFocus
+        />
+        <button
+          onClick={async () => { await handleRefine(s.id, s.new_market_question); setEditingSuggestion(null); }}
+          disabled={refining[s.id]}
+          className="bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 hover:bg-amber-100 dark:hover:bg-amber-500/20 px-3 py-2 rounded-lg text-[12px] font-bold transition disabled:opacity-50 shrink-0"
+        >
+          {refining[s.id] ? "⏳" : "✅ Re-aprobar"}
+        </button>
+        <button
+          onClick={() => { setEditingSuggestion(null); setRefinPrompts((prev) => ({ ...prev, [s.id]: "" })); }}
+          className="bg-slate-100 dark:bg-white/[0.04] text-slate-500 dark:text-white/30 border border-slate-200 dark:border-white/[0.08] px-3 py-2 rounded-lg text-[12px] transition shrink-0"
+        >
+          Cancelar
+        </button>
+      </div>
+    ) : (
+      <button
+        onClick={() => setEditingSuggestion(s.id)}
+        className="mt-2 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 hover:bg-amber-100 dark:hover:bg-amber-500/20 px-3 py-2 rounded-lg text-[12px] font-bold transition"
+      >
+        ✏️ Editar con IA
+      </button>
+    )}
+  </>
+)}
 
           <p className="text-[10px] text-slate-300 dark:text-white/15 mt-3">{new Date(s.created_at).toLocaleString()}</p>
         </div>
