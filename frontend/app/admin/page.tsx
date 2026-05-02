@@ -6,14 +6,14 @@ import {
   LogOut, Users, Activity, DollarSign,
   ShieldCheck, ShieldOff, Plus, Minus,
   Settings, X, LayoutDashboard, ChevronRight,
-  ArrowUpRight, ArrowDownRight, Circle, Zap, MessageSquare
+  ArrowUpRight, ArrowDownRight, Circle, Zap, MessageSquare, Newspaper
 } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import ThemeToggle from "@/components/ThemeToggle";
 import { supabase } from "@/lib/supabase";
 
-type Section = "overview" | "markets" | "users" | "settings" | "winners" | "transacciones" | "contacto";
+type Section = "overview" | "markets" | "users" | "settings" | "winners" | "transacciones" | "contacto" | "suggestions";
 
 export default function AdminPage() {
   const [markets, setMarkets] = useState<any[]>([]);
@@ -40,8 +40,31 @@ export default function AdminPage() {
   banco_nombre: "", banco_tipo: "", banco_cuenta: "", banco_titular: "", banco_cedula: "",
  });
   const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [contactos, setContactos] = useState<any[]>([]);
+
+  const fetchSuggestions = async () => {
+  const token = localStorage.getItem("token");
+  const res = await fetch("https://predicciones-ecuador.onrender.com/admin/news-suggestions", {
+    headers: { authorization: `Bearer ${token}` || "" },
+  });
+  const data = await res.json();
+  if (res.ok) setSuggestions(data);
+};
+
+const handleSuggestion = async (id: number, action: string) => {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/news-suggestions/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` || "" },
+    body: JSON.stringify({ action }),
+  });
+  const data = await res.json();
+  alert(data.message);
+  fetchSuggestions();
+  if (action !== "reject") { fetchMarkets(); fetchStats(); }
+};
 
   const fetchMarkets = async () => {
     const res = await fetch("https://predicciones-ecuador.onrender.com/markets");
@@ -220,7 +243,7 @@ if (status === "aprobado") {
       const data = await res.json();
       if (data.role !== "admin") { window.location.href = "/"; return; }
       setIsLogged(true); setIsAdmin(true); setPoints(data.points || 0);
-      fetchWinners(); fetchStats(); fetchUsers(); fetchSettings(); fetchCharts(); fetchTransactions(); fetchContactos();
+      fetchWinners(); fetchStats(); fetchUsers(); fetchSettings(); fetchCharts(); fetchTransactions(); fetchContactos(); fetchSuggestions();
     } catch {
       localStorage.removeItem("token");
       window.location.href = "/login";
@@ -316,6 +339,7 @@ if (status === "aprobado") {
     { id: "users", label: "Usuarios", icon: <Users size={15} />, badge: users.length },
     { id: "winners", label: "Ganadores", icon: <Trophy size={15} /> },
     { id: "transacciones", label: "Transacciones", icon: <Wallet size={15} />, badge: transactions.filter(t => t.status === "pendiente").length },
+    { id: "suggestions", label: "Sugerencias", icon: <Newspaper size={15} />, badge: suggestions.filter(s => s.status === "pending").length },
     { id: "contacto", label: "Contacto", icon: <MessageSquare size={15} />, badge: contactos.filter(c => !c.leido).length },
     { id: "settings", label: "Configuración", icon: <Settings size={15} /> },
     
@@ -919,6 +943,106 @@ if (status === "aprobado") {
     ))}
   </>
  )}
+
+ {/* SUGERENCIAS */}
+{activeSection === "suggestions" && (
+  <>
+    <div>
+      <h1 className="text-lg font-bold">Sugerencias de noticias</h1>
+      <p className="text-[12px] text-slate-400 dark:text-white/30 mt-0.5">
+        {suggestions.filter(s => s.status === "pending").length} pendientes
+      </p>
+    </div>
+
+    <div className="space-y-3">
+      {suggestions.length === 0 && (
+        <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-10 text-center">
+          <p className="text-[12px] text-slate-400 dark:text-white/20">No hay sugerencias aún. Usa la extensión para enviar noticias.</p>
+        </div>
+      )}
+      {suggestions.map((s) => (
+        <div key={s.id} className={`bg-white dark:bg-[#111111] border rounded-xl p-5 transition ${
+          s.status === "pending"
+            ? "border-amber-200 dark:border-amber-500/20"
+            : s.status === "approved"
+            ? "border-emerald-200 dark:border-emerald-500/20 opacity-60"
+            : "border-slate-200 dark:border-white/[0.06] opacity-40"
+        }`}>
+          {/* Header */}
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-[13px] font-semibold text-slate-900 dark:text-white leading-snug">{s.title}</p>
+              {s.url && (
+                <a href={s.url} target="_blank" rel="noopener noreferrer"
+                  className="text-[11px] text-blue-500 dark:text-blue-400 hover:underline mt-0.5 block truncate">
+                  {s.url}
+                </a>
+              )}
+            </div>
+            <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-md uppercase tracking-wider ${
+              s.status === "pending" ? "bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400"
+              : s.status === "approved" ? "bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+              : "bg-slate-100 dark:bg-white/[0.06] text-slate-400 dark:text-white/30"
+            }`}>
+              {s.status === "pending" ? "Pendiente" : s.status === "approved" ? "Aprobado" : "Rechazado"}
+            </span>
+          </div>
+
+          {/* Resumen IA */}
+          {s.summary && (
+            <p className="text-[12px] text-slate-500 dark:text-white/40 mb-4 leading-relaxed border-l-2 border-slate-200 dark:border-white/10 pl-3">
+              {s.summary}
+            </p>
+          )}
+
+          {/* Sugerencias IA */}
+          <div className="space-y-2 mb-4">
+            {s.new_market_question && (
+              <div className="bg-emerald-50 dark:bg-emerald-500/[0.08] border border-emerald-200 dark:border-emerald-500/20 rounded-lg px-4 py-3">
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-1">💡 Nuevo mercado sugerido</p>
+                <p className="text-[13px] text-slate-900 dark:text-white font-medium">{s.new_market_question}</p>
+              </div>
+            )}
+            {s.resolves_market_id && (
+              <div className="bg-blue-50 dark:bg-blue-500/[0.08] border border-blue-200 dark:border-blue-500/20 rounded-lg px-4 py-3">
+                <p className="text-[10px] text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-1">🔔 Resuelve mercado #{s.resolves_market_id}</p>
+                <p className="text-[13px] text-slate-900 dark:text-white font-medium">
+                  Ganó: <span className={s.resolves_as === "yes" ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-rose-500 dark:text-rose-400 font-bold"}>
+                    {s.resolves_as === "yes" ? "Sí" : "No"}
+                  </span>
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Acciones */}
+          {s.status === "pending" && (
+            <div className="flex flex-wrap gap-2">
+              {s.new_market_question && (
+                <button onClick={() => handleSuggestion(s.id, "approve_market")}
+                  className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 px-4 py-2 rounded-lg text-[12px] font-bold transition">
+                  ✅ Crear mercado
+                </button>
+              )}
+              {s.resolves_market_id && (
+                <button onClick={() => handleSuggestion(s.id, "approve_resolve")}
+                  className="bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 hover:bg-blue-100 dark:hover:bg-blue-500/20 px-4 py-2 rounded-lg text-[12px] font-bold transition">
+                  🔔 Resolver mercado
+                </button>
+              )}
+              <button onClick={() => handleSuggestion(s.id, "reject")}
+                className="bg-slate-100 dark:bg-white/[0.04] text-slate-500 dark:text-white/30 border border-slate-200 dark:border-white/[0.08] hover:bg-slate-200 dark:hover:bg-white/[0.08] px-4 py-2 rounded-lg text-[12px] transition ml-auto">
+                Rechazar
+              </button>
+            </div>
+          )}
+
+          <p className="text-[10px] text-slate-300 dark:text-white/15 mt-3">{new Date(s.created_at).toLocaleString()}</p>
+        </div>
+      ))}
+    </div>
+  </>
+)}
 
  {/* CONTACTO */}
 {activeSection === "contacto" && (

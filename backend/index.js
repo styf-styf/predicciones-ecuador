@@ -1054,9 +1054,7 @@ async function procesarPagoPayphone(clientTransactionId, payphoneId) {
   }
 }
 
-// =======================
-// 💳 PAYPHONE - INICIAR PAGO
-// =======================
+
 
 
 // =======================
@@ -1230,6 +1228,162 @@ setInterval(async () => {
     console.log(`🧹 ${data.length} transacciones pendientes canceladas automáticamente`);
   }
 }, 5 * 60 * 1000); // Corre cada 5 minutos
+
+// =======================
+// 📰 SUGERENCIAS DE NOTICIAS
+// =======================
+
+// Recibir noticia desde la extensión y procesarla con IA
+app.post("/admin/news-suggest", async (req, res) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ message: "No autorizado" });
+
+  try {
+    const decoded = jwt.verify(token, SECRET);
+    const { data: admin } = await supabase
+      .from("users").select("role").eq("id", decoded.id).single();
+    if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+  } catch {
+    return res.status(401).json({ message: "Token inválido" });
+  }
+
+  const { title, url, content } = req.body;
+  if (!title) return res.status(400).json({ message: "Título requerido" });
+
+  // Obtener mercados activos para comparar
+  const { data: activeMarkets } = await supabase
+    .from("markets").select("id, question").eq("resolved", false);
+
+  const marketsText = activeMarkets?.map(m => `ID ${m.id}: ${m.question}`).join("\n") || "Ninguno";
+
+  // Llamar a Claude para analizar
+  const prompt = `Eres un asistente para una plataforma de predicciones de Ecuador.
+
+Noticia recibida:
+Título: ${title}
+URL: ${url || "No disponible"}
+Contenido adicional: ${content || "No disponible"}
+
+Mercados activos actualmente:
+${marketsText}
+
+Tu tarea es responder SOLO en JSON con esta estructura exacta, sin texto adicional:
+{
+  "new_market_question": "pregunta en forma de predicción futura, o null si la noticia no da para un mercado",
+  "resolves_market_id": número del ID del mercado que esta noticia resuelve, o null si ninguno,
+  "resolves_as": "yes" o "no" según si el mercado se cumplió, o null si no resuelve ninguno,
+  "summary": "resumen de la noticia en máximo 2 oraciones"
+}`;
+
+  try {
+    const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-opus-4-5",
+        max_tokens: 500,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+
+    const aiData = await aiRes.json();
+    const rawText = aiData.content?.[0]?.text || "{}";
+    const clean = rawText.replace(/```json|```/g, "").trim();
+    const parsed = JSON.parse(clean);
+
+    // Guardar sugerencia en Supabase
+    const { data: suggestion, error } = await supabase
+      .from("news_suggestions")
+      .insert({
+        title,
+        url: url || null,
+        summary: parsed.summary || null,
+        new_market_question: parsed.new_market_question || null,
+        resolves_market_id: parsed.resolves_market_id || null,
+        resolves_as: parsed.resolves_as || null,
+        status: "pending",
+      })
+      .select().single();
+
+    if (error) throw error;
+    res.json({ message: "Sugerencia procesada", suggestion });
+  } catch (err) {
+    console.error("Error IA:", err);
+    res.status(500).json({ message: "Error procesando con IA" });
+  }
+});
+
+// Obtener sugerencias pendientes
+app.get("/admin/news-suggestions", async (req, res) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ message: "No autorizado" });
+  try {
+    const decoded = jwt.verify(token, SECRET);
+    const { data: admin } = await supabase
+      .from("users").select("role").eq("id", decoded.id).single();
+    if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+  } catch { return res.status(401).json({ message: "Token inválido" }); }
+
+  const { data, error } = await supabase
+    .from("news_suggestions")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) return res.status(500).json({ message: error.message });
+  res.json(data);
+});
+
+// Aprobar o rechazar sugerencia
+app.put("/admin/news-suggestions/:id", async (req, res) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ message: "No autorizado" });
+  try {
+    const decoded = jwt.verify(token, SECRET);
+    const { data: admin } = await supabase
+      .from("users").select("role").eq("id", decoded.id).single();
+    if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+  } catch { return res.status(401).json({ message: "Token inválido" }); }
+
+  const { action } = req.body; // "approve_market", "approve_resolve", "reject"
+  const suggestionId = req.params.id;
+
+  const { data: suggestion } = await supabase
+    .from("news_suggestions").select("*").eq("id", suggestionId).single();
+
+  if (!suggestion) return res.status(404).json({ message: "Sugerencia no encontrada" });
+
+  if (action === "approve_market" && suggestion.new_market_question) {
+    await supabase.from("markets").insert([{ question: suggestion.new_market_question }]);
+    await supabase.from("news_suggestions").update({ status: "approved" }).eq("id", suggestionId);
+    return res.json({ message: "Mercado creado ✅" });
+  }
+
+  if (action === "approve_resolve" && suggestion.resolves_market_id) {
+    // Reutiliza la lógica de resolución llamando internamente
+    const resolveRes = await fetch(`https://predicciones-ecuador.onrender.com/admin/resolve/${suggestion.resolves_market_id}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        authorization: req.headers.authorization,
+      },
+      body: JSON.stringify({ winner: suggestion.resolves_as }),
+    });
+    const resolveData = await resolveRes.json();
+    await supabase.from("news_suggestions").update({ status: "approved" }).eq("id", suggestionId);
+    return res.json({ message: resolveData.message });
+  }
+
+  if (action === "reject") {
+    await supabase.from("news_suggestions").update({ status: "rejected" }).eq("id", suggestionId);
+    return res.json({ message: "Sugerencia rechazada" });
+  }
+
+  res.status(400).json({ message: "Acción inválida" });
+});
 
 app.listen(4000, () => {
   console.log("Servidor en https://predicciones-ecuador.onrender.com");
