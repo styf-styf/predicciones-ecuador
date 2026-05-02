@@ -358,11 +358,24 @@ export default function Home() {
                   }`}
                 >
                   {/* Categoría badge */}
-                  {market.category && (
-                    <span className="inline-block mb-1.5 text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                      {market.category}
-                    </span>
-                  )}
+                  <div className="flex items-center justify-between mb-1.5">
+                    {market.category && (
+                      <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                        {market.category}
+                      </span>
+                    )}
+                    <button
+                      onClick={(e) => toggleFavorite(e, market.id)}
+                      className="ml-auto text-slate-300 dark:text-slate-600 hover:text-rose-400 dark:hover:text-rose-400 transition-colors"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                        fill={favorites.includes(market.id) ? "#f43f5e" : "none"}
+                        stroke={favorites.includes(market.id) ? "#f43f5e" : "currentColor"}
+                        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                      </svg>
+                    </button>
+                  </div>
 
                   {/* Título + Círculo */}
                   <div className="flex items-start justify-between gap-3 mb-4">
@@ -405,20 +418,7 @@ export default function Home() {
                       </Link>
                     </div>
                   )}
-                  {/* Favorito */}
-                  <div className="flex justify-end mt-2">
-                    <button
-                      onClick={(e) => { console.log("click corazon", market.id); toggleFavorite(e, market.id); }}
-                      className="text-slate-300 dark:text-slate-600 hover:text-rose-400 dark:hover:text-rose-400 transition-colors"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                        fill={favorites.includes(market.id) ? "#f43f5e" : "none"}
-                        stroke={favorites.includes(market.id) ? "#f43f5e" : "currentColor"}
-                        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                      </svg>
-                    </button>
-                  </div>
+                  
                 </div>
               );
             })}
