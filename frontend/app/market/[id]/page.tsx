@@ -28,7 +28,7 @@ export default function MarketPage() {
   const [userBet, setUserBet] = useState<{ type: "yes" | "no"; amount: number } | null>(null);
   const [changeCount, setChangeCount] = useState(0);
   const MAX_CHANGES = 3;
-  const [betConfig, setBetConfig] = useState({ min_bet: 1, max_bet: 10 });
+  const [betConfig, setBetConfig] = useState({ min_bet: 1 });
   const [allMarkets, setAllMarkets] = useState<any[]>([]);
   useEffect(() => {
     setToken(localStorage.getItem("token"));
@@ -65,7 +65,7 @@ export default function MarketPage() {
   const res = await fetch("https://predicciones-ecuador.onrender.com/config");
   if (res.ok) {
     const data = await res.json();
-    setBetConfig({ min_bet: data.min_bet ?? 1, max_bet: data.max_bet ?? 10 });
+    setBetConfig({ min_bet: data.min_bet ?? 1 });
   }
  };
 
@@ -105,8 +105,10 @@ export default function MarketPage() {
  const handleBet = async () => {
   if (!token) { setShowLoginPrompt(true); return; }
   const amt = parseFloat(amount);
-  if (isNaN(amt) || amt < betConfig.min_bet || amt > betConfig.max_bet)
-    return alert(`El monto debe ser entre ${betConfig.min_bet} y ${betConfig.max_bet} puntos`);
+  if (isNaN(amt) || amt < betConfig.min_bet)
+  return alert(`El monto mínimo es ${betConfig.min_bet} punto`);
+  if (points !== null && amt > points)
+  return alert("No tienes suficientes puntos");
   setBettingLoading(true);
   const res = await fetch("https://predicciones-ecuador.onrender.com/bet", {
     method: "POST",
@@ -247,10 +249,6 @@ export default function MarketPage() {
   <span className="font-bold text-slate-500 dark:text-slate-300">{(Number(market.yes) + Number(market.no)).toFixed(1)} $ total</span>
   <span>{market.no} $ · No</span>
 </div>
-            <div className="flex justify-between text-[11px] text-slate-400 mt-1">
-              <span>{market.yes} $ apostados a Sí</span>
-              <span>{market.no} $ apostados a No</span>
-            </div>
           </div>
         </div>
 
@@ -345,10 +343,11 @@ export default function MarketPage() {
                   <button
                     key={val}
                     onClick={() => {
-                      const current = parseFloat(amount) || 0;
-                      const next = Math.min(current + val, betConfig.max_bet);
-                      setAmount(String(next));
-                    }}
+                    const current = parseFloat(amount) || 0;
+const max = points !== null ? points : 0;
+const next = Math.min(current + val, max);
+setAmount(String(next));
+ }}
                     className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700"
                   >
                     +{val}
@@ -356,9 +355,7 @@ export default function MarketPage() {
                 ))}
                 <button
                   onClick={() => {
-                    const max = points !== null
-                      ? Math.min(points, betConfig.max_bet)
-                      : betConfig.max_bet;
+                    const max = points !== null ? points : 0;
                     setAmount(String(max));
                   }}
                   className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700"
@@ -427,10 +424,11 @@ export default function MarketPage() {
                   <button
                     key={val}
                     onClick={() => {
-                      const current = parseFloat(amount) || 0;
-                      const next = Math.min(current + val, betConfig.max_bet);
-                      setAmount(String(next));
-                    }}
+  const current = parseFloat(amount) || 0;
+const max = points !== null ? points : 0;
+const next = Math.min(current + val, max);
+setAmount(String(next));
+}}
                     className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700"
                   >
                     +{val}
@@ -438,9 +436,7 @@ export default function MarketPage() {
                 ))}
                 <button
                   onClick={() => {
-                    const max = points !== null
-                      ? Math.min(points, betConfig.max_bet)
-                      : betConfig.max_bet;
+                    const max = points !== null ? points : 0;
                     setAmount(String(max));
                   }}
                   className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700"
