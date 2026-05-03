@@ -219,9 +219,10 @@ const fetchUniqueBettors = async () => {
           <div className="h-12 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
         </div>
 
-        {/* Contexto del mercado */}
-        {/* Contexto del mercado */}
-{(market.news_summary || market.news_title) ? (
+        
+      
+{/* Contexto del mercado */}
+{market && (market.news_summary || market.news_title) ? (
   <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6">
     <p className="text-xs text-slate-400 uppercase tracking-widest mb-3">Contexto del mercado</p>
     {market.news_title ? (
@@ -254,7 +255,7 @@ const fetchUniqueBettors = async () => {
  ) : null}
 
 {/* Top Holders */}
-{/*{topHolders.length > 0 && (
+{market && topHolders.length > 0 && (
   <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6">
     <p className="text-xs text-slate-400 uppercase tracking-widest mb-4">Top apostadores</p>
     <div className="space-y-3">
@@ -281,7 +282,7 @@ const fetchUniqueBettors = async () => {
       })}
     </div>
   </div>
-)}*/}
+)}
 
         {/* Noticias */}
         <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3">
