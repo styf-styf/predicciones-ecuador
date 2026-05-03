@@ -253,7 +253,7 @@ const fetchUniqueBettors = async () => {
 )}
 
 {/* Top Holders */}
-{topHolders.length > 0 && (
+{/*{topHolders.length > 0 && (
   <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6">
     <p className="text-xs text-slate-400 uppercase tracking-widest mb-4">Top apostadores</p>
     <div className="space-y-3">
@@ -280,7 +280,7 @@ const fetchUniqueBettors = async () => {
       })}
     </div>
   </div>
-)}
+ )} */}
 
         {/* Noticias */}
         <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3">
