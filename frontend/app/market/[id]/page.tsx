@@ -220,7 +220,7 @@ const fetchUniqueBettors = async () => {
         </div>
 
         {/* Contexto del mercado */}
-{(market.news_summary || market.news_title) && (
+{/*{(market.news_summary || market.news_title) && (
   <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6">
     <p className="text-xs text-slate-400 uppercase tracking-widest mb-3">Contexto del mercado</p>
     {market.news_title && (
@@ -250,7 +250,7 @@ const fetchUniqueBettors = async () => {
       )}
     </div>
   </div>
-)}
+)}*/}
 
 {/* Top Holders */}
 {/*{topHolders.length > 0 && (
