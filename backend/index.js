@@ -698,10 +698,19 @@ app.post("/bet", auth, async (req, res) => {
     }]);
   }
 
-  const { data: updatedMarket } = await supabase
-    .from("markets").select("*").eq("id", marketId).single();
+ const { data: updatedMarket } = await supabase
+  .from("markets").select("*").eq("id", marketId).single();
 
-  res.json({ message: "Apuesta realizada", points: newPoints, market: updatedMarket });
+// Guardar snapshot de historial
+const total = Number(updatedMarket.yes) + Number(updatedMarket.no) || 1;
+await supabase.from("market_history").insert([{
+  market_id: marketId,
+  yes_pct: ((Number(updatedMarket.yes) / total) * 100).toFixed(1),
+  no_pct: ((Number(updatedMarket.no) / total) * 100).toFixed(1),
+  total: total,
+}]);
+
+res.json({ message: "Apuesta realizada", points: newPoints, market: updatedMarket });
 });
 // =======================
 // 💰 RESOLVER MERCADO
