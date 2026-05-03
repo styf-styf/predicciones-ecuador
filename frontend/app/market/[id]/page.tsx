@@ -21,6 +21,8 @@ export default function MarketPage() {
   const [news, setNews] = useState<any[]>([]);
   const [loadingNews, setLoadingNews] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [bettingLoading, setBettingLoading] = useState(false);
+  const [betSuccess, setBetSuccess] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [userBet, setUserBet] = useState<{ type: "yes" | "no"; amount: number } | null>(null);
@@ -101,21 +103,25 @@ export default function MarketPage() {
  }, [token]);
 
  const handleBet = async () => {
-  if (!token) return alert("Debes iniciar sesión");
+  if (!token) { setShowLoginPrompt(true); return; }
   const amt = parseFloat(amount);
-  if (isNaN(amt) || amt < betConfig.min_bet || amt > betConfig.max_bet) 
+  if (isNaN(amt) || amt < betConfig.min_bet || amt > betConfig.max_bet)
     return alert(`El monto debe ser entre ${betConfig.min_bet} y ${betConfig.max_bet} puntos`);
+  setBettingLoading(true);
   const res = await fetch("https://predicciones-ecuador.onrender.com/bet", {
     method: "POST",
     headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
     body: JSON.stringify({ marketId: Number(id), type: betType, amount: amt }),
   });
   const data = await res.json();
+  setBettingLoading(false);
   if (data.points !== undefined) {
     setPoints(data.points);
     setAmount("");
     setUserBet({ type: betType, amount: amt });
-    setChangeCount((prev) => prev + (userBet ? 1 : 0)); // solo suma si ya había apuesta previa
+    setChangeCount((prev) => prev + (userBet ? 1 : 0));
+    setBetSuccess(true);
+    setTimeout(() => setBetSuccess(false), 3000);
     fetchMarket();
   } else {
     alert(data.message);
@@ -228,12 +234,19 @@ export default function MarketPage() {
               <span className="text-emerald-500">Sí {yesPct}%</span>
               <span className="text-rose-500">No {noPct}%</span>
             </div>
-            <div className="w-full h-3 rounded-full bg-rose-200 dark:bg-rose-900/40 overflow-hidden">
-              <div
-                className="h-full bg-emerald-500 rounded-full transition-all duration-700"
-                style={{ width: `${yesPct}%` }}
-              />
-            </div>
+            <div className="w-full h-4 rounded-full bg-rose-200 dark:bg-rose-900/40 overflow-hidden shadow-inner">
+  <div
+    className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full transition-all duration-1000 ease-out relative"
+    style={{ width: `${yesPct}%` }}
+  >
+    <div className="absolute inset-0 bg-white/20 rounded-full animate-pulse" />
+  </div>
+</div>
+<div className="flex justify-between text-xs text-slate-400 mt-1">
+  <span>{market.yes} $ · Sí</span>
+  <span className="font-bold text-slate-500 dark:text-slate-300">{(Number(market.yes) + Number(market.no)).toFixed(1)} $ total</span>
+  <span>{market.no} $ · No</span>
+</div>
             <div className="flex justify-between text-[11px] text-slate-400 mt-1">
               <span>{market.yes} $ apostados a Sí</span>
               <span>{market.no} $ apostados a No</span>
@@ -247,6 +260,23 @@ export default function MarketPage() {
     <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
       <TrendingUp size={18} className="text-emerald-400" /> Realizar apuesta
     </h2>
+
+    {/* Prompt login si no está logueado */}
+    {!token && (
+      <div className="mb-4 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between gap-3">
+        <p className="text-sm text-slate-700 dark:text-slate-200">Inicia sesión para apostar</p>
+        <Link href="/login" className="shrink-0 bg-emerald-500 text-slate-950 font-bold text-sm px-4 py-2 rounded-xl">
+          Iniciar sesión
+        </Link>
+      </div>
+    )}
+
+    {/* Confirmación exitosa */}
+    {betSuccess && (
+      <div className="mb-4 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-center text-sm font-semibold text-emerald-500 flex items-center justify-center gap-2">
+        ✅ ¡Apuesta registrada exitosamente!
+      </div>
+    )}
 
     {points !== null && (
       <p className="text-sm text-slate-400 mb-4">
@@ -346,11 +376,12 @@ export default function MarketPage() {
               </div>
             </div>
             <button
-              onClick={handleBet}
-              className={`w-full py-3 rounded-xl font-bold text-sm transition active:scale-95 ${betType === "yes" ? "bg-emerald-500 text-slate-950" : "bg-rose-500 text-white"}`}
-            >
-              Cambiar predicción — {betType === "yes" ? "Sí" : "No"}
-            </button>
+  onClick={handleBet}
+  disabled={bettingLoading || !amount}
+  className={`w-full py-3 rounded-xl font-bold text-sm transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${betType === "yes" ? "bg-emerald-500 text-slate-950" : "bg-rose-500 text-white"}`}
+>
+  {bettingLoading ? "Procesando..." : `Cambiar predicción — ${betType === "yes" ? "Sí" : "No"}`}
+</button>
           </div>
         ) : (
           <p className="text-center text-sm text-slate-400 bg-slate-200 dark:bg-slate-800 rounded-xl py-3">
@@ -427,11 +458,12 @@ export default function MarketPage() {
               </div>
             </div>
         <button
-          onClick={handleBet}
-          className={`w-full py-3 rounded-xl font-bold text-sm transition active:scale-95 ${betType === "yes" ? "bg-emerald-500 text-slate-950" : "bg-rose-500 text-white"}`}
-        >
-          Confirmar apuesta — {betType === "yes" ? "Sí" : "No"}
-        </button>
+  onClick={handleBet}
+  disabled={bettingLoading || !amount}
+  className={`w-full py-3 rounded-xl font-bold text-sm transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${betType === "yes" ? "bg-emerald-500 text-slate-950" : "bg-rose-500 text-white"}`}
+>
+  {bettingLoading ? "Procesando..." : `Confirmar apuesta — ${betType === "yes" ? "Sí" : "No"}`}
+</button>
       </div>
     )}
   </div>
@@ -554,7 +586,7 @@ export default function MarketPage() {
                 const yPct = ((m.yes / t) * 100).toFixed(0);
                 const nPct = ((m.no / t) * 100).toFixed(0);
                 return (
-                  <div key={m.id} className="border rounded-xl p-3 sm:p-4 transition-all duration-300 hover:shadow-md dark:hover:shadow-black/30 bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700">
+                  <div key={m.id} className="border rounded-xl p-3 sm:p-4 transition-all duration-300 hover:shadow-lg dark:hover:shadow-black/50 hover:-translate-y-0.5 bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/50">
                     {m.category && (
                       <div className="flex items-center justify-between mb-1.5">
                         <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 uppercase tracking-wide">
