@@ -33,6 +33,7 @@ export default function MarketPage() {
   const [betConfig, setBetConfig] = useState({ min_bet: 1 });
   const [history, setHistory] = useState<any[]>([]);
   const [uniqueBettors, setUniqueBettors] = useState(0);
+  const [topHolders, setTopHolders] = useState<any[]>([]);
   const [allMarkets, setAllMarkets] = useState<any[]>([]);
   useEffect(() => {
     setToken(localStorage.getItem("token"));
@@ -75,6 +76,15 @@ export default function MarketPage() {
   setHistory(data || []);
 };
 
+const fetchTopHolders = async () => {
+  const { data } = await supabase
+    .from("bets")
+    .select("amount, type, users(nombre, email)")
+    .eq("market_id", Number(id))
+    .order("amount", { ascending: false })
+    .limit(5);
+  setTopHolders(data || []);
+};
 const fetchUniqueBettors = async () => {
   const { count } = await supabase
     .from("bets")
@@ -113,6 +123,7 @@ const fetchUniqueBettors = async () => {
     fetchBetConfig();
     fetchHistory();
     fetchUniqueBettors();
+    fetchTopHolders();
     fetch("https://predicciones-ecuador.onrender.com/markets")
       .then((r) => r.json())
       .then((data) => setAllMarkets(data));
@@ -207,6 +218,69 @@ const fetchUniqueBettors = async () => {
           <div className="h-12 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
           <div className="h-12 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
         </div>
+
+        {/* Contexto del mercado */}
+{(market.news_summary || market.news_title) && (
+  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6">
+    <p className="text-xs text-slate-400 uppercase tracking-widest mb-3">Contexto del mercado</p>
+    {market.news_title && (
+      <h3 className="font-bold text-base text-slate-900 dark:text-white mb-2">{market.news_title}</h3>
+    )}
+    {market.news_summary && (
+      <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed border-l-2 border-emerald-500 pl-4">
+        {market.news_summary}
+      </p>
+    )}
+    <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+      {market.news_source && (
+        <span className="text-xs text-slate-400 flex items-center gap-1">
+          🌐 <span className="font-medium">{market.news_source}</span>
+        </span>
+      )}
+      {market.news_url && (
+        <a href={market.news_url} target="_blank" rel="noopener noreferrer"
+          className="text-xs text-emerald-500 hover:text-emerald-400 hover:underline transition flex items-center gap-1">
+          Ver fuente completa →
+        </a>
+      )}
+      {market.news_date && (
+        <span className="text-xs text-slate-400">
+          {new Date(market.news_date).toLocaleDateString("es-EC", { day: "numeric", month: "long", year: "numeric" })}
+        </span>
+      )}
+    </div>
+  </div>
+)}
+
+{/* Top Holders */}
+{topHolders.length > 0 && (
+  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6">
+    <p className="text-xs text-slate-400 uppercase tracking-widest mb-4">Top apostadores</p>
+    <div className="space-y-3">
+      {topHolders.map((h, i) => {
+        const nombre = h.users?.nombre || h.users?.email?.split("@")[0] || "Anónimo";
+        const initial = nombre.charAt(0).toUpperCase();
+        return (
+          <div key={i} className="flex items-center gap-3">
+            <span className="text-xs font-bold text-slate-400 dark:text-slate-500 w-4">{i + 1}</span>
+            <div className="h-8 w-8 rounded-full bg-emerald-500/20 border border-emerald-500/30 grid place-items-center shrink-0">
+              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{initial}</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{nombre}</p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${h.type === "yes" ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400" : "bg-rose-50 dark:bg-rose-900/20 text-rose-500 dark:text-rose-400"}`}>
+                {h.type === "yes" ? "Sí" : "No"}
+              </span>
+              <span className="text-sm font-bold text-slate-900 dark:text-white">${h.amount}</span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+)}
 
         {/* Noticias */}
         <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3">
