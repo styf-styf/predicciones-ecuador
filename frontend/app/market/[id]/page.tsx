@@ -79,7 +79,7 @@ export default function MarketPage() {
 const fetchTopHolders = async () => {
   const { data } = await supabase
     .from("bets")
-    .select("amount, type, users(nombre, email)")
+    .select("amount, type, user_id")
     .eq("market_id", Number(id))
     .order("amount", { ascending: false })
     .limit(5);
@@ -254,12 +254,12 @@ const fetchUniqueBettors = async () => {
  ) : null}
 
 {/* Top Holders */}
-{topHolders.length > 0 && (
+{/*{topHolders.length > 0 && (
   <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6">
     <p className="text-xs text-slate-400 uppercase tracking-widest mb-4">Top apostadores</p>
     <div className="space-y-3">
       {topHolders.map((h, i) => {
-        const nombre = h.users?.nombre || h.users?.email?.split("@")[0] || "Anónimo";
+        const nombre = `Apostador ${i + 1}`;
         const initial = nombre.charAt(0).toUpperCase();
         return (
           <div key={i} className="flex items-center gap-3">
@@ -281,7 +281,7 @@ const fetchUniqueBettors = async () => {
       })}
     </div>
   </div>
-)}
+)}*/}
 
         {/* Noticias */}
         <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3">
