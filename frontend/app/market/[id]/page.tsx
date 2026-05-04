@@ -160,6 +160,7 @@ const fetchUniqueBettors = async () => {
     setBetSuccess(true);
     setTimeout(() => setBetSuccess(false), 3000);
     fetchMarket();
+    fetchHistory();
   } else {
     alert(data.message);
   }
