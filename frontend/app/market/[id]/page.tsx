@@ -278,15 +278,11 @@ const fetchUniqueBettors = async () => {
     <div className="border-t border-slate-100 dark:border-slate-800 p-5 sm:p-6 pt-4">
       <p className="text-[9px] text-slate-400 uppercase tracking-widest mb-3">Evolución de probabilidad</p>
       <ResponsiveContainer width="100%" height={160}>
-        <LineChart data={history.map((h) => {
-  const point = {
-    time: new Date(h.created_at).toLocaleTimeString("es-EC", { hour: "2-digit", minute: "2-digit", day: "numeric", month: "short" }),
-    Si: parseFloat(h.yes_pct),
-    No: parseFloat(h.no_pct),
-  };
-  console.log("punto:", point);
-  return point;
-})}>
+        <LineChart data={history.map((h) => ({
+          time: new Date(h.created_at).toLocaleTimeString("es-EC", { hour: "2-digit", minute: "2-digit", day: "numeric", month: "short" }),
+          Sí: parseFloat(h.yes_pct),
+          No: parseFloat(h.no_pct),
+        }))}>
           <CartesianGrid strokeDasharray="2 4" stroke="#94a3b820" vertical={false} />
           <XAxis dataKey="time" tick={{ fill: "#94a3b8", fontSize: 9 }} axisLine={false} tickLine={false} />
           <YAxis tick={{ fill: "#94a3b8", fontSize: 9 }} axisLine={false} tickLine={false} width={28} domain={[0, 100]} />
