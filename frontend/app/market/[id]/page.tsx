@@ -248,543 +248,424 @@ const fetchUniqueBettors = async () => {
     (m) => m.category === market.category && m.id !== market.id && !m.resolved
   ).slice(0, 4);
 
-  
-
   return (
-    
-    <main className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
-        <Header />
-      <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+  <main className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
+    <Header />
+    <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
 
-        {/* Back */}
-        <Link href="/" className="flex items-center gap-2 text-slate-400 hover:text-white transition text-sm">
-          <ArrowLeft size={16} /> Volver a mercados
-        </Link>
+      {/* Back */}
+      <Link href="/" className="flex items-center gap-2 text-slate-400 hover:text-white transition text-sm">
+        <ArrowLeft size={16} /> Volver a mercados
+      </Link>
 
-        {/* Header mercado - estilo Polymarket */}
-<div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
-  
-  {/* Top section */}
-  <div className="p-5 sm:p-6">
-    <div className="flex items-start gap-4">
-      <div className="flex-1">
-        {market.category && (
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2 block">{market.category}</span>
-        )}
-        <h1 className="text-xl sm:text-2xl font-bold leading-snug">{market.question}</h1>
-      </div>
-    </div>
-
-    {/* Probabilidad grande al estilo Polymarket */}
-    <div className="mt-6 flex items-end justify-between gap-4 flex-wrap">
-      <div>
-        <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Probabilidad actual</p>
-        <div className="flex items-baseline gap-3">
-          <span className="text-5xl font-black text-emerald-500">{yesPct}%</span>
-          <span className="text-lg text-slate-400">de que ocurra</span>
-        </div>
-      </div>
-      <div className="flex gap-6 text-right">
-        <div>
-          <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Sí</p>
-          <p className="text-2xl font-bold text-emerald-500">{yesPct}%</p>
-        </div>
-        <div>
-          <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">No</p>
-          <p className="text-2xl font-bold text-rose-500">{noPct}%</p>
-        </div>
-      </div>
-    </div>
-
-    {/* Barra de progreso */}
-    <div className="mt-4">
-      <div className="w-full h-4 rounded-full bg-rose-200 dark:bg-rose-900/40 overflow-hidden shadow-inner">
-        <div
-          className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full transition-all duration-1000 ease-out relative"
-          style={{ width: `${yesPct}%` }}
-        >
-          <div className="absolute inset-0 bg-white/20 rounded-full" />
-        </div>
-      </div>
-    </div>
-  </div>
-
-  {/* Stats bar */}
-  <div className="border-t border-slate-100 dark:border-slate-800 px-5 sm:px-6 py-3 flex items-center gap-6 flex-wrap bg-slate-50 dark:bg-slate-800/50">
-    {[
-      { icon: <BarChart2 size={13} />, label: "Total apostado", value: `$${(Number(market.yes) + Number(market.no)).toFixed(1)}` },
-      { icon: <Users size={13} />, label: "Participantes", value: uniqueBettors },
-      { icon: <Clock size={13} />, label: "Creado", value: new Date(market.created_at).toLocaleDateString("es-EC", { day: "numeric", month: "short", year: "numeric" }) },
-      { icon: <TrendingUp size={13} />, label: "Estado", value: market.resolved ? `Ganó ${market.winner === "yes" ? "Sí" : "No"}` : "En vivo" },
-    ].map((stat) => (
-      <div key={stat.label} className="flex items-center gap-2">
-        <span className="text-slate-400 dark:text-slate-500">{stat.icon}</span>
-        <div>
-          <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-widest">{stat.label}</p>
-          <p className="text-[13px] font-bold text-slate-900 dark:text-white">{stat.value}</p>
-        </div>
-      </div>
-    ))}
-  </div>
-
-  {/* Gráfico de evolución */}
-  {history.length > 1 && (
-    <div className="border-t border-slate-100 dark:border-slate-800 p-5 sm:p-6">
-      <p className="text-xs text-slate-400 uppercase tracking-widest mb-4">Evolución de probabilidad</p>
-      <ResponsiveContainer width="100%" height={160}>
-        <LineChart data={history.map((h) => ({
-          time: new Date(h.created_at).toLocaleDateString("es-EC", { day: "numeric", month: "short" }),
-          Sí: parseFloat(h.yes_pct),
-          No: parseFloat(h.no_pct),
-        }))}>
-          <CartesianGrid strokeDasharray="2 4" stroke="#94a3b820" vertical={false} />
-          <XAxis dataKey="time" tick={{ fill: "#94a3b8", fontSize: 9 }} axisLine={false} tickLine={false} />
-          <YAxis tick={{ fill: "#94a3b8", fontSize: 9 }} axisLine={false} tickLine={false} width={30} domain={[0, 100]} />
-          <Tooltip
-            contentStyle={{ backgroundColor: "#1e293b", border: "1px solid #334155", borderRadius: "8px", fontSize: "11px" }}
-            labelStyle={{ color: "#94a3b8" }}
-          />
-          <Line type="monotone" dataKey="Sí" stroke="#10b981" strokeWidth={2} dot={false} />
-          <Line type="monotone" dataKey="No" stroke="#f43f5e" strokeWidth={2} dot={false} />
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
-  )}
-</div>
-
-        {/* Apostar */}
-        {!market.resolved && (
-  <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
-    <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
-      <TrendingUp size={18} className="text-emerald-400" /> Realizar apuesta
-    </h2>
-
-    {/* Prompt login si no está logueado */}
-    {!token && (
-      <div className="mb-4 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between gap-3">
-        <p className="text-sm text-slate-700 dark:text-slate-200">Inicia sesión para apostar</p>
-        <Link href="/login" className="shrink-0 bg-emerald-500 text-slate-950 font-bold text-sm px-4 py-2 rounded-xl">
-          Iniciar sesión
-        </Link>
-      </div>
-    )}
-
-    {/* Confirmación exitosa */}
-    {betSuccess && (
-      <div className="mb-4 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-center text-sm font-semibold text-emerald-500 flex items-center justify-center gap-2">
-        ✅ ¡Apuesta registrada exitosamente!
-      </div>
-    )}
-
-    {points !== null && (
-      <p className="text-sm text-slate-400 mb-4">
-        Tu balance: <span className="text-slate-900 dark:text-white font-bold">{points} $</span>
-      </p>
-    )}
-
-    {/* Ya apostó */}
-    {userBet ? (
-      <div className="space-y-4">
-        <div className={`rounded-xl p-4 text-center border ${userBet.type === "yes" ? "border-emerald-500/40 bg-emerald-500/10" : "border-rose-500/40 bg-rose-500/10"}`}>
-          <p className="text-sm text-slate-400 mb-1">Tu predicción actual</p>
-          <p className={`text-2xl font-black ${userBet.type === "yes" ? "text-emerald-400" : "text-rose-400"}`}>
-            {userBet.type === "yes" ? "✅ Sí" : "❌ No"}
-          </p>
-          <p className="text-sm text-slate-400 mt-1">{userBet.amount} $ apostados</p>
-        </div>
-
-        {changeCount < MAX_CHANGES ? (
-          <div className="space-y-3">
-            <p className="text-xs text-slate-400 text-center">
-              Cambios restantes: <span className="font-bold text-white">{MAX_CHANGES - changeCount}</span> de {MAX_CHANGES}
-            </p>
-            <div className="flex gap-6">
-              <button
-                onClick={() => setBetType("yes")}
-                className="flex items-center gap-2.5 group"
-              >
-                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                  betType === "yes"
-                    ? "border-emerald-500 bg-emerald-500"
-                    : "border-slate-300 dark:border-slate-600"
-                }`}>
-                  {betType === "yes" && <div className="w-2 h-2 rounded-full bg-white" />}
-                </div>
-                <span className={`text-sm font-medium transition-colors ${
-                  betType === "yes" ? "text-emerald-500" : "text-slate-500 dark:text-slate-400"
-                }`}>Sí — {yesPct}%</span>
-              </button>
-
-              <button
-                onClick={() => setBetType("no")}
-                className="flex items-center gap-2.5 group"
-              >
-                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                  betType === "no"
-                    ? "border-rose-500 bg-rose-500"
-                    : "border-slate-300 dark:border-slate-600"
-                }`}>
-                  {betType === "no" && <div className="w-2 h-2 rounded-full bg-white" />}
-                </div>
-                <span className={`text-sm font-medium transition-colors ${
-                  betType === "no" ? "text-rose-500" : "text-slate-500 dark:text-slate-400"
-                }`}>No — {noPct}%</span>
-              </button>
+      {/* Header mercado - estilo Polymarket */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
+        <div className="p-5 sm:p-6">
+          <div className="flex items-start gap-4">
+            <div className="flex-1">
+              {market.category && (
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2 block">{market.category}</span>
+              )}
+              <h1 className="text-xl sm:text-2xl font-bold leading-snug">{market.question}</h1>
             </div>
+          </div>
+          <div className="mt-6 flex items-end justify-between gap-4 flex-wrap">
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm text-slate-500 dark:text-slate-400">Monto</span>
-                <span className="text-2xl font-bold text-slate-900 dark:text-white">
-                  {amount ? `${amount} $` : "0 $"}
-                </span>
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                {[1, 5, 10, 50, 100].map((val) => (
-                  <button
-                    key={val}
-                    onClick={() => {
-                    const current = parseFloat(amount) || 0;
-const max = points !== null ? points : 0;
-const next = Math.min(current + val, max);
-setAmount(String(next));
- }}
-                    className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700"
-                  >
-                    +{val}
-                  </button>
-                ))}
-                <button
-                  onClick={() => {
-                    const max = points !== null ? points : 0;
-                    setAmount(String(max));
-                  }}
-                  className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700"
-                >
-                  Máx.
-                </button>
-                {amount && (
-                  <button
-                    onClick={() => setAmount("")}
-                    className="px-3 py-1.5 rounded-full text-sm font-medium bg-rose-100 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 hover:bg-rose-200 dark:hover:bg-rose-900/40 transition-colors border border-rose-200 dark:border-rose-800"
-                  >
-                    Limpiar
-                  </button>
-                )}
+              <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Probabilidad actual</p>
+              <div className="flex items-baseline gap-3">
+                <span className="text-5xl font-black text-emerald-500">{yesPct}%</span>
+                <span className="text-lg text-slate-400">de que ocurra</span>
               </div>
             </div>
-            <button
-  onClick={handleBet}
-  disabled={bettingLoading || !amount}
-  className={`w-full py-3 rounded-xl font-bold text-sm transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${betType === "yes" ? "bg-emerald-500 text-slate-950" : "bg-rose-500 text-white"}`}
->
-  {bettingLoading ? "Procesando..." : `Cambiar predicción — ${betType === "yes" ? "Sí" : "No"}`}
-</button>
+            <div className="flex gap-6 text-right">
+              <div>
+                <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Sí</p>
+                <p className="text-2xl font-bold text-emerald-500">{yesPct}%</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">No</p>
+                <p className="text-2xl font-bold text-rose-500">{noPct}%</p>
+              </div>
+            </div>
           </div>
-        ) : (
-          <p className="text-center text-sm text-slate-400 bg-slate-200 dark:bg-slate-800 rounded-xl py-3">
-            🔒 Alcanzaste el límite de <span className="text-white font-bold">{MAX_CHANGES} cambios</span>
-          </p>
-        )}
-      </div>
-    ) : (
-      /* No ha apostado aún */
-      <div className="space-y-2">
-        <div className="flex gap-6 mb-4">
-          <button onClick={() => setBetType("yes")} className="flex items-center gap-2.5">
-            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-              betType === "yes" ? "border-emerald-500 bg-emerald-500" : "border-slate-300 dark:border-slate-600"
-            }`}>
-              {betType === "yes" && <div className="w-2 h-2 rounded-full bg-white" />}
+          <div className="mt-4">
+            <div className="w-full h-4 rounded-full bg-rose-200 dark:bg-rose-900/40 overflow-hidden shadow-inner">
+              <div
+                className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full transition-all duration-1000 ease-out relative"
+                style={{ width: `${yesPct}%` }}
+              >
+                <div className="absolute inset-0 bg-white/20 rounded-full" />
+              </div>
             </div>
-            <span className={`text-sm font-medium transition-colors ${
-              betType === "yes" ? "text-emerald-500" : "text-slate-500 dark:text-slate-400"
-            }`}>Sí — {yesPct}%</span>
-          </button>
-
-          <button onClick={() => setBetType("no")} className="flex items-center gap-2.5">
-            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-              betType === "no" ? "border-rose-500 bg-rose-500" : "border-slate-300 dark:border-slate-600"
-            }`}>
-              {betType === "no" && <div className="w-2 h-2 rounded-full bg-white" />}
-            </div>
-            <span className={`text-sm font-medium transition-colors ${
-              betType === "no" ? "text-rose-500" : "text-slate-500 dark:text-slate-400"
-            }`}>No — {noPct}%</span>
-          </button>
+          </div>
         </div>
-        <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm text-slate-500 dark:text-slate-400">Monto</span>
-                <span className="text-2xl font-bold text-slate-900 dark:text-white">
-                  {amount ? `${amount} $` : "0 $"}
-                </span>
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                {[1, 5, 10, 50, 100].map((val) => (
-                  <button
-                    key={val}
-                    onClick={() => {
-  const current = parseFloat(amount) || 0;
-const max = points !== null ? points : 0;
-const next = Math.min(current + val, max);
-setAmount(String(next));
-}}
-                    className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700"
-                  >
-                    +{val}
-                  </button>
-                ))}
-                <button
-                  onClick={() => {
-                    const max = points !== null ? points : 0;
-                    setAmount(String(max));
-                  }}
-                  className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700"
-                >
-                  Máx.
-                </button>
-                {amount && (
-                  <button
-                    onClick={() => setAmount("")}
-                    className="px-3 py-1.5 rounded-full text-sm font-medium bg-rose-100 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 hover:bg-rose-200 dark:hover:bg-rose-900/40 transition-colors border border-rose-200 dark:border-rose-800"
-                  >
-                    Limpiar
-                  </button>
-                )}
+
+        {/* Stats bar */}
+        <div className="border-t border-slate-100 dark:border-slate-800 px-5 sm:px-6 py-3 flex items-center gap-6 flex-wrap bg-slate-50 dark:bg-slate-800/50">
+          {[
+            { icon: <BarChart2 size={13} />, label: "Total apostado", value: `$${(Number(market.yes) + Number(market.no)).toFixed(1)}` },
+            { icon: <Users size={13} />, label: "Participantes", value: uniqueBettors },
+            { icon: <Clock size={13} />, label: "Creado", value: new Date(market.created_at).toLocaleDateString("es-EC", { day: "numeric", month: "short", year: "numeric" }) },
+            { icon: <TrendingUp size={13} />, label: "Estado", value: market.resolved ? `Ganó ${market.winner === "yes" ? "Sí" : "No"}` : "En vivo" },
+          ].map((stat) => (
+            <div key={stat.label} className="flex items-center gap-2">
+              <span className="text-slate-400 dark:text-slate-500">{stat.icon}</span>
+              <div>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-widest">{stat.label}</p>
+                <p className="text-[13px] font-bold text-slate-900 dark:text-white">{stat.value}</p>
               </div>
             </div>
-        <button
-  onClick={handleBet}
-  disabled={bettingLoading || !amount}
-  className={`w-full py-3 rounded-xl font-bold text-sm transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${betType === "yes" ? "bg-emerald-500 text-slate-950" : "bg-rose-500 text-white"}`}
->
-  {bettingLoading ? "Procesando..." : `Confirmar apuesta — ${betType === "yes" ? "Sí" : "No"}`}
-</button>
-      </div>
-    )}
-  </div>
- )}
+          ))}
+        </div>
 
- {/* Contexto del mercado */}
-{market && (market.news_summary || market.news_title) ? (
-  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6">
-    <p className="text-xs text-slate-400 uppercase tracking-widest mb-3">Contexto del mercado</p>
-    {market.news_title ? (
-      <h3 className="font-bold text-base text-slate-900 dark:text-white mb-2">{market.news_title}</h3>
-    ) : null}
-    {market.news_summary ? (
-      <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed border-l-2 border-emerald-500 pl-4">
-        {market.news_summary}
-      </p>
-    ) : null}
-    <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-      {market.news_source ? (
-        <span className="text-xs text-slate-400 flex items-center gap-1">
-          🌐 <span className="font-medium">{market.news_source}</span>
-        </span>
-      ) : null}
-      {market.news_url ? (
-        <a href={market.news_url} target="_blank" rel="noopener noreferrer"
-          className="text-xs text-emerald-500 hover:text-emerald-400 hover:underline transition flex items-center gap-1">
-          Ver fuente completa →
-        </a>
-      ) : null}
-      {market.news_date ? (
-        <span className="text-xs text-slate-400">
-          {new Date(market.news_date).toLocaleDateString("es-EC", { day: "numeric", month: "long", year: "numeric" })}
-        </span>
-      ) : null}
-    </div>
-  </div>
- ) : null}
-
- {/* Top Holders */}
- {market && topHolders.length > 0 && (
-  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6">
-    <p className="text-xs text-slate-400 uppercase tracking-widest mb-4">Top apostadores</p>
-    <div className="space-y-3">
-      {topHolders.map((h, i) => {
-        const nombre = h.users?.nombre || h.users?.email?.split("@")[0] || "Anónimo";
-        const initial = nombre.charAt(0).toUpperCase();
-        return (
-          <div key={i} className="flex items-center gap-3">
-            <span className="text-xs font-bold text-slate-400 dark:text-slate-500 w-4">{i + 1}</span>
-            <div className="h-8 w-8 rounded-full bg-emerald-500/20 border border-emerald-500/30 grid place-items-center shrink-0">
-              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{initial}</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{nombre}</p>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${h.type === "yes" ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400" : "bg-rose-50 dark:bg-rose-900/20 text-rose-500 dark:text-rose-400"}`}>
-                {h.type === "yes" ? "Sí" : "No"}
-              </span>
-              <span className="text-sm font-bold text-slate-900 dark:text-white">${h.amount}</span>
-            </div>
+        {/* Gráfico de evolución */}
+        {history.length > 1 && (
+          <div className="border-t border-slate-100 dark:border-slate-800 p-5 sm:p-6">
+            <p className="text-xs text-slate-400 uppercase tracking-widest mb-4">Evolución de probabilidad</p>
+            <ResponsiveContainer width="100%" height={160}>
+              <LineChart data={history.map((h) => ({
+                time: new Date(h.created_at).toLocaleDateString("es-EC", { day: "numeric", month: "short" }),
+                Sí: parseFloat(h.yes_pct),
+                No: parseFloat(h.no_pct),
+              }))}>
+                <CartesianGrid strokeDasharray="2 4" stroke="#94a3b820" vertical={false} />
+                <XAxis dataKey="time" tick={{ fill: "#94a3b8", fontSize: 9 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: "#94a3b8", fontSize: 9 }} axisLine={false} tickLine={false} width={30} domain={[0, 100]} />
+                <Tooltip contentStyle={{ backgroundColor: "#1e293b", border: "1px solid #334155", borderRadius: "8px", fontSize: "11px" }} labelStyle={{ color: "#94a3b8" }} />
+                <Line type="monotone" dataKey="Sí" stroke="#10b981" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="No" stroke="#f43f5e" strokeWidth={2} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
-        );
-      })}
-    </div>
-  </div>
-)}
-
-
-
-
-        {/* Noticias */}
-<div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
-  <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
-    <Newspaper size={18} className="text-blue-400" /> Noticia relacionada
-  </h2>
-
-  {/* Noticia de la plataforma (origen del mercado) */}
-  {market.news_title && (
-    <div className="mb-4 bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-[10px] text-blue-400 uppercase tracking-widest font-semibold">📰 Noticia origen del mercado</span>
-        {market.news_date && (
-          <span className="text-[10px] text-slate-400 dark:text-slate-500">
-            {new Date(market.news_date).toLocaleDateString("es-EC", { day: "numeric", month: "long", year: "numeric" })}
-          </span>
         )}
       </div>
 
-      <p className="font-bold text-sm text-slate-900 dark:text-white leading-snug">{market.news_title}</p>
+      {/* LAYOUT 2 COLUMNAS */}
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
 
-      {market.news_summary && (
-        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-l-2 border-blue-400 pl-3">
-          {market.news_summary}
-        </p>
-      )}
+        {/* COLUMNA IZQUIERDA */}
+        <div className="flex-1 min-w-0 space-y-6">
 
-      <div className="flex items-center justify-between gap-2 pt-1">
-        {market.news_source && (
-          <span className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
-            🌐 <span className="font-medium">{market.news_source}</span>
-          </span>
-        )}
-        {market.news_url && (
-          <a href={market.news_url} target="_blank" rel="noopener noreferrer"
-            className="text-[11px] text-blue-400 hover:text-blue-300 hover:underline transition flex items-center gap-1">
-            Ver noticia completa →
-          </a>
-        )}
-      </div>
-    </div>
-  )}
+          {/* Contexto del mercado */}
+          {(market.news_summary || market.news_title) ? (
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6">
+              <p className="text-xs text-slate-400 uppercase tracking-widest mb-3">Contexto del mercado</p>
+              {market.news_title ? (
+                <h3 className="font-bold text-base text-slate-900 dark:text-white mb-2">{market.news_title}</h3>
+              ) : null}
+              {market.news_summary ? (
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed border-l-2 border-emerald-500 pl-4">
+                  {market.news_summary}
+                </p>
+              ) : null}
+              <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                {market.news_source ? (
+                  <span className="text-xs text-slate-400 flex items-center gap-1">
+                    🌐 <span className="font-medium">{market.news_source}</span>
+                  </span>
+                ) : null}
+                {market.news_url ? (
+                  <a href={market.news_url} target="_blank" rel="noopener noreferrer"
+                    className="text-xs text-emerald-500 hover:text-emerald-400 hover:underline transition">
+                    Ver fuente completa →
+                  </a>
+                ) : null}
+                {market.news_date ? (
+                  <span className="text-xs text-slate-400">
+                    {new Date(market.news_date).toLocaleDateString("es-EC", { day: "numeric", month: "long", year: "numeric" })}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
 
-  {/* Noticias adicionales de NewsAPI */}
-  {loadingNews ? (
-    <p className="text-slate-400 text-sm">Buscando noticias adicionales...</p>
-  ) : news.length === 0 && !market.news_title ? (
-    <p className="text-slate-400 text-sm">No se encontraron noticias relacionadas.</p>
-  ) : (
-    <div className="space-y-3">
-      {news.map((n, i) => (
-        <a key={i} href={n.url} target="_blank" rel="noopener noreferrer"
-          className="block bg-slate-200 dark:bg-slate-800 rounded-xl p-4 hover:bg-slate-300 dark:hover:bg-slate-700 transition">
-          <p className="font-semibold text-sm leading-snug">{n.title}</p>
-          <p className="text-xs text-slate-400 mt-1">{n.source?.name} • {new Date(n.publishedAt).toLocaleDateString()}</p>
-        </a>
-      ))}
-    </div>
-  )}
- </div>
+          {/* Noticias */}
+          <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
+            <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
+              <Newspaper size={18} className="text-blue-400" /> Noticias relacionadas
+            </h2>
+            {loadingNews ? (
+              <p className="text-slate-400 text-sm">Buscando noticias...</p>
+            ) : news.length === 0 ? (
+              <p className="text-slate-400 text-sm">No se encontraron noticias relacionadas.</p>
+            ) : (
+              <div className="space-y-3">
+                {news.map((n, i) => (
+                  <a key={i} href={n.url} target="_blank" rel="noopener noreferrer"
+                    className="block bg-slate-200 dark:bg-slate-800 rounded-xl p-4 hover:bg-slate-300 dark:hover:bg-slate-700 transition">
+                    <p className="font-semibold text-sm leading-snug">{n.title}</p>
+                    <p className="text-xs text-slate-400 mt-1">{n.source?.name} • {new Date(n.publishedAt).toLocaleDateString()}</p>
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
 
-        {/* Comentarios */}
-        <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
-          <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
-            <MessageCircle size={18} className="text-purple-400" /> Comentarios ({comments.length})
-          </h2>
-
-          {/* Input */}
-          <div className="flex gap-2 mb-5">
-  <input
-    placeholder="Escribe un comentario..."
-    value={newComment}
-    onChange={(e) => setNewComment(e.target.value)}
-    onKeyDown={(e) => { if (e.key === "Enter") handleComment(); }}
-    className="flex-1 bg-slate-200 dark:bg-slate-800 rounded-xl px-4 py-2.5 text-sm outline-none placeholder-slate-500"
-  />
-  <button onClick={handleComment} disabled={submitting}
-    className="bg-purple-500 text-white px-4 rounded-xl disabled:opacity-50 hover:bg-purple-600 transition">
-    <Send size={16} />
-  </button>
- </div>
-
- {showLoginPrompt && (
-  <div className="mb-4 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between gap-3">
-    <p className="text-sm text-slate-900 dark:text-slate-200">Debes iniciar sesión para comentar</p>
-    <Link href="/login" className="shrink-0 bg-emerald-500 text-slate-950 font-bold text-sm px-4 py-2 rounded-xl">
-      Iniciar sesión
-    </Link>
-  </div>
- )}
-
-          {/* Lista */}
-          {comments.length === 0 ? (
-            <p className="text-slate-400 text-sm text-center py-4">Sé el primero en comentar</p>
-          ) : (
-            <div className="space-y-3">
-              {comments.map((c) => (
-                <div key={c.id} className="bg-slate-200 dark:bg-slate-800 rounded-xl p-3">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-semibold text-purple-400">{c.username}</span>
-                    <span className="text-[10px] text-slate-500">{new Date(c.created_at).toLocaleString()}</span>
+          {/* Comentarios */}
+          <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
+            <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
+              <MessageCircle size={18} className="text-purple-400" /> Comentarios ({comments.length})
+            </h2>
+            <div className="flex gap-2 mb-5">
+              <input
+                placeholder="Escribe un comentario..."
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") handleComment(); }}
+                className="flex-1 bg-slate-200 dark:bg-slate-800 rounded-xl px-4 py-2.5 text-sm outline-none placeholder-slate-500"
+              />
+              <button onClick={handleComment} disabled={submitting}
+                className="bg-purple-500 text-white px-4 rounded-xl disabled:opacity-50 hover:bg-purple-600 transition">
+                <Send size={16} />
+              </button>
+            </div>
+            {showLoginPrompt && (
+              <div className="mb-4 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between gap-3">
+                <p className="text-sm text-slate-900 dark:text-slate-200">Debes iniciar sesión para comentar</p>
+                <Link href="/login" className="shrink-0 bg-emerald-500 text-slate-950 font-bold text-sm px-4 py-2 rounded-xl">
+                  Iniciar sesión
+                </Link>
+              </div>
+            )}
+            {comments.length === 0 ? (
+              <p className="text-slate-400 text-sm text-center py-4">Sé el primero en comentar</p>
+            ) : (
+              <div className="space-y-3">
+                {comments.map((c) => (
+                  <div key={c.id} className="bg-slate-200 dark:bg-slate-800 rounded-xl p-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-semibold text-purple-400">{c.username}</span>
+                      <span className="text-[10px] text-slate-500">{new Date(c.created_at).toLocaleString()}</span>
+                    </div>
+                    <p className="text-sm text-slate-900 dark:text-slate-200">{c.content}</p>
                   </div>
-                  <p className="text-sm text-slate-900 dark:text-slate-200">{c.content}</p>
+                ))}
+              </div>
+            )}
+          </div>
+
+        </div>{/* fin columna izquierda */}
+
+        {/* COLUMNA DERECHA - sticky */}
+        <div className="w-full lg:w-[360px] shrink-0 lg:sticky lg:top-24 space-y-4">
+
+          {/* Apostar */}
+          {!market.resolved ? (
+            <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
+              <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
+                <TrendingUp size={18} className="text-emerald-400" /> Realizar apuesta
+              </h2>
+
+              {!token && (
+                <div className="mb-4 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between gap-3">
+                  <p className="text-sm text-slate-700 dark:text-slate-200">Inicia sesión para apostar</p>
+                  <Link href="/login" className="shrink-0 bg-emerald-500 text-slate-950 font-bold text-sm px-4 py-2 rounded-xl">
+                    Iniciar sesión
+                  </Link>
                 </div>
-              ))}
+              )}
+
+              {betSuccess && (
+                <div className="mb-4 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-center text-sm font-semibold text-emerald-500 flex items-center justify-center gap-2">
+                  ✅ ¡Apuesta registrada exitosamente!
+                </div>
+              )}
+
+              {points !== null && (
+                <p className="text-sm text-slate-400 mb-4">
+                  Tu balance: <span className="text-slate-900 dark:text-white font-bold">{points} $</span>
+                </p>
+              )}
+
+              {userBet ? (
+                <div className="space-y-4">
+                  <div className={`rounded-xl p-4 text-center border ${userBet.type === "yes" ? "border-emerald-500/40 bg-emerald-500/10" : "border-rose-500/40 bg-rose-500/10"}`}>
+                    <p className="text-sm text-slate-400 mb-1">Tu predicción actual</p>
+                    <p className={`text-2xl font-black ${userBet.type === "yes" ? "text-emerald-400" : "text-rose-400"}`}>
+                      {userBet.type === "yes" ? "✅ Sí" : "❌ No"}
+                    </p>
+                    <p className="text-sm text-slate-400 mt-1">{userBet.amount} $ apostados</p>
+                  </div>
+                  {changeCount < MAX_CHANGES ? (
+                    <div className="space-y-3">
+                      <p className="text-xs text-slate-400 text-center">
+                        Cambios restantes: <span className="font-bold text-white">{MAX_CHANGES - changeCount}</span> de {MAX_CHANGES}
+                      </p>
+                      <div className="flex gap-6">
+                        <button onClick={() => setBetType("yes")} className="flex items-center gap-2.5">
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${betType === "yes" ? "border-emerald-500 bg-emerald-500" : "border-slate-300 dark:border-slate-600"}`}>
+                            {betType === "yes" && <div className="w-2 h-2 rounded-full bg-white" />}
+                          </div>
+                          <span className={`text-sm font-medium ${betType === "yes" ? "text-emerald-500" : "text-slate-500 dark:text-slate-400"}`}>Sí — {yesPct}%</span>
+                        </button>
+                        <button onClick={() => setBetType("no")} className="flex items-center gap-2.5">
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${betType === "no" ? "border-rose-500 bg-rose-500" : "border-slate-300 dark:border-slate-600"}`}>
+                            {betType === "no" && <div className="w-2 h-2 rounded-full bg-white" />}
+                          </div>
+                          <span className={`text-sm font-medium ${betType === "no" ? "text-rose-500" : "text-slate-500 dark:text-slate-400"}`}>No — {noPct}%</span>
+                        </button>
+                      </div>
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-sm text-slate-500 dark:text-slate-400">Monto</span>
+                          <span className="text-2xl font-bold text-slate-900 dark:text-white">{amount ? `${amount} $` : "0 $"}</span>
+                        </div>
+                        <div className="flex gap-2 flex-wrap">
+                          {[1, 5, 10, 50, 100].map((val) => (
+                            <button key={val} onClick={() => { const current = parseFloat(amount) || 0; const max = points !== null ? points : 0; const next = Math.min(current + val, max); setAmount(String(next)); }}
+                              className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700">
+                              +{val}
+                            </button>
+                          ))}
+                          <button onClick={() => { const max = points !== null ? points : 0; setAmount(String(max)); }}
+                            className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700">
+                            Máx.
+                          </button>
+                          {amount && (
+                            <button onClick={() => setAmount("")}
+                              className="px-3 py-1.5 rounded-full text-sm font-medium bg-rose-100 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 hover:bg-rose-200 dark:hover:bg-rose-900/40 transition-colors border border-rose-200 dark:border-rose-800">
+                              Limpiar
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <button onClick={handleBet} disabled={bettingLoading || !amount}
+                        className={`w-full py-3 rounded-xl font-bold text-sm transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${betType === "yes" ? "bg-emerald-500 text-slate-950" : "bg-rose-500 text-white"}`}>
+                        {bettingLoading ? "Procesando..." : `Cambiar predicción — ${betType === "yes" ? "Sí" : "No"}`}
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-center text-sm text-slate-400 bg-slate-200 dark:bg-slate-800 rounded-xl py-3">
+                      🔒 Alcanzaste el límite de <span className="text-white font-bold">{MAX_CHANGES} cambios</span>
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex gap-6 mb-4">
+                    <button onClick={() => setBetType("yes")} className="flex items-center gap-2.5">
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${betType === "yes" ? "border-emerald-500 bg-emerald-500" : "border-slate-300 dark:border-slate-600"}`}>
+                        {betType === "yes" && <div className="w-2 h-2 rounded-full bg-white" />}
+                      </div>
+                      <span className={`text-sm font-medium ${betType === "yes" ? "text-emerald-500" : "text-slate-500 dark:text-slate-400"}`}>Sí — {yesPct}%</span>
+                    </button>
+                    <button onClick={() => setBetType("no")} className="flex items-center gap-2.5">
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${betType === "no" ? "border-rose-500 bg-rose-500" : "border-slate-300 dark:border-slate-600"}`}>
+                        {betType === "no" && <div className="w-2 h-2 rounded-full bg-white" />}
+                      </div>
+                      <span className={`text-sm font-medium ${betType === "no" ? "text-rose-500" : "text-slate-500 dark:text-slate-400"}`}>No — {noPct}%</span>
+                    </button>
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm text-slate-500 dark:text-slate-400">Monto</span>
+                      <span className="text-2xl font-bold text-slate-900 dark:text-white">{amount ? `${amount} $` : "0 $"}</span>
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      {[1, 5, 10, 50, 100].map((val) => (
+                        <button key={val} onClick={() => { const current = parseFloat(amount) || 0; const max = points !== null ? points : 0; const next = Math.min(current + val, max); setAmount(String(next)); }}
+                          className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700">
+                          +{val}
+                        </button>
+                      ))}
+                      <button onClick={() => { const max = points !== null ? points : 0; setAmount(String(max)); }}
+                        className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700">
+                        Máx.
+                      </button>
+                      {amount && (
+                        <button onClick={() => setAmount("")}
+                          className="px-3 py-1.5 rounded-full text-sm font-medium bg-rose-100 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 hover:bg-rose-200 dark:hover:bg-rose-900/40 transition-colors border border-rose-200 dark:border-rose-800">
+                          Limpiar
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <button onClick={handleBet} disabled={bettingLoading || !amount}
+                    className={`w-full py-3 rounded-xl font-bold text-sm transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${betType === "yes" ? "bg-emerald-500 text-slate-950" : "bg-rose-500 text-white"}`}>
+                    {bettingLoading ? "Procesando..." : `Confirmar apuesta — ${betType === "yes" ? "Sí" : "No"}`}
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : null}
+
+          {/* Top apostadores */}
+          {topHolders.length > 0 && (
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
+              <p className="text-xs text-slate-400 uppercase tracking-widest mb-4">Top apostadores</p>
+              <div className="space-y-3">
+                {topHolders.map((h, i) => {
+                  const nombre = `Apostador ${i + 1}`;
+                  const initial = nombre.charAt(0).toUpperCase();
+                  return (
+                    <div key={i} className="flex items-center gap-3">
+                      <span className="text-xs font-bold text-slate-400 dark:text-slate-500 w-4">{i + 1}</span>
+                      <div className="h-8 w-8 rounded-full bg-emerald-500/20 border border-emerald-500/30 grid place-items-center shrink-0">
+                        <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{initial}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{nombre}</p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${h.type === "yes" ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400" : "bg-rose-50 dark:bg-rose-900/20 text-rose-500 dark:text-rose-400"}`}>
+                          {h.type === "yes" ? "Sí" : "No"}
+                        </span>
+                        <span className="text-sm font-bold text-slate-900 dark:text-white">${h.amount}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
-        </div>
-        {/* Mercados relacionados */}
-        {relatedMarkets.length > 0 && (
-          <div>
-            <h2 className="font-bold text-xl mb-4">Más de {market.category}</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 gap-4">
-              {relatedMarkets.map((m) => {
-                const t = (m.yes ?? 0) + (m.no ?? 0) || 1;
-                const yPct = ((m.yes / t) * 100).toFixed(0);
-                const nPct = ((m.no / t) * 100).toFixed(0);
-                return (
-                  <div key={m.id} className="border rounded-xl p-3 sm:p-4 transition-all duration-300 hover:shadow-lg dark:hover:shadow-black/50 hover:-translate-y-0.5 bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/50">
-                    {m.category && (
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                          {m.category}
-                        </span>
-                      </div>
-                    )}
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <Link href={`/market/${m.id}`}>
-                        <h3 className="text-[13px] font-semibold leading-snug hover:text-emerald-400 transition-colors cursor-pointer">
-                          {m.question}
-                        </h3>
-                      </Link>
-                    </div>
-                    <div className="flex justify-end text-[11px] text-slate-400 mb-3">
-                      <span>{(Number(m.yes) + Number(m.no)).toFixed(1)} $ apostados</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Link href={`/market/${m.id}?bet=yes`}
-                        className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium rounded-xl py-2.5 text-sm text-center active:scale-95 transition-transform flex flex-col items-center leading-tight">
-                        <span className="text-[11px] opacity-70">Sí</span>
-                        <span className="font-bold">{yPct}%</span>
-                      </Link>
-                      <Link href={`/market/${m.id}?bet=no`}
-                        className="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 font-medium rounded-xl py-2.5 text-sm text-center active:scale-95 transition-transform flex flex-col items-center leading-tight">
-                        <span className="text-[11px] opacity-70">No</span>
-                        <span className="font-bold">{nPct}%</span>
-                      </Link>
-                    </div>
+
+        </div>{/* fin columna derecha */}
+      </div>{/* fin flex row */}
+
+      {/* ABAJO - mercados relacionados */}
+      {relatedMarkets.length > 0 && (
+        <div>
+          <h2 className="font-bold text-xl mb-4">Más de {market.category}</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            {relatedMarkets.map((m) => {
+              const t = (m.yes ?? 0) + (m.no ?? 0) || 1;
+              const yPct = ((m.yes / t) * 100).toFixed(0);
+              const nPct = ((m.no / t) * 100).toFixed(0);
+              return (
+                <div key={m.id} className="border rounded-xl p-3 sm:p-4 transition-all duration-300 hover:shadow-lg dark:hover:shadow-black/50 hover:-translate-y-0.5 bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/50">
+                  {m.category && (
+                    <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5 block w-fit">
+                      {m.category}
+                    </span>
+                  )}
+                  <Link href={`/market/${m.id}`}>
+                    <h3 className="text-[13px] font-semibold leading-snug hover:text-emerald-400 transition-colors cursor-pointer mb-3">
+                      {m.question}
+                    </h3>
+                  </Link>
+                  <div className="flex justify-end text-[11px] text-slate-400 mb-3">
+                    <span>{(Number(m.yes) + Number(m.no)).toFixed(1)} $ apostados</span>
                   </div>
-                );
-              })}
-            </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Link href={`/market/${m.id}?bet=yes`}
+                      className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium rounded-xl py-2.5 text-sm text-center active:scale-95 transition-transform flex flex-col items-center leading-tight">
+                      <span className="text-[11px] opacity-70">Sí</span>
+                      <span className="font-bold">{yPct}%</span>
+                    </Link>
+                    <Link href={`/market/${m.id}?bet=no`}
+                      className="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 font-medium rounded-xl py-2.5 text-sm text-center active:scale-95 transition-transform flex flex-col items-center leading-tight">
+                      <span className="text-[11px] opacity-70">No</span>
+                      <span className="font-bold">{nPct}%</span>
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        )}
-      </div>
-    </main>
-  );
+        </div>
+      )}
+
+    </div>
+  </main>
+);
 }
