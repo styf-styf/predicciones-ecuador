@@ -257,11 +257,11 @@ const fetchUniqueBettors = async () => {
 
       {/* LAYOUT 2 COLUMNAS */}
       
-      <div className="flex flex-col-reverse lg:flex-row gap-6 items-start">
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
 
         {/* COLUMNA IZQUIERDA */}
         
-        <div className="flex-1 min-w-0 space-y-6">
+        <div className="flex-1 min-w-0 space-y-6 order-2 lg:order-1">
           {/* Header mercado */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
         <div className="p-5 sm:p-6">
@@ -445,7 +445,7 @@ const fetchUniqueBettors = async () => {
         </div>{/* fin columna izquierda */}
 
         {/* COLUMNA DERECHA - sticky */}
-        <div className="w-full lg:w-[360px] shrink-0 lg:sticky lg:top-24 space-y-4">
+        <div className="w-full lg:w-[360px] shrink-0 lg:sticky lg:top-24 space-y-4 order-1 lg:order-2">
 
           {/* Apostar */}
           {!market.resolved ? (
