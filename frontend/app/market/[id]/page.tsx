@@ -280,7 +280,7 @@ const fetchUniqueBettors = async () => {
       <ResponsiveContainer width="100%" height={160}>
         <LineChart data={history.map((h) => {
   const point = {
-    time: new Date(h.created_at).toLocaleDateString("es-EC", { day: "numeric", month: "short" }),
+    time: new Date(h.created_at).toLocaleTimeString("es-EC", { hour: "2-digit", minute: "2-digit", day: "numeric", month: "short" }),
     Si: parseFloat(h.yes_pct),
     No: parseFloat(h.no_pct),
   };
