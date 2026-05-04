@@ -346,26 +346,40 @@ const fetchUniqueBettors = async () => {
 
 
           {/* Noticias */}
-          <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
-            <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
-              <Newspaper size={18} className="text-blue-400" /> Noticias relacionadas
-            </h2>
-            {loadingNews ? (
-              <p className="text-slate-400 text-sm">Buscando noticias...</p>
-            ) : news.length === 0 ? (
-              <p className="text-slate-400 text-sm">No se encontraron noticias relacionadas.</p>
-            ) : (
-              <div className="space-y-3">
-                {news.map((n, i) => (
-                  <a key={i} href={n.url} target="_blank" rel="noopener noreferrer"
-                    className="block bg-slate-200 dark:bg-slate-800 rounded-xl p-4 hover:bg-slate-300 dark:hover:bg-slate-700 transition">
-                    <p className="font-semibold text-sm leading-snug">{n.title}</p>
-                    <p className="text-xs text-slate-400 mt-1">{n.source?.name} • {new Date(n.publishedAt).toLocaleDateString()}</p>
-                  </a>
-                ))}
-              </div>
-            )}
-          </div>
+<div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
+  <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
+    <Newspaper size={18} className="text-blue-400" /> Noticias relacionadas
+  </h2>
+
+  {/* Noticia origen del mercado */}
+  {market.news_title && (
+    <a href={market.news_url || "#"} target="_blank" rel="noopener noreferrer"
+      className="block mb-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition">
+      <span className="text-[10px] text-blue-500 uppercase tracking-widest font-semibold block mb-1">📰 Noticia origen</span>
+      <p className="font-semibold text-sm leading-snug text-slate-900 dark:text-white">{market.news_title}</p>
+      {market.news_source && (
+        <p className="text-xs text-slate-400 mt-1">{market.news_source} · {market.news_date ? new Date(market.news_date).toLocaleDateString() : ""}</p>
+      )}
+    </a>
+  )}
+
+  {/* Noticias de NewsAPI */}
+  {loadingNews ? (
+    <p className="text-slate-400 text-sm">Buscando noticias adicionales...</p>
+  ) : news.length === 0 && !market.news_title ? (
+    <p className="text-slate-400 text-sm">No se encontraron noticias relacionadas.</p>
+  ) : (
+    <div className="space-y-3">
+      {news.map((n, i) => (
+        <a key={i} href={n.url} target="_blank" rel="noopener noreferrer"
+          className="block bg-slate-200 dark:bg-slate-800 rounded-xl p-4 hover:bg-slate-300 dark:hover:bg-slate-700 transition">
+          <p className="font-semibold text-sm leading-snug">{n.title}</p>
+          <p className="text-xs text-slate-400 mt-1">{n.source?.name} • {new Date(n.publishedAt).toLocaleDateString()}</p>
+        </a>
+      ))}
+    </div>
+  )}
+</div>
 
           {/* Comentarios */}
           <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
