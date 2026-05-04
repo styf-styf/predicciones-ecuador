@@ -710,6 +710,8 @@ await supabase.from("market_history").insert([{
   total: total,
 }]);
 
+console.log("Snapshot guardado:", { marketId, yes_pct: ((Number(updatedMarket.yes) / total) * 100).toFixed(1), no_pct: ((Number(updatedMarket.no) / total) * 100).toFixed(1) });
+
 res.json({ message: "Apuesta realizada", points: newPoints, market: updatedMarket });
 });
 // =======================
