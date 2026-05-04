@@ -333,7 +333,7 @@ const fetchUniqueBettors = async () => {
 
   {/* Noticia de la plataforma (origen del mercado) */}
   {market.news_title && (
-    <div className="mb-4 bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 space-y-3">
+    <div className="mb-4 space-y-3">
       <div className="flex items-center justify-between gap-2">
         <span className="text-[10px] text-blue-400 uppercase tracking-widest font-semibold">📰 Noticia origen del mercado</span>
         {market.news_date && (
