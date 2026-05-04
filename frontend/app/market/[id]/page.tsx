@@ -79,7 +79,7 @@ export default function MarketPage() {
 const fetchTopHolders = async () => {
   const { data } = await supabase
     .from("bets")
-    .select("amount, type, user_id")
+    .select("amount, type, users(nombre, email)")
     .eq("market_id", Number(id))
     .order("amount", { ascending: false })
     .limit(5);
@@ -604,7 +604,7 @@ setAmount(String(next));
     <p className="text-xs text-slate-400 uppercase tracking-widest mb-4">Top apostadores</p>
     <div className="space-y-3">
       {topHolders.map((h, i) => {
-        const nombre = `Apostador ${i + 1}`;
+        const nombre = h.users?.nombre || h.users?.email?.split("@")[0] || "Anónimo";
         const initial = nombre.charAt(0).toUpperCase();
         return (
           <div key={i} className="flex items-center gap-3">
