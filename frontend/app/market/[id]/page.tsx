@@ -263,87 +263,66 @@ const fetchUniqueBettors = async () => {
         
         <div className="flex-1 min-w-0 space-y-6 order-2 lg:order-1">
           {/* Header mercado */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
-        <div className="p-5 sm:p-6">
-          <div className="flex items-start gap-4">
-            <div className="flex-1">
-              {market.category && (
-                <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2 block">{market.category}</span>
-              )}
-              <h1 className="text-xl sm:text-2xl font-bold leading-snug">{market.question}</h1>
-            </div>
-          </div>
-          <div className="mt-6 flex items-end justify-between gap-4 flex-wrap">
-            <div>
-              <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Probabilidad actual</p>
-              <div className="flex items-baseline gap-3">
-                <span className="text-5xl font-black text-emerald-500">{yesPct}%</span>
-                <span className="text-lg text-slate-400">de que ocurra</span>
-              </div>
-            </div>
-            <div className="flex gap-6 text-right">
-              <div>
-                <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Sí</p>
-                <p className="text-2xl font-bold text-emerald-500">{yesPct}%</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">No</p>
-                <p className="text-2xl font-bold text-rose-500">{noPct}%</p>
-              </div>
-            </div>
-          </div>
-          <div className="mt-4">
-            <div className="w-full h-4 rounded-full bg-rose-200 dark:bg-rose-900/40 overflow-hidden shadow-inner">
-              <div
-                className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full transition-all duration-1000 ease-out relative"
-                style={{ width: `${yesPct}%` }}
-              >
-                <div className="absolute inset-0 bg-white/20 rounded-full" />
-              </div>
-            </div>
+<div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
+
+  {/* Categoría + Pregunta */}
+  <div className="p-5 sm:p-6">
+    {market.category && (
+      <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2 block">{market.category}</span>
+    )}
+    <h1 className="text-xl sm:text-2xl font-bold leading-snug">{market.question}</h1>
+  </div>
+
+  {/* Gráfico de evolución */}
+  {history.length > 1 && (
+    <div className="border-t border-slate-100 dark:border-slate-800 p-5 sm:p-6 pt-4">
+      <p className="text-[9px] text-slate-400 uppercase tracking-widest mb-3">Evolución de probabilidad</p>
+      <ResponsiveContainer width="100%" height={160}>
+        <LineChart data={history.map((h) => ({
+          time: new Date(h.created_at).toLocaleDateString("es-EC", { day: "numeric", month: "short" }),
+          Sí: parseFloat(h.yes_pct),
+          No: parseFloat(h.no_pct),
+        }))}>
+          <CartesianGrid strokeDasharray="2 4" stroke="#94a3b820" vertical={false} />
+          <XAxis dataKey="time" tick={{ fill: "#94a3b8", fontSize: 9 }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fill: "#94a3b8", fontSize: 9 }} axisLine={false} tickLine={false} width={28} domain={[0, 100]} />
+          <Tooltip contentStyle={{ backgroundColor: "#1e293b", border: "1px solid #334155", borderRadius: "8px", fontSize: "11px" }} labelStyle={{ color: "#94a3b8" }} />
+          <Line type="monotone" dataKey="Sí" stroke="#10b981" strokeWidth={2} dot={false} />
+          <Line type="monotone" dataKey="No" stroke="#f43f5e" strokeWidth={2} dot={false} />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  )}
+
+  {/* Stats + Probabilidad */}
+  <div className="border-t border-slate-100 dark:border-slate-800 px-5 sm:px-6 py-3 flex items-center justify-between flex-wrap gap-3 bg-slate-50 dark:bg-slate-800/50">
+    <div className="flex items-center gap-5 flex-wrap">
+      {[
+        { icon: <BarChart2 size={12} />, label: "Total apostado", value: `$${(Number(market.yes) + Number(market.no)).toFixed(1)}` },
+        { icon: <Users size={12} />, label: "Participantes", value: uniqueBettors },
+        { icon: <Clock size={12} />, label: "Creado", value: new Date(market.created_at).toLocaleDateString("es-EC", { day: "numeric", month: "short", year: "numeric" }) },
+        { icon: <TrendingUp size={12} />, label: "Estado", value: market.resolved ? `Ganó ${market.winner === "yes" ? "Sí" : "No"}` : "En vivo" },
+      ].map((stat) => (
+        <div key={stat.label} className="flex items-center gap-1.5">
+          <span className="text-slate-400 dark:text-slate-500">{stat.icon}</span>
+          <div>
+            <p className="text-[9px] text-slate-400 dark:text-slate-500 uppercase tracking-widest">{stat.label}</p>
+            <p className="text-[12px] font-bold text-slate-900 dark:text-white">{stat.value}</p>
           </div>
         </div>
-
-        {/* Stats bar */}
-        <div className="border-t border-slate-100 dark:border-slate-800 px-5 sm:px-6 py-3 flex items-center gap-6 flex-wrap bg-slate-50 dark:bg-slate-800/50">
-          {[
-            { icon: <BarChart2 size={13} />, label: "Total apostado", value: `$${(Number(market.yes) + Number(market.no)).toFixed(1)}` },
-            { icon: <Users size={13} />, label: "Participantes", value: uniqueBettors },
-            { icon: <Clock size={13} />, label: "Creado", value: new Date(market.created_at).toLocaleDateString("es-EC", { day: "numeric", month: "short", year: "numeric" }) },
-            { icon: <TrendingUp size={13} />, label: "Estado", value: market.resolved ? `Ganó ${market.winner === "yes" ? "Sí" : "No"}` : "En vivo" },
-          ].map((stat) => (
-            <div key={stat.label} className="flex items-center gap-2">
-              <span className="text-slate-400 dark:text-slate-500">{stat.icon}</span>
-              <div>
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-widest">{stat.label}</p>
-                <p className="text-[13px] font-bold text-slate-900 dark:text-white">{stat.value}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Gráfico de evolución */}
-        {history.length > 1 && (
-          <div className="border-t border-slate-100 dark:border-slate-800 p-5 sm:p-6">
-            <p className="text-xs text-slate-400 uppercase tracking-widest mb-4">Evolución de probabilidad</p>
-            <ResponsiveContainer width="100%" height={160}>
-              <LineChart data={history.map((h) => ({
-                time: new Date(h.created_at).toLocaleDateString("es-EC", { day: "numeric", month: "short" }),
-                Sí: parseFloat(h.yes_pct),
-                No: parseFloat(h.no_pct),
-              }))}>
-                <CartesianGrid strokeDasharray="2 4" stroke="#94a3b820" vertical={false} />
-                <XAxis dataKey="time" tick={{ fill: "#94a3b8", fontSize: 9 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: "#94a3b8", fontSize: 9 }} axisLine={false} tickLine={false} width={30} domain={[0, 100]} />
-                <Tooltip contentStyle={{ backgroundColor: "#1e293b", border: "1px solid #334155", borderRadius: "8px", fontSize: "11px" }} labelStyle={{ color: "#94a3b8" }} />
-                <Line type="monotone" dataKey="Sí" stroke="#10b981" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="No" stroke="#f43f5e" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        )}
+      ))}
+    </div>
+    <div className="text-right">
+      <p className="text-[9px] text-slate-400 uppercase tracking-widest mb-0.5">Probabilidad actual</p>
+      <div className="flex items-baseline gap-1.5">
+        <span className="text-3xl font-black text-emerald-500">{yesPct}%</span>
+        <span className="text-xl font-black text-rose-500">{noPct}%</span>
+        <span className="text-xs text-slate-400">de que ocurra</span>
       </div>
+    </div>
+  </div>
 
+</div>
 
           {/* Noticias */}
 <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
