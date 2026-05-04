@@ -610,7 +610,7 @@ const fetchUniqueBettors = async () => {
       {relatedMarkets.length > 0 && (
         <div>
           <h2 className="font-bold text-xl mb-4">Más de {market.category}</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {relatedMarkets.map((m) => {
               const t = (m.yes ?? 0) + (m.no ?? 0) || 1;
               const yPct = ((m.yes / t) * 100).toFixed(0);
