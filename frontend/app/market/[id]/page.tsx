@@ -599,7 +599,7 @@ const fetchUniqueBettors = async () => {
               <p className="text-xs text-slate-400 uppercase tracking-widest mb-4">Top Predictores</p>
               <div className="space-y-3">
                 {topHolders.map((h, i) => {
-                  const nombre = `Apostador ${i + 1}`;
+                  const nombre = h.users?.nombre || h.users?.email?.split("@")[0] || "Anónimo";
                   const initial = nombre.charAt(0).toUpperCase();
                   return (
                     <div key={i} className="flex items-center gap-3">
