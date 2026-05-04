@@ -264,7 +264,9 @@ const fetchUniqueBettors = async () => {
       <div className="flex flex-col lg:flex-row gap-6 items-start">
 
         {/* COLUMNA IZQUIERDA */}
-        {/* Header mercado - estilo Polymarket */}
+        
+        <div className="flex-1 min-w-0 space-y-6">
+          {/* Header mercado - estilo Polymarket */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
         <div className="p-5 sm:p-6">
           <div className="flex items-start gap-4">
@@ -345,7 +347,6 @@ const fetchUniqueBettors = async () => {
           </div>
         )}
       </div>
-        <div className="flex-1 min-w-0 space-y-6">
 
           {/* Contexto del mercado */}
           {(market.news_summary || market.news_title) ? (
