@@ -335,7 +335,7 @@ const fetchUniqueBettors = async () => {
   {market.news_title && (
     <div className="mb-4 space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[10px] text-blue-400 uppercase tracking-widest font-semibold">📰 Noticia origen del mercado</span>
+
         {market.news_date && (
           <span className="text-[10px] text-slate-400 dark:text-slate-500">
             {new Date(market.news_date).toLocaleDateString("es-EC", { day: "numeric", month: "long", year: "numeric" })}
