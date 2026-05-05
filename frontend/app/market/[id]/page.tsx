@@ -243,7 +243,7 @@ const fetchUniqueBettors = async () => {
     </main>
   );
   const total = (market.yes ?? 0) + (market.no ?? 0) || 1;
-  const yesPct = (market.yes === 0 && market.no === 0) ? "50" : ((market.yes / total) * 100).toFixed(0);
+  const yesPct = ((market.yes / total) * 100).toFixed(0);
   const noPct = ((market.no / total) * 100).toFixed(0);
   const relatedMarkets = allMarkets.filter(
     (m) => m.category === market.category && m.id !== market.id && !m.resolved
@@ -288,7 +288,7 @@ const fetchUniqueBettors = async () => {
                 <div className={`rounded-xl p-4 text-center border ${userBet.type === "yes" ? "border-emerald-500/40 bg-emerald-500/10" : "border-rose-500/40 bg-rose-500/10"}`}>
                   <p className="text-sm text-slate-400 mb-1">Tu predicción actual</p>
                   <p className={`text-2xl font-black ${userBet.type === "yes" ? "text-emerald-400" : "text-rose-400"}`}>{userBet.type === "yes" ? "✅ Sí" : "❌ No"}</p>
-                  <p className="text-sm text-slate-400 mt-1">{userBet.amount} $ apostados</p>
+                  <p className="text-sm text-slate-400 mt-1">{userBet.amount} $ en predicciones</p>
                 </div>
                 {changeCount < MAX_CHANGES ? (
                   <div className="space-y-3">
@@ -612,7 +612,7 @@ const fetchUniqueBettors = async () => {
                   <div className={`rounded-xl p-4 text-center border ${userBet.type === "yes" ? "border-emerald-500/40 bg-emerald-500/10" : "border-rose-500/40 bg-rose-500/10"}`}>
                     <p className="text-sm text-slate-400 mb-1">Tu predicción actual</p>
                     <p className={`text-2xl font-black ${userBet.type === "yes" ? "text-emerald-400" : "text-rose-400"}`}>{userBet.type === "yes" ? "✅ Sí" : "❌ No"}</p>
-                    <p className="text-sm text-slate-400 mt-1">{userBet.amount} $ apostados</p>
+                    <p className="text-sm text-slate-400 mt-1">{userBet.amount} $ en predicciones</p>
                   </div>
                   {changeCount < MAX_CHANGES ? (
                     <div className="space-y-3">
@@ -725,7 +725,7 @@ const fetchUniqueBettors = async () => {
                     <h3 className="text-[13px] font-semibold leading-snug hover:text-emerald-400 transition-colors cursor-pointer mb-3">{m.question}</h3>
                   </Link>
                   <div className="flex justify-end text-[11px] text-slate-400 mb-3">
-                    <span>{(Number(m.yes) + Number(m.no)).toFixed(1)} $ apostados</span>
+                    <span>{(Number(m.yes) + Number(m.no)).toFixed(1)} $ en predicciones</span>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <Link href={`/market/${m.id}?bet=yes`} className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium rounded-xl py-2.5 text-sm text-center active:scale-95 transition-transform flex flex-col items-center leading-tight">

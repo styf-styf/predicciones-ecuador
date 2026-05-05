@@ -392,7 +392,7 @@ export default function Home() {
                   <div className="flex items-center justify-end text-[11px] text-slate-400 dark:text-slate-500 mb-3">
                     <span className="flex items-center gap-1">
                       
-                      {(Number(market.yes) + Number(market.no)).toFixed(1)} $ apostados
+                      {(Number(market.yes) + Number(market.no)).toFixed(1)} $ en predicciones
                     </span>
                   </div>
                   {/* Acción */}
@@ -509,7 +509,7 @@ function Carousel({ markets, autoplayMs = 5000 }: { markets: any[]; autoplayMs?:
               </div>
             </div>
           </div>
-          <div className="text-xs text-slate-400 text-right">{total} $ apostados</div>
+          <div className="text-xs text-slate-400 text-right">{total} $ en predicciones</div>
         </div>
       </div>
 
