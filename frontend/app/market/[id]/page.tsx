@@ -243,7 +243,7 @@ const fetchUniqueBettors = async () => {
     </main>
   );
   const total = (market.yes ?? 0) + (market.no ?? 0) || 1;
-  const yesPct = ((market.yes / total) * 100).toFixed(0);
+  const yesPct = (market.yes === 0 && market.no === 0) ? "50" : ((market.yes / total) * 100).toFixed(0);
   const noPct = ((market.no / total) * 100).toFixed(0);
   const relatedMarkets = allMarkets.filter(
     (m) => m.category === market.category && m.id !== market.id && !m.resolved
