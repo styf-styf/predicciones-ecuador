@@ -503,9 +503,7 @@ function SectionHeader({ category, count }: { category: string; count: number })
       <h2 className="text-xl sm:text-2xl font-bold">
         {category === "all" ? "Tendencias": cat.label}
       </h2>
-      {category !== "all" && (
-        <span className="ml-1 text-sm text-slate-400">({count} activos)</span>
-      )}
+      <span className="ml-1 text-sm text-slate-400">({count} activos)</span>
     </>
   );
 }
