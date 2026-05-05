@@ -342,7 +342,7 @@ export default function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {visibleMarkets.map((market) => {
               const total = (market.yes ?? 0) + (market.no ?? 0) || 1;
-              const yesPct = ((market.yes / total) * 100).toFixed(0);
+              const yesPct = (market.yes === 0 && market.no === 0) ? "50" : ((market.yes / total) * 100).toFixed(0);
               const isResolved = market.resolved;
 
               return (
