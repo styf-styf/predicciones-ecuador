@@ -249,144 +249,164 @@ const fetchUniqueBettors = async () => {
     (m) => m.category === market.category && m.id !== market.id && !m.resolved
   ).slice(0, 4);
 
-  return (
+ return (
   <main className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
     <Header />
     <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
 
-      
-
       {/* LAYOUT 2 COLUMNAS */}
-      
       <div className="flex flex-col lg:flex-row gap-6 items-start">
 
         {/* COLUMNA IZQUIERDA */}
-        
         <div className="flex-1 min-w-0 space-y-6 order-2 lg:order-1">
-          {/* Header mercado */}
-<div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
 
-  {/* Categoría + Pregunta */}
-  <div className="p-5 sm:p-6">
-    {market.category && (
-      <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2 block">{market.category}</span>
-    )}
-    <h1 className="text-xl sm:text-2xl font-bold leading-snug">{market.question}</h1>
-  </div>
-
-  {/* Gráfico de evolución */}
-  {history.length > 1 && (
-    <div className="border-t border-slate-100 dark:border-slate-800 p-5 sm:p-6 pt-4">
-      <p className="text-[9px] text-slate-400 uppercase tracking-widest mb-3">Evolución de probabilidad</p>
-      <ResponsiveContainer width="100%" height={160}>
-        <LineChart data={history.map((h) => ({
-          time: new Date(h.created_at).toLocaleTimeString("es-EC", { hour: "2-digit", minute: "2-digit", day: "numeric", month: "short" }),
-          Sí: parseFloat(h.yes_pct),
-          No: parseFloat(h.no_pct),
-        }))}>
-          <CartesianGrid strokeDasharray="2 4" stroke="#94a3b820" vertical={false} />
-          <XAxis dataKey="time" tick={{ fill: "#94a3b8", fontSize: 9 }} axisLine={false} tickLine={false} />
-          <YAxis tick={{ fill: "#94a3b8", fontSize: 9 }} axisLine={false} tickLine={false} width={28} domain={[0, 100]} />
-          <Tooltip contentStyle={{ backgroundColor: "#1e293b", border: "1px solid #334155", borderRadius: "8px", fontSize: "11px" }} labelStyle={{ color: "#94a3b8" }} />
-          <Line type="monotone" dataKey="Sí" stroke="#10b981" strokeWidth={2} dot={false} />
-          <Line type="monotone" dataKey="No" stroke="#f43f5e" strokeWidth={2} dot={false} />
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
-  )}
-
-  {/* Stats + Probabilidad */}
-  <div className="border-t border-slate-100 dark:border-slate-800 px-5 sm:px-6 py-3 flex items-center justify-between flex-wrap gap-3 bg-slate-50 dark:bg-slate-800/50">
-    <div className="flex items-center gap-5 flex-wrap">
-      {[
-        { icon: <BarChart2 size={12} />, label: "Total apostado", value: `$${(Number(market.yes) + Number(market.no)).toFixed(1)}` },
-        { icon: <Users size={12} />, label: "Participantes", value: uniqueBettors },
-        { icon: <Clock size={12} />, label: "Creado", value: new Date(market.created_at).toLocaleDateString("es-EC", { day: "numeric", month: "short", year: "numeric" }) },
-        { icon: <TrendingUp size={12} />, label: "Estado", value: market.resolved ? `Ganó ${market.winner === "yes" ? "Sí" : "No"}` : "En vivo" },
-      ].map((stat) => (
-        <div key={stat.label} className="flex items-center gap-1.5">
-          <span className="text-slate-400 dark:text-slate-500">{stat.icon}</span>
-          <div>
-            <p className="text-[9px] text-slate-400 dark:text-slate-500 uppercase tracking-widest">{stat.label}</p>
-            <p className="text-[12px] font-bold text-slate-900 dark:text-white">{stat.value}</p>
+          {/* Pregunta - order 1 en móvil */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden order-first">
+            <div className="p-5 sm:p-6">
+              {market.category && (
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2 block">{market.category}</span>
+              )}
+              <h1 className="text-xl sm:text-2xl font-bold leading-snug">{market.question}</h1>
+            </div>
           </div>
-        </div>
-      ))}
-    </div>
-    <div className="text-right">
-      <p className="text-[9px] text-slate-400 uppercase tracking-widest mb-0.5">Probabilidad actual</p>
-      <div className="flex items-baseline gap-1.5">
-        <span className="text-3xl font-black text-emerald-500">{yesPct}%</span>
-        <span className="text-xl font-black text-rose-500">{noPct}%</span>
-        <span className="text-xs text-slate-400">de que ocurra</span>
-      </div>
-    </div>
-  </div>
 
-</div>
+          {/* Gráfico + Stats - order 3 en móvil, debajo de apuesta */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden order-3 lg:order-2">
 
-          {/* Noticias */}
-<div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
-  <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
-    <Newspaper size={18} className="text-blue-400" /> Noticia relacionada
-  </h2>
+            {/* Gráfico de evolución */}
+            {history.length > 1 && (
+              <div className="p-5 sm:p-6 pt-4">
+                <p className="text-[9px] text-slate-400 uppercase tracking-widest mb-3">Evolución de probabilidad</p>
+                <ResponsiveContainer width="100%" height={160}>
+                  <LineChart data={history.map((h) => ({
+                    time: new Date(h.created_at).toLocaleTimeString("es-EC", { hour: "2-digit", minute: "2-digit", day: "numeric", month: "short" }),
+                    Sí: parseFloat(h.yes_pct),
+                    No: parseFloat(h.no_pct),
+                  }))}>
+                    <CartesianGrid strokeDasharray="2 4" stroke="#94a3b820" vertical={false} />
+                    <XAxis dataKey="time" tick={{ fill: "#94a3b8", fontSize: 9 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fill: "#94a3b8", fontSize: 9 }} axisLine={false} tickLine={false} width={28} domain={[0, 100]} />
+                    <Tooltip contentStyle={{ backgroundColor: "#1e293b", border: "1px solid #334155", borderRadius: "8px", fontSize: "11px" }} labelStyle={{ color: "#94a3b8" }} />
+                    <Line type="monotone" dataKey="Sí" stroke="#10b981" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="No" stroke="#f43f5e" strokeWidth={2} dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
 
-  {/* Noticia de la plataforma (origen del mercado) */}
-  {market.news_title && (
-    <div className="mb-4 space-y-3">
-      <div className="flex items-center justify-between gap-2">
+            {/* Stats + Probabilidad */}
+            <div className="border-t border-slate-100 dark:border-slate-800 px-5 sm:px-6 py-3 flex items-center justify-between flex-wrap gap-3 bg-slate-50 dark:bg-slate-800/50">
+              <div className="flex items-center gap-5 flex-wrap">
+                {[
+                  { icon: <BarChart2 size={12} />, label: "Total apostado", value: `$${(Number(market.yes) + Number(market.no)).toFixed(1)}` },
+                  { icon: <Users size={12} />, label: "Participantes", value: uniqueBettors },
+                  { icon: <Clock size={12} />, label: "Creado", value: new Date(market.created_at).toLocaleDateString("es-EC", { day: "numeric", month: "short", year: "numeric" }) },
+                  { icon: <TrendingUp size={12} />, label: "Estado", value: market.resolved ? `Ganó ${market.winner === "yes" ? "Sí" : "No"}` : "En vivo" },
+                ].map((stat) => (
+                  <div key={stat.label} className="flex items-center gap-1.5">
+                    <span className="text-slate-400 dark:text-slate-500">{stat.icon}</span>
+                    <div>
+                      <p className="text-[9px] text-slate-400 dark:text-slate-500 uppercase tracking-widest">{stat.label}</p>
+                      <p className="text-[12px] font-bold text-slate-900 dark:text-white">{stat.value}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="text-right">
+                <p className="text-[9px] text-slate-400 uppercase tracking-widest mb-0.5">Probabilidad actual</p>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-3xl font-black text-emerald-500">{yesPct}%</span>
+                  <span className="text-xl font-black text-rose-500">{noPct}%</span>
+                  <span className="text-xs text-slate-400">de que ocurra</span>
+                </div>
+              </div>
+            </div>
+          </div>
 
-        {market.news_date && (
-          <span className="text-[10px] text-slate-400 dark:text-slate-500">
-            {new Date(market.news_date).toLocaleDateString("es-EC", { day: "numeric", month: "long", year: "numeric" })}
-          </span>
-        )}
-      </div>
+          {/* Top apostadores - order 4 en móvil */}
+          {topHolders.length > 0 && (
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 order-4 lg:hidden">
+              <p className="text-xs text-slate-400 uppercase tracking-widest mb-4">Top Predictores</p>
+              <div className="space-y-3">
+                {topHolders.map((h, i) => {
+                  const nombre = h.users?.nombre || h.users?.email?.split("@")[0] || "Anónimo";
+                  const initial = nombre.charAt(0).toUpperCase();
+                  return (
+                    <div key={i} className="flex items-center gap-3">
+                      <span className="text-xs font-bold text-slate-400 dark:text-slate-500 w-4">{i + 1}</span>
+                      <div className="h-8 w-8 rounded-full bg-emerald-500/20 border border-emerald-500/30 grid place-items-center shrink-0">
+                        <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{initial}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{nombre}</p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${h.type === "yes" ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400" : "bg-rose-50 dark:bg-rose-900/20 text-rose-500 dark:text-rose-400"}`}>
+                          {h.type === "yes" ? "Sí" : "No"}
+                        </span>
+                        <span className="text-sm font-bold text-slate-900 dark:text-white">${h.amount}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
-      <p className="font-bold text-sm text-slate-900 dark:text-white leading-snug">{market.news_title}</p>
+          {/* Noticias - order 5 en móvil */}
+          <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 order-5 lg:order-3">
+            <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
+              <Newspaper size={18} className="text-blue-400" /> Noticia relacionada
+            </h2>
+            {market.news_title && (
+              <div className="mb-4 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  {market.news_date && (
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                      {new Date(market.news_date).toLocaleDateString("es-EC", { day: "numeric", month: "long", year: "numeric" })}
+                    </span>
+                  )}
+                </div>
+                <p className="font-bold text-sm text-slate-900 dark:text-white leading-snug">{market.news_title}</p>
+                {market.news_summary && (
+                  <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-l-2 border-blue-400 pl-3">
+                    {market.news_summary}
+                  </p>
+                )}
+                <div className="flex items-center justify-between gap-2 pt-1">
+                  {market.news_source && (
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                      🌐 <span className="font-medium">{market.news_source}</span>
+                    </span>
+                  )}
+                  {market.news_url && (
+                    <a href={market.news_url} target="_blank" rel="noopener noreferrer"
+                      className="text-[11px] text-blue-400 hover:text-blue-300 hover:underline transition flex items-center gap-1">
+                      Ver noticia completa →
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+            {loadingNews ? (
+              <p className="text-slate-400 text-sm">Buscando noticias adicionales...</p>
+            ) : news.length === 0 && !market.news_title ? (
+              <p className="text-slate-400 text-sm">No se encontraron noticias relacionadas.</p>
+            ) : (
+              <div className="space-y-3">
+                {news.map((n, i) => (
+                  <a key={i} href={n.url} target="_blank" rel="noopener noreferrer"
+                    className="block bg-slate-200 dark:bg-slate-800 rounded-xl p-4 hover:bg-slate-300 dark:hover:bg-slate-700 transition">
+                    <p className="font-semibold text-sm leading-snug">{n.title}</p>
+                    <p className="text-xs text-slate-400 mt-1">{n.source?.name} • {new Date(n.publishedAt).toLocaleDateString()}</p>
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
 
-      {market.news_summary && (
-        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-l-2 border-blue-400 pl-3">
-          {market.news_summary}
-        </p>
-      )}
-
-      <div className="flex items-center justify-between gap-2 pt-1">
-        {market.news_source && (
-          <span className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
-            🌐 <span className="font-medium">{market.news_source}</span>
-          </span>
-        )}
-        {market.news_url && (
-          <a href={market.news_url} target="_blank" rel="noopener noreferrer"
-            className="text-[11px] text-blue-400 hover:text-blue-300 hover:underline transition flex items-center gap-1">
-            Ver noticia completa →
-          </a>
-        )}
-      </div>
-    </div>
-  )}
-
-  {/* Noticias adicionales de NewsAPI */}
-  {loadingNews ? (
-    <p className="text-slate-400 text-sm">Buscando noticias adicionales...</p>
-  ) : news.length === 0 && !market.news_title ? (
-    <p className="text-slate-400 text-sm">No se encontraron noticias relacionadas.</p>
-  ) : (
-    <div className="space-y-3">
-      {news.map((n, i) => (
-        <a key={i} href={n.url} target="_blank" rel="noopener noreferrer"
-          className="block bg-slate-200 dark:bg-slate-800 rounded-xl p-4 hover:bg-slate-300 dark:hover:bg-slate-700 transition">
-          <p className="font-semibold text-sm leading-snug">{n.title}</p>
-          <p className="text-xs text-slate-400 mt-1">{n.source?.name} • {new Date(n.publishedAt).toLocaleDateString()}</p>
-        </a>
-      ))}
-    </div>
-  )}
- </div>
-
-          {/* Comentarios */}
-          <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
+          {/* Comentarios - order 6 en móvil */}
+          <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 order-6 lg:order-4">
             <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
               <MessageCircle size={18} className="text-purple-400" /> Comentarios ({comments.length})
             </h2>
@@ -430,7 +450,7 @@ const fetchUniqueBettors = async () => {
 
         </div>{/* fin columna izquierda */}
 
-        {/* COLUMNA DERECHA - sticky */}
+        {/* COLUMNA DERECHA - sticky, solo visible en desktop */}
         <div className="w-full lg:w-[360px] shrink-0 lg:sticky lg:top-24 space-y-4 order-1 lg:order-2">
 
           {/* Apostar */}
@@ -439,7 +459,6 @@ const fetchUniqueBettors = async () => {
               <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
                 <TrendingUp size={18} className="text-emerald-400" /> Realizar apuesta
               </h2>
-
               {!token && (
                 <div className="mb-4 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between gap-3">
                   <p className="text-sm text-slate-700 dark:text-slate-200">Inicia sesión para apostar</p>
@@ -448,19 +467,16 @@ const fetchUniqueBettors = async () => {
                   </Link>
                 </div>
               )}
-
               {betSuccess && (
                 <div className="mb-4 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-center text-sm font-semibold text-emerald-500 flex items-center justify-center gap-2">
                   ✅ ¡Apuesta registrada exitosamente!
                 </div>
               )}
-
               {points !== null && (
                 <p className="text-sm text-slate-400 mb-4">
                   Tu balance: <span className="text-slate-900 dark:text-white font-bold">{points} $</span>
                 </p>
               )}
-
               {userBet ? (
                 <div className="space-y-4">
                   <div className={`rounded-xl p-4 text-center border ${userBet.type === "yes" ? "border-emerald-500/40 bg-emerald-500/10" : "border-rose-500/40 bg-rose-500/10"}`}>
@@ -573,9 +589,9 @@ const fetchUniqueBettors = async () => {
             </div>
           ) : null}
 
-          {/* Top apostadores */}
+          {/* Top apostadores - solo desktop */}
           {topHolders.length > 0 && (
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
+            <div className="hidden lg:block bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
               <p className="text-xs text-slate-400 uppercase tracking-widest mb-4">Top Predictores</p>
               <div className="space-y-3">
                 {topHolders.map((h, i) => {
