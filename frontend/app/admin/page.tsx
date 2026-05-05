@@ -111,6 +111,7 @@ export default function AdminPage() {
   const [refinPrompts, setRefinPrompts] = useState<{ [key: number]: string }>({});
   const [refining, setRefining] = useState<{ [key: number]: boolean }>({});
   const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [suggestionCategories, setSuggestionCategories] = useState<{ [key: number]: string }>({});
   const [transactions, setTransactions] = useState<any[]>([]);
   const [contactos, setContactos] = useState<any[]>([]);
 
@@ -843,7 +844,6 @@ export default function AdminPage() {
                           <span className="text-rose-500 dark:text-rose-400">No: {m.no}</span>
                           <span className="text-amber-500 dark:text-amber-400 font-bold">Total: {(Number(m.yes) + Number(m.no)).toFixed(1)}</span>
                         </div>
-                        // DESPUÉS
 {!m.resolved && (
   <div className="space-y-2">
     {editingMarket?.id === m.id ? (
@@ -1265,14 +1265,27 @@ export default function AdminPage() {
                     {s.status === "pending" && (
                       <div className="flex flex-wrap gap-2">
                         {s.new_market_question && (
-                          <button
-                            onClick={() => handleSuggestion(s.id, "approve_market")}
-                            disabled={loadingAction === `suggestion-${s.id}-approve_market`}
-                            className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 px-4 py-2 rounded-lg text-[12px] font-bold transition disabled:opacity-40"
-                          >
-                            {loadingAction === `suggestion-${s.id}-approve_market` ? "Creando..." : "✅ Crear mercado"}
-                          </button>
-                        )}
+  <div className="flex items-center gap-2">
+    <select
+      value={suggestionCategories[s.id] ?? "deporte"}
+      onChange={(e) => setSuggestionCategories((prev) => ({ ...prev, [s.id]: e.target.value }))}
+      className="bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-[12px] text-slate-700 dark:text-white/60 outline-none focus:border-emerald-500/60 transition"
+    >
+      <option value="deporte">Deporte</option>
+      <option value="farandula">Farándula</option>
+      <option value="politica">Política</option>
+      <option value="elecciones">Elecciones</option>
+      <option value="pais">País</option>
+    </select>
+    <button
+      onClick={() => handleSuggestion(s.id, "approve_market")}
+      disabled={loadingAction === `suggestion-${s.id}-approve_market`}
+      className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 px-4 py-2 rounded-lg text-[12px] font-bold transition disabled:opacity-40"
+    >
+      {loadingAction === `suggestion-${s.id}-approve_market` ? "Creando..." : "✅ Crear mercado"}
+    </button>
+  </div>
+ )}
                         {s.resolves_market_id && (
                           <button
                             onClick={() => handleSuggestion(s.id, "approve_resolve")}
