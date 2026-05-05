@@ -843,13 +843,30 @@ export default function AdminPage() {
                           <span className="text-rose-500 dark:text-rose-400">No: {m.no}</span>
                           <span className="text-amber-500 dark:text-amber-400 font-bold">Total: {(Number(m.yes) + Number(m.no)).toFixed(1)}</span>
                         </div>
-                        {!m.resolved && (
-                          <div className="flex gap-1.5">
-                            <button onClick={() => resolveMarket(m.id, "yes")} className="flex-1 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-[11px] font-bold">Sí gana</button>
-                            <button onClick={() => resolveMarket(m.id, "no")} className="flex-1 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 text-[11px] font-bold">No gana</button>
-                            <button onClick={() => handleDeleteMarket(m.id)} className="px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 text-[11px]">🗑️</button>
-                          </div>
-                        )}
+                        // DESPUÉS
+{!m.resolved && (
+  <div className="space-y-2">
+    {editingMarket?.id === m.id ? (
+      <div className="flex gap-1.5">
+        <input
+        value={editingMarket?.question ?? ""}
+          onChange={(e) => setEditingMarket((prev) => prev ? { ...prev, question: e.target.value } : null)}
+          className="flex-1 bg-slate-100 dark:bg-white/[0.06] border border-emerald-500/40 rounded-lg px-2 py-1.5 text-[12px] outline-none text-slate-900 dark:text-white"
+          autoFocus
+        />
+        <button onClick={handleEditMarket} className="px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-[11px] font-bold">✓</button>
+        <button onClick={() => setEditingMarket(null)} className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-white/[0.04] text-slate-500 dark:text-white/30 border border-slate-200 dark:border-white/[0.08] text-[11px]">✕</button>
+      </div>
+    ) : (
+      <div className="flex gap-1.5">
+        <button onClick={() => resolveMarket(m.id, "yes")} className="flex-1 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-[11px] font-bold">Sí gana</button>
+        <button onClick={() => resolveMarket(m.id, "no")} className="flex-1 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 text-[11px] font-bold">No gana</button>
+        <button onClick={() => setEditingMarket({ id: m.id, question: m.question })} className="px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 text-[11px]">✏️</button>
+        <button onClick={() => handleDeleteMarket(m.id)} className="px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 text-[11px]">🗑️</button>
+      </div>
+    )}
+  </div>
+ )}
                       </div>
                     </div>
                   ))}
