@@ -308,7 +308,7 @@ const fetchUniqueBettors = async () => {
                         <span className="text-sm text-slate-500 dark:text-slate-400">Monto</span>
                         <span className="text-2xl font-bold text-slate-900 dark:text-white">{amount ? `${amount} $` : "0 $"}</span>
                       </div>
-                      <div className="text-[8px] flex gap-2 flex-wrap">
+                      <div className="flex gap-2 flex-wrap">
                         {[1, 5, 10, 50, 100].map((val) => (
                           <button key={val} onClick={() => { const current = parseFloat(amount) || 0; const max = points !== null ? points : 0; setAmount(String(Math.min(current + val, max))); }}
                             className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700">+{val}</button>
