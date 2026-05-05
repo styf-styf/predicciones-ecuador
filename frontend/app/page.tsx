@@ -271,29 +271,41 @@ function CategoryBar({
           })}
 
           {/* Stats clickeables */}
-          <button
-            onClick={() => onChange("mercados")}
-            className="flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[12px] font-medium bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700 shrink-0 transition"
-          >
-            <TrendingUp size={11} className="text-slate-400" />
-            {total} mercados
-          </button>
+         <button
+  onClick={() => onChange("mercados")}
+  className={`flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[12px] font-medium shrink-0 transition border
+    ${active === "mercados"
+      ? "bg-slate-600 text-white border-transparent shadow-sm scale-[1.03]"
+      : "bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-400 dark:hover:border-slate-600"
+    }`}
+>
+  <TrendingUp size={11} />
+  {total} mercados
+</button>
 
-          <button
-            onClick={() => onChange("resueltos")}
-            className="flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[12px] font-medium bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700 shrink-0 transition"
-          >
-            <Trophy size={11} className="text-amber-400" />
-            {resueltos} resueltos
-          </button>
+<button
+  onClick={() => onChange("resueltos")}
+  className={`flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[12px] font-medium shrink-0 transition border
+    ${active === "resueltos"
+      ? "bg-amber-500 text-white border-transparent shadow-sm scale-[1.03]"
+      : "bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-amber-300 dark:hover:border-amber-700"
+    }`}
+>
+  <Trophy size={11} className={active === "resueltos" ? "text-white" : "text-amber-400"} />
+  {resueltos} resueltos
+</button>
 
-          <button
-            onClick={() => onChange("favoritos")}
-            className="flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[12px] font-medium bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-rose-400 hover:border-rose-300 dark:hover:border-rose-700 shrink-0 transition"
-          >
-            <HeartIcon filled size={11} />
-            Favoritos
-          </button>
+         <button
+  onClick={() => onChange("favoritos")}
+  className={`flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[12px] font-medium shrink-0 transition border
+    ${active === "favoritos"
+      ? "bg-rose-500 text-white border-transparent shadow-sm scale-[1.03]"
+      : "bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-rose-400 hover:border-rose-300 dark:hover:border-rose-700"
+    }`}
+>
+  <HeartIcon filled={active === "favoritos"} size={11} />
+  Favoritos
+</button>
 
           {/* Indicador en vivo */}
           <div className="ml-auto shrink-0 flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-full px-3.5 py-1.5">
@@ -489,7 +501,7 @@ function SectionHeader({ category, count }: { category: string; count: number })
     <>
       <Icon size={18} className={cat.color} />
       <h2 className="text-xl sm:text-2xl font-bold">
-        {category === "all" ? "Mercados activos" : cat.label}
+        {category === "all" ? "Tendencias": cat.label}
       </h2>
       {category !== "all" && (
         <span className="ml-1 text-sm text-slate-400">({count} activos)</span>
