@@ -382,9 +382,9 @@ function MarketCard({
       {/* Pregunta */}
       <div className="mb-4">
         <Link href={`/market/${market.id}`}>
-          <h3 className="text-[13px] font-semibold leading-snug hover:text-emerald-400 transition-colors cursor-pointer">
+          <h3 className="text-[13px] font-semibold leading-snug hover:text-emerald-400 transition-colors cursor-pointer line-clamp-2">
             {market.question}
-          </h3>
+            </h3>
         </Link>
       </div>
 
@@ -448,7 +448,7 @@ function HomeSkeleton() {
         </div>
       </div>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {Array.from({ length: 9 }).map((_, i) => (
             <div key={i} className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
               <div className="space-y-2">
@@ -620,7 +620,7 @@ export default function Home() {
           {visibleMarkets.length === 0 && <EmptyState category={activeCategory} />}
 
           {/* Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {visibleMarkets.map((market) => (
               <MarketCard
                 key={market.id}
