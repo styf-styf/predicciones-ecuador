@@ -262,10 +262,10 @@ const fetchUniqueBettors = async () => {
     <div className="max-w-6xl mx-auto px-4 py-6 space-y-4">
 
       {/* ===== MÓVIL ONLY ===== */}
-      <div className="lg:hidden space-y-4">
+      <div className="lg:hidden space-y-2">
 
         {/* 1. Pregunta */}
-        <div className={`transition-all duration-500 ${scrolled ? "p-2" : "p-4 pt-6"}`}>
+        <div className={`sticky top-0 z-10 bg-white dark:bg-slate-950 transition-all duration-500 ${scrolled ? "p-2 shadow-sm border-b border-slate-100 dark:border-slate-800" : "p-4 pt-6"}`}>
   {market.category && (
     <span className={`font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2 block transition-all duration-500 ${scrolled ? "text-[10px]" : "text-[11px]"}`}>
       {market.category}
