@@ -30,7 +30,7 @@ export default function MarketPage() {
   const [userBet, setUserBet] = useState<{ type: "yes" | "no"; amount: number } | null>(null);
   const [changeCount, setChangeCount] = useState(0);
   const MAX_CHANGES = 3;
-  const [betConfig, setBetConfig] = useState({ min_bet: 1 });
+  const [betConfig, setBetConfig] = useState({ min_bet: 1, commission: 3 });
   const [history, setHistory] = useState<any[]>([]);
   const [uniqueBettors, setUniqueBettors] = useState(0);
   const [topHolders, setTopHolders] = useState<any[]>([]);
@@ -97,7 +97,7 @@ const fetchUniqueBettors = async () => {
   const res = await fetch("https://predicciones-ecuador.onrender.com/config");
   if (res.ok) {
     const data = await res.json();
-    setBetConfig({ min_bet: data.min_bet ?? 1 });
+    setBetConfig({ min_bet: data.min_bet ?? 1, commission: data.commission ?? 3 });
   }
  };
 
@@ -354,9 +354,30 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
                     {amount && <button onClick={() => setAmount("")} className="px-3 py-1.5 rounded-full text-sm font-medium bg-rose-100 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 hover:bg-rose-200 dark:hover:bg-rose-900/40 transition-colors border border-rose-200 dark:border-rose-800">Limpiar</button>}
                   </div>
                 </div>
-                <button onClick={handleBet} disabled={bettingLoading || !amount} className={`w-full py-3 rounded-xl font-bold text-sm transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${betType === "yes" ? "bg-emerald-500 text-slate-950" : "bg-rose-500 text-white"}`}>
-                  {bettingLoading ? "Procesando..." : `Confirmar apuesta — ${betType === "yes" ? "Sí" : "No"}`}
-                </button>
+                {(() => {
+  const amt = parseFloat(amount) || 0;
+  const yesPool = Number(market.yes);
+  const noPool = Number(market.no);
+  const myPool = betType === "yes" ? yesPool + amt : noPool + amt;
+  const oppPool = betType === "yes" ? noPool : yesPool;
+  const grossProfit = myPool > 0 ? oppPool * (amt / myPool) : 0;
+  const commission = grossProfit * ((betConfig.commission ?? 3) / 100);
+  const total = amt + grossProfit - commission;
+  return amt > 0 ? (
+    <div className={`rounded-xl p-3 text-center border ${betType === "yes" ? "border-emerald-500/30 bg-emerald-500/5" : "border-rose-500/30 bg-rose-500/5"}`}>
+      <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Ganancia estimada si aciertas</p>
+      <p className={`text-xl font-black ${betType === "yes" ? "text-emerald-400" : "text-rose-400"}`}>
+        +{total.toFixed(2)} $
+      </p>
+      <p className="text-[10px] text-slate-400 mt-0.5">
+        Comisión ({betConfig.commission}%): -{commission.toFixed(2)} $
+      </p>
+    </div>
+  ) : null;
+})()}
+<button onClick={handleBet} disabled={bettingLoading || !amount} className={`w-full py-3 rounded-xl font-bold text-sm transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${betType === "yes" ? "bg-emerald-500 text-slate-950" : "bg-rose-500 text-white"}`}>
+  {bettingLoading ? "Procesando..." : `Confirmar apuesta — ${betType === "yes" ? "Sí" : "No"}`}
+</button>
               </div>
             )}
           </div>
@@ -676,9 +697,30 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
                       {amount && <button onClick={() => setAmount("")} className="px-3 py-1.5 rounded-full text-sm font-medium bg-rose-100 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 hover:bg-rose-200 dark:hover:bg-rose-900/40 transition-colors border border-rose-200 dark:border-rose-800">Limpiar</button>}
                     </div>
                   </div>
-                  <button onClick={handleBet} disabled={bettingLoading || !amount} className={`w-full py-3 rounded-xl font-bold text-sm transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${betType === "yes" ? "bg-emerald-500 text-slate-950" : "bg-rose-500 text-white"}`}>
-                    {bettingLoading ? "Procesando..." : `Confirmar apuesta — ${betType === "yes" ? "Sí" : "No"}`}
-                  </button>
+                  {(() => {
+  const amt = parseFloat(amount) || 0;
+  const yesPool = Number(market.yes);
+  const noPool = Number(market.no);
+  const myPool = betType === "yes" ? yesPool + amt : noPool + amt;
+  const oppPool = betType === "yes" ? noPool : yesPool;
+  const grossProfit = myPool > 0 ? oppPool * (amt / myPool) : 0;
+  const commission = grossProfit * ((betConfig.commission ?? 3) / 100);
+  const total = amt + grossProfit - commission;
+  return amt > 0 ? (
+    <div className={`rounded-xl p-3 text-center border ${betType === "yes" ? "border-emerald-500/30 bg-emerald-500/5" : "border-rose-500/30 bg-rose-500/5"}`}>
+      <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Ganancia estimada si aciertas</p>
+      <p className={`text-xl font-black ${betType === "yes" ? "text-emerald-400" : "text-rose-400"}`}>
+        +{total.toFixed(2)} $
+      </p>
+      <p className="text-[10px] text-slate-400 mt-0.5">
+        Comisión ({betConfig.commission}%): -{commission.toFixed(2)} $
+      </p>
+    </div>
+  ) : null;
+})()}
+<button onClick={handleBet} disabled={bettingLoading || !amount} className={`w-full py-3 rounded-xl font-bold text-sm transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${betType === "yes" ? "bg-emerald-500 text-slate-950" : "bg-rose-500 text-white"}`}>
+  {bettingLoading ? "Procesando..." : `Confirmar apuesta — ${betType === "yes" ? "Sí" : "No"}`}
+</button>
                 </div>
               )}
             </div>
