@@ -554,14 +554,22 @@ export default function Home() {
   const { favorites, togglingId, fetchFavorites, toggleFavorite } = useFavorites();
   const { getToken } = useAuth();
   const [activeCategory, setActiveCategory] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 12;
   const { toast, showToast, hideToast } = useToast();
 
   // Filtrado memoizado: no recalcula en cada render
-  const visibleMarkets = useMemo(
-    () => filterMarkets(markets, activeCategory, favorites),
-    [markets, activeCategory, favorites]
-  );
+  const filteredMarkets = useMemo(
+  () => filterMarkets(markets, activeCategory, favorites),
+  [markets, activeCategory, favorites]
+ );
 
+ const totalPages = Math.ceil(filteredMarkets.length / ITEMS_PER_PAGE);
+
+ const visibleMarkets = useMemo(
+  () => filteredMarkets.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE),
+  [filteredMarkets, currentPage]
+ );
   // Wrapper con toast en lugar de alert()
   const handleToggleFavorite = useCallback(
     async (e: React.MouseEvent, marketId: number) => {
@@ -614,7 +622,7 @@ export default function Home() {
     <main className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
       <Header />
 
-      <CategoryBar active={activeCategory} onChange={setActiveCategory} markets={markets} />
+      <CategoryBar active={activeCategory} onChange={(id) => { setActiveCategory(id); setCurrentPage(1); }} markets={markets} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
         <section>
@@ -638,6 +646,42 @@ export default function Home() {
               />
             ))}
           </div>
+        {/* Paginación */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-8">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-4 py-2 rounded-xl text-sm font-medium border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >
+                ← Anterior
+              </button>
+
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }).map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCurrentPage(i + 1)}
+                    className={`w-8 h-8 rounded-lg text-sm font-medium transition-all ${
+                      currentPage === i + 1
+                        ? "bg-emerald-500 text-white shadow-sm scale-[1.05]"
+                        : "bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300"
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="px-4 py-2 rounded-xl text-sm font-medium border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >
+                Siguiente →
+              </button>
+            </div>
+          )}
         </section>
       </div>
 
