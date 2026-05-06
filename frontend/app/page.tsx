@@ -349,7 +349,7 @@ function MarketCard({
   return (
     <div
       id={`market-${market.id}`}
-      className={`border rounded-xl p-3 sm:p-4 transition-all duration-300 hover:shadow-md dark:hover:shadow-black/30 ${
+      className={`border rounded-xl p-3 sm:p-4 transition-all duration-300 hover:scale-[1.01] hover:shadow-lg dark:hover:shadow-black/40 cursor-pointer ${
         isResolved
           ? market.winner === "yes"
             ? "bg-emerald-500/5 border-emerald-500/30"
@@ -409,14 +409,18 @@ function MarketCard({
         <div className="grid grid-cols-2 gap-2">
           <Link
             href={`/market/${market.id}?bet=yes`}
-            className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium rounded-xl py-2.5 text-sm text-center active:scale-95 transition-transform flex flex-col items-center leading-tight"
+            className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium rounded-xl py-2.5 text-sm text-center transition-all flex flex-col items-center leading-tight
+    hover:bg-emerald-200 dark:hover:bg-emerald-900/60 hover:scale-[1.03]
+    active:scale-95 active:bg-emerald-300 dark:active:bg-emerald-900/80"
           >
             <span className="text-[11px] opacity-70">Sí</span>
             <span className="font-bold">{yesPct}%</span>
           </Link>
           <Link
             href={`/market/${market.id}?bet=no`}
-            className="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 font-medium rounded-xl py-2.5 text-sm text-center active:scale-95 transition-transform flex flex-col items-center leading-tight"
+            className="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 font-medium rounded-xl py-2.5 text-sm text-center transition-all flex flex-col items-center leading-tight
+    hover:bg-rose-200 dark:hover:bg-rose-900/60 hover:scale-[1.03]
+    active:scale-95 active:bg-rose-300 dark:active:bg-rose-900/80"
           >
             <span className="text-[11px] opacity-70">No</span>
             <span className="font-bold">{noPct}%</span>
