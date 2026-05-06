@@ -260,7 +260,14 @@ function CategoryBar({
                   text-[12px] sm:text-[13px] font-medium transition-all duration-200 shrink-0 border
                   ${isActive
                     ? `${cat.activeBg} text-white border-transparent shadow-sm scale-[1.03]`
-                    : "bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700"
+                    : `bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 ${
+                      cat.id === "deporte"    ? "hover:border-sky-400 dark:hover:border-sky-500" :
+                      cat.id === "farandula"  ? "hover:border-pink-400 dark:hover:border-pink-500" :
+                      cat.id === "politica"   ? "hover:border-violet-400 dark:hover:border-violet-500" :
+                      cat.id === "elecciones" ? "hover:border-amber-400 dark:hover:border-amber-500" :
+                      cat.id === "pais"       ? "hover:border-emerald-400 dark:hover:border-emerald-500" :
+                              "hover:border-orange-400 dark:hover:border-orange-500"
+                            }`
                   }
                 `}
               >
