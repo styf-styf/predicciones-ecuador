@@ -713,26 +713,26 @@ const fetchUniqueBettors = async () => {
       {relatedMarkets.length > 0 && (
         <div>
           <h2 className="font-bold text-xl mb-4">Más de {market.category}</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {relatedMarkets.map((m) => {
               const t = (m.yes ?? 0) + (m.no ?? 0) || 1;
               const yPct = ((m.yes / t) * 100).toFixed(0);
               const nPct = ((m.no / t) * 100).toFixed(0);
               return (
-                <div key={m.id} className="border rounded-xl p-3 sm:p-4 transition-all duration-300 hover:shadow-lg dark:hover:shadow-black/50 hover:-translate-y-0.5 bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/50">
+                <div key={m.id} className="border rounded-xl p-3 sm:p-4 transition-all duration-300 hover:scale-[1.01] hover:shadow-lg dark:hover:shadow-black/40 cursor-pointer bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/50">
                   {m.category && <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5 block w-fit">{m.category}</span>}
                   <Link href={`/market/${m.id}`}>
-                    <h3 className="text-[13px] font-semibold leading-snug hover:text-emerald-400 transition-colors cursor-pointer mb-3">{m.question}</h3>
+                    <h3 className="text-[13px] font-semibold leading-snug hover:text-emerald-400 transition-colors cursor-pointer mb-3 line-clamp-2">{m.question}</h3>
                   </Link>
                   <div className="flex justify-end text-[11px] text-slate-400 mb-3">
                     <span>{(Number(m.yes) + Number(m.no)).toFixed(1)} $ en predicciones</span>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
-                    <Link href={`/market/${m.id}?bet=yes`} className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium rounded-xl py-2.5 text-sm text-center active:scale-95 transition-transform flex flex-col items-center leading-tight">
-                      <span className="text-[11px] opacity-70">Sí</span><span className="font-bold">{yPct}%</span>
+                    <Link href={`/market/${m.id}?bet=yes`} className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium rounded-lg py-1.5 text-xs text-center transition-all flex items-center justify-center gap-1 hover:bg-emerald-200 dark:hover:bg-emerald-900/60 hover:scale-[1.03] active:scale-95 active:bg-emerald-300 dark:active:bg-emerald-900/80">
+                    <span className="opacity-70">Sí</span><span className="font-bold">{yPct}%</span>
                     </Link>
-                    <Link href={`/market/${m.id}?bet=no`} className="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 font-medium rounded-xl py-2.5 text-sm text-center active:scale-95 transition-transform flex flex-col items-center leading-tight">
-                      <span className="text-[11px] opacity-70">No</span><span className="font-bold">{nPct}%</span>
+                    <Link href={`/market/${m.id}?bet=no`} className="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 font-medium rounded-lg py-1.5 text-xs text-center transition-all flex items-center justify-center gap-1 hover:bg-rose-200 dark:hover:bg-rose-900/60 hover:scale-[1.03] active:scale-95 active:bg-rose-300 dark:active:bg-rose-900/80">
+                    <span className="opacity-70">No</span><span className="font-bold">{nPct}%</span>
                     </Link>
                   </div>
                 </div>
