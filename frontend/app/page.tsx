@@ -409,7 +409,7 @@ function MarketCard({
         <div className="grid grid-cols-2 gap-2">
           <Link
   href={`/market/${market.id}?bet=yes`}
-  className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium rounded-lg py-1.5 text-xs text-center transition-all flex items-center justify-center gap-1
+  className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium rounded-lg py-2 text-xs text-center transition-all flex items-center justify-center gap-1
     hover:bg-emerald-200 dark:hover:bg-emerald-900/60 hover:scale-[1.03]
     active:scale-95 active:bg-emerald-300 dark:active:bg-emerald-900/80"
 >
@@ -419,7 +419,7 @@ function MarketCard({
 
 <Link
   href={`/market/${market.id}?bet=no`}
-  className="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 font-medium rounded-lg py-1.5 text-xs text-center transition-all flex items-center justify-center gap-1
+  className="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 font-medium rounded-lg py-2 text-xs text-center transition-all flex items-center justify-center gap-1
     hover:bg-rose-200 dark:hover:bg-rose-900/60 hover:scale-[1.03]
     active:scale-95 active:bg-rose-300 dark:active:bg-rose-900/80"
 >
