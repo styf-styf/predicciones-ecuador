@@ -258,7 +258,7 @@ const fetchUniqueBettors = async () => {
       <div className="lg:hidden space-y-2">
 
         {/* 1. Pregunta */}
-        <div className="sticky top-[57px] z-10 -mx-4 px-4 py-2 bg-white dark:bg-slate-950 shadow-sm border-b border-slate-100 dark:border-slate-800">
+        <div className="sticky top-[57px] z-10 -mx-4 px-4 py-2 bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800">
   {market.category && (
     <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2 block">
       {market.category}
