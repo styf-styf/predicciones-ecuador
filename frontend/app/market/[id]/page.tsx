@@ -29,6 +29,13 @@ export default function MarketPage() {
   const [token, setToken] = useState<string | null>(null);
   const [userBet, setUserBet] = useState<{ type: "yes" | "no"; amount: number } | null>(null);
   const [changeCount, setChangeCount] = useState(0);
+  const [scrolled, setScrolled] = useState(false);
+  
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 60);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
   const MAX_CHANGES = 3;
   const [betConfig, setBetConfig] = useState({ min_bet: 1 });
   const [history, setHistory] = useState<any[]>([]);
@@ -258,12 +265,16 @@ const fetchUniqueBettors = async () => {
       <div className="lg:hidden space-y-4">
 
         {/* 1. Pregunta */}
-        <div className="p-2">
-          {market.category && (
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2 block">{market.category}</span>
-          )}
-          <h1 className="text-[14px] font-bold leading-snug">{market.question}</h1>
-        </div>
+        <div className={`transition-all duration-500 ${scrolled ? "p-2" : "p-4 pt-6"}`}>
+  {market.category && (
+    <span className={`font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2 block transition-all duration-500 ${scrolled ? "text-[10px]" : "text-[11px]"}`}>
+      {market.category}
+    </span>
+  )}
+  <h1 className={`font-bold leading-snug transition-all duration-500 ${scrolled ? "text-[14px]" : "text-[22px]"}`}>
+    {market.question}
+  </h1>
+</div>
 
         {/* 2. Panel de apuesta */}
         {!market.resolved && (
