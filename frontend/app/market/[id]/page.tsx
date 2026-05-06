@@ -253,7 +253,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
  return (
   <main className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
     <Header />
-    <div className="max-w-6xl mx-auto px-4 py-2 space-y-4">
+    <div className="max-w-6xl mx-auto px-4 py-6 space-y-4">
 
       {/* ===== MÓVIL ONLY ===== */}
       <div className="lg:hidden space-y-2">
