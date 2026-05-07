@@ -332,13 +332,8 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
 </div>
 
         {/* 2. Panel de apuesta */}
-        {/* Calculadora pública */}
-{!market.resolved && (
-  <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
-    <p className="text-xs text-slate-400 uppercase tracking-widest mb-3">Simula tu ganancia</p>
-    <PublicCalculator market={market} commission={betConfig.commission} />
-  </div>
-)}
+       
+
 
 {/* 2. Panel de apuesta */}
 {!market.resolved && (
@@ -347,11 +342,67 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
               <TrendingUp size={18} className="text-emerald-400" /> Realizar apuesta
             </h2>
             {!token && (
-              <div className="mb-4 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between gap-3">
-                <p className="text-sm text-slate-700 dark:text-slate-200">Inicia sesión para apostar</p>
-                <Link href="/login" className="shrink-0 bg-emerald-500 text-slate-950 font-bold text-sm px-4 py-2 rounded-xl">Iniciar sesión</Link>
+  <div className="space-y-3">
+    {(() => {
+      const amt = parseFloat(amount) || 0;
+      const yesPool = Number(market.yes);
+      const noPool  = Number(market.no);
+      const myPool  = betType === "yes" ? yesPool + amt : noPool + amt;
+      const oppPool = betType === "yes" ? noPool : yesPool;
+      const grossProfit = myPool > 0 && amt > 0 ? oppPool * (amt / myPool) : 0;
+      const comm  = grossProfit * ((betConfig.commission ?? 3) / 100);
+      const total = amt + grossProfit - comm;
+      return (
+        <div className="space-y-3">
+          <div className="flex gap-4">
+            <button onClick={() => setBetType("yes")} className="flex items-center gap-2">
+              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${betType === "yes" ? "border-emerald-500 bg-emerald-500" : "border-slate-300 dark:border-slate-600"}`}>
+                {betType === "yes" && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
               </div>
+              <span className={`text-sm font-medium ${betType === "yes" ? "text-emerald-500" : "text-slate-400"}`}>Sí — {yesPct}%</span>
+            </button>
+            <button onClick={() => setBetType("no")} className="flex items-center gap-2">
+              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${betType === "no" ? "border-rose-500 bg-rose-500" : "border-slate-300 dark:border-slate-600"}`}>
+                {betType === "no" && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+              </div>
+              <span className={`text-sm font-medium ${betType === "no" ? "text-rose-500" : "text-slate-400"}`}>No — {noPct}%</span>
+            </button>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {[1, 5, 10, 50, 100].map((val) => (
+              <button key={val} onClick={() => setAmount(String((parseFloat(amount) || 0) + val))}
+                className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition border border-slate-300 dark:border-slate-700">
+                +{val}
+              </button>
+            ))}
+            {amount && (
+              <button onClick={() => setAmount("")}
+                className="px-3 py-1.5 rounded-full text-sm font-medium bg-rose-100 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
+                Limpiar
+              </button>
             )}
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-slate-400">Monto</span>
+            <span className="text-2xl font-bold">{amount ? `${amount} $` : "0 $"}</span>
+          </div>
+          {amt > 0 && (
+            <div className={`rounded-xl p-3 text-center border ${betType === "yes" ? "border-emerald-500/30 bg-emerald-500/5" : "border-rose-500/30 bg-rose-500/5"}`}>
+              <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Ganancia estimada si aciertas</p>
+              <p className={`text-xl font-black ${betType === "yes" ? "text-emerald-400" : "text-rose-400"}`}>+{total.toFixed(2)} $</p>
+              <p className="text-[10px] text-slate-400 mt-0.5">Comisión ({betConfig.commission}%): -{comm.toFixed(2)} $</p>
+              <p className="text-[10px] text-slate-500 mt-1 italic">* Estimado basado en apuestas actuales.</p>
+            </div>
+          )}
+        </div>
+      );
+    })()}
+    <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between gap-3">
+      <p className="text-sm text-slate-700 dark:text-slate-200">Inicia sesión para apostar</p>
+      <Link href="/login" className="shrink-0 bg-emerald-500 text-slate-950 font-bold text-sm px-4 py-2 rounded-xl">Iniciar sesión</Link>
+    </div>
+  </div>
+)}
             {betSuccess && (
               <div className="mb-4 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-center text-sm font-semibold text-emerald-500 flex items-center justify-center gap-2">
                 ✅ ¡Apuesta registrada exitosamente!
@@ -727,24 +778,74 @@ const oppPool = betType === "yes" ? noPool  : yesPool;
         <div className="w-[360px] shrink-0 sticky top-24 space-y-4">
 
           {/* Apostar */}
-          {/* Calculadora pública desktop */}
-{!market.resolved && (
-  <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
-    <p className="text-xs text-slate-400 uppercase tracking-widest mb-3">Simula tu ganancia</p>
-    <PublicCalculator market={market} commission={betConfig.commission} />
-  </div>
-)}
+    
 
 {/* Apostar */}
 {!market.resolved ? (
             <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
               <h2 className="font-bold text-lg mb-4 flex items-center gap-2"><TrendingUp size={18} className="text-emerald-400" /> Realizar apuesta</h2>
               {!token && (
-                <div className="mb-4 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between gap-3">
-                  <p className="text-sm text-slate-700 dark:text-slate-200">Inicia sesión para apostar</p>
-                  <Link href="/login" className="shrink-0 bg-emerald-500 text-slate-950 font-bold text-sm px-4 py-2 rounded-xl">Iniciar sesión</Link>
-                </div>
-              )}
+  <div className="space-y-3">
+    {(() => {
+      const amt = parseFloat(amount) || 0;
+      const yesPool = Number(market.yes);
+      const noPool  = Number(market.no);
+      const myPool  = betType === "yes" ? yesPool + amt : noPool + amt;
+      const oppPool = betType === "yes" ? noPool : yesPool;
+      const grossProfit = myPool > 0 && amt > 0 ? oppPool * (amt / myPool) : 0;
+      const comm  = grossProfit * ((betConfig.commission ?? 3) / 100);
+      const total = amt + grossProfit - comm;
+      return (
+        <div className="space-y-3">
+          <div className="flex gap-4">
+            <button onClick={() => setBetType("yes")} className="flex items-center gap-2">
+              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${betType === "yes" ? "border-emerald-500 bg-emerald-500" : "border-slate-300 dark:border-slate-600"}`}>
+                {betType === "yes" && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+              </div>
+              <span className={`text-sm font-medium ${betType === "yes" ? "text-emerald-500" : "text-slate-400"}`}>Sí — {yesPct}%</span>
+            </button>
+            <button onClick={() => setBetType("no")} className="flex items-center gap-2">
+              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${betType === "no" ? "border-rose-500 bg-rose-500" : "border-slate-300 dark:border-slate-600"}`}>
+                {betType === "no" && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+              </div>
+              <span className={`text-sm font-medium ${betType === "no" ? "text-rose-500" : "text-slate-400"}`}>No — {noPct}%</span>
+            </button>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {[1, 5, 10, 50, 100].map((val) => (
+              <button key={val} onClick={() => setAmount(String((parseFloat(amount) || 0) + val))}
+                className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition border border-slate-300 dark:border-slate-700">
+                +{val}
+              </button>
+            ))}
+            {amount && (
+              <button onClick={() => setAmount("")}
+                className="px-3 py-1.5 rounded-full text-sm font-medium bg-rose-100 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
+                Limpiar
+              </button>
+            )}
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-slate-400">Monto</span>
+            <span className="text-2xl font-bold">{amount ? `${amount} $` : "0 $"}</span>
+          </div>
+          {amt > 0 && (
+            <div className={`rounded-xl p-3 text-center border ${betType === "yes" ? "border-emerald-500/30 bg-emerald-500/5" : "border-rose-500/30 bg-rose-500/5"}`}>
+              <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Ganancia estimada si aciertas</p>
+              <p className={`text-xl font-black ${betType === "yes" ? "text-emerald-400" : "text-rose-400"}`}>+{total.toFixed(2)} $</p>
+              <p className="text-[10px] text-slate-400 mt-0.5">Comisión ({betConfig.commission}%): -{comm.toFixed(2)} $</p>
+              <p className="text-[10px] text-slate-500 mt-1 italic">* Estimado basado en apuestas actuales.</p>
+            </div>
+          )}
+        </div>
+      );
+    })()}
+    <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between gap-3">
+      <p className="text-sm text-slate-700 dark:text-slate-200">Inicia sesión para apostar</p>
+      <Link href="/login" className="shrink-0 bg-emerald-500 text-slate-950 font-bold text-sm px-4 py-2 rounded-xl">Iniciar sesión</Link>
+    </div>
+  </div>
+)}
               {betSuccess && (
                 <div className="mb-4 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-center text-sm font-semibold text-emerald-500 flex items-center justify-center gap-2">✅ ¡Apuesta registrada exitosamente!</div>
               )}
