@@ -7,69 +7,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import Header from "@/components/Header";
 import { supabase } from "@/lib/supabase";
 
-function PublicCalculator({ market, commission }: { market: any; commission: number }) {
-  const [simAmount, setSimAmount] = useState("");
-  const [simType, setSimType] = useState<"yes" | "no">("yes");
 
-  const amt = parseFloat(simAmount) || 0;
-  const yesPool = Number(market.yes);
-  const noPool  = Number(market.no);
-  const myPool  = simType === "yes" ? yesPool + amt : noPool + amt;
-  const oppPool = simType === "yes" ? noPool : yesPool;
-  const grossProfit = myPool > 0 && amt > 0 ? oppPool * (amt / myPool) : 0;
-  const comm  = grossProfit * ((commission ?? 3) / 100);
-  const total = amt + grossProfit - comm;
-
-  return (
-    <div className="space-y-3">
-      <div className="flex gap-4">
-        <button onClick={() => setSimType("yes")} className="flex items-center gap-2">
-          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${simType === "yes" ? "border-emerald-500 bg-emerald-500" : "border-slate-300 dark:border-slate-600"}`}>
-            {simType === "yes" && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-          </div>
-          <span className={`text-sm font-medium ${simType === "yes" ? "text-emerald-500" : "text-slate-400"}`}>Sí</span>
-        </button>
-        <button onClick={() => setSimType("no")} className="flex items-center gap-2">
-          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${simType === "no" ? "border-rose-500 bg-rose-500" : "border-slate-300 dark:border-slate-600"}`}>
-            {simType === "no" && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-          </div>
-          <span className={`text-sm font-medium ${simType === "no" ? "text-rose-500" : "text-slate-400"}`}>No</span>
-        </button>
-      </div>
-
-      <div className="flex gap-2 flex-wrap">
-        {[1, 5, 10, 50, 100].map((val) => (
-          <button key={val} onClick={() => setSimAmount(String((parseFloat(simAmount) || 0) + val))}
-            className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition border border-slate-300 dark:border-slate-700">
-            +{val}
-          </button>
-        ))}
-        {simAmount && (
-          <button onClick={() => setSimAmount("")}
-            className="px-3 py-1.5 rounded-full text-sm font-medium bg-rose-100 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
-            Limpiar
-          </button>
-        )}
-      </div>
-
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-slate-400">Monto</span>
-        <span className="text-2xl font-bold">{simAmount ? `${simAmount} $` : "0 $"}</span>
-      </div>
-
-      {amt > 0 && (
-        <div className={`rounded-xl p-3 text-center border ${simType === "yes" ? "border-emerald-500/30 bg-emerald-500/5" : "border-rose-500/30 bg-rose-500/5"}`}>
-          <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Ganancia estimada si aciertas</p>
-          <p className={`text-xl font-black ${simType === "yes" ? "text-emerald-400" : "text-rose-400"}`}>
-            +{total.toFixed(2)} $
-          </p>
-          <p className="text-[10px] text-slate-400 mt-0.5">Comisión ({commission}%): -{comm.toFixed(2)} $</p>
-          <p className="text-[10px] text-slate-500 mt-1 italic">* Estimado basado en apuestas actuales.</p>
-        </div>
-      )}
-    </div>
-  );
-}
 
 export default function MarketPage() {
   const { id } = useParams();
@@ -341,75 +279,14 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
             <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
               <TrendingUp size={18} className="text-emerald-400" /> Realizar apuesta
             </h2>
-            {!token && (
-  <div className="space-y-3">
-    {(() => {
-      const amt = parseFloat(amount) || 0;
-      const yesPool = Number(market.yes);
-      const noPool  = Number(market.no);
-      const myPool  = betType === "yes" ? yesPool + amt : noPool + amt;
-      const oppPool = betType === "yes" ? noPool : yesPool;
-      const grossProfit = myPool > 0 && amt > 0 ? oppPool * (amt / myPool) : 0;
-      const comm  = grossProfit * ((betConfig.commission ?? 3) / 100);
-      const total = amt + grossProfit - comm;
-      return (
-        <div className="space-y-3">
-          <div className="flex gap-4">
-            <button onClick={() => setBetType("yes")} className="flex items-center gap-2">
-              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${betType === "yes" ? "border-emerald-500 bg-emerald-500" : "border-slate-300 dark:border-slate-600"}`}>
-                {betType === "yes" && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-              </div>
-              <span className={`text-sm font-medium ${betType === "yes" ? "text-emerald-500" : "text-slate-400"}`}>Sí — {yesPct}%</span>
-            </button>
-            <button onClick={() => setBetType("no")} className="flex items-center gap-2">
-              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${betType === "no" ? "border-rose-500 bg-rose-500" : "border-slate-300 dark:border-slate-600"}`}>
-                {betType === "no" && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-              </div>
-              <span className={`text-sm font-medium ${betType === "no" ? "text-rose-500" : "text-slate-400"}`}>No — {noPct}%</span>
-            </button>
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            {[1, 5, 10, 50, 100].map((val) => (
-              <button key={val} onClick={() => setAmount(String((parseFloat(amount) || 0) + val))}
-                className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition border border-slate-300 dark:border-slate-700">
-                +{val}
-              </button>
-            ))}
-            {amount && (
-              <button onClick={() => setAmount("")}
-                className="px-3 py-1.5 rounded-full text-sm font-medium bg-rose-100 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
-                Limpiar
-              </button>
-            )}
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-slate-400">Monto</span>
-            <span className="text-2xl font-bold">{amount ? `${amount} $` : "0 $"}</span>
-          </div>
-          {amt > 0 && (
-            <div className={`rounded-xl p-3 text-center border ${betType === "yes" ? "border-emerald-500/30 bg-emerald-500/5" : "border-rose-500/30 bg-rose-500/5"}`}>
-              <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Ganancia estimada si aciertas</p>
-              <p className={`text-xl font-black ${betType === "yes" ? "text-emerald-400" : "text-rose-400"}`}>+{total.toFixed(2)} $</p>
-              <p className="text-[10px] text-slate-400 mt-0.5">Comisión ({betConfig.commission}%): -{comm.toFixed(2)} $</p>
-              <p className="text-[10px] text-slate-500 mt-1 italic">* Estimado basado en apuestas actuales.</p>
-            </div>
-          )}
-        </div>
-      );
-    })()}
-    <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between gap-3">
-      <p className="text-sm text-slate-700 dark:text-slate-200">Inicia sesión para apostar</p>
-      <Link href="/login" className="shrink-0 bg-emerald-500 text-slate-950 font-bold text-sm px-4 py-2 rounded-xl">Iniciar sesión</Link>
-    </div>
-  </div>
-)}
-            {betSuccess && (
+            
+            {token && betSuccess && (
               <div className="mb-4 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-center text-sm font-semibold text-emerald-500 flex items-center justify-center gap-2">
                 ✅ ¡Apuesta registrada exitosamente!
               </div>
             )}
-            {points !== null && <p className="text-sm text-slate-400 mb-4">Tu balance: <span className="text-slate-900 dark:text-white font-bold">{points} $</span></p>}
-            {userBet ? (
+            {token && points !== null && <p className="text-sm text-slate-400 mb-4">Tu balance: <span className="text-slate-900 dark:text-white font-bold">{points} $</span></p>}
+            {token && userBet ? (
               <div className="space-y-4">
                 <div className={`rounded-xl p-4 text-center border ${userBet.type === "yes" ? "border-emerald-500/40 bg-emerald-500/10" : "border-rose-500/40 bg-rose-500/10"}`}>
                   <p className="text-sm text-slate-400 mb-1">Tu predicción actual</p>
@@ -535,9 +412,16 @@ const oppPool = betType === "yes" ? noPool  : yesPool;
     </div>
   ) : null;
 })()}
-<button onClick={handleBet} disabled={bettingLoading || !amount} className={`w-full py-3 rounded-xl font-bold text-sm transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${betType === "yes" ? "bg-emerald-500 text-slate-950" : "bg-rose-500 text-white"}`}>
-  {bettingLoading ? "Procesando..." : `Confirmar predicción — ${betType === "yes" ? "Sí" : "No"}`}
-</button>
+{!token ? (
+  <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between gap-3">
+    <p className="text-sm text-slate-700 dark:text-slate-200">Inicia sesión para apostar</p>
+    <Link href="/login" className="shrink-0 bg-emerald-500 text-slate-950 font-bold text-sm px-4 py-2 rounded-xl">Iniciar sesión</Link>
+  </div>
+) : (
+  <button onClick={handleBet} disabled={bettingLoading || !amount} className={`w-full py-3 rounded-xl font-bold text-sm transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${betType === "yes" ? "bg-emerald-500 text-slate-950" : "bg-rose-500 text-white"}`}>
+    {bettingLoading ? "Procesando..." : `Confirmar predicción — ${betType === "yes" ? "Sí" : "No"}`}
+  </button>
+)}
               </div>
             )}
           </div>
@@ -784,73 +668,12 @@ const oppPool = betType === "yes" ? noPool  : yesPool;
 {!market.resolved ? (
             <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
               <h2 className="font-bold text-lg mb-4 flex items-center gap-2"><TrendingUp size={18} className="text-emerald-400" /> Realizar apuesta</h2>
-              {!token && (
-  <div className="space-y-3">
-    {(() => {
-      const amt = parseFloat(amount) || 0;
-      const yesPool = Number(market.yes);
-      const noPool  = Number(market.no);
-      const myPool  = betType === "yes" ? yesPool + amt : noPool + amt;
-      const oppPool = betType === "yes" ? noPool : yesPool;
-      const grossProfit = myPool > 0 && amt > 0 ? oppPool * (amt / myPool) : 0;
-      const comm  = grossProfit * ((betConfig.commission ?? 3) / 100);
-      const total = amt + grossProfit - comm;
-      return (
-        <div className="space-y-3">
-          <div className="flex gap-4">
-            <button onClick={() => setBetType("yes")} className="flex items-center gap-2">
-              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${betType === "yes" ? "border-emerald-500 bg-emerald-500" : "border-slate-300 dark:border-slate-600"}`}>
-                {betType === "yes" && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-              </div>
-              <span className={`text-sm font-medium ${betType === "yes" ? "text-emerald-500" : "text-slate-400"}`}>Sí — {yesPct}%</span>
-            </button>
-            <button onClick={() => setBetType("no")} className="flex items-center gap-2">
-              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${betType === "no" ? "border-rose-500 bg-rose-500" : "border-slate-300 dark:border-slate-600"}`}>
-                {betType === "no" && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-              </div>
-              <span className={`text-sm font-medium ${betType === "no" ? "text-rose-500" : "text-slate-400"}`}>No — {noPct}%</span>
-            </button>
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            {[1, 5, 10, 50, 100].map((val) => (
-              <button key={val} onClick={() => setAmount(String((parseFloat(amount) || 0) + val))}
-                className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition border border-slate-300 dark:border-slate-700">
-                +{val}
-              </button>
-            ))}
-            {amount && (
-              <button onClick={() => setAmount("")}
-                className="px-3 py-1.5 rounded-full text-sm font-medium bg-rose-100 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
-                Limpiar
-              </button>
-            )}
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-slate-400">Monto</span>
-            <span className="text-2xl font-bold">{amount ? `${amount} $` : "0 $"}</span>
-          </div>
-          {amt > 0 && (
-            <div className={`rounded-xl p-3 text-center border ${betType === "yes" ? "border-emerald-500/30 bg-emerald-500/5" : "border-rose-500/30 bg-rose-500/5"}`}>
-              <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Ganancia estimada si aciertas</p>
-              <p className={`text-xl font-black ${betType === "yes" ? "text-emerald-400" : "text-rose-400"}`}>+{total.toFixed(2)} $</p>
-              <p className="text-[10px] text-slate-400 mt-0.5">Comisión ({betConfig.commission}%): -{comm.toFixed(2)} $</p>
-              <p className="text-[10px] text-slate-500 mt-1 italic">* Estimado basado en apuestas actuales.</p>
-            </div>
-          )}
-        </div>
-      );
-    })()}
-    <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between gap-3">
-      <p className="text-sm text-slate-700 dark:text-slate-200">Inicia sesión para apostar</p>
-      <Link href="/login" className="shrink-0 bg-emerald-500 text-slate-950 font-bold text-sm px-4 py-2 rounded-xl">Iniciar sesión</Link>
-    </div>
-  </div>
-)}
-              {betSuccess && (
+             
+              {token && betSuccess && (
                 <div className="mb-4 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-center text-sm font-semibold text-emerald-500 flex items-center justify-center gap-2">✅ ¡Apuesta registrada exitosamente!</div>
               )}
-              {points !== null && <p className="text-sm text-slate-400 mb-4">Tu balance: <span className="text-slate-900 dark:text-white font-bold">{points} $</span></p>}
-              {userBet ? (
+              {token && points !== null && <p className="text-sm text-slate-400 mb-4">Tu balance: <span className="text-slate-900 dark:text-white font-bold">{points} $</span></p>}
+            {token && userBet ? (
                 <div className="space-y-4">
                   <div className={`rounded-xl p-4 text-center border ${userBet.type === "yes" ? "border-emerald-500/40 bg-emerald-500/10" : "border-rose-500/40 bg-rose-500/10"}`}>
                     <p className="text-sm text-slate-400 mb-1">Tu predicción actual</p>
@@ -974,9 +797,16 @@ const oppPool = betType === "yes" ? noPool  : yesPool;
     </div>
   ) : null;
 })()}
-<button onClick={handleBet} disabled={bettingLoading || !amount} className={`w-full py-3 rounded-xl font-bold text-sm transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${betType === "yes" ? "bg-emerald-500 text-slate-950" : "bg-rose-500 text-white"}`}>
-  {bettingLoading ? "Procesando..." : `Confirmar predicción — ${betType === "yes" ? "Sí" : "No"}`}
-</button>
+{!token ? (
+  <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between gap-3">
+    <p className="text-sm text-slate-700 dark:text-slate-200">Inicia sesión para apostar</p>
+    <Link href="/login" className="shrink-0 bg-emerald-500 text-slate-950 font-bold text-sm px-4 py-2 rounded-xl">Iniciar sesión</Link>
+  </div>
+) : (
+  <button onClick={handleBet} disabled={bettingLoading || !amount} className={`w-full py-3 rounded-xl font-bold text-sm transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${betType === "yes" ? "bg-emerald-500 text-slate-950" : "bg-rose-500 text-white"}`}>
+    {bettingLoading ? "Procesando..." : `Confirmar predicción — ${betType === "yes" ? "Sí" : "No"}`}
+  </button>
+)}
                 </div>
               )}
             </div>
