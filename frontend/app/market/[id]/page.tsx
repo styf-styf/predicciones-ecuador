@@ -112,9 +112,10 @@ const fetchUniqueBettors = async () => {
     if (data.bet) {
       setUserBet({ type: data.bet.type, amount: data.bet.amount });
       setChangeCount(data.bet.changes ?? 0);
+      setBetType(data.bet.type);
     }
   }
- };
+};
 
   useEffect(() => {
   if (id) {
