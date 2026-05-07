@@ -17,6 +17,7 @@ type Tab = "inicio" | "movimientos" | "wallet" | "perfil";
 export default function PanelPage() {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("inicio");
+  const [tabVisible, setTabVisible] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [bets, setBets] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -285,7 +286,13 @@ setBankConfig(configData);
           {tabs.map((t) => (
             <button
               key={t.id}
-              onClick={() => setTab(t.id as Tab)}
+              onClick={() => {
+  setTabVisible(false);
+  setTimeout(() => {
+    setTab(t.id as Tab);
+    setTabVisible(true);
+  }, 150);
+ }}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all ${
                 tab === t.id
                   ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900"
@@ -297,6 +304,8 @@ setBankConfig(configData);
             </button>
           ))}
         </div>
+        
+        <div style={{ opacity: tabVisible ? 1 : 0, transform: tabVisible ? "translateY(0)" : "translateY(6px)", transition: "opacity 0.15s ease, transform 0.15s ease" }}>
 
         {/* ===== TAB: INICIO ===== */}
         {tab === "inicio" && (
@@ -852,6 +861,7 @@ setBankConfig(configData);
           </div>
         )}
 
+        </div>
       </div>
     </main>
   );
