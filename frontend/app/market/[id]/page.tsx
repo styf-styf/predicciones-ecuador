@@ -321,15 +321,23 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
                       </div>
                     </div>
                     {(() => {
-  const amt = parseFloat(amount) || 0;
-  const yesPool = Number(market.yes);
-  const noPool = Number(market.no);
-  const myPool = betType === "yes" ? yesPool + amt : noPool + amt;
-  const oppPool = betType === "yes" ? noPool : yesPool;
+  const amt = parseFloat(amount) || (userBet !== null ? (userBet as { type: "yes" | "no"; amount: number }).amount : 0);
+const prevAmt = userBet !== null ? (userBet as { type: "yes" | "no"; amount: number }).amount : 0;
+const prevType = userBet !== null ? (userBet as { type: "yes" | "no"; amount: number }).type : null;
+
+// Revertir apuesta anterior del mercado para calcular el pool real
+const baseYes = prevType === "yes" ? Number(market.yes) - prevAmt : Number(market.yes);
+const baseNo  = prevType === "no"  ? Number(market.no)  - prevAmt : Number(market.no);
+
+// Agregar nueva apuesta
+const yesPool = betType === "yes" ? baseYes + amt : baseYes;
+const noPool  = betType === "no"  ? baseNo  + amt : baseNo;
+const myPool  = betType === "yes" ? yesPool : noPool;
+const oppPool = betType === "yes" ? noPool  : yesPool;
   const grossProfit = myPool > 0 ? oppPool * (amt / myPool) : 0;
   const commission = grossProfit * ((betConfig.commission ?? 3) / 100);
   const total = amt + grossProfit - commission;
-  return amt > 0 ? (
+  return amt > 0 || userBet ? (
     <div className={`rounded-xl p-3 text-center border ${betType === "yes" ? "border-emerald-500/30 bg-emerald-500/5" : "border-rose-500/30 bg-rose-500/5"}`}>
       <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Ganancia estimada si aciertas</p>
       <p className={`text-xl font-black ${betType === "yes" ? "text-emerald-400" : "text-rose-400"}`}>
@@ -376,15 +384,23 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
                   </div>
                 </div>
                 {(() => {
-  const amt = parseFloat(amount) || 0;
-  const yesPool = Number(market.yes);
-  const noPool = Number(market.no);
-  const myPool = betType === "yes" ? yesPool + amt : noPool + amt;
-  const oppPool = betType === "yes" ? noPool : yesPool;
+  const amt = parseFloat(amount) || (userBet !== null ? (userBet as { type: "yes" | "no"; amount: number }).amount : 0);
+const prevAmt = userBet !== null ? (userBet as { type: "yes" | "no"; amount: number }).amount : 0;
+const prevType = userBet !== null ? (userBet as { type: "yes" | "no"; amount: number }).type : null;
+
+// Revertir apuesta anterior del mercado para calcular el pool real
+const baseYes = prevType === "yes" ? Number(market.yes) - prevAmt : Number(market.yes);
+const baseNo  = prevType === "no"  ? Number(market.no)  - prevAmt : Number(market.no);
+
+// Agregar nueva apuesta
+const yesPool = betType === "yes" ? baseYes + amt : baseYes;
+const noPool  = betType === "no"  ? baseNo  + amt : baseNo;
+const myPool  = betType === "yes" ? yesPool : noPool;
+const oppPool = betType === "yes" ? noPool  : yesPool;
   const grossProfit = myPool > 0 ? oppPool * (amt / myPool) : 0;
   const commission = grossProfit * ((betConfig.commission ?? 3) / 100);
   const total = amt + grossProfit - commission;
-  return amt > 0 ? (
+  return amt > 0 || userBet ? (
     <div className={`rounded-xl p-3 text-center border ${betType === "yes" ? "border-emerald-500/30 bg-emerald-500/5" : "border-rose-500/30 bg-rose-500/5"}`}>
       <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Ganancia estimada si aciertas</p>
       <p className={`text-xl font-black ${betType === "yes" ? "text-emerald-400" : "text-rose-400"}`}>
@@ -686,15 +702,23 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
                         </div>
                       </div>
                       {(() => {
-  const amt = parseFloat(amount) || 0;
-  const yesPool = Number(market.yes);
-  const noPool = Number(market.no);
-  const myPool = betType === "yes" ? yesPool + amt : noPool + amt;
-  const oppPool = betType === "yes" ? noPool : yesPool;
+  const amt = parseFloat(amount) || (userBet !== null ? (userBet as { type: "yes" | "no"; amount: number }).amount : 0);
+const prevAmt = userBet !== null ? (userBet as { type: "yes" | "no"; amount: number }).amount : 0;
+const prevType = userBet !== null ? (userBet as { type: "yes" | "no"; amount: number }).type : null;
+
+// Revertir apuesta anterior del mercado para calcular el pool real
+const baseYes = prevType === "yes" ? Number(market.yes) - prevAmt : Number(market.yes);
+const baseNo  = prevType === "no"  ? Number(market.no)  - prevAmt : Number(market.no);
+
+// Agregar nueva apuesta
+const yesPool = betType === "yes" ? baseYes + amt : baseYes;
+const noPool  = betType === "no"  ? baseNo  + amt : baseNo;
+const myPool  = betType === "yes" ? yesPool : noPool;
+const oppPool = betType === "yes" ? noPool  : yesPool;
   const grossProfit = myPool > 0 ? oppPool * (amt / myPool) : 0;
   const commission = grossProfit * ((betConfig.commission ?? 3) / 100);
   const total = amt + grossProfit - commission;
-  return amt > 0 ? (
+  return amt > 0 || userBet ? (
     <div className={`rounded-xl p-3 text-center border ${betType === "yes" ? "border-emerald-500/30 bg-emerald-500/5" : "border-rose-500/30 bg-rose-500/5"}`}>
       <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Ganancia estimada si aciertas</p>
       <p className={`text-xl font-black ${betType === "yes" ? "text-emerald-400" : "text-rose-400"}`}>
@@ -740,15 +764,23 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
                     </div>
                   </div>
                   {(() => {
-  const amt = parseFloat(amount) || 0;
-  const yesPool = Number(market.yes);
-  const noPool = Number(market.no);
-  const myPool = betType === "yes" ? yesPool + amt : noPool + amt;
-  const oppPool = betType === "yes" ? noPool : yesPool;
+  const amt = parseFloat(amount) || (userBet !== null ? (userBet as { type: "yes" | "no"; amount: number }).amount : 0);
+const prevAmt = userBet !== null ? (userBet as { type: "yes" | "no"; amount: number }).amount : 0;
+const prevType = userBet !== null ? (userBet as { type: "yes" | "no"; amount: number }).type : null;
+
+// Revertir apuesta anterior del mercado para calcular el pool real
+const baseYes = prevType === "yes" ? Number(market.yes) - prevAmt : Number(market.yes);
+const baseNo  = prevType === "no"  ? Number(market.no)  - prevAmt : Number(market.no);
+
+// Agregar nueva apuesta
+const yesPool = betType === "yes" ? baseYes + amt : baseYes;
+const noPool  = betType === "no"  ? baseNo  + amt : baseNo;
+const myPool  = betType === "yes" ? yesPool : noPool;
+const oppPool = betType === "yes" ? noPool  : yesPool;
   const grossProfit = myPool > 0 ? oppPool * (amt / myPool) : 0;
   const commission = grossProfit * ((betConfig.commission ?? 3) / 100);
   const total = amt + grossProfit - commission;
-  return amt > 0 ? (
+  return amt > 0 || userBet ? (
     <div className={`rounded-xl p-3 text-center border ${betType === "yes" ? "border-emerald-500/30 bg-emerald-500/5" : "border-rose-500/30 bg-rose-500/5"}`}>
       <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Ganancia estimada si aciertas</p>
       <p className={`text-xl font-black ${betType === "yes" ? "text-emerald-400" : "text-rose-400"}`}>
