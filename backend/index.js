@@ -1517,6 +1517,59 @@ app.put("/admin/markets/:id", auth, async (req, res) => {
   res.json({ message: "Mercado actualizado ✅" });
 });
 
+// =======================
+// 💸 SOLICITAR RETIRO
+// =======================
+app.post("/withdrawal", auth, async (req, res) => {
+  const { amount, method } = req.body;
+  const withdrawAmount = parseFloat(amount);
+
+  if (!withdrawAmount || withdrawAmount < 10) {
+    return res.status(400).json({ message: "Monto mínimo de retiro: 10 puntos" });
+  }
+
+  const { data: user } = await supabase
+    .from("users").select("*").eq("id", req.userId).single();
+
+  if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
+  if (user.points < withdrawAmount) return res.status(400).json({ message: "Saldo insuficiente" });
+  if (!user.banco || !user.numero_cuenta || !user.tipo_cuenta) {
+    return res.status(400).json({ message: "Completa tus datos bancarios en tu perfil" });
+  }
+
+  // Operación atómica: descontar puntos + crear transacción
+  const newPoints = Number(user.points) - withdrawAmount;
+
+  const { error: pointsError } = await supabase
+    .from("users").update({ points: newPoints }).eq("id", req.userId);
+
+  if (pointsError) return res.status(500).json({ message: "Error al procesar" });
+
+  const { error: txError } = await supabase.from("transactions").insert({
+    user_id: req.userId,
+    type: "retiro",
+    amount: withdrawAmount,
+    status: "pendiente",
+    payment_method: method || "transferencia",
+    transfer_code: null,
+  });
+
+  if (txError) {
+    // Revertir los puntos si falla la transacción
+    await supabase.from("users").update({ points: user.points }).eq("id", req.userId);
+    return res.status(500).json({ message: "Error al crear solicitud" });
+  }
+
+  await supabase.from("notifications").insert([{
+    user_id: req.userId,
+    title: "📤 Solicitud de retiro enviada",
+    message: `Tu solicitud de retiro por $${withdrawAmount} está siendo procesada.`,
+    read: false,
+  }]);
+
+  res.json({ message: "Solicitud enviada", newPoints });
+});
+
 app.listen(4000, () => {
   console.log("Servidor en https://predicciones-ecuador.onrender.com");
 });
