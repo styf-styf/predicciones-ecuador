@@ -357,6 +357,27 @@ setBankConfig(configData);
                     </div>
                   );
                 })}
+                {userRankIndex > 9 && (
+                  <>
+                    <div className="flex items-center justify-center py-1">
+                      <span className="text-xs text-slate-300 dark:text-slate-600">• • •</span>
+                    </div>
+                    <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="text-sm font-bold shrink-0 w-6 text-slate-400 dark:text-slate-500">
+                          {userRankIndex + 1}
+                        </span>
+                        <span className="text-sm truncate">
+                          {ranking[userRankIndex]?.nombre
+                            ? `${ranking[userRankIndex].nombre} ${ranking[userRankIndex].apellido || ""}`.trim()
+                            : ranking[userRankIndex]?.email}
+                          <span className="text-emerald-500 text-xs ml-1">(tú)</span>
+                        </span>
+                      </div>
+                      <span className="text-sm font-semibold shrink-0">{ranking[userRankIndex]?.points} $</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>

@@ -1085,7 +1085,7 @@ export default function AdminPage() {
                               "bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400"
                             }`}>{tx.status}</span>
                           </div>
-                          <p className="col-span-2 text-center text-[10px] text-slate-400 dark:text-white/20">{new Date(tx.created_at).toLocaleDateString()}</p>
+                          <p className="col-span-2 text-center text-[10px] text-slate-400 dark:text-white/20">{new Date(tx.created_at).toLocaleString("es-EC", { timeZone: "America/Guayaquil", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
                           {(method === "transferencia" || method === "retiro") && (
                             <div className="col-span-1 flex justify-end gap-1">
                               {tx.status === "pendiente" ? (
@@ -1115,7 +1115,7 @@ export default function AdminPage() {
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
                               <p className="text-[12px] text-slate-600 dark:text-white/60 truncate">{tx.users?.email}</p>
-                              <p className="text-[11px] text-slate-400 dark:text-white/30">{new Date(tx.created_at).toLocaleDateString()}</p>
+                              <p className="text-[11px] text-slate-400 dark:text-white/30">{new Date(tx.created_at).toLocaleString("es-EC", { timeZone: "America/Guayaquil", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
                             </div>
                             <span className="text-[12px] text-emerald-600 dark:text-emerald-400 font-bold shrink-0">${tx.amount}</span>
                           </div>
