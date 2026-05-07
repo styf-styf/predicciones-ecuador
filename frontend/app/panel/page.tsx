@@ -337,7 +337,7 @@ setBankConfig(configData);
     <div key={stat.label} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3">
   <div className={`flex items-center gap-1.5 ${stat.color} mb-1`}>
     {stat.icon}
-    <p className="text-[10px] text-slate-400">{stat.label}</p>
+    <p className="text-[8px] text-slate-400">{stat.label}</p>
   </div>
   <p className="text-base font-bold leading-tight text-slate-900 dark:text-white">{stat.value}</p>
   </div>
