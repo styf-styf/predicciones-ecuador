@@ -313,7 +313,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
                       </div>
                       <div className="flex gap-2 flex-wrap">
                         {[1, 5, 10, 50, 100].map((val) => (
-                          <button key={val} onClick={() => { const current = parseFloat(amount) || 0; const max = points !== null ? points : 0; setAmount(String(Math.min(current + val, max))); }}
+                          <button key={val} onClick={() => { const current = parseFloat(amount) || 0; const max = points !== null ? points : Infinity; setAmount(String(Math.min(current + val, max))); }}
                             className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700">+{val}</button>
                         ))}
                         <button onClick={() => setAmount(String(points !== null ? points : 0))} className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700">Máx.</button>
@@ -376,7 +376,7 @@ const oppPool = betType === "yes" ? noPool  : yesPool;
                   </div>
                   <div className="flex gap-2 flex-wrap">
                     {[1, 5, 10, 50, 100].map((val) => (
-                      <button key={val} onClick={() => { const current = parseFloat(amount) || 0; const max = points !== null ? points : 0; setAmount(String(Math.min(current + val, max))); }}
+                      <button key={val} onClick={() => { const current = parseFloat(amount) || 0; const max = points !== null ? points : Infinity; setAmount(String(Math.min(current + val, max))); }}
                         className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700">+{val}</button>
                     ))}
                     <button onClick={() => setAmount(String(points !== null ? points : 0))} className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700">Máx.</button>
@@ -700,7 +700,7 @@ const oppPool = betType === "yes" ? noPool  : yesPool;
                         </div>
                         <div className="flex gap-2 flex-wrap">
                           {[1, 5, 10, 50, 100].map((val) => (
-                            <button key={val} onClick={() => { const current = parseFloat(amount) || 0; const max = points !== null ? points : 0; setAmount(String(Math.min(current + val, max))); }} className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700">+{val}</button>
+                            <button key={val} onClick={() => { const current = parseFloat(amount) || 0; const max = points !== null ? points : Infinity; setAmount(String(Math.min(current + val, max))); }} className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700">+{val}</button>
                           ))}
                           <button onClick={() => setAmount(String(points !== null ? points : 0))} className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700">Máx.</button>
                           {amount && <button onClick={() => setAmount("")} className="px-3 py-1.5 rounded-full text-sm font-medium bg-rose-100 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 hover:bg-rose-200 dark:hover:bg-rose-900/40 transition-colors border border-rose-200 dark:border-rose-800">Limpiar</button>}
@@ -762,7 +762,7 @@ const oppPool = betType === "yes" ? noPool  : yesPool;
                     </div>
                     <div className="flex gap-2 flex-wrap">
                       {[1, 5, 10, 50, 100].map((val) => (
-                        <button key={val} onClick={() => { const current = parseFloat(amount) || 0; const max = points !== null ? points : 0; setAmount(String(Math.min(current + val, max))); }} className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700">+{val}</button>
+                        <button key={val} onClick={() => { const current = parseFloat(amount) || 0; const max = points !== null ? points : Infinity; setAmount(String(Math.min(current + val, max))); }} className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700">+{val}</button>
                       ))}
                       <button onClick={() => setAmount(String(points !== null ? points : 0))} className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700">Máx.</button>
                       {amount && <button onClick={() => setAmount("")} className="px-3 py-1.5 rounded-full text-sm font-medium bg-rose-100 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 hover:bg-rose-200 dark:hover:bg-rose-900/40 transition-colors border border-rose-200 dark:border-rose-800">Limpiar</button>}
