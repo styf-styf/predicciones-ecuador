@@ -214,7 +214,7 @@ setBankConfig(configData);
               <div className="h-4 w-56 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
             </div>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-4 gap-2">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3">
                 <div className="h-3 w-16 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
@@ -327,20 +327,20 @@ setBankConfig(configData);
         {tab === "inicio" && (
           <div className="space-y-6">
             {/* Stats */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {[
-                { label: "Puntos", value: `${user.points}`, icon: <Wallet size={14} />, color: "text-emerald-500" },
-                { label: "Apuestas", value: totalBets, icon: <BarChart3 size={14} />, color: "text-blue-500" },
-                { label: "Total apostado", value: `${totalBet.toFixed(0)} $`, icon: <ArrowUpRight size={14} />, color: "text-amber-500" },
-                { label: "Ranking", value: userRankIndex !== -1 ? `#${userRankIndex + 1}` : "—", icon: <Trophy size={14} />, color: "text-rose-500" },
-              ].map((stat) => (
-                <div key={stat.label} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4">
-                  <div className={`${stat.color} mb-2`}>{stat.icon}</div>
-                  <p className="text-xl font-bold">{stat.value}</p>
-                  <p className="text-xs text-slate-400 mt-0.5">{stat.label}</p>
-                </div>
-              ))}
-            </div>
+            <div className="grid grid-cols-4 gap-2">
+  {[
+    { label: "Puntos", value: `${user.points}`, icon: <Wallet size={12} />, color: "text-emerald-500" },
+    { label: "Apuestas", value: totalBets, icon: <BarChart3 size={12} />, color: "text-blue-500" },
+    { label: "Apostado", value: `${totalBet.toFixed(0)}$`, icon: <ArrowUpRight size={12} />, color: "text-amber-500" },
+    { label: "Ranking", value: userRankIndex !== -1 ? `#${userRankIndex + 1}` : "—", icon: <Trophy size={12} />, color: "text-rose-500" },
+  ].map((stat) => (
+    <div key={stat.label} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3">
+      <div className={`${stat.color} mb-1`}>{stat.icon}</div>
+      <p className="text-base font-bold leading-tight">{stat.value}</p>
+      <p className="text-[10px] text-slate-400 mt-0.5">{stat.label}</p>
+    </div>
+  ))}
+ </div>
 
             {/* Últimos movimientos */}
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
