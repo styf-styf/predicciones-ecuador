@@ -130,41 +130,16 @@ setBankConfig(configData);
 
   const handleSolicitarRetiro = async () => {
   if (!walletAmount || parseFloat(walletAmount) < 10) return;
-  if (parseFloat(walletAmount) > user.points) return alert("Saldo insuficiente");
-  if (!user.banco || !user.numero_cuenta || !user.tipo_cuenta) return alert("Completa tus datos bancarios en la pestaña Perfil");
   setSendingRetiro(true);
   try {
     const token = localStorage.getItem("token");
-    const payload = JSON.parse(atob(token!.split(".")[1]));
-
-    // Descontar puntos inmediatamente
-    const { error: pointsError } = await supabase
-      .from("users")
-      .update({ points: user.points - parseFloat(walletAmount) })
-      .eq("id", payload.id);
-
-    if (pointsError) { alert("Error al procesar"); return; }
-
-    // Crear transacción de retiro
-    const { error: txError } = await supabase.from("transactions").insert({
-      user_id: payload.id,
-      type: "retiro",
-      amount: parseFloat(walletAmount),
-      status: "pendiente",
-      payment_method: retiroMethod,
-      transfer_code: null,
+    const res = await fetch("https://predicciones-ecuador.onrender.com/withdrawal", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+      body: JSON.stringify({ amount: parseFloat(walletAmount), method: retiroMethod }),
     });
-
-    if (txError) { alert("Error al crear solicitud"); return; }
-
-    // Notificación al usuario
-    await supabase.from("notifications").insert([{
-      user_id: payload.id,
-      title: "📤 Solicitud de retiro enviada",
-      message: `Tu solicitud de retiro por $${walletAmount} está siendo procesada.`,
-      read: false,
-    }]);
-
+    const data = await res.json();
+    if (!res.ok) return alert(data.message);
     setRetiroSent(true);
     setWalletAmount("");
     setTimeout(() => setRetiroSent(false), 4000);
@@ -172,7 +147,7 @@ setBankConfig(configData);
   } finally {
     setSendingRetiro(false);
   }
- };
+};
 
   const handleSendTransfer = async () => {
   if (!transferCode.trim() || !walletAmount || parseFloat(walletAmount) < 1) return;
