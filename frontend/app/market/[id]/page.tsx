@@ -847,8 +847,9 @@ const oppPool = betType === "yes" ? noPool  : yesPool;
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {relatedMarkets.map((m) => {
               const t = (m.yes ?? 0) + (m.no ?? 0) || 1;
-              const yPct = ((m.yes / t) * 100).toFixed(0);
-              const nPct = ((m.no / t) * 100).toFixed(0);
+const isZeroM = m.yes === 0 && m.no === 0;
+const yPct = isZeroM ? "50" : ((m.yes / t) * 100).toFixed(0);
+const nPct = isZeroM ? "50" : ((m.no / t) * 100).toFixed(0);
               return (
                 <div key={m.id} className="border rounded-xl p-3 sm:p-4 transition-all duration-300 hover:scale-[1.01] hover:shadow-lg dark:hover:shadow-black/40 cursor-pointer bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/50">
                   {m.category && <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5 block w-fit">{m.category}</span>}
