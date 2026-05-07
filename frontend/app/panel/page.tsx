@@ -335,12 +335,12 @@ setBankConfig(configData);
     { label: "Ranking", value: userRankIndex !== -1 ? `#${userRankIndex + 1}` : "—", icon: <Trophy size={12} />, color: "text-rose-500" },
   ].map((stat) => (
     <div key={stat.label} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3">
-  <div className={`flex items-center gap-1.5 ${stat.color} mb-1`}>
+  <div className={`flex items-center gap-1.5 ${stat.color}`}>
     {stat.icon}
-    <p className="text-[8px] text-slate-400">{stat.label}</p>
+    <p className="text-base font-bold text-slate-900 dark:text-white">{stat.value}</p>
   </div>
-  <p className="text-base font-bold leading-tight text-slate-900 dark:text-white">{stat.value}</p>
-  </div>
+  <p className="text-[10px] text-slate-400 mt-1">{stat.label}</p>
+</div>
   ))}
  </div>
 
