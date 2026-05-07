@@ -167,7 +167,7 @@ app.post("/auth/google", async (req, res) => {
 
 app.get("/config", async (req, res) => {
   const { data, error } = await supabase
-    .from("config").select("min_bet, max_bet, banco_nombre, banco_tipo, banco_cuenta, banco_titular, banco_cedula").eq("id", 1).single();
+    .from("config").select("min_bet, max_bet, commission, banco_nombre, banco_tipo, banco_cuenta, banco_titular, banco_cedula").eq("id", 1).single();
   if (error) return res.status(500).json({ message: error.message });
   res.json(data);
 });
