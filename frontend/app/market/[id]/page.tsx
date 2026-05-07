@@ -296,7 +296,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
                 </div>
                 {changeCount < MAX_CHANGES ? (
                   <div className="space-y-3">
-                    <p className="text-xs text-slate-400 text-center">Cambios restantes: <span className="font-bold text-white">{MAX_CHANGES - changeCount}</span> de {MAX_CHANGES}</p>
+                    <p className="text-xs text-slate-400 text-center">Cambios restantes: <span className="font-bold text-slate-900 dark:text-white">{MAX_CHANGES - changeCount}</span> de {MAX_CHANGES}</p>
                     <div className="flex gap-6">
                       <button onClick={() => setBetType("yes")} className="flex items-center gap-2.5">
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${betType === "yes" ? "border-emerald-500 bg-emerald-500" : "border-slate-300 dark:border-slate-600"}`}>{betType === "yes" && <div className="w-2 h-2 rounded-full bg-white" />}</div>
@@ -677,7 +677,7 @@ const oppPool = betType === "yes" ? noPool  : yesPool;
                   </div>
                   {changeCount < MAX_CHANGES ? (
                     <div className="space-y-3">
-                      <p className="text-xs text-slate-400 text-center">Cambios restantes: <span className="font-bold text-white">{MAX_CHANGES - changeCount}</span> de {MAX_CHANGES}</p>
+                      <p className="text-xs text-slate-400 text-center">Cambios restantes: <span className="font-bold text-slate-900 dark:text-white">{MAX_CHANGES - changeCount}</span> de {MAX_CHANGES}</p>
                       <div className="flex gap-6">
                         <button onClick={() => setBetType("yes")} className="flex items-center gap-2.5">
                           <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${betType === "yes" ? "border-emerald-500 bg-emerald-500" : "border-slate-300 dark:border-slate-600"}`}>{betType === "yes" && <div className="w-2 h-2 rounded-full bg-white" />}</div>
