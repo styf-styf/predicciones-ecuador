@@ -343,9 +343,6 @@ const oppPool = betType === "yes" ? noPool  : yesPool;
       <p className={`text-xl font-black ${betType === "yes" ? "text-emerald-400" : "text-rose-400"}`}>
         +{total.toFixed(2)} $
       </p>
-      <p className="text-[10px] text-slate-400 mt-0.5">
-        Comisión ({betConfig.commission}%): -{commission.toFixed(2)} $
-      </p>
     </div>
   ) : null;
 })()}
@@ -405,9 +402,6 @@ const oppPool = betType === "yes" ? noPool  : yesPool;
       <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Ganancia estimada si aciertas</p>
       <p className={`text-xl font-black ${betType === "yes" ? "text-emerald-400" : "text-rose-400"}`}>
         +{total.toFixed(2)} $
-      </p>
-      <p className="text-[10px] text-slate-400 mt-0.5">
-        Comisión ({betConfig.commission}%): -{commission.toFixed(2)} $
       </p>
     </div>
   ) : null;
@@ -729,9 +723,6 @@ const oppPool = betType === "yes" ? noPool  : yesPool;
       <p className={`text-xl font-black ${betType === "yes" ? "text-emerald-400" : "text-rose-400"}`}>
         +{total.toFixed(2)} $
       </p>
-      <p className="text-[10px] text-slate-400 mt-0.5">
-        Comisión ({betConfig.commission}%): -{commission.toFixed(2)} $
-      </p>
     </div>
   ) : null;
 })()}
@@ -790,9 +781,6 @@ const oppPool = betType === "yes" ? noPool  : yesPool;
       <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Ganancia estimada si aciertas</p>
       <p className={`text-xl font-black ${betType === "yes" ? "text-emerald-400" : "text-rose-400"}`}>
         +{total.toFixed(2)} $
-      </p>
-      <p className="text-[10px] text-slate-400 mt-0.5">
-        Comisión ({betConfig.commission}%): -{commission.toFixed(2)} $
       </p>
     </div>
   ) : null;
