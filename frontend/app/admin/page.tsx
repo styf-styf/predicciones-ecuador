@@ -799,11 +799,13 @@ export default function AdminPage() {
   <button
     onClick={async () => {
       const token = localStorage.getItem("token");
-      await fetch(`https://predicciones-ecuador.onrender.com/admin/markets/${m.id}/archive`, {
+      const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/markets/${m.id}/archive`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
         body: JSON.stringify({ archived: !m.archived }),
       });
+      const data = await res.json();
+      console.log("Archive response:", res.status, data);
       fetchMarkets();
       showToast(m.archived ? "Mercado restaurado" : "Mercado archivado", "info");
     }}
