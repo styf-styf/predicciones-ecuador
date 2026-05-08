@@ -104,7 +104,9 @@ app.post("/auth/google", async (req, res) => {
   if (!code) return res.status(400).json({ message: "Código de Google requerido" });
 
   try {
-    const { tokens } = await googleClient.getToken({ code, redirect_uri: "postmessage" });
+    const isMobileRedirect = req.body.redirect_uri;
+    const redirectUri = isMobileRedirect || "postmessage";
+    const { tokens } = await googleClient.getToken({ code, redirect_uri: redirectUri });
 
     const ticket = await googleClient.verifyIdToken({
       idToken: tokens.id_token,

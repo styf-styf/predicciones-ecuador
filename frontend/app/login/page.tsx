@@ -22,17 +22,53 @@ export default function Login() {
     const role = localStorage.getItem("role");
     if (token && role === "admin") router.push("/admin");
     else if (token) router.push("/");
+
+    // Manejar redirect de Google
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    if (code) {
+      setGoogleLoading(true);
+      fetch("https://predicciones-ecuador.onrender.com/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.token) {
+            localStorage.setItem("token", data.token);
+            localStorage.setItem("role", data.user.role || "user");
+            localStorage.setItem("points", String(data.user.points || 0));
+            window.dispatchEvent(new Event("auth-change"));
+            router.push("/");
+          } else {
+            setIsError(true);
+            setMessage(data.message || "Error con Google");
+            setGoogleLoading(false);
+          }
+        })
+        .catch(() => {
+          setIsError(true);
+          setMessage("Error de conexión con Google");
+          setGoogleLoading(false);
+        });
+    }
   }, [router]);
 
   const googleLogin = useGoogleLogin({
     flow: "auth-code",
+    ux_mode: "redirect",
+    redirect_uri: typeof window !== "undefined" ? window.location.origin + "/login" : "",
     onSuccess: async (codeResponse) => {
       setGoogleLoading(true);
       try {
         const res = await fetch("https://predicciones-ecuador.onrender.com/auth/google", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code: codeResponse.code }),
+          body: JSON.stringify({ 
+            code: codeResponse.code,
+            redirect_uri: window.location.origin + "/login"
+          }),
         });
         const data = await res.json();
         if (data.token) {
