@@ -848,14 +848,7 @@ export default function AdminPage() {
                               ) : (
                                 <button onClick={() => setEditingMarket({ id: m.id, question: m.question })} className="text-[10px] bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-500/20 border border-amber-200 dark:border-amber-500/20 px-2.5 py-1 rounded-md transition">✏️</button>
                               )}
-                              {/* Botón eliminar — ahora también en desktop */}
-                              <button
-                                onClick={() => handleDeleteMarket(m.id)}
-                                disabled={loadingAction === `delete-${m.id}`}
-                                className="text-[10px] bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 border border-rose-200 dark:border-rose-500/20 px-2.5 py-1 rounded-md transition disabled:opacity-40"
-                              >
-                                {loadingAction === `delete-${m.id}` ? "..." : "🗑️"}
-                              </button>
+                             
                             </>
                           )}
                         </div>
