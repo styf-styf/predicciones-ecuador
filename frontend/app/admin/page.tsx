@@ -13,7 +13,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis,
 import ThemeToggle from "@/components/ThemeToggle";
 import { supabase } from "@/lib/supabase";
 
-type Section = "overview" | "markets" | "users" | "settings" | "winners" | "transacciones" | "contacto" | "suggestions";
+type Section = "overview" | "markets" | "users" | "settings" | "winners" | "transacciones" | "contacto" | "suggestions" | "noticias";
 
 // ─── Toast ─────────────────────────────────────────────────────────────────────
 function Toast({ message, type, onClose }: { message: string; type: "success" | "error" | "info"; onClose: () => void }) {
@@ -114,6 +114,8 @@ export default function AdminPage() {
   const [suggestionCategories, setSuggestionCategories] = useState<{ [key: number]: string }>({});
   const [transactions, setTransactions] = useState<any[]>([]);
   const [contactos, setContactos] = useState<any[]>([]);
+  const [marketNews, setMarketNews] = useState<any[]>([]);
+  const [newsMarketInput, setNewsMarketInput] = useState<{ [key: number]: string }>({});
 
   // ── Nuevos estados ──
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
@@ -218,6 +220,15 @@ export default function AdminPage() {
     });
     const data = await res.json();
     if (res.ok) setUsers(data);
+  };
+
+  const fetchMarketNews = async () => {
+    const token = localStorage.getItem("token");
+    const res = await fetch("https://predicciones-ecuador.onrender.com/admin/market-news", {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (res.ok) setMarketNews(data);
   };
 
   const fetchContactos = async () => {
@@ -340,7 +351,7 @@ export default function AdminPage() {
       const data = await res.json();
       if (data.role !== "admin") { window.location.href = "/"; return; }
       setIsLogged(true); setIsAdmin(true); setPoints(data.points || 0);
-      fetchWinners(); fetchStats(); fetchUsers(); fetchSettings(); fetchCharts(); fetchTransactions(); fetchContactos(); fetchSuggestions();
+      fetchWinners(); fetchStats(); fetchUsers(); fetchSettings(); fetchCharts(); fetchTransactions(); fetchContactos(); fetchSuggestions(); fetchMarketNews();
     } catch {
       localStorage.removeItem("token");
       window.location.href = "/login";
@@ -482,6 +493,7 @@ export default function AdminPage() {
     { id: "transacciones", label: "Transacciones", icon: <Wallet size={15} />, badge: transactions.filter(t => t.status === "pendiente").length },
     { id: "suggestions", label: "Sugerencias", icon: <Newspaper size={15} />, badge: suggestions.filter(s => s.status === "pending").length },
     { id: "contacto", label: "Contacto", icon: <MessageSquare size={15} />, badge: contactos.filter(c => !c.leido).length },
+    { id: "noticias", label: "Noticias", icon: <Newspaper size={15} />, badge: marketNews.filter(n => n.status === "pending").length },
     { id: "settings", label: "Configuración", icon: <Settings size={15} /> },
   ];
 
@@ -1428,6 +1440,121 @@ export default function AdminPage() {
                     </div>
                   ))}
                 </div>
+              </div>
+            </>
+          )}
+
+          {/* NOTICIAS */}
+          {activeSection === "noticias" && (
+            <>
+              <div>
+                <h1 className="text-lg font-bold">Noticias de mercados</h1>
+                <p className="text-[12px] text-slate-400 dark:text-white/30 mt-0.5">
+                  {marketNews.filter(n => n.status === "pending").length} pendientes · {marketNews.length} total
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {marketNews.length === 0 && (
+                  <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-10 text-center">
+                    <p className="text-[12px] text-slate-400 dark:text-white/20">No hay noticias aún. Usa la extensión para guardar noticias.</p>
+                  </div>
+                )}
+                {marketNews.map((n) => (
+                  <div key={n.id} className={`bg-white dark:bg-[#111111] border rounded-xl p-5 space-y-3 ${
+                    n.status === "pending" ? "border-amber-200 dark:border-amber-500/20"
+                    : n.status === "approved" ? "border-emerald-200 dark:border-emerald-500/20 opacity-70"
+                    : "border-slate-200 dark:border-white/[0.06] opacity-40"
+                  }`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[13px] font-semibold text-slate-900 dark:text-white leading-snug">{n.title}</p>
+                        {n.url && (
+                          <a href={n.url} target="_blank" rel="noopener noreferrer"
+                            className="text-[11px] text-blue-500 dark:text-blue-400 hover:underline mt-0.5 block truncate">
+                            {n.source || n.url}
+                          </a>
+                        )}
+                      </div>
+                      <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-md uppercase tracking-wider ${
+                        n.status === "pending" ? "bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                        : n.status === "approved" ? "bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                        : "bg-slate-100 dark:bg-white/[0.06] text-slate-400 dark:text-white/30"
+                      }`}>
+                        {n.status === "pending" ? "Pendiente" : n.status === "approved" ? "Aprobada" : "Rechazada"}
+                      </span>
+                    </div>
+
+                    {n.content && (
+                      <p className="text-[12px] text-slate-500 dark:text-white/40 leading-relaxed border-l-2 border-slate-200 dark:border-white/10 pl-3 line-clamp-3">
+                        {n.content}
+                      </p>
+                    )}
+
+                    {n.market_id && (
+                      <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-white/40">
+                        <span>🔗 Vinculada al mercado</span>
+                        <span className="font-bold text-slate-700 dark:text-white/60">#{n.market_id}</span>
+                        <span className="text-slate-400 dark:text-white/25 truncate">
+                          — {markets.find(m => m.id === n.market_id)?.question || ""}
+                        </span>
+                      </div>
+                    )}
+
+                    {n.status === "pending" && (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <input
+                          type="number"
+                          placeholder="ID del mercado..."
+                          value={newsMarketInput[n.id] || n.market_id || ""}
+                          onChange={(e) => setNewsMarketInput((prev) => ({ ...prev, [n.id]: e.target.value }))}
+                          className="bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-[12px] outline-none text-slate-900 dark:text-white w-40 focus:border-emerald-500/60 transition"
+                        />
+                        {newsMarketInput[n.id] && markets.find(m => m.id === Number(newsMarketInput[n.id])) && (
+                          <span className="text-[11px] text-slate-500 dark:text-white/40 truncate max-w-xs">
+                            → {markets.find(m => m.id === Number(newsMarketInput[n.id]))?.question}
+                          </span>
+                        )}
+                        <div className="flex gap-2 ml-auto">
+                          <button
+                            onClick={async () => {
+                              const token = localStorage.getItem("token");
+                              const mid = newsMarketInput[n.id];
+                              if (!mid) return showToast("Ingresa el ID del mercado", "error");
+                              const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/market-news/${n.id}`, {
+                                method: "PUT",
+                                headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+                                body: JSON.stringify({ market_id: Number(mid), status: "approved" }),
+                              });
+                              const data = await res.json();
+                              if (res.ok) { showToast("Noticia aprobada ✅", "success"); fetchMarketNews(); }
+                              else showToast(data.message, "error");
+                            }}
+                            className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 px-4 py-2 rounded-lg text-[12px] font-bold transition"
+                          >
+                            ✅ Aprobar
+                          </button>
+                          <button
+                            onClick={async () => {
+                              const token = localStorage.getItem("token");
+                              const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/market-news/${n.id}`, {
+                                method: "PUT",
+                                headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+                                body: JSON.stringify({ market_id: null, status: "rejected" }),
+                              });
+                              if (res.ok) { showToast("Noticia rechazada", "info"); fetchMarketNews(); }
+                            }}
+                            className="bg-slate-100 dark:bg-white/[0.04] text-slate-500 dark:text-white/30 border border-slate-200 dark:border-white/[0.08] hover:bg-slate-200 dark:hover:bg-white/[0.08] px-4 py-2 rounded-lg text-[12px] transition"
+                          >
+                            Rechazar
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    <p className="text-[10px] text-slate-300 dark:text-white/15">{new Date(n.created_at).toLocaleString("es-EC", { timeZone: "America/Guayaquil" })}</p>
+                  </div>
+                ))}
               </div>
             </>
           )}

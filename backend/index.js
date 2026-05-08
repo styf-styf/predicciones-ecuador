@@ -1590,6 +1590,56 @@ app.put("/admin/markets/:id/archive", auth, async (req, res) => {
   res.json({ message: archived ? "Mercado archivado" : "Mercado restaurado" });
 });
 
+// =======================
+// 📰 NOTICIAS DE MERCADO
+// =======================
+app.post("/admin/market-news", auth, async (req, res) => {
+  const { data: user } = await supabase
+    .from("users").select("role").eq("id", req.userId).single();
+  if (!user || user.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const { title, url, content, source } = req.body;
+  const { data, error } = await supabase.from("market_news").insert([{
+    title, url, content, source, status: "pending",
+  }]).select().single();
+
+  if (error) return res.status(500).json({ message: error.message });
+  res.json({ message: "Noticia guardada", news: data });
+});
+
+app.get("/admin/market-news", auth, async (req, res) => {
+  const { data: user } = await supabase
+    .from("users").select("role").eq("id", req.userId).single();
+  if (!user || user.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const { data, error } = await supabase
+    .from("market_news").select("*").order("created_at", { ascending: false });
+  if (error) return res.status(500).json({ message: error.message });
+  res.json(data);
+});
+
+app.put("/admin/market-news/:id", auth, async (req, res) => {
+  const { data: user } = await supabase
+    .from("users").select("role").eq("id", req.userId).single();
+  if (!user || user.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const { market_id, status } = req.body;
+  const { error } = await supabase
+    .from("market_news").update({ market_id, status }).eq("id", req.params.id);
+  if (error) return res.status(500).json({ message: error.message });
+  res.json({ message: "Noticia actualizada" });
+});
+
+app.get("/markets/:id/news-closing", async (req, res) => {
+  const { data, error } = await supabase
+    .from("market_news")
+    .select("*")
+    .eq("market_id", req.params.id)
+    .eq("status", "approved");
+  if (error) return res.status(500).json({ message: error.message });
+  res.json(data);
+});
+
 app.listen(4000, () => {
   console.log("Servidor en https://predicciones-ecuador.onrender.com");
 });

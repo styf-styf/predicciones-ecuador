@@ -325,7 +325,7 @@ export default function Header() {
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{userName}</p>
-                <p className="text-xs text-emerald-500 font-semibold">{points} puntos</p>
+                <p className="text-xs text-emerald-500 font-semibold">{points} $</p>
               </div>
             </div>
           )}
