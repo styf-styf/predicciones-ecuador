@@ -36,6 +36,7 @@ export default function MarketPage() {
   const [uniqueBettors, setUniqueBettors] = useState(0);
   const [topHolders, setTopHolders] = useState<any[]>([]);
   const [allMarkets, setAllMarkets] = useState<any[]>([]);
+  const [closingNews, setClosingNews] = useState<any[]>([]);
   useEffect(() => {
     setToken(localStorage.getItem("token"));
   }, []);
@@ -65,6 +66,11 @@ export default function MarketPage() {
     const res = await fetch(`https://predicciones-ecuador.onrender.com/markets/${id}/news`);
     if (res.ok) setNews(await res.json());
     setLoadingNews(false);
+  };
+
+  const fetchClosingNews = async () => {
+    const res = await fetch(`https://predicciones-ecuador.onrender.com/markets/${id}/news-closing`);
+    if (res.ok) setClosingNews(await res.json());
   };
   
   const fetchHistory = async () => {
@@ -129,6 +135,7 @@ const fetchUniqueBettors = async () => {
     fetch("https://predicciones-ecuador.onrender.com/markets")
       .then((r) => r.json())
       .then((data) => setAllMarkets(data));
+    fetchClosingNews();
   }
  }, [id]);
 
@@ -517,6 +524,31 @@ const oppPool = betType === "yes" ? noPool  : yesPool;
           }
         </div>
 
+        {/* 5b. Noticia de cierre móvil */}
+        {market.resolved && closingNews.length > 0 && (
+          <div className="bg-slate-100 dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-5">
+            <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
+              <Newspaper size={18} className="text-emerald-400" /> Noticia de cierre
+            </h2>
+            <div className="space-y-4">
+              {closingNews.map((n) => (
+                <div key={n.id} className="space-y-2">
+                  <p className="text-[10px] text-emerald-500 uppercase tracking-widest font-semibold">✅ Verificado al cierre</p>
+                  <p className="font-bold text-sm text-slate-900 dark:text-white leading-snug">{n.title}</p>
+                  {n.content && <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-l-2 border-emerald-400 pl-3 line-clamp-3">{n.content}</p>}
+                  <div className="flex items-center justify-between gap-2 pt-1">
+                    {n.source && <span className="text-[11px] text-slate-500 flex items-center gap-1">🌐 <span className="font-medium">{n.source}</span></span>}
+                    {n.url && <a href={n.url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-emerald-400 hover:underline">Ver noticia completa →</a>}
+                  </div>
+                  <p className="text-[10px] text-slate-400">{new Date(n.created_at).toLocaleDateString("es-EC", { day: "numeric", month: "long", year: "numeric" })}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        
+
         {/* 6. Comentarios */}
         <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
           <h2 className="font-bold text-lg mb-4 flex items-center gap-2"><MessageCircle size={18} className="text-purple-400" /> Comentarios ({comments.length})</h2>
@@ -624,6 +656,29 @@ const oppPool = betType === "yes" ? noPool  : yesPool;
               ))}</div>
             }
           </div>
+
+          {/* Noticia de cierre desktop */}
+          {market.resolved && closingNews.length > 0 && (
+            <div className="bg-slate-100 dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-5">
+              <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
+                <Newspaper size={18} className="text-emerald-400" /> Noticia de cierre
+              </h2>
+              <div className="space-y-4">
+                {closingNews.map((n) => (
+                  <div key={n.id} className="space-y-2">
+                    <p className="text-[10px] text-emerald-500 uppercase tracking-widest font-semibold">✅ Verificado al cierre</p>
+                    <p className="font-bold text-sm text-slate-900 dark:text-white leading-snug">{n.title}</p>
+                    {n.content && <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-l-2 border-emerald-400 pl-3 line-clamp-3">{n.content}</p>}
+                    <div className="flex items-center justify-between gap-2 pt-1">
+                      {n.source && <span className="text-[11px] text-slate-500 flex items-center gap-1">🌐 <span className="font-medium">{n.source}</span></span>}
+                      {n.url && <a href={n.url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-emerald-400 hover:underline">Ver noticia completa →</a>}
+                    </div>
+                    <p className="text-[10px] text-slate-400">{new Date(n.created_at).toLocaleDateString("es-EC", { day: "numeric", month: "long", year: "numeric" })}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Comentarios */}
           <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
