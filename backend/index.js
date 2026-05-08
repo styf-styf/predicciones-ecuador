@@ -221,8 +221,14 @@ app.get("/ranking", async (req, res) => {
 
 
 app.get("/markets", async (req, res) => {
-  const { data, error } = await supabase
-    .from("markets").select("*, bets(count)").order("id", { ascending: false });
+  const isAdmin = req.headers.authorization
+    ? (() => { try { const d = jwt.verify(req.headers.authorization.split(" ")[1], SECRET); return d.role === "admin"; } catch { return false; } })()
+    : false;
+
+  let query = supabase.from("markets").select("*, bets(count)").order("id", { ascending: false });
+  if (!isAdmin) query = query.eq("archived", false);
+
+  const { data, error } = await query;
 
   if (error) return res.status(500).json({ message: error.message });
 
