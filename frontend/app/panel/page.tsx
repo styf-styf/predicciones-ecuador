@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  Wallet, Trophy, BarChart3, ArrowUpRight, Shield,
+  Wallet, Trophy, BarChart3, ArrowUpRight, Shield, X,
   TrendingUp, TrendingDown, ArrowDownLeft, ArrowUpLeft,
   User, Settings, Home, ChevronRight, Copy, Check,
   AlertCircle, ExternalLink, Clock, CheckCircle, XCircle
@@ -47,6 +47,8 @@ export default function PanelPage() {
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
   const [editingProfile, setEditingProfile] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
+const showToast = (message: string, type: "success" | "error" | "info" = "success") => setToast({ message, type });
 
   const loadPanel = async () => {
     const token = localStorage.getItem("token");
@@ -125,7 +127,7 @@ setBankConfig(configData);
         headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
         body: JSON.stringify(profileForm),
       });
-      if (res.ok) { setProfileSaved(true); setTimeout(() => setProfileSaved(false), 3000); loadPanel(); }
+      if (res.ok) { setProfileSaved(true); setTimeout(() => setProfileSaved(false), 3000); showToast("Perfil guardado correctamente", "success"); loadPanel(); }
     } finally { setSavingProfile(false); }
   };
 
@@ -144,6 +146,7 @@ setBankConfig(configData);
     setRetiroSent(true);
     setWalletAmount("");
     setTimeout(() => setRetiroSent(false), 4000);
+    showToast("Solicitud de retiro enviada correctamente", "success");
     loadPanel();
   } finally {
     setSendingRetiro(false);
@@ -169,6 +172,7 @@ setBankConfig(configData);
       setTransferCode("");
       setWalletAmount("");
       setTimeout(() => setTransferSent(false), 4000);
+      showToast("Comprobante enviado, será procesado en menos de 24 horas", "info");
       loadPanel();
     }
   } finally {
@@ -244,6 +248,17 @@ setBankConfig(configData);
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white">
       <Header />
+      {toast && (
+        <div className={`fixed bottom-5 right-5 z-[100] flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-[13px] font-medium transition-all ${
+          toast.type === "success" ? "bg-emerald-50 dark:bg-emerald-900/40 border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400"
+          : toast.type === "error" ? "bg-rose-50 dark:bg-rose-900/40 border-rose-200 dark:border-rose-500/30 text-rose-700 dark:text-rose-400"
+          : "bg-blue-50 dark:bg-blue-900/40 border-blue-200 dark:border-blue-500/30 text-blue-700 dark:text-blue-400"
+        }`}>
+          <span>{toast.type === "success" ? "✅" : toast.type === "error" ? "❌" : "ℹ️"}</span>
+          <span>{toast.message}</span>
+          <button onClick={() => setToast(null)} className="ml-2 opacity-50 hover:opacity-100"><X size={13} /></button>
+        </div>
+      )}
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
 
