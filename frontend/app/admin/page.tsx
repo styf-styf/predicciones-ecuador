@@ -795,15 +795,30 @@ export default function AdminPage() {
                         <div className="col-span-2 flex justify-end gap-1.5 flex-wrap">
                           {m.resolved ? (
                             <div className="flex items-center gap-1.5">
-                              <span className="text-[10px] text-slate-400 dark:text-white/25 bg-slate-100 dark:bg-white/[0.04] px-2 py-1 rounded-md">Ganó {m.winner === "yes" ? "Sí ✓" : "No ✗"}</span>
-                              <button
-                                onClick={() => handleDeleteMarket(m.id)}
-                                disabled={loadingAction === `delete-${m.id}`}
-                                className="text-[10px] bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 border border-rose-200 dark:border-rose-500/20 px-2.5 py-1 rounded-md transition disabled:opacity-40"
-                              >
-                                {loadingAction === `delete-${m.id}` ? "..." : "🗑️"}
-                              </button>
-                            </div>
+  <span className="text-[10px] text-slate-400 dark:text-white/25 bg-slate-100 dark:bg-white/[0.04] px-2 py-1 rounded-md">Ganó {m.winner === "yes" ? "Sí ✓" : "No ✗"}</span>
+  <button
+    onClick={async () => {
+      const token = localStorage.getItem("token");
+      await fetch(`https://predicciones-ecuador.onrender.com/admin/markets/${m.id}/archive`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+        body: JSON.stringify({ archived: !m.archived }),
+      });
+      fetchMarkets();
+      showToast(m.archived ? "Mercado restaurado" : "Mercado archivado", "info");
+    }}
+    className={`text-[10px] px-2.5 py-1 rounded-md border transition ${m.archived ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20" : "bg-slate-100 dark:bg-white/[0.04] text-slate-500 dark:text-white/30 border-slate-200 dark:border-white/[0.08]"}`}
+  >
+    {m.archived ? "📂 Restaurar" : "🗄️ Archivar"}
+  </button>
+  <button
+    onClick={() => handleDeleteMarket(m.id)}
+    disabled={loadingAction === `delete-${m.id}`}
+    className="text-[10px] bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 border border-rose-200 dark:border-rose-500/20 px-2.5 py-1 rounded-md transition disabled:opacity-40"
+  >
+    {loadingAction === `delete-${m.id}` ? "..." : "🗑️"}
+  </button>
+ </div>
                           ) : (
                             <>
                               <button

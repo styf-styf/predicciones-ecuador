@@ -211,8 +211,8 @@ app.get("/my-bets", auth, async (req, res) => {
 
 app.get("/ranking", async (req, res) => {
   const { data, error } = await supabase
-    .from("users").select("email,points")
-    .order("points", { ascending: false }).limit(10);
+    .from("users").select("email,points,nombre,apellido")
+    .order("points", { ascending: false }).limit(100);
 
   if (error) return res.status(400).json({ message: error.message });
   res.json(data);
@@ -222,7 +222,7 @@ app.get("/ranking", async (req, res) => {
 
 app.get("/markets", async (req, res) => {
   const { data, error } = await supabase
-    .from("markets").select("*, bets(count)").order("id", { ascending: false });
+    .from("markets").select("*, bets(count)").eq("archived", false).order("id", { ascending: false });
 
   if (error) return res.status(500).json({ message: error.message });
 
@@ -1568,6 +1568,19 @@ app.post("/withdrawal", auth, async (req, res) => {
   }]);
 
   res.json({ message: "Solicitud enviada", newPoints });
+});
+
+app.put("/admin/markets/:id/archive", auth, async (req, res) => {
+  const { data: user } = await supabase
+    .from("users").select("role").eq("id", req.userId).single();
+  if (!user || user.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const { archived } = req.body;
+  const { error } = await supabase
+    .from("markets").update({ archived }).eq("id", req.params.id);
+
+  if (error) return res.status(500).json({ message: error.message });
+  res.json({ message: archived ? "Mercado archivado" : "Mercado restaurado" });
 });
 
 app.listen(4000, () => {
