@@ -794,7 +794,16 @@ export default function AdminPage() {
                         <span className="col-span-1 text-center text-[11px] text-amber-500 dark:text-amber-400 tabular-nums font-bold">{(Number(m.yes) + Number(m.no)).toFixed(1)}</span>
                         <div className="col-span-2 flex justify-end gap-1.5 flex-wrap">
                           {m.resolved ? (
-                            <span className="text-[10px] text-slate-400 dark:text-white/25 bg-slate-100 dark:bg-white/[0.04] px-2 py-1 rounded-md">Ganó {m.winner === "yes" ? "Sí ✓" : "No ✗"}</span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] text-slate-400 dark:text-white/25 bg-slate-100 dark:bg-white/[0.04] px-2 py-1 rounded-md">Ganó {m.winner === "yes" ? "Sí ✓" : "No ✗"}</span>
+                              <button
+                                onClick={() => handleDeleteMarket(m.id)}
+                                disabled={loadingAction === `delete-${m.id}`}
+                                className="text-[10px] bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 border border-rose-200 dark:border-rose-500/20 px-2.5 py-1 rounded-md transition disabled:opacity-40"
+                              >
+                                {loadingAction === `delete-${m.id}` ? "..." : "🗑️"}
+                              </button>
+                            </div>
                           ) : (
                             <>
                               <button
