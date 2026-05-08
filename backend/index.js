@@ -234,6 +234,7 @@ app.get("/markets", async (req, res) => {
   res.json(markets);
 }); 
 
+
 // =======================
 // 🔍 BUSCAR MERCADOS
 // =======================
