@@ -9,9 +9,11 @@ export default function Header() {
   const [points, setPoints] = useState<number | null>(null);
   const [isLogged, setIsLogged] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userName, setUserName] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showResults, setShowResults] = useState(false);
@@ -30,6 +32,7 @@ export default function Header() {
       setPoints(data.points || 0);
       setIsAdmin(data.role === "admin");
       setIsLogged(true);
+      setUserName(data.nombre || data.email || null);
     } catch {
       localStorage.removeItem("token");
       setIsLogged(false); setIsAdmin(false); setPoints(null);
@@ -76,7 +79,12 @@ export default function Header() {
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "users" }, () => loadMe())
       .subscribe();
     const notifChannel = supabase.channel("header-notif-live")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications" }, () => loadNotifications())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications" }, () => {
+        loadNotifications();
+      })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "notifications" }, () => {
+        loadNotifications();
+      })
       .subscribe();
     return () => {
       window.removeEventListener("auth-change", syncAuth);
@@ -86,12 +94,26 @@ export default function Header() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!showNotifications) return;
+    const interval = setInterval(() => loadNotifications(), 10000);
+    return () => clearInterval(interval);
+  }, [showNotifications]);
+
   return (
+    <>
+      <style>{`
+        @keyframes slideDown {
+          from { opacity: 0; transform: translateY(-8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+    
     <header className="sticky top-0 z-50 border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-3">
 
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 sm:gap-3 min-w-0">
+        <Link href="/" onClick={() => setShowMobileMenu(false)} className="flex items-center gap-2 sm:gap-3 min-w-0">
           <div className="h-9 w-9 sm:h-10 sm:w-10 shrink-0 rounded-2xl bg-emerald-500 grid place-items-center font-bold text-slate-950 text-sm sm:text-base">P</div>
           <div className="min-w-0">
             <h1 className="text-base sm:text-xl font-bold leading-tight truncate">Predicciones Ecuador</h1>
@@ -191,7 +213,22 @@ export default function Header() {
           {/* Auth desktop */}
           <div className="hidden sm:flex items-center gap-4">
             {isAdmin && <Link href="/admin" className="text-sm font-semibold text-amber-500 hover:text-amber-400 transition-colors">Admin</Link>}
-            <Link href="/panel" className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">Panel</Link>
+            <Link href="/panel" className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
+              {isLogged && userName ? (
+                <div className="flex items-center gap-2">
+                  <div className="h-7 w-7 rounded-full bg-emerald-500 text-white text-xs font-bold grid place-items-center shrink-0">
+                    {userName.charAt(0).toUpperCase()}
+                  </div>
+                  {points !== null && (
+                    <span className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 text-xs font-bold px-2 py-0.5 rounded-full">
+                      {points} $
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <span>Panel</span>
+              )}
+            </Link>
             {isLogged ? (
               <button
                 onClick={() => { localStorage.removeItem("token"); localStorage.removeItem("role"); localStorage.removeItem("points"); setIsLogged(false); setPoints(null); setIsAdmin(false); window.location.href = "/"; }}
@@ -207,15 +244,54 @@ export default function Header() {
           </div>
 
           {/* Hamburguesa móvil */}
-          <button onClick={() => setShowMobileMenu(!showMobileMenu)} className="sm:hidden p-2 rounded-xl bg-slate-200 dark:bg-slate-900 text-slate-900 dark:text-white">
+          <button onClick={() => { setShowMobileSearch(!showMobileSearch); setShowMobileMenu(false); }} className="sm:hidden p-2 rounded-xl bg-slate-200 dark:bg-slate-900 text-slate-900 dark:text-white">
+            <Search size={18} />
+          </button>
+          <button onClick={() => { setShowMobileMenu(!showMobileMenu); setShowMobileSearch(false); }} className="sm:hidden p-2 rounded-xl bg-slate-200 dark:bg-slate-900 text-slate-900 dark:text-white">
             {showMobileMenu ? <X size={18} /> : <Menu size={18} />}
           </button>
         </div>
       </div>
 
+      {/* Búsqueda móvil inline */}
+      {showMobileSearch && (
+        <div className="sm:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-3">
+          <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-900 px-4 py-2.5 rounded-2xl">
+            <Search size={16} className="text-slate-400 shrink-0" />
+            <input
+              autoFocus
+              placeholder="Buscar mercados..."
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="bg-transparent outline-none w-full text-sm text-slate-900 dark:text-white placeholder-slate-400"
+            />
+            {searchQuery && (
+              <button onClick={() => { setSearchQuery(""); setSearchResults([]); setShowResults(false); }}>
+                <X size={14} className="text-slate-400" />
+              </button>
+            )}
+          </div>
+          {showResults && searchResults.length > 0 && (
+            <div className="mt-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
+              {searchResults.map((m) => (
+                <Link key={m.id} href={`/market/${m.id}`}
+                  onClick={() => { setShowResults(false); setSearchQuery(""); setShowMobileSearch(false); }}
+                  className="w-full text-left px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition border-b border-slate-100 dark:border-slate-800 last:border-0 flex items-center justify-between gap-3">
+                  <p className="text-sm font-medium truncate">{m.question}</p>
+                  <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full ${m.resolved ? "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300" : "bg-emerald-500/10 text-emerald-400"}`}>
+                    {m.resolved ? "Cerrado" : "En vivo"}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Menú móvil */}
       {showMobileMenu && (
-        <div className="sm:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-4 space-y-3">
+        <div className="sm:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-4 space-y-3"
+          style={{ animation: "slideDown 0.15s ease" }}>
           <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-900 px-4 py-2.5 rounded-2xl">
             <Search size={16} className="text-slate-400 shrink-0" />
             <input placeholder="Buscar mercados..." value={searchQuery} onChange={(e) => handleSearch(e.target.value)}
@@ -251,6 +327,7 @@ export default function Header() {
           </div>
         </div>
       )}
-    </header>
+  </header>
+    </>
   );
 }
