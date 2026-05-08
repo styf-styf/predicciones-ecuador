@@ -176,7 +176,10 @@ export default function AdminPage() {
   };
 
   const fetchMarkets = async () => {
-    const res = await fetch("https://predicciones-ecuador.onrender.com/markets");
+    const token = localStorage.getItem("token");
+    const res = await fetch("https://predicciones-ecuador.onrender.com/markets", {
+      headers: { authorization: `Bearer ${token}` },
+    });
     const data = await res.json();
     setMarkets(data);
   };
