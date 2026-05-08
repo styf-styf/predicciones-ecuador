@@ -10,6 +10,8 @@ export default function Header() {
   const [isLogged, setIsLogged] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef<any>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -73,6 +75,7 @@ export default function Header() {
     const handleClickOutside = (e: any) => {
       if (notifRef.current && !notifRef.current.contains(e.target)) setShowNotifications(false);
       if (searchRef.current && !searchRef.current.contains(e.target)) setShowResults(false);
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) setShowUserMenu(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
     const userChannel = supabase.channel("header-user-live")
@@ -212,34 +215,55 @@ export default function Header() {
 
           {/* Auth desktop */}
           <div className="hidden sm:flex items-center gap-4">
-            {isAdmin && <Link href="/admin" className="text-sm font-semibold text-amber-500 hover:text-amber-400 transition-colors">Admin</Link>}
-            <Link href="/panel" className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
-              {isLogged && userName ? (
-                <div className="flex items-center gap-2">
-                  <div className="h-7 w-7 rounded-full bg-emerald-500 text-white text-xs font-bold grid place-items-center shrink-0">
-                    {userName.charAt(0).toUpperCase()}
-                  </div>
-                  {points !== null && (
-                    <span className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 text-xs font-bold px-2 py-0.5 rounded-full">
-                      {points} $
-                    </span>
-                  )}
-                </div>
-              ) : (
-                <span>Panel</span>
-              )}
-            </Link>
-            {isLogged ? (
-              <button
-                onClick={() => { localStorage.removeItem("token"); localStorage.removeItem("role"); localStorage.removeItem("points"); setIsLogged(false); setPoints(null); setIsAdmin(false); window.location.href = "/"; }}
-                className="text-sm font-medium text-rose-500 hover:text-rose-400 transition-colors flex items-center gap-1.5"
-              >
-                <LogOut size={15} /> Salir
-              </button>
-            ) : (
+            {!isLogged && (
               <Link href="/login" className="text-sm font-semibold text-emerald-500 hover:text-emerald-400 transition-colors flex items-center gap-1.5">
                 <LogIn size={15} /> Login
               </Link>
+            )}
+            {isLogged && (
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-1.5 rounded-xl hover:border-emerald-500/50 transition-all"
+                >
+                  {points !== null && (
+                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{points} $</span>
+                  )}
+                  <div className="h-6 w-6 rounded-full bg-emerald-500 text-white text-xs font-bold grid place-items-center shrink-0">
+                    {userName?.charAt(0).toUpperCase() || "U"}
+                  </div>
+                </button>
+
+                {showUserMenu && (
+                  <div className="absolute right-0 top-12 w-48 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden z-50"
+                    style={{ animation: "slideDown 0.15s ease" }}>
+                    <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800">
+                      <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{userName}</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5">{points} puntos</p>
+                    </div>
+                    <div className="py-1">
+                      <Link href="/panel" onClick={() => setShowUserMenu(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+                        <span>👤</span> Mi panel
+                      </Link>
+                      {isAdmin && (
+                        <Link href="/admin" onClick={() => setShowUserMenu(false)}
+                          className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition">
+                          <span>⚙️</span> Admin
+                        </Link>
+                      )}
+                      <div className="border-t border-slate-100 dark:border-slate-800 mt-1 pt-1">
+                        <button
+                          onClick={() => { localStorage.removeItem("token"); localStorage.removeItem("role"); localStorage.removeItem("points"); setIsLogged(false); setPoints(null); setIsAdmin(false); setShowUserMenu(false); window.location.href = "/"; }}
+                          className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition w-full text-left"
+                        >
+                          <LogOut size={14} /> Cerrar sesión
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
