@@ -222,7 +222,7 @@ app.get("/ranking", async (req, res) => {
 
 app.get("/markets", async (req, res) => {
   const { data, error } = await supabase
-    .from("markets").select("*, bets(count)").eq("archived", false).order("id", { ascending: false });
+    .from("markets").select("*, bets(count)").order("id", { ascending: false });
 
   if (error) return res.status(500).json({ message: error.message });
 
