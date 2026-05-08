@@ -239,7 +239,7 @@ export default function Header() {
                     style={{ animation: "slideDown 0.15s ease" }}>
                     <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800">
                       <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{userName}</p>
-                      <p className="text-[10px] text-slate-400 mt-0.5">{points} puntos</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5">{points} $</p>
                     </div>
                     <div className="py-1">
                       <Link href="/panel" onClick={() => setShowUserMenu(false)}
@@ -316,39 +316,46 @@ export default function Header() {
       {showMobileMenu && (
         <div className="sm:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-4 space-y-3"
           style={{ animation: "slideDown 0.15s ease" }}>
-          <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-900 px-4 py-2.5 rounded-2xl">
-            <Search size={16} className="text-slate-400 shrink-0" />
-            <input placeholder="Buscar mercados..." value={searchQuery} onChange={(e) => handleSearch(e.target.value)}
-              className="bg-transparent outline-none w-full text-sm text-slate-900 dark:text-white" />
-          </div>
-          {showResults && searchResults.length > 0 && (
-            <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
-              {searchResults.map((m) => (
-                <Link key={m.id} href={`/market/${m.id}`}
-                  onClick={() => { setShowResults(false); setSearchQuery(""); setShowMobileMenu(false); }}
-                  className="w-full text-left px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition border-b border-slate-100 dark:border-slate-800 last:border-0 flex items-center justify-between gap-3">
-                  <p className="text-sm font-medium truncate">{m.question}</p>
-                  <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full ${m.resolved ? "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300" : "bg-emerald-500/10 text-emerald-400"}`}>
-                    {m.resolved ? "Cerrado" : "En vivo"}
-                  </span>
-                </Link>
-              ))}
+
+          {/* Usuario info */}
+          {isLogged && (
+            <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3">
+              <div className="h-9 w-9 rounded-full bg-emerald-500 text-white text-sm font-bold grid place-items-center shrink-0">
+                {userName?.charAt(0).toUpperCase() || "U"}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{userName}</p>
+                <p className="text-xs text-emerald-500 font-semibold">{points} puntos</p>
+              </div>
             </div>
           )}
-          <div className="flex flex-col gap-1">
-            {isAdmin && <Link href="/admin" onClick={() => setShowMobileMenu(false)} className="px-2 py-2.5 text-sm font-semibold text-amber-500 border-b border-slate-100 dark:border-slate-800">Admin</Link>}
-            <Link href="/panel" onClick={() => setShowMobileMenu(false)} className="px-2 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 border-b border-slate-100 dark:border-slate-800">Panel</Link>
+
+          {/* Links */}
+          <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
+            <Link href="/panel" onClick={() => setShowMobileMenu(false)}
+              className="flex items-center gap-3 px-4 py-3 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition border-b border-slate-100 dark:border-slate-800">
+              <span>👤</span> Mi panel
+            </Link>
+            {isAdmin && (
+              <Link href="/admin" onClick={() => setShowMobileMenu(false)}
+                className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition border-b border-slate-100 dark:border-slate-800">
+                <span>⚙️</span> Admin
+              </Link>
+            )}
             {isLogged ? (
-              <button onClick={() => { localStorage.removeItem("token"); localStorage.removeItem("role"); localStorage.removeItem("points"); setIsLogged(false); setPoints(null); setIsAdmin(false); setShowMobileMenu(false); window.location.href = "/"; }}
-                className="px-2 py-2.5 text-sm font-medium text-rose-500 flex items-center gap-2 w-full">
+              <button
+                onClick={() => { localStorage.removeItem("token"); localStorage.removeItem("role"); localStorage.removeItem("points"); setIsLogged(false); setPoints(null); setIsAdmin(false); setShowMobileMenu(false); window.location.href = "/"; }}
+                className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition w-full">
                 <LogOut size={15} /> Cerrar sesión
               </button>
             ) : (
-              <Link href="/login" onClick={() => setShowMobileMenu(false)} className="px-2 py-2.5 text-sm font-semibold text-emerald-500 flex items-center gap-2">
+              <Link href="/login" onClick={() => setShowMobileMenu(false)}
+                className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition">
                 <LogIn size={15} /> Iniciar sesión
               </Link>
             )}
           </div>
+
         </div>
       )}
   </header>
