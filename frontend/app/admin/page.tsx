@@ -495,7 +495,23 @@ export default function AdminPage() {
     });
   };
 
-  useEffect(() => { fetchMarkets(); loadMe(); }, []);
+  useEffect(() => {
+    fetchMarkets();
+    loadMe();
+
+    const channel = supabase.channel("admin-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "markets" }, () => { fetchMarkets(); fetchStats(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "transactions" }, () => { fetchTransactions(); fetchStats(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "users" }, () => { fetchUsers(); fetchStats(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "bets" }, () => { fetchStats(); fetchCharts(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "news_suggestions" }, () => { fetchSuggestions(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "market_news" }, () => { fetchMarketNews(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "contactos" }, () => { fetchContactos(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "extension_tokens" }, () => { fetchExtensionTokens(); })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   const navItems = [
     { id: "overview", label: "Resumen", icon: <LayoutDashboard size={15} /> },
