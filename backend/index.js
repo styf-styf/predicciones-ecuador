@@ -1686,6 +1686,122 @@ app.delete("/admin/extension-tokens/:id", auth, async (req, res) => {
   res.json({ message: "Token eliminado" });
 });
 
+// =======================
+// 💳 ADMIN - ACTUALIZAR ESTADO TRANSACCIÓN
+// =======================
+app.put("/admin/transactions/:id/status", auth, async (req, res) => {
+  const { data: admin } = await supabase
+    .from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const { status, userId, amount, type } = req.body;
+  if (!["aprobado", "rechazado"].includes(status)) {
+    return res.status(400).json({ message: "Estado inválido" });
+  }
+
+  const { error } = await supabase.from("transactions").update({ status }).eq("id", req.params.id);
+  if (error) return res.status(500).json({ message: error.message });
+
+  const { data: user } = await supabase.from("users").select("points").eq("id", userId).single();
+  if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
+
+  if (status === "aprobado") {
+    if (type === "recarga") {
+      await supabase.from("users").update({ points: Number(user.points) + Number(amount) }).eq("id", userId);
+      await supabase.from("notifications").insert([{
+        user_id: userId, title: "✅ Recarga exitosa",
+        message: `Se acreditaron ${amount} puntos a tu cuenta por transferencia bancaria.`, read: false,
+      }]);
+    } else if (type === "retiro") {
+      await supabase.from("notifications").insert([{
+        user_id: userId, title: "✅ Retiro aprobado",
+        message: `Tu retiro de $${amount} fue aprobado y será transferido a tu cuenta bancaria.`, read: false,
+      }]);
+    }
+  } else if (status === "rechazado") {
+    if (type === "retiro") {
+      await supabase.from("users").update({ points: Number(user.points) + Number(amount) }).eq("id", userId);
+      await supabase.from("notifications").insert([{
+        user_id: userId, title: "❌ Retiro rechazado",
+        message: `Tu solicitud de retiro por $${amount} fue rechazada. Los puntos fueron devueltos a tu cuenta.`, read: false,
+      }]);
+    } else {
+      await supabase.from("notifications").insert([{
+        user_id: userId, title: "❌ Recarga rechazada",
+        message: `Tu solicitud de recarga por $${amount} fue rechazada. Contáctanos si crees que es un error.`, read: false,
+      }]);
+    }
+  }
+
+  res.json({ message: status === "aprobado" ? "Transacción aprobada" : "Transacción rechazada" });
+});
+
+// =======================
+// 🗑️ ADMIN - ELIMINAR SUGERENCIA DE NOTICIA
+// =======================
+app.delete("/admin/news-suggestions/:id", auth, async (req, res) => {
+  const { data: admin } = await supabase
+    .from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const { error } = await supabase.from("news_suggestions").delete().eq("id", req.params.id);
+  if (error) return res.status(500).json({ message: error.message });
+  res.json({ message: "Sugerencia eliminada" });
+});
+
+// =======================
+// 🗑️ ADMIN - ELIMINAR NOTICIA DE MERCADO
+// =======================
+app.delete("/admin/market-news/:id", auth, async (req, res) => {
+  const { data: admin } = await supabase
+    .from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const { error } = await supabase.from("market_news").delete().eq("id", req.params.id);
+  if (error) return res.status(500).json({ message: error.message });
+  res.json({ message: "Noticia eliminada" });
+});
+
+// =======================
+// ✉️ ADMIN - MARCAR CONTACTO COMO LEÍDO
+// =======================
+app.put("/admin/contactos/:id/leido", auth, async (req, res) => {
+  const { data: admin } = await supabase
+    .from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const { error } = await supabase.from("contactos").update({ leido: true }).eq("id", req.params.id);
+  if (error) return res.status(500).json({ message: error.message });
+  res.json({ message: "Marcado como leído" });
+});
+
+// =======================
+// 💸 RECARGA POR TRANSFERENCIA BANCARIA
+// =======================
+app.post("/transfer", auth, async (req, res) => {
+  const { amount, transfer_code } = req.body;
+  const transferAmount = parseFloat(amount);
+
+  if (!transferAmount || transferAmount < 1) {
+    return res.status(400).json({ message: "Monto mínimo de recarga: 1 punto" });
+  }
+  if (!transfer_code?.trim()) {
+    return res.status(400).json({ message: "El código de transferencia es obligatorio" });
+  }
+
+  const { error } = await supabase.from("transactions").insert({
+    user_id: req.userId,
+    type: "recarga",
+    amount: transferAmount,
+    status: "pendiente",
+    payment_method: "transferencia",
+    transfer_code: transfer_code.trim(),
+  });
+
+  if (error) return res.status(500).json({ message: error.message });
+  res.json({ message: "Comprobante enviado, será procesado en menos de 24 horas" });
+});
+
 app.listen(4000, () => {
   console.log("Servidor en https://predicciones-ecuador.onrender.com");
 });

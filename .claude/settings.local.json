@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem \"c:\\\\Users\\\\Styf\\\\Desktop\\\\predicciones-ecuador\" -Depth 3 | Where-Object { !$_.FullName.Contains\\(\"node_modules\"\\) } | Select-Object FullName, Length)"
+    ]
+  }
+}

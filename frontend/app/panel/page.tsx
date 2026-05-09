@@ -158,22 +158,21 @@ setBankConfig(configData);
   setSendingTransfer(true);
   try {
     const token = localStorage.getItem("token");
-    const payload = JSON.parse(atob(token!.split(".")[1]));
-    const { error } = await supabase.from("transactions").insert({
-      user_id: payload.id,
-      type: "recarga",
-      amount: parseFloat(walletAmount),
-      status: "pendiente",
-      payment_method: "transferencia",
-      transfer_code: transferCode.trim(),
+    const res = await fetch("https://predicciones-ecuador.onrender.com/transfer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+      body: JSON.stringify({ amount: walletAmount, transfer_code: transferCode.trim() }),
     });
-    if (!error) {
+    if (res.ok) {
       setTransferSent(true);
       setTransferCode("");
       setWalletAmount("");
       setTimeout(() => setTransferSent(false), 4000);
       showToast("Comprobante enviado, será procesado en menos de 24 horas", "info");
       loadPanel();
+    } else {
+      const data = await res.json();
+      showToast(data.message || "Error al enviar comprobante", "error");
     }
   } finally {
     setSendingTransfer(false);

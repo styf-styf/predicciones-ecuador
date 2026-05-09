@@ -261,48 +261,16 @@ export default function AdminPage() {
 
   const handleTransactionStatus = async (id: string, status: "aprobado" | "rechazado", userId: string, amount: number, tx: any) => {
     setLoadingAction(`tx-${id}`);
-    const { error } = await supabase.from("transactions").update({ status }).eq("id", id);
-    if (error) { showToast("Error al actualizar", "error"); setLoadingAction(null); return; }
-
     const token = localStorage.getItem("token");
-
-    if (status === "aprobado") {
-      if (tx.type === "recarga") {
-        await fetch(`https://predicciones-ecuador.onrender.com/admin/users/${userId}/points`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
-          body: JSON.stringify({ points: amount }),
-        });
-        await supabase.from("notifications").insert([{
-          user_id: userId, title: "✅ Recarga exitosa",
-          message: `Se acreditaron ${amount} puntos a tu cuenta por transferencia bancaria.`, read: false,
-        }]);
-      } else if (tx.type === "retiro") {
-        await supabase.from("notifications").insert([{
-          user_id: userId, title: "✅ Retiro aprobado",
-          message: `Tu retiro de $${amount} fue aprobado y será transferido a tu cuenta bancaria.`, read: false,
-        }]);
-      }
-    } else if (status === "rechazado") {
-      if (tx.type === "retiro") {
-        await fetch(`https://predicciones-ecuador.onrender.com/admin/users/${userId}/points`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
-          body: JSON.stringify({ points: amount }),
-        });
-        await supabase.from("notifications").insert([{
-          user_id: userId, title: "❌ Retiro rechazado",
-          message: `Tu solicitud de retiro por $${amount} fue rechazada. Los puntos fueron devueltos a tu cuenta.`, read: false,
-        }]);
-      } else {
-        await supabase.from("notifications").insert([{
-          user_id: userId, title: "❌ Recarga rechazada",
-          message: `Tu solicitud de recarga por $${amount} fue rechazada. Contáctanos si crees que es un error.`, read: false,
-        }]);
-      }
-    }
-
+    const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/transactions/${id}/status`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+      body: JSON.stringify({ status, userId, amount, type: tx.type }),
+    });
+    const data = await res.json();
     setLoadingAction(null);
+    if (!res.ok) { showToast(data.message || "Error al actualizar", "error"); return; }
+    setTransactions(prev => prev.map(t => t.id === id ? { ...t, status } : t));
     showToast(status === "aprobado" ? "Transacción aprobada ✅" : "Transacción rechazada", status === "aprobado" ? "success" : "info");
     fetchTransactions(); fetchUsers(); fetchStats();
   };
@@ -1388,7 +1356,7 @@ export default function AdminPage() {
                         <button
                           onClick={async () => {
                             const token = localStorage.getItem("token");
-                            await supabase.from("news_suggestions").delete().eq("id", s.id);
+                            await fetch(`https://predicciones-ecuador.onrender.com/admin/news-suggestions/${s.id}`, { method: "DELETE", headers: { authorization: `Bearer ${token}` } });
                             showToast("Sugerencia eliminada", "info");
                             fetchSuggestions();
                           }}
@@ -1403,7 +1371,8 @@ export default function AdminPage() {
                     {s.status !== "pending" && (
                       <button
                         onClick={async () => {
-                          await supabase.from("news_suggestions").delete().eq("id", s.id);
+                          const token = localStorage.getItem("token");
+                          await fetch(`https://predicciones-ecuador.onrender.com/admin/news-suggestions/${s.id}`, { method: "DELETE", headers: { authorization: `Bearer ${token}` } });
                           showToast("Sugerencia eliminada", "info");
                           fetchSuggestions();
                         }}
@@ -1524,7 +1493,8 @@ export default function AdminPage() {
                           </button>
                           <button
                             onClick={async () => {
-                              await supabase.from("market_news").delete().eq("id", n.id);
+                              const token = localStorage.getItem("token");
+                              await fetch(`https://predicciones-ecuador.onrender.com/admin/market-news/${n.id}`, { method: "DELETE", headers: { authorization: `Bearer ${token}` } });
                               showToast("Noticia eliminada", "info");
                               fetchMarketNews();
                             }}
@@ -1540,7 +1510,8 @@ export default function AdminPage() {
                     {n.status !== "pending" && (
                       <button
                         onClick={async () => {
-                          await supabase.from("market_news").delete().eq("id", n.id);
+                          const token = localStorage.getItem("token");
+                          await fetch(`https://predicciones-ecuador.onrender.com/admin/market-news/${n.id}`, { method: "DELETE", headers: { authorization: `Bearer ${token}` } });
                           showToast("Noticia eliminada", "info");
                           fetchMarketNews();
                         }}
@@ -1596,7 +1567,7 @@ export default function AdminPage() {
                         <div className="col-span-1 flex justify-end">
                           {!c.leido && (
                             <button
-                              onClick={async () => { await supabase.from("contactos").update({ leido: true }).eq("id", c.id); fetchContactos(); showToast("Marcado como leído", "info"); }}
+                              onClick={async () => { const token = localStorage.getItem("token"); await fetch(`https://predicciones-ecuador.onrender.com/admin/contactos/${c.id}/leido`, { method: "PUT", headers: { authorization: `Bearer ${token}` } }); fetchContactos(); showToast("Marcado como leído", "info"); }}
                               className="text-[10px] bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/20 px-2 py-1 rounded-md transition"
                             >
                               Leído
@@ -1618,7 +1589,7 @@ export default function AdminPage() {
                         <p className="text-[11px] text-slate-400 dark:text-white/30">{c.mensaje}</p>
                         {!c.leido && (
                           <button
-                            onClick={async () => { await supabase.from("contactos").update({ leido: true }).eq("id", c.id); fetchContactos(); showToast("Marcado como leído", "info"); }}
+                            onClick={async () => { const token = localStorage.getItem("token"); await fetch(`https://predicciones-ecuador.onrender.com/admin/contactos/${c.id}/leido`, { method: "PUT", headers: { authorization: `Bearer ${token}` } }); fetchContactos(); showToast("Marcado como leído", "info"); }}
                             className="text-[11px] bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 px-3 py-1.5 rounded-lg"
                           >
                             Marcar leído
