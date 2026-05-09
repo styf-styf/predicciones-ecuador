@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useGoogleLogin } from "@react-oauth/google";
@@ -21,6 +21,39 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    if (code) {
+      setGoogleLoading(true);
+      fetch("https://predicciones-ecuador.onrender.com/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code,
+          redirect_uri: window.location.origin + "/register"
+        }),
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.token) {
+            localStorage.setItem("token", data.token);
+            localStorage.setItem("role", data.user.role || "user");
+            localStorage.setItem("points", String(data.user.points || 0));
+            window.dispatchEvent(new Event("auth-change"));
+            router.push("/");
+          } else {
+            setError(data.message || "Error con Google");
+            setGoogleLoading(false);
+          }
+        })
+        .catch(() => {
+          setError("Error de conexión con Google");
+          setGoogleLoading(false);
+        });
+    }
+  }, [router]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
     setError("");
@@ -39,13 +72,18 @@ export default function RegisterPage() {
 
   const googleLogin = useGoogleLogin({
     flow: "auth-code",
+    ux_mode: "redirect",
+    redirect_uri: typeof window !== "undefined" ? window.location.origin + "/register" : "",
     onSuccess: async (codeResponse) => {
       setGoogleLoading(true);
       try {
         const res = await fetch("https://predicciones-ecuador.onrender.com/auth/google", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code: codeResponse.code }),
+          body: JSON.stringify({ 
+            code: codeResponse.code,
+            redirect_uri: window.location.origin + "/register"
+          }),
         });
         const data = await res.json();
         if (data.token) {
