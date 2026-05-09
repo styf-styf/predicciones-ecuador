@@ -12,8 +12,26 @@ const googleClient = new OAuth2Client(
 );
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: ["https://predicciones-ecuador.vercel.app", "http://localhost:3000"],
+}));
 app.use(express.json());
+
+// Rate limiter en memoria para login
+const loginAttempts = new Map();
+const RATE_WINDOW_MS = 15 * 60 * 1000;
+const MAX_LOGIN_ATTEMPTS = 10;
+function loginRateLimit(req, res, next) {
+  const ip = req.ip || req.socket.remoteAddress;
+  const now = Date.now();
+  const attempts = (loginAttempts.get(ip) || []).filter(t => now - t < RATE_WINDOW_MS);
+  if (attempts.length >= MAX_LOGIN_ATTEMPTS) {
+    return res.status(429).json({ message: "Demasiados intentos. Espera 15 minutos." });
+  }
+  attempts.push(now);
+  loginAttempts.set(ip, attempts);
+  next();
+}
 
 const SECRET = process.env.JWT_SECRET;
 if (!SECRET) throw new Error("JWT_SECRET no está definido en .env");
@@ -65,7 +83,7 @@ app.post("/register", async (req, res) => {
 // =======================
 // 🔑 LOGIN
 // =======================
-app.post("/login", async (req, res) => {
+app.post("/login", loginRateLimit, async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -1684,6 +1702,58 @@ app.delete("/admin/extension-tokens/:id", auth, async (req, res) => {
     .from("extension_tokens").delete().eq("id", req.params.id);
   if (error) return res.status(500).json({ message: error.message });
   res.json({ message: "Token eliminado" });
+});
+
+// =======================
+// 💳 ADMIN - LISTAR TRANSACCIONES
+// =======================
+app.get("/admin/transactions", auth, async (req, res) => {
+  const { data: admin } = await supabase
+    .from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const { data, error } = await supabase
+    .from("transactions")
+    .select("*, users(email, nombre, apellido, banco, numero_cuenta, tipo_cuenta, celular, cedula)")
+    .order("created_at", { ascending: false });
+  if (error) return res.status(500).json({ message: error.message });
+  res.json(data);
+});
+
+// =======================
+// ✉️ ADMIN - LISTAR CONTACTOS
+// =======================
+app.get("/admin/contactos", auth, async (req, res) => {
+  const { data: admin } = await supabase
+    .from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const { data, error } = await supabase
+    .from("contactos").select("*").order("created_at", { ascending: false });
+  if (error) return res.status(500).json({ message: error.message });
+  res.json(data);
+});
+
+// =======================
+// ✉️ FORMULARIO DE CONTACTO
+// =======================
+app.post("/contacto", async (req, res) => {
+  const { nombre, email, asunto, mensaje } = req.body;
+  if (!nombre?.trim() || !email?.trim() || !mensaje?.trim()) {
+    return res.status(400).json({ message: "Nombre, email y mensaje son obligatorios" });
+  }
+  if (nombre.length > 100 || email.length > 200 || (asunto || "").length > 200 || mensaje.length > 2000) {
+    return res.status(400).json({ message: "Uno o más campos exceden el límite de caracteres" });
+  }
+
+  const { error } = await supabase.from("contactos").insert({
+    nombre: nombre.trim(),
+    email: email.trim(),
+    asunto: asunto?.trim() || "",
+    mensaje: mensaje.trim(),
+  });
+  if (error) return res.status(500).json({ message: error.message });
+  res.json({ message: "Mensaje enviado correctamente" });
 });
 
 // =======================

@@ -78,8 +78,10 @@ export default function Header() {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target)) setShowUserMenu(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
+    const token = localStorage.getItem("token");
+    const userId = token ? JSON.parse(atob(token.split(".")[1])).id : null;
     const userChannel = supabase.channel("header-user-live")
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "users" }, () => loadMe())
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "users", filter: userId ? `id=eq.${userId}` : undefined }, () => loadMe())
       .subscribe();
     const notifChannel = supabase.channel("header-notif-live")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications" }, () => {

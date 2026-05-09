@@ -1,32 +1,33 @@
 "use client";
 import Header from "@/components/Header";
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { Mail, MessageSquare, Clock, CheckCircle } from "lucide-react";
 
 export default function ContactoPage() {
   const [form, setForm] = useState({ nombre: "", email: "", asunto: "", mensaje: "" });
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async () => {
-  if (!form.nombre || !form.email || !form.mensaje) return;
-  setSending(true);
-  try {
-    const { error } = await supabase.from("contactos").insert({
-      nombre: form.nombre,
-      email: form.email,
-      asunto: form.asunto,
-      mensaje: form.mensaje,
-    });
-    if (error) { alert("Error al enviar el mensaje"); return; }
-    setSent(true);
-    setForm({ nombre: "", email: "", asunto: "", mensaje: "" });
-    setTimeout(() => setSent(false), 5000);
-  } finally {
-    setSending(false);
-  }
-};
+    if (!form.nombre || !form.email || !form.mensaje) return;
+    setSending(true);
+    setError("");
+    try {
+      const res = await fetch("https://predicciones-ecuador.onrender.com/contacto", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.message || "Error al enviar el mensaje"); return; }
+      setSent(true);
+      setForm({ nombre: "", email: "", asunto: "", mensaje: "" });
+      setTimeout(() => setSent(false), 5000);
+    } finally {
+      setSending(false);
+    }
+  };
 
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white">
@@ -101,6 +102,11 @@ export default function ContactoPage() {
             />
           </div>
 
+          {error && (
+            <div className="text-sm px-4 py-3 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/30">
+              {error}
+            </div>
+          )}
           {sent ? (
             <div className="w-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl py-3 text-center text-sm font-semibold text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-2">
               <CheckCircle size={15} /> Mensaje enviado — te responderemos pronto

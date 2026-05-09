@@ -244,19 +244,21 @@ export default function AdminPage() {
   };
 
   const fetchContactos = async () => {
-    const { data } = await supabase
-      .from("contactos")
-      .select("*")
-      .order("created_at", { ascending: false });
-    setContactos(data || []);
+    const token = localStorage.getItem("token");
+    const res = await fetch("https://predicciones-ecuador.onrender.com/admin/contactos", {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (res.ok) setContactos(data);
   };
 
   const fetchTransactions = async () => {
-    const { data } = await supabase
-      .from("transactions")
-      .select("*, users(email, nombre, apellido, banco, numero_cuenta, tipo_cuenta, celular, cedula)")
-      .order("created_at", { ascending: false });
-    setTransactions(data || []);
+    const token = localStorage.getItem("token");
+    const res = await fetch("https://predicciones-ecuador.onrender.com/admin/transactions", {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (res.ok) setTransactions(data);
   };
 
   const handleTransactionStatus = async (id: string, status: "aprobado" | "rechazado", userId: string, amount: number, tx: any) => {
