@@ -31,7 +31,10 @@ export default function Login() {
       fetch("https://predicciones-ecuador.onrender.com/auth/google", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({ 
+          code,
+          redirect_uri: window.location.origin + "/login"
+        }),
       })
         .then((r) => r.json())
         .then((data) => {
