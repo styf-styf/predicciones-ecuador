@@ -113,6 +113,9 @@ export default function AdminPage() {
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [suggestionCategories, setSuggestionCategories] = useState<{ [key: number]: string }>({});
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [extensionTokens, setExtensionTokens] = useState<any[]>([]);
+  const [newTokenLabel, setNewTokenLabel] = useState("");
+  const [copiedTokenId, setCopiedTokenId] = useState<number | null>(null);
   const [contactos, setContactos] = useState<any[]>([]);
   const [marketNews, setMarketNews] = useState<any[]>([]);
   const [newsMarketInput, setNewsMarketInput] = useState<{ [key: number]: string }>({});
@@ -220,6 +223,15 @@ export default function AdminPage() {
     });
     const data = await res.json();
     if (res.ok) setUsers(data);
+  };
+
+  const fetchExtensionTokens = async () => {
+    const token = localStorage.getItem("token");
+    const res = await fetch("https://predicciones-ecuador.onrender.com/admin/extension-tokens", {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (res.ok) setExtensionTokens(data);
   };
 
   const fetchMarketNews = async () => {
@@ -351,7 +363,7 @@ export default function AdminPage() {
       const data = await res.json();
       if (data.role !== "admin") { window.location.href = "/"; return; }
       setIsLogged(true); setIsAdmin(true); setPoints(data.points || 0);
-      fetchWinners(); fetchStats(); fetchUsers(); fetchSettings(); fetchCharts(); fetchTransactions(); fetchContactos(); fetchSuggestions(); fetchMarketNews();
+      fetchWinners(); fetchStats(); fetchUsers(); fetchSettings(); fetchCharts(); fetchTransactions(); fetchContactos(); fetchSuggestions(); fetchMarketNews(); fetchExtensionTokens();
     } catch {
       localStorage.removeItem("token");
       window.location.href = "/login";
@@ -1692,6 +1704,78 @@ export default function AdminPage() {
                       <option value="corriente">Corriente</option>
                     </select>
                   </div>
+                </div>
+              </div>
+
+              <div className="border-t border-slate-200 dark:border-white/[0.06] pt-6 mt-2">
+                <p className="text-[11px] text-slate-400 dark:text-white/30 uppercase tracking-widest mb-1">Tokens de extensión</p>
+                <p className="text-[11px] text-slate-400 dark:text-white/20 mb-4">Tokens sin expiración para usar en la extensión del navegador.</p>
+
+                <div className="flex gap-2 mb-4">
+                  <input
+                    placeholder="Nombre del token (ej: MacBook Juan)"
+                    value={newTokenLabel}
+                    onChange={(e) => setNewTokenLabel(e.target.value)}
+                    className="flex-1 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-[12px] outline-none text-slate-900 dark:text-white focus:border-emerald-500/60 transition"
+                  />
+                  <button
+                    onClick={async () => {
+                      const token = localStorage.getItem("token");
+                      const res = await fetch("https://predicciones-ecuador.onrender.com/admin/extension-tokens", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+                        body: JSON.stringify({ label: newTokenLabel }),
+                      });
+                      const data = await res.json();
+                      if (res.ok) { showToast("Token creado ✅", "success"); setNewTokenLabel(""); fetchExtensionTokens(); }
+                      else showToast(data.message, "error");
+                    }}
+                    className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg px-4 py-2 text-[12px] transition"
+                  >
+                    Crear
+                  </button>
+                </div>
+
+                <div className="space-y-2">
+                  {extensionTokens.length === 0 && (
+                    <p className="text-[12px] text-slate-400 dark:text-white/20 text-center py-4">No hay tokens creados</p>
+                  )}
+                  {extensionTokens.map((t) => (
+                    <div key={t.id} className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-3 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-[12px] font-semibold text-slate-700 dark:text-white/70">{t.label}</p>
+                        <p className="text-[10px] text-slate-400 dark:text-white/25">{new Date(t.created_at).toLocaleDateString("es-EC")}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <code className="flex-1 text-[10px] bg-slate-100 dark:bg-white/[0.04] text-slate-600 dark:text-white/40 px-2 py-1.5 rounded-lg truncate font-mono">
+                          {t.token}
+                        </code>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(t.token);
+                            setCopiedTokenId(t.id);
+                            setTimeout(() => setCopiedTokenId(null), 2000);
+                          }}
+                          className="shrink-0 bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-white/40 hover:bg-slate-200 dark:hover:bg-white/[0.1] border border-slate-200 dark:border-white/[0.08] px-3 py-1.5 rounded-lg text-[11px] transition"
+                        >
+                          {copiedTokenId === t.id ? "✓ Copiado" : "Copiar"}
+                        </button>
+                        <button
+                          onClick={async () => {
+                            const token = localStorage.getItem("token");
+                            const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/extension-tokens/${t.id}`, {
+                              method: "DELETE",
+                              headers: { authorization: `Bearer ${token}` },
+                            });
+                            if (res.ok) { showToast("Token eliminado", "info"); fetchExtensionTokens(); }
+                          }}
+                          className="shrink-0 bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 border border-rose-200 dark:border-rose-500/20 px-3 py-1.5 rounded-lg text-[11px] transition"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 

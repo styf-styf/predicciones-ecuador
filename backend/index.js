@@ -1640,6 +1640,52 @@ app.get("/markets/:id/news-closing", async (req, res) => {
   res.json(data);
 });
 
+// =======================
+// 🔑 TOKENS DE EXTENSIÓN
+// =======================
+app.get("/admin/extension-tokens", auth, async (req, res) => {
+  const { data: user } = await supabase
+    .from("users").select("role").eq("id", req.userId).single();
+  if (!user || user.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const { data, error } = await supabase
+    .from("extension_tokens").select("*").order("created_at", { ascending: false });
+  if (error) return res.status(500).json({ message: error.message });
+  res.json(data);
+});
+
+app.post("/admin/extension-tokens", auth, async (req, res) => {
+  const { data: user } = await supabase
+    .from("users").select("role").eq("id", req.userId).single();
+  if (!user || user.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const { label } = req.body;
+  const token = jwt.sign(
+    { id: req.userId, role: "admin", type: "extension" },
+    SECRET
+  );
+
+  const { data, error } = await supabase
+    .from("extension_tokens").insert([{
+      token,
+      label: label || "Token extensión",
+    }]).select().single();
+
+  if (error) return res.status(500).json({ message: error.message });
+  res.json({ message: "Token creado", token: data });
+});
+
+app.delete("/admin/extension-tokens/:id", auth, async (req, res) => {
+  const { data: user } = await supabase
+    .from("users").select("role").eq("id", req.userId).single();
+  if (!user || user.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const { error } = await supabase
+    .from("extension_tokens").delete().eq("id", req.params.id);
+  if (error) return res.status(500).json({ message: error.message });
+  res.json({ message: "Token eliminado" });
+});
+
 app.listen(4000, () => {
   console.log("Servidor en https://predicciones-ecuador.onrender.com");
 });
