@@ -1367,83 +1367,6 @@ export default function AdminPage() {
             </>
           )}
 
-          {/* CONTACTO */}
-          {activeSection === "contacto" && (
-            <>
-              <div>
-                <h1 className="text-lg font-bold">Contacto</h1>
-                <p className="text-[12px] text-slate-400 dark:text-white/30 mt-0.5">
-                  {contactos.filter(c => !c.leido).length} sin leer · {contactos.length} total
-                </p>
-              </div>
-
-              <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl overflow-hidden">
-                <div className="px-5 py-3 border-b border-slate-100 dark:border-white/[0.06] hidden sm:block">
-                  <div className="grid grid-cols-12 text-[10px] text-slate-400 dark:text-white/25 uppercase tracking-widest">
-                    <span className="col-span-2">Nombre</span>
-                    <span className="col-span-2">Email</span>
-                    <span className="col-span-2">Asunto</span>
-                    <span className="col-span-4">Mensaje</span>
-                    <span className="col-span-1 text-center">Estado</span>
-                    <span className="col-span-1 text-right">Acción</span>
-                  </div>
-                </div>
-
-                <div className="divide-y divide-slate-100 dark:divide-white/[0.03]">
-                  {contactos.length === 0 && (
-                    <p className="px-5 py-8 text-[12px] text-slate-400 dark:text-white/20 text-center">Sin mensajes aún</p>
-                  )}
-                  {contactos.map((c) => (
-                    <div key={c.id} className={`px-5 py-4 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition ${!c.leido ? "bg-blue-50/50 dark:bg-blue-500/5" : ""}`}>
-                      <div className="hidden sm:grid grid-cols-12 items-start gap-2">
-                        <p className="col-span-2 text-[12px] text-slate-600 dark:text-white/60 truncate">{c.nombre}</p>
-                        <p className="col-span-2 text-[12px] text-slate-400 dark:text-white/30 truncate">{c.email}</p>
-                        <p className="col-span-2 text-[12px] text-slate-600 dark:text-white/60 truncate">{c.asunto || "—"}</p>
-                        <p className="col-span-4 text-[12px] text-slate-500 dark:text-white/40 line-clamp-2">{c.mensaje}</p>
-                        <div className="col-span-1 flex justify-center">
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded-md ${!c.leido ? "bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400" : "bg-slate-100 dark:bg-white/[0.06] text-slate-400 dark:text-white/25"}`}>
-                            {c.leido ? "Leído" : "Nuevo"}
-                          </span>
-                        </div>
-                        <div className="col-span-1 flex justify-end">
-                          {!c.leido && (
-                            <button
-                              onClick={async () => { await supabase.from("contactos").update({ leido: true }).eq("id", c.id); fetchContactos(); showToast("Marcado como leído", "info"); }}
-                              className="text-[10px] bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/20 px-2 py-1 rounded-md transition"
-                            >
-                              Leído
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                      <div className="sm:hidden space-y-2">
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <p className="text-[12px] font-medium text-slate-700 dark:text-white/70">{c.nombre}</p>
-                            <p className="text-[11px] text-slate-400 dark:text-white/30">{c.email}</p>
-                          </div>
-                          <span className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded-md ${!c.leido ? "bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400" : "bg-slate-100 dark:bg-white/[0.06] text-slate-400 dark:text-white/25"}`}>
-                            {c.leido ? "Leído" : "Nuevo"}
-                          </span>
-                        </div>
-                        {c.asunto && <p className="text-[11px] font-medium text-slate-600 dark:text-white/50">{c.asunto}</p>}
-                        <p className="text-[11px] text-slate-400 dark:text-white/30">{c.mensaje}</p>
-                        {!c.leido && (
-                          <button
-                            onClick={async () => { await supabase.from("contactos").update({ leido: true }).eq("id", c.id); fetchContactos(); showToast("Marcado como leído", "info"); }}
-                            className="text-[11px] bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 px-3 py-1.5 rounded-lg"
-                          >
-                            Marcar leído
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-
           {/* NOTICIAS */}
           {activeSection === "noticias" && (
             <>
@@ -1558,6 +1481,85 @@ export default function AdminPage() {
               </div>
             </>
           )}
+
+          {/* CONTACTO */}
+          {activeSection === "contacto" && (
+            <>
+              <div>
+                <h1 className="text-lg font-bold">Contacto</h1>
+                <p className="text-[12px] text-slate-400 dark:text-white/30 mt-0.5">
+                  {contactos.filter(c => !c.leido).length} sin leer · {contactos.length} total
+                </p>
+              </div>
+
+              <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl overflow-hidden">
+                <div className="px-5 py-3 border-b border-slate-100 dark:border-white/[0.06] hidden sm:block">
+                  <div className="grid grid-cols-12 text-[10px] text-slate-400 dark:text-white/25 uppercase tracking-widest">
+                    <span className="col-span-2">Nombre</span>
+                    <span className="col-span-2">Email</span>
+                    <span className="col-span-2">Asunto</span>
+                    <span className="col-span-4">Mensaje</span>
+                    <span className="col-span-1 text-center">Estado</span>
+                    <span className="col-span-1 text-right">Acción</span>
+                  </div>
+                </div>
+
+                <div className="divide-y divide-slate-100 dark:divide-white/[0.03]">
+                  {contactos.length === 0 && (
+                    <p className="px-5 py-8 text-[12px] text-slate-400 dark:text-white/20 text-center">Sin mensajes aún</p>
+                  )}
+                  {contactos.map((c) => (
+                    <div key={c.id} className={`px-5 py-4 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition ${!c.leido ? "bg-blue-50/50 dark:bg-blue-500/5" : ""}`}>
+                      <div className="hidden sm:grid grid-cols-12 items-start gap-2">
+                        <p className="col-span-2 text-[12px] text-slate-600 dark:text-white/60 truncate">{c.nombre}</p>
+                        <p className="col-span-2 text-[12px] text-slate-400 dark:text-white/30 truncate">{c.email}</p>
+                        <p className="col-span-2 text-[12px] text-slate-600 dark:text-white/60 truncate">{c.asunto || "—"}</p>
+                        <p className="col-span-4 text-[12px] text-slate-500 dark:text-white/40 line-clamp-2">{c.mensaje}</p>
+                        <div className="col-span-1 flex justify-center">
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-md ${!c.leido ? "bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400" : "bg-slate-100 dark:bg-white/[0.06] text-slate-400 dark:text-white/25"}`}>
+                            {c.leido ? "Leído" : "Nuevo"}
+                          </span>
+                        </div>
+                        <div className="col-span-1 flex justify-end">
+                          {!c.leido && (
+                            <button
+                              onClick={async () => { await supabase.from("contactos").update({ leido: true }).eq("id", c.id); fetchContactos(); showToast("Marcado como leído", "info"); }}
+                              className="text-[10px] bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/20 px-2 py-1 rounded-md transition"
+                            >
+                              Leído
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="sm:hidden space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="text-[12px] font-medium text-slate-700 dark:text-white/70">{c.nombre}</p>
+                            <p className="text-[11px] text-slate-400 dark:text-white/30">{c.email}</p>
+                          </div>
+                          <span className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded-md ${!c.leido ? "bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400" : "bg-slate-100 dark:bg-white/[0.06] text-slate-400 dark:text-white/25"}`}>
+                            {c.leido ? "Leído" : "Nuevo"}
+                          </span>
+                        </div>
+                        {c.asunto && <p className="text-[11px] font-medium text-slate-600 dark:text-white/50">{c.asunto}</p>}
+                        <p className="text-[11px] text-slate-400 dark:text-white/30">{c.mensaje}</p>
+                        {!c.leido && (
+                          <button
+                            onClick={async () => { await supabase.from("contactos").update({ leido: true }).eq("id", c.id); fetchContactos(); showToast("Marcado como leído", "info"); }}
+                            className="text-[11px] bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 px-3 py-1.5 rounded-lg"
+                          >
+                            Marcar leído
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          
 
           {/* CONFIGURACIÓN */}
           {activeSection === "settings" && config && (
