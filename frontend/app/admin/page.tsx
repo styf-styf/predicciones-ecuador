@@ -492,8 +492,8 @@ export default function AdminPage() {
     { id: "winners", label: "Ganadores", icon: <Trophy size={15} /> },
     { id: "transacciones", label: "Transacciones", icon: <Wallet size={15} />, badge: transactions.filter(t => t.status === "pendiente").length },
     { id: "suggestions", label: "Sugerencias", icon: <Newspaper size={15} />, badge: suggestions.filter(s => s.status === "pending").length },
-    { id: "contacto", label: "Contacto", icon: <MessageSquare size={15} />, badge: contactos.filter(c => !c.leido).length },
     { id: "noticias", label: "Noticias", icon: <Newspaper size={15} />, badge: marketNews.filter(n => n.status === "pending").length },
+    { id: "contacto", label: "Contacto", icon: <MessageSquare size={15} />, badge: contactos.filter(c => !c.leido).length },
     { id: "settings", label: "Configuración", icon: <Settings size={15} /> },
   ];
 
@@ -1357,10 +1357,33 @@ export default function AdminPage() {
                         >
                           Rechazar
                         </button>
+                        <button
+                          onClick={async () => {
+                            const token = localStorage.getItem("token");
+                            await supabase.from("news_suggestions").delete().eq("id", s.id);
+                            showToast("Sugerencia eliminada", "info");
+                            fetchSuggestions();
+                          }}
+                          className="bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 hover:bg-rose-100 dark:hover:bg-rose-500/20 px-4 py-2 rounded-lg text-[12px] transition"
+                        >
+                          🗑️ Eliminar
+                        </button>
                       </div>
                     )}
 
                     <p className="text-[10px] text-slate-300 dark:text-white/15 mt-3">{new Date(s.created_at).toLocaleString()}</p>
+                    {s.status !== "pending" && (
+                      <button
+                        onClick={async () => {
+                          await supabase.from("news_suggestions").delete().eq("id", s.id);
+                          showToast("Sugerencia eliminada", "info");
+                          fetchSuggestions();
+                        }}
+                        className="bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 hover:bg-rose-100 dark:hover:bg-rose-500/20 px-3 py-1.5 rounded-lg text-[11px] transition mt-2"
+                      >
+                        🗑️ Eliminar
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -1470,6 +1493,16 @@ export default function AdminPage() {
                             className="bg-slate-100 dark:bg-white/[0.04] text-slate-500 dark:text-white/30 border border-slate-200 dark:border-white/[0.08] hover:bg-slate-200 dark:hover:bg-white/[0.08] px-4 py-2 rounded-lg text-[12px] transition"
                           >
                             Rechazar
+                          </button>
+                          <button
+                            onClick={async () => {
+                              await supabase.from("market_news").delete().eq("id", n.id);
+                              showToast("Noticia eliminada", "info");
+                              fetchMarketNews();
+                            }}
+                            className="bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 hover:bg-rose-100 dark:hover:bg-rose-500/20 px-4 py-2 rounded-lg text-[12px] transition"
+                          >
+                            🗑️ Eliminar
                           </button>
                         </div>
                       </div>
