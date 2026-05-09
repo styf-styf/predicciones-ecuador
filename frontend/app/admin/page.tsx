@@ -1509,6 +1509,18 @@ export default function AdminPage() {
                     )}
 
                     <p className="text-[10px] text-slate-300 dark:text-white/15">{new Date(n.created_at).toLocaleString("es-EC", { timeZone: "America/Guayaquil" })}</p>
+                    {n.status !== "pending" && (
+                      <button
+                        onClick={async () => {
+                          await supabase.from("market_news").delete().eq("id", n.id);
+                          showToast("Noticia eliminada", "info");
+                          fetchMarketNews();
+                        }}
+                        className="bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 hover:bg-rose-100 dark:hover:bg-rose-500/20 px-3 py-1.5 rounded-lg text-[11px] transition mt-2"
+                      >
+                        🗑️ Eliminar
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
