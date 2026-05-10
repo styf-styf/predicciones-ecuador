@@ -86,6 +86,7 @@ export default function MarketPage() {
     const res = await fetch(`https://predicciones-ecuador.onrender.com/markets/${id}/bettors-count`);
     if (res.ok) { const d = await res.json(); setUniqueBettors(d.count || 0); }
   };
+  
 
   const fetchBetConfig = async () => {
   const res = await fetch("https://predicciones-ecuador.onrender.com/config");

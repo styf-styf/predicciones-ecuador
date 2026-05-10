@@ -84,7 +84,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
   provincia: meData.provincia || "",
  });
 
- const configRes = await fetch("https://predicciones-ecuador.onrender.com/config");
+ const configRes = await fetch("https://predicciones-ecuador.onrender.com/config", { headers });
 const configData = await configRes.json();
 setBankConfig(configData);
       setLoading(false);
@@ -192,7 +192,7 @@ setBankConfig(configData);
 
   const totalBet = bets.reduce((acc, bet) => acc + Number(bet.amount), 0);
   const totalBets = bets.length;
-  const userRankIndex = ranking.findIndex((r) => r.email === user?.email);
+  const userRankIndex = ranking.findIndex((r) => r.id === user?.id);
   const isGoogleUser = user?.provider === "google";
   const hasPaymentInfo = user?.cedula && user?.celular && user?.nombre;
 
@@ -356,8 +356,8 @@ setBankConfig(configData);
               <h2 className="font-bold mb-4">Ranking Global</h2>
               <div className="space-y-2">
                 {ranking.slice(0, 10).map((item, index) => {
-                  const isMe = item.email === user?.email;
-                  const nombre = item.nombre ? `${item.nombre}${item.apellido ? " " + item.apellido : ""}` : item.email;
+                  const isMe = item.id === user?.id;
+                  const nombre = item.nombre ? `${item.nombre}${item.apellido ? " " + item.apellido : ""}` : "Usuario";
                   return (
                     <div key={index} className={`flex items-center justify-between px-4 py-3 rounded-xl ${isMe ? "bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800" : "bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800"}`}>
                       <div className="flex items-center gap-3 min-w-0">
@@ -383,7 +383,7 @@ setBankConfig(configData);
                         <span className="text-sm truncate">
                           {ranking[userRankIndex]?.nombre
                             ? `${ranking[userRankIndex].nombre} ${ranking[userRankIndex].apellido || ""}`.trim()
-                            : ranking[userRankIndex]?.email}
+                            : "Usuario"}
                           <span className="text-emerald-500 text-xs ml-1">(tú)</span>
                         </span>
                       </div>

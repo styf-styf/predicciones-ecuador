@@ -206,7 +206,15 @@ app.get("/config", async (req, res) => {
   const { data, error } = await supabase
     .from("config").select("min_bet, max_bet, commission, banco_nombre, banco_tipo, banco_cuenta, banco_titular, banco_cedula").eq("id", 1).single();
   if (error) return res.status(500).json({ message: error.message });
-  res.json(data);
+
+  const token = req.headers.authorization?.split(" ")[1];
+  let isAuth = false;
+  try { if (token) { jwt.verify(token, SECRET); isAuth = true; } } catch {}
+
+  if (isAuth) return res.json(data);
+
+  const { min_bet, max_bet, commission } = data;
+  res.json({ min_bet, max_bet, commission });
 });
 
 // =======================
@@ -226,10 +234,34 @@ app.get("/me", auth, async (req, res) => {
 app.put("/me/profile", auth, async (req, res) => {
   const { nombre, apellido, cedula, celular, ciudad, direccion, banco, numero_cuenta, tipo_cuenta, provincia } = req.body;
 
-const { error } = await supabase
-  .from("users")
-  .update({ nombre, apellido, cedula, celular, pais: "Ecuador", ciudad, direccion, banco, numero_cuenta, tipo_cuenta, provincia })
-  .eq("id", req.userId);
+  const isStr = (v, max) => v === undefined || v === null || (typeof v === "string" && v.trim().length <= max);
+  const isDigits = (v, max) => v === undefined || v === null || (typeof v === "string" && /^\d+$/.test(v.trim()) && v.trim().length <= max);
+  const tiposCuenta = ["ahorros", "corriente"];
+
+  if (
+    !isStr(nombre, 50) || !isStr(apellido, 50) ||
+    !isStr(ciudad, 100) || !isStr(direccion, 200) ||
+    !isStr(banco, 100) || !isStr(provincia, 100) ||
+    !isDigits(cedula, 10) || !isDigits(celular, 15) ||
+    !isDigits(numero_cuenta, 20) ||
+    (tipo_cuenta !== undefined && tipo_cuenta !== null && !tiposCuenta.includes(tipo_cuenta))
+  ) {
+    return res.status(400).json({ message: "Datos inválidos" });
+  }
+
+  const trim = (v) => (typeof v === "string" ? v.trim() : v);
+
+  const { error } = await supabase
+    .from("users")
+    .update({
+      nombre: trim(nombre), apellido: trim(apellido),
+      cedula: trim(cedula), celular: trim(celular),
+      ciudad: trim(ciudad), direccion: trim(direccion),
+      banco: trim(banco), numero_cuenta: trim(numero_cuenta),
+      tipo_cuenta, provincia: trim(provincia),
+      pais: "Ecuador",
+    })
+    .eq("id", req.userId);
 
   if (error) return res.status(500).json({ message: error.message });
   res.json({ message: "Perfil actualizado" });
@@ -248,7 +280,7 @@ app.get("/my-bets", auth, async (req, res) => {
 
 app.get("/ranking", async (req, res) => {
   const { data, error } = await supabase
-    .from("users").select("email,points,nombre,apellido")
+    .from("users").select("id,points,nombre,apellido")
     .order("points", { ascending: false }).limit(100);
 
   if (error) return res.status(400).json({ message: error.message });
@@ -460,16 +492,12 @@ app.get("/admin/settings", auth, async (req, res) => {
   const { data: admin, error: adminError } = await supabase
     .from("users").select("role").eq("id", req.userId).single();
 
-  console.log("ADMIN:", admin, "ERROR:", adminError);
-
   if (!admin || admin.role !== "admin") {
     return res.status(403).json({ message: "Solo admin" });
   }
 
   const { data, error } = await supabase
     .from("config").select("*").eq("id", 1).single();
-
-  console.log("CONFIG DATA:", data, "CONFIG ERROR:", error);
 
   if (error) return res.status(500).json({ message: error.message });
   res.json(data);
@@ -899,7 +927,6 @@ app.put("/admin/markets/:id/category", auth, async (req, res) => {
 app.get("/favorites", auth, async (req, res) => {
   const { data, error } = await supabase
     .from("favorites").select("market_id").eq("user_id", req.userId);
-  console.log("favorites data:", data, "error:", error, "userId:", req.userId);
   if (error) return res.status(500).json({ message: error.message });
   res.json(data.map((f) => f.market_id));
 });
@@ -943,6 +970,7 @@ app.post("/markets/:id/comments", auth, async (req, res) => {
   const { id } = req.params;
   const { content } = req.body;
   if (!content || content.trim() === "") return res.status(400).json({ message: "Comentario vacío" });
+  if (typeof content !== "string" || content.trim().length > 500) return res.status(400).json({ message: "El comentario no puede superar los 500 caracteres" });
 
   const { data: user } = await supabase
     .from("users").select("nombre, email").eq("id", req.userId).single();
@@ -1076,8 +1104,10 @@ app.get("/", (req, res) => {
 // =======================
 app.post("/payphone/prepare", auth, async (req, res) => {
   const { amount, clientTransactionId } = req.body;
-  console.log("Prepare recibido:", { amount, clientTransactionId, userId: req.userId });
-  if (!amount || !clientTransactionId) return res.status(400).json({ message: "Datos inválidos" });
+  const parsedAmount = parseFloat(amount);
+  if (!clientTransactionId || !Number.isFinite(parsedAmount) || parsedAmount <= 0 || parsedAmount > 10000) {
+    return res.status(400).json({ message: "Datos inválidos" });
+  }
 
   const { data, error } = await supabase.from("transactions").insert([{
     user_id: req.userId,
@@ -1087,7 +1117,6 @@ app.post("/payphone/prepare", auth, async (req, res) => {
     reference: clientTransactionId,
   }]);
 
-  console.log("Insert resultado:", { data, error });
   if (error) return res.status(500).json({ message: error.message });
   res.json({ message: "Transacción preparada" });
 });
@@ -1102,21 +1131,20 @@ async function procesarPagoPayphone(clientTransactionId, payphoneId) {
       .eq("status", "pendiente")
       .maybeSingle();
 
-    console.log("Transacción encontrada:", transaction, "Error:", txError);
-
     if (!transaction) {
       console.log("Transacción ya procesada o no encontrada:", clientTransactionId);
       return;
     }
 
     // Marcar como procesando ANTES de sumar puntos para evitar doble procesamiento
-    const { error: lockError } = await supabase
+    const { data: lockData, error: lockError } = await supabase
       .from("transactions")
       .update({ status: "procesando" })
       .eq("reference", clientTransactionId)
-      .eq("status", "pendiente");
+      .eq("status", "pendiente")
+      .select();
 
-    if (lockError || !lockError === null) {
+    if (lockError || !lockData || lockData.length === 0) {
       console.log("No se pudo bloquear la transacción, puede ya estar procesada");
       return;
     }
@@ -1162,8 +1190,6 @@ async function procesarPagoPayphone(clientTransactionId, payphoneId) {
 // =======================
 app.get("/payphone/callback", async (req, res) => {
   const { clientTransactionId, id } = req.query;
-  console.log("Payphone callback GET:", req.query);
-
   if (!id) {
     return res.redirect("https://predicciones-ecuador.vercel.app/panel?status=cancelado");
   }
@@ -1228,10 +1254,6 @@ app.get("/payphone/callback", async (req, res) => {
 
 app.post("/payphone/callback", async (req, res) => {
   const { clientTransactionId, transactionStatus, id, amount } = req.body;
-  console.log("Payphone callback body:", req.body);
-
-  console.log("Payphone callback:", req.body);
-
   if (transactionStatus !== "Approved") {
     await supabase.from("transactions")
       .update({ status: "rechazado" })
@@ -1247,7 +1269,6 @@ app.post("/payphone/callback", async (req, res) => {
     });
     const rawText = await verifyRes.text();
     console.log("Payphone verify status:", verifyRes.status);
-    console.log("Payphone verify raw:", rawText.slice(0, 500));
     const verifyData = JSON.parse(rawText);
 
     if (verifyData.transactionStatus !== "Approved") {
@@ -1752,7 +1773,8 @@ app.post("/admin/extension-tokens", auth, async (req, res) => {
   const { label } = req.body;
   const token = jwt.sign(
     { id: req.userId, role: "admin", type: "extension" },
-    SECRET
+    SECRET,
+    { expiresIn: "30d" }
   );
 
   const { data, error } = await supabase
