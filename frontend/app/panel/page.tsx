@@ -48,6 +48,11 @@ export default function PanelPage() {
   const [editingProfile, setEditingProfile] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
 const showToast = (message: string, type: "success" | "error" | "info" = "success") => setToast({ message, type });
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3500);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   const loadPanel = async () => {
     const token = localStorage.getItem("token");

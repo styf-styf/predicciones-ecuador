@@ -1,28 +1,33 @@
 "use client";
 import Header from "@/components/Header";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Mail, MessageSquare, Clock, CheckCircle } from "lucide-react";
+import ReCAPTCHA from "react-google-recaptcha";
 
 export default function ContactoPage() {
   const [form, setForm] = useState({ nombre: "", email: "", asunto: "", mensaje: "" });
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   const handleSubmit = async () => {
     if (!form.nombre || !form.email || !form.mensaje) return;
+    const captchaToken = recaptchaRef.current?.getValue();
+    if (!captchaToken) { setError("Por favor completa el CAPTCHA"); return; }
     setSending(true);
     setError("");
     try {
       const res = await fetch("https://predicciones-ecuador.onrender.com/contacto", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, captchaToken }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.message || "Error al enviar el mensaje"); return; }
       setSent(true);
       setForm({ nombre: "", email: "", asunto: "", mensaje: "" });
+      recaptchaRef.current?.reset();
       setTimeout(() => setSent(false), 5000);
     } finally {
       setSending(false);
@@ -101,6 +106,11 @@ export default function ContactoPage() {
               className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500 transition text-slate-900 dark:text-white resize-none"
             />
           </div>
+
+          <ReCAPTCHA
+            ref={recaptchaRef}
+            sitekey="6LeZleMsAAAAAJTg98uzMKO5b8e_kzyxsliMgt3t"
+          />
 
           {error && (
             <div className="text-sm px-4 py-3 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/30">

@@ -1934,9 +1934,21 @@ app.get("/admin/contactos", auth, async (req, res) => {
 // ✉️ FORMULARIO DE CONTACTO
 // =======================
 app.post("/contacto", async (req, res) => {
-  const { nombre, email, asunto, mensaje } = req.body;
+  const { nombre, email, asunto, mensaje, captchaToken } = req.body;
   if (!nombre?.trim() || !email?.trim() || !mensaje?.trim()) {
     return res.status(400).json({ message: "Nombre, email y mensaje son obligatorios" });
+  }
+  if (!captchaToken) {
+    return res.status(400).json({ message: "CAPTCHA requerido" });
+  }
+  const captchaRes = await fetch(`https://www.google.com/recaptcha/api/siteverify`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `secret=${process.env.RECAPTCHA_SECRET}&response=${captchaToken}`,
+  });
+  const captchaData = await captchaRes.json();
+  if (!captchaData.success) {
+    return res.status(400).json({ message: "CAPTCHA inválido, intenta de nuevo" });
   }
   if (nombre.length > 100 || email.length > 200 || (asunto || "").length > 200 || mensaje.length > 2000) {
     return res.status(400).json({ message: "Uno o más campos exceden el límite de caracteres" });
