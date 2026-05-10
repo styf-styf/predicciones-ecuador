@@ -2,7 +2,6 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Bell, Search, LogOut, LogIn, Menu, X } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import ThemeToggle from "@/components/ThemeToggle";
 
 export default function Header() {
@@ -78,32 +77,19 @@ export default function Header() {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target)) setShowUserMenu(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
-    const token = localStorage.getItem("token");
-    const userId = token ? JSON.parse(atob(token.split(".")[1])).id : null;
-    const userChannel = supabase.channel("header-user-live")
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "users", filter: userId ? `id=eq.${userId}` : undefined }, () => loadMe())
-      .subscribe();
-    const notifChannel = supabase.channel("header-notif-live")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications" }, () => {
-        loadNotifications();
-      })
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "notifications" }, () => {
-        loadNotifications();
-      })
-      .subscribe();
     return () => {
       window.removeEventListener("auth-change", syncAuth);
       document.removeEventListener("mousedown", handleClickOutside);
-      supabase.removeChannel(userChannel);
-      supabase.removeChannel(notifChannel);
     };
   }, []);
 
   useEffect(() => {
-    if (!showNotifications) return;
-    const interval = setInterval(() => loadNotifications(), 10000);
-    return () => clearInterval(interval);
-  }, [showNotifications]);
+    const es = new EventSource("https://predicciones-ecuador.onrender.com/events");
+    es.addEventListener("notifications", () => loadNotifications());
+    es.addEventListener("bets", () => loadMe());
+    es.addEventListener("transactions", () => { loadMe(); loadNotifications(); });
+    return () => es.close();
+  }, []);
 
   return (
     <>

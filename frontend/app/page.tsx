@@ -6,7 +6,6 @@ import {
   TrendingUp, Trophy, Flame, Globe, Mic2,
   Vote, Flag, Dumbbell, AlertCircle,
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import Header from "@/components/Header";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -587,12 +586,9 @@ export default function Home() {
     fetchMarkets();
     fetchFavorites();
 
-    const channel = supabase
-      .channel("markets-live")
-      .on("postgres_changes", { event: "*", schema: "public", table: "markets" }, fetchMarkets)
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
+    const es = new EventSource("https://predicciones-ecuador.onrender.com/events");
+    es.addEventListener("markets", () => fetchMarkets());
+    return () => es.close();
   }, [fetchMarkets, fetchFavorites]);
 
   // ── Loading ─────────────────────────────────────────────────────────────────

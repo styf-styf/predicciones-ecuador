@@ -1,6 +1,5 @@
 "use client";
 import React from "react";
-import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -64,14 +63,8 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
       const meData = await meRes.json();
       const betsData = await betsRes.json();
       const rankData = await rankRes.json();
-      const token2 = localStorage.getItem("token");
-      const payload2 = JSON.parse(atob(token2!.split(".")[1]));
-      const { data: txData } = await supabase
-      .from("transactions")
-      .select("*")
-      .eq("user_id", payload2.id)
-      .or("payment_method.eq.transferencia,payment_method.eq.tarjeta,payment_method.is.null")
-      .order("created_at", { ascending: false });
+      const txRes = await fetch("https://predicciones-ecuador.onrender.com/my-transactions", { headers });
+      const txData = await txRes.json();
 
       setUser(meData);
       setBets(betsData || []);
@@ -102,20 +95,10 @@ setBankConfig(configData);
 
   useEffect(() => {
     loadPanel();
-    const token = localStorage.getItem("token");
-    if (!token) return;
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    const userId = payload.id;
-    const usersChannel = supabase.channel("panel-users")
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "users", filter: `id=eq.${userId}` }, () => loadPanel())
-      .subscribe();
-    const betsChannel = supabase.channel("panel-bets")
-      .on("postgres_changes", { event: "*", schema: "public", table: "bets", filter: `user_id=eq.${userId}` }, () => loadPanel())
-      .subscribe();
-    return () => {
-      supabase.removeChannel(usersChannel);
-      supabase.removeChannel(betsChannel);
-    };
+    const es = new EventSource("https://predicciones-ecuador.onrender.com/events");
+    es.addEventListener("bets", () => loadPanel());
+    es.addEventListener("transactions", () => loadPanel());
+    return () => es.close();
   }, []);
 
   const handleSaveProfile = async () => {

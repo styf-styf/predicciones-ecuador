@@ -970,6 +970,40 @@ app.get("/markets/:id/my-bet", auth, async (req, res) => {
 });
 
 // =======================
+// 📊 HISTORIAL DE MERCADO
+// =======================
+app.get("/markets/:id/history", async (req, res) => {
+  const { data, error } = await supabase
+    .from("market_history")
+    .select("yes_pct, no_pct, total, created_at")
+    .eq("market_id", Number(req.params.id))
+    .order("created_at", { ascending: true })
+    .limit(50);
+  if (error) return res.status(500).json({ message: error.message });
+  res.json(data || []);
+});
+
+app.get("/markets/:id/top-holders", async (req, res) => {
+  const { data, error } = await supabase
+    .from("bets")
+    .select("amount, type, users(nombre, email)")
+    .eq("market_id", Number(req.params.id))
+    .order("amount", { ascending: false })
+    .limit(5);
+  if (error) return res.status(500).json({ message: error.message });
+  res.json(data || []);
+});
+
+app.get("/markets/:id/bettors-count", async (req, res) => {
+  const { count, error } = await supabase
+    .from("bets")
+    .select("*", { count: "exact", head: true })
+    .eq("market_id", Number(req.params.id));
+  if (error) return res.status(500).json({ message: error.message });
+  res.json({ count: count || 0 });
+});
+
+// =======================
 // 🎠 CONFIG CARRUSEL
 // =======================
 app.get("/carousel-config", async (req, res) => {
@@ -1705,6 +1739,20 @@ app.delete("/admin/extension-tokens/:id", auth, async (req, res) => {
 });
 
 // =======================
+// 💳 MIS TRANSACCIONES
+// =======================
+app.get("/my-transactions", auth, async (req, res) => {
+  const { data, error } = await supabase
+    .from("transactions")
+    .select("*")
+    .eq("user_id", req.userId)
+    .or("payment_method.eq.transferencia,payment_method.eq.tarjeta,payment_method.is.null")
+    .order("created_at", { ascending: false });
+  if (error) return res.status(500).json({ message: error.message });
+  res.json(data);
+});
+
+// =======================
 // 💳 ADMIN - LISTAR TRANSACCIONES
 // =======================
 app.get("/admin/transactions", auth, async (req, res) => {
@@ -1871,6 +1919,51 @@ app.post("/transfer", auth, async (req, res) => {
   if (error) return res.status(500).json({ message: error.message });
   res.json({ message: "Comprobante enviado, será procesado en menos de 24 horas" });
 });
+
+// =======================
+// 📡 SSE - EVENTOS EN TIEMPO REAL
+// =======================
+const sseClients = new Set();
+
+function broadcast(event, data) {
+  const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+  for (const client of sseClients) {
+    try { client.write(payload); } catch { sseClients.delete(client); }
+  }
+}
+
+app.get("/events", (req, res) => {
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders();
+
+  const heartbeat = setInterval(() => res.write(": heartbeat\n\n"), 25000);
+  sseClients.add(res);
+
+  req.on("close", () => {
+    clearInterval(heartbeat);
+    sseClients.delete(res);
+  });
+});
+
+supabase.channel("sse-broadcast")
+  .on("postgres_changes", { event: "*", schema: "public", table: "markets" }, () => {
+    broadcast("markets", {});
+  })
+  .on("postgres_changes", { event: "*", schema: "public", table: "bets" }, (payload) => {
+    broadcast("bets", { market_id: payload.new?.market_id ?? payload.old?.market_id ?? null });
+  })
+  .on("postgres_changes", { event: "*", schema: "public", table: "market_history" }, (payload) => {
+    broadcast("market_history", { market_id: payload.new?.market_id ?? null });
+  })
+  .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, () => {
+    broadcast("notifications", {});
+  })
+  .on("postgres_changes", { event: "*", schema: "public", table: "transactions" }, () => {
+    broadcast("transactions", {});
+  })
+  .subscribe();
 
 app.listen(4000, () => {
   console.log("Servidor en https://predicciones-ecuador.onrender.com");

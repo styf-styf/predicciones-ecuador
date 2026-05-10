@@ -11,7 +11,6 @@ import {
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import ThemeToggle from "@/components/ThemeToggle";
-import { supabase } from "@/lib/supabase";
 
 type Section = "overview" | "markets" | "users" | "settings" | "winners" | "transacciones" | "contacto" | "suggestions" | "noticias";
 
@@ -469,18 +468,11 @@ export default function AdminPage() {
     fetchMarkets();
     loadMe();
 
-    const channel = supabase.channel("admin-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "markets" }, () => { fetchMarkets(); fetchStats(); })
-      .on("postgres_changes", { event: "*", schema: "public", table: "transactions" }, () => { fetchTransactions(); fetchStats(); })
-      .on("postgres_changes", { event: "*", schema: "public", table: "users" }, () => { fetchUsers(); fetchStats(); })
-      .on("postgres_changes", { event: "*", schema: "public", table: "bets" }, () => { fetchStats(); fetchCharts(); })
-      .on("postgres_changes", { event: "*", schema: "public", table: "news_suggestions" }, () => { fetchSuggestions(); })
-      .on("postgres_changes", { event: "*", schema: "public", table: "market_news" }, () => { fetchMarketNews(); })
-      .on("postgres_changes", { event: "*", schema: "public", table: "contactos" }, () => { fetchContactos(); })
-      .on("postgres_changes", { event: "*", schema: "public", table: "extension_tokens" }, () => { fetchExtensionTokens(); })
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
+    const es = new EventSource("https://predicciones-ecuador.onrender.com/events");
+    es.addEventListener("markets", () => { fetchMarkets(); fetchStats(); });
+    es.addEventListener("bets", () => fetchStats());
+    es.addEventListener("transactions", () => fetchTransactions());
+    return () => es.close();
   }, []);
 
   const navItems = [

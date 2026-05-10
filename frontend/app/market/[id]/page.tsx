@@ -5,7 +5,6 @@ import Link from "next/link";
 import { ArrowLeft, TrendingUp, MessageCircle, Send, Newspaper, Users, Clock, BarChart2 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import Header from "@/components/Header";
-import { supabase } from "@/lib/supabase";
 
 
 
@@ -74,31 +73,19 @@ export default function MarketPage() {
   };
   
   const fetchHistory = async () => {
-  const { data } = await supabase
-    .from("market_history")
-    .select("yes_pct, no_pct, total, created_at")
-    .eq("market_id", Number(id))
-    .order("created_at", { ascending: true })
-    .limit(50);
-  setHistory(data || []);
-};
+    const res = await fetch(`https://predicciones-ecuador.onrender.com/markets/${id}/history`);
+    if (res.ok) setHistory(await res.json());
+  };
 
-const fetchTopHolders = async () => {
-  const { data } = await supabase
-    .from("bets")
-    .select("amount, type, users(nombre, email)")
-    .eq("market_id", Number(id))
-    .order("amount", { ascending: false })
-    .limit(5);
-  setTopHolders(data || []);
-};
-const fetchUniqueBettors = async () => {
-  const { count } = await supabase
-    .from("bets")
-    .select("*", { count: "exact", head: true })
-    .eq("market_id", Number(id));
-  setUniqueBettors(count || 0);
-};
+  const fetchTopHolders = async () => {
+    const res = await fetch(`https://predicciones-ecuador.onrender.com/markets/${id}/top-holders`);
+    if (res.ok) setTopHolders(await res.json());
+  };
+
+  const fetchUniqueBettors = async () => {
+    const res = await fetch(`https://predicciones-ecuador.onrender.com/markets/${id}/bettors-count`);
+    if (res.ok) { const d = await res.json(); setUniqueBettors(d.count || 0); }
+  };
 
   const fetchBetConfig = async () => {
   const res = await fetch("https://predicciones-ecuador.onrender.com/config");
@@ -145,6 +132,24 @@ const fetchUniqueBettors = async () => {
         fetchUserBet();
     }
  }, [token]);
+
+  useEffect(() => {
+    if (!id) return;
+    const es = new EventSource("https://predicciones-ecuador.onrender.com/events");
+    es.addEventListener("bets", (e: MessageEvent) => {
+      const d = JSON.parse(e.data);
+      if (d.market_id === Number(id)) {
+        fetchMarket();
+        fetchTopHolders();
+        fetchUniqueBettors();
+      }
+    });
+    es.addEventListener("market_history", (e: MessageEvent) => {
+      const d = JSON.parse(e.data);
+      if (d.market_id === Number(id)) fetchHistory();
+    });
+    return () => es.close();
+  }, [id]);
 
  const handleBet = async () => {
   if (!token) { setShowLoginPrompt(true); return; }
