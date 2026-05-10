@@ -37,6 +37,17 @@ const SECRET = process.env.JWT_SECRET;
 if (!SECRET) throw new Error("JWT_SECRET no está definido en .env");
 
 // =======================
+// 📡 SSE
+// =======================
+const sseClients = new Set();
+function broadcast(event, data) {
+  const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+  for (const client of sseClients) {
+    try { client.write(payload); } catch { sseClients.delete(client); }
+  }
+}
+
+// =======================
 // 🔐 Middleware auth
 // =======================
 const auth = (req, res, next) => {
@@ -737,6 +748,8 @@ await supabase.from("market_history").insert([{
 
 console.log("Snapshot guardado:", { marketId, yes_pct: ((Number(updatedMarket.yes) / total) * 100).toFixed(1), no_pct: ((Number(updatedMarket.no) / total) * 100).toFixed(1) });
 
+broadcast("bets", { market_id: marketId });
+broadcast("market_history", { market_id: marketId });
 res.json({ message: "Apuesta realizada", points: newPoints, market: updatedMarket });
 });
 // =======================
@@ -832,6 +845,7 @@ app.post("/admin/markets", auth, async (req, res) => {
   const { error } = await supabase.from("markets").insert([{ question, category: category || "general" }]);
   if (error) return res.status(400).json({ message: error.message });
 
+  broadcast("markets", {});
   res.json({ message: "Mercado creado" });
 });
 
@@ -848,6 +862,7 @@ app.delete("/admin/markets/:id", auth, async (req, res) => {
   const { error } = await supabase.from("markets").delete().eq("id", req.params.id);
   if (error) return res.status(400).json({ message: error.message });
 
+  broadcast("markets", {});
   res.json({ message: "Mercado eliminado" });
 });
 
@@ -1801,6 +1816,7 @@ app.post("/contacto", async (req, res) => {
     mensaje: mensaje.trim(),
   });
   if (error) return res.status(500).json({ message: error.message });
+  broadcast("contactos", {});
   res.json({ message: "Mensaje enviado correctamente" });
 });
 
@@ -1851,6 +1867,8 @@ app.put("/admin/transactions/:id/status", auth, async (req, res) => {
     }
   }
 
+  broadcast("transactions", {});
+  broadcast("notifications", {});
   res.json({ message: status === "aprobado" ? "Transacción aprobada" : "Transacción rechazada" });
 });
 
@@ -1921,17 +1939,8 @@ app.post("/transfer", auth, async (req, res) => {
 });
 
 // =======================
-// 📡 SSE - EVENTOS EN TIEMPO REAL
+// 📡 SSE - ENDPOINT
 // =======================
-const sseClients = new Set();
-
-function broadcast(event, data) {
-  const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
-  for (const client of sseClients) {
-    try { client.write(payload); } catch { sseClients.delete(client); }
-  }
-}
-
 app.get("/events", (req, res) => {
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
@@ -1949,29 +1958,6 @@ app.get("/events", (req, res) => {
     console.log(`SSE cliente desconectado. Total: ${sseClients.size}`);
   });
 });
-
-supabase.channel("sse-broadcast")
-  .on("postgres_changes", { event: "*", schema: "public", table: "markets" }, () => {
-    broadcast("markets", {});
-  })
-  .on("postgres_changes", { event: "*", schema: "public", table: "bets" }, (payload) => {
-    broadcast("bets", { market_id: payload.new?.market_id ?? payload.old?.market_id ?? null });
-  })
-  .on("postgres_changes", { event: "*", schema: "public", table: "market_history" }, (payload) => {
-    broadcast("market_history", { market_id: payload.new?.market_id ?? null });
-  })
-  .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, () => {
-    broadcast("notifications", {});
-  })
-  .on("postgres_changes", { event: "*", schema: "public", table: "transactions" }, () => {
-    broadcast("transactions", {});
-  })
-  .on("postgres_changes", { event: "*", schema: "public", table: "contactos" }, () => {
-    broadcast("contactos", {});
-  })
-  .subscribe((status, err) => {
-    console.log("SSE Realtime:", status, err ?? "");
-  });
 
 app.listen(4000, () => {
   console.log("Servidor en https://predicciones-ecuador.onrender.com");
