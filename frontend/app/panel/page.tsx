@@ -51,42 +51,40 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
 
   const loadPanel = async () => {
     const token = localStorage.getItem("token");
-    console.log("Token en loadPanel:", token ? "existe" : "NO existe");
     if (!token) { router.push("/login"); return; }
     const headers = { authorization: `Bearer ${token}` };
     try {
-      const [meRes, betsRes, rankRes] = await Promise.all([
+      const [meRes, betsRes, rankRes, txRes, configRes] = await Promise.all([
         fetch("https://predicciones-ecuador.onrender.com/me", { headers }),
         fetch("https://predicciones-ecuador.onrender.com/my-bets", { headers }),
         fetch("https://predicciones-ecuador.onrender.com/ranking"),
+        fetch("https://predicciones-ecuador.onrender.com/my-transactions", { headers }),
+        fetch("https://predicciones-ecuador.onrender.com/config", { headers }),
       ]);
       const meData = await meRes.json();
       const betsData = await betsRes.json();
       const rankData = await rankRes.json();
-      const txRes = await fetch("https://predicciones-ecuador.onrender.com/my-transactions", { headers });
       const txData = await txRes.json();
+      const configData = await configRes.json();
 
       setUser(meData);
       setBets(betsData || []);
       setRanking(rankData || []);
       setTransactions(txData || []);
       setProfileForm({
-  nombre: meData.nombre || "",
-  apellido: meData.apellido || "",
-  cedula: meData.cedula || "",
-  celular: meData.celular || "",
-  pais: meData.pais || "Ecuador",
-  ciudad: meData.ciudad || "",
-  direccion: meData.direccion || "",
-  banco: meData.banco || "",
-  numero_cuenta: meData.numero_cuenta || "",
-  tipo_cuenta: meData.tipo_cuenta || "",
-  provincia: meData.provincia || "",
- });
-
- const configRes = await fetch("https://predicciones-ecuador.onrender.com/config", { headers });
-const configData = await configRes.json();
-setBankConfig(configData);
+        nombre: meData.nombre || "",
+        apellido: meData.apellido || "",
+        cedula: meData.cedula || "",
+        celular: meData.celular || "",
+        pais: meData.pais || "Ecuador",
+        ciudad: meData.ciudad || "",
+        direccion: meData.direccion || "",
+        banco: meData.banco || "",
+        numero_cuenta: meData.numero_cuenta || "",
+        tipo_cuenta: meData.tipo_cuenta || "",
+        provincia: meData.provincia || "",
+      });
+      setBankConfig(configData);
       setLoading(false);
     } catch (error) {
       setLoading(false);

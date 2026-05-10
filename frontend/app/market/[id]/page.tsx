@@ -43,6 +43,7 @@ export default function MarketPage() {
   const fetchMarket = async () => {
     const res = await fetch(`https://predicciones-ecuador.onrender.com/markets`);
     const data = await res.json();
+    setAllMarkets(data);
     const found = data.find((m: any) => m.id === Number(id));
     setMarket(found || null);
   };
@@ -120,9 +121,6 @@ export default function MarketPage() {
     fetchHistory();
     fetchUniqueBettors();
     fetchTopHolders();
-    fetch("https://predicciones-ecuador.onrender.com/markets")
-      .then((r) => r.json())
-      .then((data) => setAllMarkets(data));
     fetchClosingNews();
   }
  }, [id]);
