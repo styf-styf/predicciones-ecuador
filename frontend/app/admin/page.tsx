@@ -1569,9 +1569,9 @@ export default function AdminPage() {
                   <div className="grid grid-cols-12 text-[10px] text-slate-400 dark:text-white/25 uppercase tracking-widest">
                     <span className="col-span-3">Mercado</span>
                     <span className="col-span-2">Usuario</span>
-                    <span className="col-span-5">Comentario</span>
+                    <span className="col-span-4">Comentario</span>
                     <span className="col-span-1">Fecha</span>
-                    <span className="col-span-1 text-right">Acción</span>
+                    <span className="col-span-2 text-right">Acciones</span>
                   </div>
                 </div>
 
@@ -1582,16 +1582,34 @@ export default function AdminPage() {
                   {adminComments
                     .filter(c => commentMarketFilter === "all" || String(c.market_id) === commentMarketFilter)
                     .map((c) => (
-                      <div key={c.id} className="px-5 py-4 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition">
+                      <div key={c.id} className={`px-5 py-4 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition ${c.hidden ? "opacity-50" : ""}`}>
                         {/* Desktop */}
                         <div className="hidden sm:grid grid-cols-12 items-start gap-2">
                           <p className="col-span-3 text-[12px] text-slate-500 dark:text-white/40 truncate">{c.markets?.question || `#${c.market_id}`}</p>
                           <p className="col-span-2 text-[12px] text-slate-600 dark:text-white/60 truncate">{c.username}</p>
-                          <p className="col-span-5 text-[12px] text-slate-500 dark:text-white/40 line-clamp-2">{c.content}</p>
+                          <div className="col-span-4">
+                            <p className="text-[12px] text-slate-500 dark:text-white/40 line-clamp-2">{c.content}</p>
+                            {c.hidden && <span className="text-[10px] bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 px-1.5 py-0.5 rounded-md mt-1 inline-block">Oculto</span>}
+                          </div>
                           <p className="col-span-1 text-[10px] text-slate-300 dark:text-white/20 tabular-nums">
                             {new Date(c.created_at).toLocaleDateString("es-EC", { timeZone: "America/Guayaquil", day: "2-digit", month: "2-digit" })}
                           </p>
-                          <div className="col-span-1 flex justify-end">
+                          <div className="col-span-2 flex justify-end gap-1">
+                            <button
+                              onClick={async () => {
+                                const token = localStorage.getItem("token");
+                                const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/comments/${c.id}/hide`, {
+                                  method: "PUT",
+                                  headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+                                  body: JSON.stringify({ hidden: !c.hidden }),
+                                });
+                                if (res.ok) { showToast(c.hidden ? "Comentario visible" : "Comentario ocultado", "info"); fetchAdminComments(); }
+                                else showToast("Error", "error");
+                              }}
+                              className="text-[10px] bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 hover:bg-amber-100 dark:hover:bg-amber-500/20 px-2 py-1 rounded-md transition"
+                            >
+                              {c.hidden ? "👁️" : "🙈"}
+                            </button>
                             <button
                               onClick={() => openModal({
                                 title: "¿Eliminar comentario?",
@@ -1621,30 +1639,50 @@ export default function AdminPage() {
                               <p className="text-[12px] font-medium text-slate-700 dark:text-white/70">{c.username}</p>
                               <p className="text-[10px] text-slate-400 dark:text-white/30 truncate">{c.markets?.question || `#${c.market_id}`}</p>
                             </div>
-                            <p className="text-[10px] text-slate-300 dark:text-white/20 shrink-0 tabular-nums">
-                              {new Date(c.created_at).toLocaleDateString("es-EC", { timeZone: "America/Guayaquil", day: "2-digit", month: "2-digit" })}
-                            </p>
+                            <div className="flex items-center gap-1 shrink-0">
+                              {c.hidden && <span className="text-[10px] bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 px-1.5 py-0.5 rounded-md">Oculto</span>}
+                              <p className="text-[10px] text-slate-300 dark:text-white/20 tabular-nums">
+                                {new Date(c.created_at).toLocaleDateString("es-EC", { timeZone: "America/Guayaquil", day: "2-digit", month: "2-digit" })}
+                              </p>
+                            </div>
                           </div>
                           <p className="text-[11px] text-slate-500 dark:text-white/40">{c.content}</p>
-                          <button
-                            onClick={() => openModal({
-                              title: "¿Eliminar comentario?",
-                              confirmLabel: "Eliminar",
-                              danger: true,
-                              onConfirm: async () => {
+                          <div className="flex gap-2">
+                            <button
+                              onClick={async () => {
                                 const token = localStorage.getItem("token");
-                                const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/comments/${c.id}`, {
-                                  method: "DELETE",
-                                  headers: { authorization: `Bearer ${token}` },
+                                const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/comments/${c.id}/hide`, {
+                                  method: "PUT",
+                                  headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+                                  body: JSON.stringify({ hidden: !c.hidden }),
                                 });
-                                if (res.ok) { showToast("Comentario eliminado", "info"); fetchAdminComments(); }
-                                else showToast("Error al eliminar", "error");
-                              },
-                            })}
-                            className="text-[11px] bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 px-3 py-1.5 rounded-lg"
-                          >
-                            Eliminar
-                          </button>
+                                if (res.ok) { showToast(c.hidden ? "Comentario visible" : "Comentario ocultado", "info"); fetchAdminComments(); }
+                                else showToast("Error", "error");
+                              }}
+                              className="text-[11px] bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 px-3 py-1.5 rounded-lg"
+                            >
+                              {c.hidden ? "Mostrar" : "Ocultar"}
+                            </button>
+                            <button
+                              onClick={() => openModal({
+                                title: "¿Eliminar comentario?",
+                                confirmLabel: "Eliminar",
+                                danger: true,
+                                onConfirm: async () => {
+                                  const token = localStorage.getItem("token");
+                                  const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/comments/${c.id}`, {
+                                    method: "DELETE",
+                                    headers: { authorization: `Bearer ${token}` },
+                                  });
+                                  if (res.ok) { showToast("Comentario eliminado", "info"); fetchAdminComments(); }
+                                  else showToast("Error al eliminar", "error");
+                                },
+                              })}
+                              className="text-[11px] bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 px-3 py-1.5 rounded-lg"
+                            >
+                              Eliminar
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))}

@@ -961,6 +961,7 @@ app.get("/markets/:id/comments", async (req, res) => {
     .from("comments")
     .select("*")
     .eq("market_id", id)
+    .eq("hidden", false)
     .order("created_at", { ascending: false });
   if (error) return res.status(500).json({ message: "Error" });
   res.json(data);
@@ -997,10 +998,22 @@ app.get("/admin/comments", auth, async (req, res) => {
 
   const { data, error } = await supabase
     .from("comments")
-    .select("id, content, username, created_at, market_id, markets ( question )")
+    .select("id, content, username, created_at, market_id, hidden, markets ( question )")
     .order("created_at", { ascending: false });
   if (error) return res.status(500).json({ message: error.message });
   res.json(data);
+});
+
+app.put("/admin/comments/:id/hide", auth, async (req, res) => {
+  const { data: admin } = await supabase.from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const { id } = req.params;
+  const { hidden } = req.body;
+  const { error } = await supabase.from("comments").update({ hidden }).eq("id", id);
+  if (error) return res.status(500).json({ message: error.message });
+  broadcast("comments", {});
+  res.json({ message: hidden ? "Comentario ocultado" : "Comentario visible" });
 });
 
 app.delete("/admin/comments/:id", auth, async (req, res) => {
