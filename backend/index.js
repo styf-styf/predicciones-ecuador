@@ -991,7 +991,10 @@ app.post("/markets/:id/comments", auth, async (req, res) => {
   res.json(data);
 });
 
-app.get("/admin/comments", auth, adminOnly, async (req, res) => {
+app.get("/admin/comments", auth, async (req, res) => {
+  const { data: admin } = await supabase.from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
   const { data, error } = await supabase
     .from("comments")
     .select("id, content, username, created_at, market_id, markets ( question )")
@@ -1000,7 +1003,10 @@ app.get("/admin/comments", auth, adminOnly, async (req, res) => {
   res.json(data);
 });
 
-app.delete("/admin/comments/:id", auth, adminOnly, async (req, res) => {
+app.delete("/admin/comments/:id", auth, async (req, res) => {
+  const { data: admin } = await supabase.from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
   const { id } = req.params;
   const { error } = await supabase.from("comments").delete().eq("id", id);
   if (error) return res.status(500).json({ message: error.message });
