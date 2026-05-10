@@ -555,7 +555,7 @@ export default function AdminPage() {
           </button>
         </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-0.5">
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
           {navItems.map((item) => (
             <button
               key={item.id}
@@ -623,7 +623,7 @@ export default function AdminPage() {
           </div>
         </header>
 
-        <main className="flex-1 px-4 sm:px-6 py-6 space-y-6 overflow-auto">
+        <main className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 space-y-6">
 
           {/* OVERVIEW */}
           {activeSection === "overview" && (
