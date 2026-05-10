@@ -88,6 +88,7 @@ app.post("/register", async (req, res) => {
 
   if (error) return res.status(400).json({ message: error.message });
 
+  broadcast("users", {});
   res.json({ message: "Usuario registrado correctamente" });
 });
 
@@ -549,6 +550,7 @@ app.put("/admin/users/:id/role", auth, async (req, res) => {
     .from("users").update({ role }).eq("id", req.params.id);
 
   if (error) return res.status(500).json({ message: error.message });
+  broadcast("users", {});
   res.json({ message: "Rol actualizado" });
 });
 
@@ -577,6 +579,7 @@ app.put("/admin/users/:id/points", auth, async (req, res) => {
     .from("users").update({ points: newPoints }).eq("id", req.params.id);
 
   if (error) return res.status(500).json({ message: error.message });
+  broadcast("users", {});
   res.json({ message: "Puntos actualizados", newPoints });
 });
 
@@ -594,6 +597,7 @@ app.put("/admin/users/:id/suspend", auth, async (req, res) => {
     .from("users").update({ suspended }).eq("id", req.params.id);
 
   if (error) return res.status(500).json({ message: error.message });
+  broadcast("users", {});
   res.json({ message: suspended ? "Usuario suspendido" : "Usuario activado" });
 });
 
@@ -832,6 +836,9 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
 
   await supabase.from("markets").update({ resolved: true, winner }).eq("id", marketId);
 
+  broadcast("markets", {});
+  broadcast("winners", {});
+  broadcast("notifications", {});
   res.json({
     message: `Mercado resuelto. Comisión total plataforma: ${totalCommission.toFixed(2)} pts`
   });
@@ -875,6 +882,7 @@ app.put("/admin/markets/:id/category", auth, async (req, res) => {
   const { error } = await supabase
     .from("markets").update({ category }).eq("id", req.params.id);
   if (error) return res.status(500).json({ message: error.message });
+  broadcast("markets", {});
   res.json({ message: "Categoría actualizada" });
 });
 
@@ -1464,9 +1472,11 @@ app.put("/admin/news-suggestions/:id", async (req, res) => {
 
   if (!suggestion) return res.status(404).json({ message: "Sugerencia no encontrada" });
 
+  broadcast("suggestions", {});
+
   if (action === "approve_market" && suggestion.new_market_question) {
   console.log("Sugerencia completa:", JSON.stringify(suggestion, null, 2));
-  
+
   const { data: newMarket, error: marketError } = await supabase.from("markets").insert([{
     question: suggestion.new_market_question,
     news_title: suggestion.title || null,
@@ -1588,6 +1598,7 @@ app.put("/admin/markets/:id", auth, async (req, res) => {
     .from("markets").update({ question }).eq("id", req.params.id);
 
   if (error) return res.status(500).json({ message: error.message });
+  broadcast("markets", {});
   res.json({ message: "Mercado actualizado ✅" });
 });
 
@@ -1641,6 +1652,7 @@ app.post("/withdrawal", auth, async (req, res) => {
     read: false,
   }]);
 
+  broadcast("transactions", {});
   res.json({ message: "Solicitud enviada", newPoints });
 });
 
@@ -1654,6 +1666,7 @@ app.put("/admin/markets/:id/archive", auth, async (req, res) => {
     .from("markets").update({ archived }).eq("id", req.params.id);
 
   if (error) return res.status(500).json({ message: error.message });
+  broadcast("markets", {});
   res.json({ message: archived ? "Mercado archivado" : "Mercado restaurado" });
 });
 
@@ -1671,6 +1684,7 @@ app.post("/admin/market-news", auth, async (req, res) => {
   }]).select().single();
 
   if (error) return res.status(500).json({ message: error.message });
+  broadcast("news", {});
   res.json({ message: "Noticia guardada", news: data });
 });
 
@@ -1694,6 +1708,7 @@ app.put("/admin/market-news/:id", auth, async (req, res) => {
   const { error } = await supabase
     .from("market_news").update({ market_id, status }).eq("id", req.params.id);
   if (error) return res.status(500).json({ message: error.message });
+  broadcast("news", {});
   res.json({ message: "Noticia actualizada" });
 });
 
@@ -1882,6 +1897,7 @@ app.delete("/admin/news-suggestions/:id", auth, async (req, res) => {
 
   const { error } = await supabase.from("news_suggestions").delete().eq("id", req.params.id);
   if (error) return res.status(500).json({ message: error.message });
+  broadcast("suggestions", {});
   res.json({ message: "Sugerencia eliminada" });
 });
 
@@ -1895,6 +1911,7 @@ app.delete("/admin/market-news/:id", auth, async (req, res) => {
 
   const { error } = await supabase.from("market_news").delete().eq("id", req.params.id);
   if (error) return res.status(500).json({ message: error.message });
+  broadcast("news", {});
   res.json({ message: "Noticia eliminada" });
 });
 
@@ -1935,6 +1952,7 @@ app.post("/transfer", auth, async (req, res) => {
   });
 
   if (error) return res.status(500).json({ message: error.message });
+  broadcast("transactions", {});
   res.json({ message: "Comprobante enviado, será procesado en menos de 24 horas" });
 });
 
