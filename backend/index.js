@@ -13,7 +13,14 @@ const googleClient = new OAuth2Client(
 
 const app = express();
 app.use(cors({
-  origin: ["https://predicciones-ecuador.vercel.app", "http://localhost:3000"],
+  origin: (origin, callback) => {
+    const allowed = ["https://predicciones-ecuador.vercel.app", "http://localhost:3000"];
+    if (!origin || allowed.includes(origin) || origin.startsWith("chrome-extension://") || origin.startsWith("moz-extension://")) {
+      callback(null, true);
+    } else {
+      callback(new Error("CORS: origen no permitido"));
+    }
+  },
 }));
 app.use(express.json());
 
