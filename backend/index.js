@@ -1963,7 +1963,12 @@ supabase.channel("sse-broadcast")
   .on("postgres_changes", { event: "*", schema: "public", table: "transactions" }, () => {
     broadcast("transactions", {});
   })
-  .subscribe();
+  .on("postgres_changes", { event: "*", schema: "public", table: "contactos" }, () => {
+    broadcast("contactos", {});
+  })
+  .subscribe((status, err) => {
+    console.log("SSE Realtime:", status, err ?? "");
+  });
 
 app.listen(4000, () => {
   console.log("Servidor en https://predicciones-ecuador.onrender.com");

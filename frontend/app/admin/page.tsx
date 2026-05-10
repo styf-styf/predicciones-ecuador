@@ -472,6 +472,7 @@ export default function AdminPage() {
     es.addEventListener("markets", () => { fetchMarkets(); fetchStats(); });
     es.addEventListener("bets", () => fetchStats());
     es.addEventListener("transactions", () => fetchTransactions());
+    es.addEventListener("contactos", () => fetchContactos());
     return () => es.close();
   }, []);
 
