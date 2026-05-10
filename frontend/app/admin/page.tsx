@@ -6,13 +6,13 @@ import {
   LogOut, Users, Activity, DollarSign,
   ShieldCheck, ShieldOff, Plus, Minus,
   Settings, X, LayoutDashboard, ChevronRight,
-  ArrowUpRight, ArrowDownRight, Circle, Zap, MessageSquare, Newspaper
+  ArrowUpRight, ArrowDownRight, Circle, Zap, MessageSquare, MessageCircle, Newspaper
 } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import ThemeToggle from "@/components/ThemeToggle";
 
-type Section = "overview" | "markets" | "users" | "settings" | "winners" | "transacciones" | "contacto" | "suggestions" | "noticias";
+type Section = "overview" | "markets" | "users" | "settings" | "winners" | "transacciones" | "contacto" | "suggestions" | "noticias" | "comentarios";
 
 // ─── Toast ─────────────────────────────────────────────────────────────────────
 function Toast({ message, type, onClose }: { message: string; type: "success" | "error" | "info"; onClose: () => void }) {
@@ -118,6 +118,8 @@ export default function AdminPage() {
   const [contactos, setContactos] = useState<any[]>([]);
   const [marketNews, setMarketNews] = useState<any[]>([]);
   const [newsMarketInput, setNewsMarketInput] = useState<{ [key: number]: string }>({});
+  const [adminComments, setAdminComments] = useState<any[]>([]);
+  const [commentMarketFilter, setCommentMarketFilter] = useState<string>("all");
 
   // ── Nuevos estados ──
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
@@ -242,6 +244,15 @@ export default function AdminPage() {
     if (res.ok) setMarketNews(data);
   };
 
+  const fetchAdminComments = async () => {
+    const token = localStorage.getItem("token");
+    const res = await fetch("https://predicciones-ecuador.onrender.com/admin/comments", {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (res.ok) setAdminComments(data);
+  };
+
   const fetchContactos = async () => {
     const token = localStorage.getItem("token");
     const res = await fetch("https://predicciones-ecuador.onrender.com/admin/contactos", {
@@ -332,7 +343,7 @@ export default function AdminPage() {
       const data = await res.json();
       if (data.role !== "admin") { window.location.href = "/"; return; }
       setIsLogged(true); setIsAdmin(true); setPoints(data.points || 0);
-      fetchWinners(); fetchStats(); fetchUsers(); fetchSettings(); fetchCharts(); fetchTransactions(); fetchContactos(); fetchSuggestions(); fetchMarketNews(); fetchExtensionTokens();
+      fetchWinners(); fetchStats(); fetchUsers(); fetchSettings(); fetchCharts(); fetchTransactions(); fetchContactos(); fetchSuggestions(); fetchMarketNews(); fetchExtensionTokens(); fetchAdminComments();
     } catch {
       localStorage.removeItem("token");
       window.location.href = "/login";
@@ -478,6 +489,7 @@ export default function AdminPage() {
     es.addEventListener("news", () => fetchMarketNews());
     es.addEventListener("winners", () => fetchStats());
     es.addEventListener("notifications", () => fetchStats());
+    es.addEventListener("comments", () => fetchAdminComments());
     return () => es.close();
   }, []);
 
@@ -489,6 +501,7 @@ export default function AdminPage() {
     { id: "transacciones", label: "Transacciones", icon: <Wallet size={15} />, badge: transactions.filter(t => t.status === "pendiente").length },
     { id: "suggestions", label: "Sugerencias", icon: <Newspaper size={15} />, badge: suggestions.filter(s => s.status === "pending").length },
     { id: "noticias", label: "Noticias", icon: <Newspaper size={15} />, badge: marketNews.filter(n => n.status === "pending").length },
+    { id: "comentarios", label: "Comentarios", icon: <MessageCircle size={15} />, badge: adminComments.length },
     { id: "contacto", label: "Contacto", icon: <MessageSquare size={15} />, badge: contactos.filter(c => !c.leido).length },
     { id: "settings", label: "Configuración", icon: <Settings size={15} /> },
   ];
@@ -1522,6 +1535,120 @@ export default function AdminPage() {
                     )}
                   </div>
                 ))}
+              </div>
+            </>
+          )}
+
+          {/* COMENTARIOS */}
+          {activeSection === "comentarios" && (
+            <>
+              <div>
+                <h1 className="text-lg font-bold">Comentarios</h1>
+                <p className="text-[12px] text-slate-400 dark:text-white/30 mt-0.5">
+                  {adminComments.length} comentario{adminComments.length !== 1 ? "s" : ""} en total
+                </p>
+              </div>
+
+              {/* Filtro por mercado */}
+              <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl px-4 py-3">
+                <label className="text-[10px] text-slate-400 dark:text-white/30 uppercase tracking-widest block mb-1.5">Filtrar por mercado</label>
+                <select
+                  value={commentMarketFilter}
+                  onChange={(e) => setCommentMarketFilter(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-[12px] text-slate-700 dark:text-white/70 outline-none"
+                >
+                  <option value="all">Todos los mercados</option>
+                  {Array.from(new Map(adminComments.map(c => [c.market_id, c.markets?.question])).entries()).map(([id, question]) => (
+                    <option key={id} value={String(id)}>{question || `Mercado #${id}`}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl overflow-hidden">
+                <div className="px-5 py-3 border-b border-slate-100 dark:border-white/[0.06] hidden sm:block">
+                  <div className="grid grid-cols-12 text-[10px] text-slate-400 dark:text-white/25 uppercase tracking-widest">
+                    <span className="col-span-3">Mercado</span>
+                    <span className="col-span-2">Usuario</span>
+                    <span className="col-span-5">Comentario</span>
+                    <span className="col-span-1">Fecha</span>
+                    <span className="col-span-1 text-right">Acción</span>
+                  </div>
+                </div>
+
+                <div className="divide-y divide-slate-100 dark:divide-white/[0.03]">
+                  {adminComments.filter(c => commentMarketFilter === "all" || String(c.market_id) === commentMarketFilter).length === 0 && (
+                    <p className="px-5 py-8 text-[12px] text-slate-400 dark:text-white/20 text-center">Sin comentarios</p>
+                  )}
+                  {adminComments
+                    .filter(c => commentMarketFilter === "all" || String(c.market_id) === commentMarketFilter)
+                    .map((c) => (
+                      <div key={c.id} className="px-5 py-4 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition">
+                        {/* Desktop */}
+                        <div className="hidden sm:grid grid-cols-12 items-start gap-2">
+                          <p className="col-span-3 text-[12px] text-slate-500 dark:text-white/40 truncate">{c.markets?.question || `#${c.market_id}`}</p>
+                          <p className="col-span-2 text-[12px] text-slate-600 dark:text-white/60 truncate">{c.username}</p>
+                          <p className="col-span-5 text-[12px] text-slate-500 dark:text-white/40 line-clamp-2">{c.content}</p>
+                          <p className="col-span-1 text-[10px] text-slate-300 dark:text-white/20 tabular-nums">
+                            {new Date(c.created_at).toLocaleDateString("es-EC", { timeZone: "America/Guayaquil", day: "2-digit", month: "2-digit" })}
+                          </p>
+                          <div className="col-span-1 flex justify-end">
+                            <button
+                              onClick={() => openModal({
+                                title: "¿Eliminar comentario?",
+                                description: `"${c.content.slice(0, 60)}${c.content.length > 60 ? "…" : ""}"`,
+                                confirmLabel: "Eliminar",
+                                danger: true,
+                                onConfirm: async () => {
+                                  const token = localStorage.getItem("token");
+                                  const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/comments/${c.id}`, {
+                                    method: "DELETE",
+                                    headers: { authorization: `Bearer ${token}` },
+                                  });
+                                  if (res.ok) { showToast("Comentario eliminado", "info"); fetchAdminComments(); }
+                                  else showToast("Error al eliminar", "error");
+                                },
+                              })}
+                              className="text-[10px] bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 hover:bg-rose-100 dark:hover:bg-rose-500/20 px-2 py-1 rounded-md transition"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        </div>
+                        {/* Mobile */}
+                        <div className="sm:hidden space-y-1.5">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <p className="text-[12px] font-medium text-slate-700 dark:text-white/70">{c.username}</p>
+                              <p className="text-[10px] text-slate-400 dark:text-white/30 truncate">{c.markets?.question || `#${c.market_id}`}</p>
+                            </div>
+                            <p className="text-[10px] text-slate-300 dark:text-white/20 shrink-0 tabular-nums">
+                              {new Date(c.created_at).toLocaleDateString("es-EC", { timeZone: "America/Guayaquil", day: "2-digit", month: "2-digit" })}
+                            </p>
+                          </div>
+                          <p className="text-[11px] text-slate-500 dark:text-white/40">{c.content}</p>
+                          <button
+                            onClick={() => openModal({
+                              title: "¿Eliminar comentario?",
+                              confirmLabel: "Eliminar",
+                              danger: true,
+                              onConfirm: async () => {
+                                const token = localStorage.getItem("token");
+                                const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/comments/${c.id}`, {
+                                  method: "DELETE",
+                                  headers: { authorization: `Bearer ${token}` },
+                                });
+                                if (res.ok) { showToast("Comentario eliminado", "info"); fetchAdminComments(); }
+                                else showToast("Error al eliminar", "error");
+                              },
+                            })}
+                            className="text-[11px] bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 px-3 py-1.5 rounded-lg"
+                          >
+                            Eliminar
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                </div>
               </div>
             </>
           )}

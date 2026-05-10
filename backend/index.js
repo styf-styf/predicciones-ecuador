@@ -987,7 +987,25 @@ app.post("/markets/:id/comments", auth, async (req, res) => {
     console.error("Error comentario:", error);
     return res.status(500).json({ message: error.message });
   }
+  broadcast("comments", { market_id: Number(id) });
   res.json(data);
+});
+
+app.get("/admin/comments", auth, adminOnly, async (req, res) => {
+  const { data, error } = await supabase
+    .from("comments")
+    .select("id, content, username, created_at, market_id, markets ( question )")
+    .order("created_at", { ascending: false });
+  if (error) return res.status(500).json({ message: error.message });
+  res.json(data);
+});
+
+app.delete("/admin/comments/:id", auth, adminOnly, async (req, res) => {
+  const { id } = req.params;
+  const { error } = await supabase.from("comments").delete().eq("id", id);
+  if (error) return res.status(500).json({ message: error.message });
+  broadcast("comments", {});
+  res.json({ message: "Comentario eliminado" });
 });
 
 // =======================
