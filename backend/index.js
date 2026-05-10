@@ -422,6 +422,57 @@ app.get("/admin/stats", auth, async (req, res) => {
 });
 
 // =======================
+// 💰 FINANZAS ADMIN
+// =======================
+app.get("/admin/finance", auth, async (req, res) => {
+  const { data: admin } = await supabase.from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const [
+    { data: recargas },
+    { data: retiros },
+    { data: bets },
+    { data: users },
+    { data: config },
+    { data: winners },
+    { count: totalApuestas },
+    { count: totalRecargas },
+    { count: totalRetiros },
+  ] = await Promise.all([
+    supabase.from("transactions").select("amount").eq("type", "recarga").eq("status", "aprobado"),
+    supabase.from("transactions").select("amount").eq("type", "retiro").eq("status", "aprobado"),
+    supabase.from("bets").select("amount"),
+    supabase.from("users").select("points"),
+    supabase.from("config").select("commission").eq("id", 1).single(),
+    supabase.from("winners").select("reward"),
+    supabase.from("bets").select("*", { count: "exact", head: true }),
+    supabase.from("transactions").select("*", { count: "exact", head: true }).eq("type", "recarga").eq("status", "aprobado"),
+    supabase.from("transactions").select("*", { count: "exact", head: true }).eq("type", "retiro").eq("status", "aprobado"),
+  ]);
+
+  const totalEntradas = recargas?.reduce((s, t) => s + Number(t.amount), 0) ?? 0;
+  const totalSalidas = retiros?.reduce((s, t) => s + Number(t.amount), 0) ?? 0;
+  const totalApuestado = bets?.reduce((s, b) => s + Number(b.amount), 0) ?? 0;
+  const totalCirculacion = users?.reduce((s, u) => s + Number(u.points), 0) ?? 0;
+  const commission = config?.commission ?? 0;
+  const totalComisiones = (totalApuestado * commission) / 100;
+  const totalPagado = winners?.reduce((s, w) => s + Number(w.reward), 0) ?? 0;
+
+  res.json({
+    totalEntradas: totalEntradas.toFixed(2),
+    totalSalidas: totalSalidas.toFixed(2),
+    totalApuestado: totalApuestado.toFixed(2),
+    totalCirculacion: totalCirculacion.toFixed(2),
+    totalComisiones: totalComisiones.toFixed(2),
+    totalPagado: totalPagado.toFixed(2),
+    totalApuestas,
+    totalRecargas,
+    totalRetiros,
+    commissionRate: commission,
+  });
+});
+
+// =======================
 // 📈 GRÁFICAS ADMIN
 // =======================
 app.get("/admin/charts", auth, async (req, res) => {

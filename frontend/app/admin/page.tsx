@@ -6,13 +6,14 @@ import {
   LogOut, Users, Activity, DollarSign,
   ShieldCheck, ShieldOff, Plus, Minus,
   Settings, X, LayoutDashboard, ChevronRight,
-  ArrowUpRight, ArrowDownRight, Circle, Zap, MessageSquare, MessageCircle, Newspaper
+  ArrowUpRight, ArrowDownRight, Circle, Zap, MessageSquare, MessageCircle, Newspaper, Eye, EyeOff,
+  TrendingDown, PiggyBank, BarChart2
 } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import ThemeToggle from "@/components/ThemeToggle";
 
-type Section = "overview" | "markets" | "users" | "settings" | "winners" | "transacciones" | "contacto" | "suggestions" | "noticias" | "comentarios";
+type Section = "overview" | "administracion" | "markets" | "users" | "settings" | "winners" | "transacciones" | "contacto" | "suggestions" | "noticias" | "comentarios";
 
 // ─── Toast ─────────────────────────────────────────────────────────────────────
 function Toast({ message, type, onClose }: { message: string; type: "success" | "error" | "info"; onClose: () => void }) {
@@ -120,6 +121,7 @@ export default function AdminPage() {
   const [newsMarketInput, setNewsMarketInput] = useState<{ [key: number]: string }>({});
   const [adminComments, setAdminComments] = useState<any[]>([]);
   const [commentMarketFilter, setCommentMarketFilter] = useState<string>("all");
+  const [finance, setFinance] = useState<any>(null);
 
   // ── Nuevos estados ──
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
@@ -244,6 +246,15 @@ export default function AdminPage() {
     if (res.ok) setMarketNews(data);
   };
 
+  const fetchFinance = async () => {
+    const token = localStorage.getItem("token");
+    const res = await fetch("https://predicciones-ecuador.onrender.com/admin/finance", {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (res.ok) setFinance(data);
+  };
+
   const fetchAdminComments = async () => {
     const token = localStorage.getItem("token");
     const res = await fetch("https://predicciones-ecuador.onrender.com/admin/comments", {
@@ -343,7 +354,7 @@ export default function AdminPage() {
       const data = await res.json();
       if (data.role !== "admin") { window.location.href = "/"; return; }
       setIsLogged(true); setIsAdmin(true); setPoints(data.points || 0);
-      fetchWinners(); fetchStats(); fetchUsers(); fetchSettings(); fetchCharts(); fetchTransactions(); fetchContactos(); fetchSuggestions(); fetchMarketNews(); fetchExtensionTokens(); fetchAdminComments();
+      fetchWinners(); fetchStats(); fetchUsers(); fetchSettings(); fetchCharts(); fetchTransactions(); fetchContactos(); fetchSuggestions(); fetchMarketNews(); fetchExtensionTokens(); fetchAdminComments(); fetchFinance();
     } catch {
       localStorage.removeItem("token");
       window.location.href = "/login";
@@ -481,8 +492,8 @@ export default function AdminPage() {
 
     const es = new EventSource("https://predicciones-ecuador.onrender.com/events");
     es.addEventListener("markets", () => { fetchMarkets(); fetchStats(); });
-    es.addEventListener("bets", () => fetchStats());
-    es.addEventListener("transactions", () => fetchTransactions());
+    es.addEventListener("bets", () => { fetchStats(); fetchFinance(); });
+    es.addEventListener("transactions", () => { fetchTransactions(); fetchFinance(); });
     es.addEventListener("contactos", () => fetchContactos());
     es.addEventListener("users", () => fetchUsers());
     es.addEventListener("suggestions", () => fetchSuggestions());
@@ -495,6 +506,7 @@ export default function AdminPage() {
 
   const navItems = [
     { id: "overview", label: "Resumen", icon: <LayoutDashboard size={15} /> },
+    { id: "administracion", label: "Administración", icon: <PiggyBank size={15} /> },
     { id: "markets", label: "Mercados", icon: <TrendingUp size={15} />, badge: markets.filter(m => !m.resolved).length },
     { id: "users", label: "Usuarios", icon: <Users size={15} />, badge: users.length },
     { id: "winners", label: "Ganadores", icon: <Trophy size={15} /> },
@@ -724,6 +736,59 @@ export default function AdminPage() {
                     </div>
                   ))}
                   {transactions.length === 0 && <p className="px-5 py-8 text-[12px] text-slate-400 dark:text-white/20 text-center">Sin transacciones aún</p>}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* ADMINISTRACIÓN */}
+          {activeSection === "administracion" && finance && (
+            <>
+              <div>
+                <h1 className="text-lg font-bold">Administración</h1>
+                <p className="text-[12px] text-slate-400 dark:text-white/30 mt-0.5">Registros financieros de la plataforma</p>
+              </div>
+
+              {/* Tarjetas principales */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {[
+                  { label: "Entradas totales", value: `$${finance.totalEntradas}`, sub: `${finance.totalRecargas} recargas aprobadas`, icon: <ArrowUpRight size={16} />, color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-500/10" },
+                  { label: "Salidas totales", value: `$${finance.totalSalidas}`, sub: `${finance.totalRetiros} retiros aprobados`, icon: <TrendingDown size={16} />, color: "text-rose-500", bg: "bg-rose-50 dark:bg-rose-500/10" },
+                  { label: "En circulación", value: `$${finance.totalCirculacion}`, sub: "Puntos en wallets de usuarios", icon: <Wallet size={16} />, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-500/10" },
+                  { label: "Total apostado", value: `$${finance.totalApuestado}`, sub: `${finance.totalApuestas} apuestas realizadas`, icon: <BarChart2 size={16} />, color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-500/10" },
+                  { label: "Comisiones generadas", value: `$${finance.totalComisiones}`, sub: `Tasa: ${finance.commissionRate}%`, icon: <DollarSign size={16} />, color: "text-purple-500", bg: "bg-purple-50 dark:bg-purple-500/10" },
+                  { label: "Premios pagados", value: `$${finance.totalPagado}`, sub: "A ganadores de mercados", icon: <Trophy size={16} />, color: "text-amber-400", bg: "bg-amber-50 dark:bg-amber-500/10" },
+                ].map((item) => (
+                  <div key={item.label} className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-4 space-y-3">
+                    <div className={`w-8 h-8 rounded-lg ${item.bg} ${item.color} flex items-center justify-center`}>
+                      {item.icon}
+                    </div>
+                    <div>
+                      <p className="text-xl font-bold tabular-nums text-slate-900 dark:text-white">{item.value}</p>
+                      <p className="text-[10px] text-slate-400 dark:text-white/30 uppercase tracking-widest mt-0.5">{item.label}</p>
+                      <p className="text-[11px] text-slate-400 dark:text-white/25 mt-1">{item.sub}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Balance neto */}
+              <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-5">
+                <p className="text-[10px] text-slate-400 dark:text-white/25 uppercase tracking-widest mb-3">Balance neto de la plataforma</p>
+                <div className="flex items-center gap-4 flex-wrap">
+                  <div>
+                    <p className="text-2xl font-bold tabular-nums text-slate-900 dark:text-white">
+                      ${(parseFloat(finance.totalEntradas) - parseFloat(finance.totalSalidas) - parseFloat(finance.totalPagado)).toFixed(2)}
+                    </p>
+                    <p className="text-[11px] text-slate-400 dark:text-white/30 mt-0.5">Entradas − Salidas − Premios pagados</p>
+                  </div>
+                  <div className="flex gap-3 flex-wrap text-[12px]">
+                    <span className="flex items-center gap-1 text-emerald-500"><ArrowUpRight size={13} /> ${finance.totalEntradas}</span>
+                    <span className="text-slate-300 dark:text-white/20">−</span>
+                    <span className="flex items-center gap-1 text-rose-500"><TrendingDown size={13} /> ${finance.totalSalidas}</span>
+                    <span className="text-slate-300 dark:text-white/20">−</span>
+                    <span className="flex items-center gap-1 text-amber-400"><Trophy size={13} /> ${finance.totalPagado}</span>
+                  </div>
                 </div>
               </div>
             </>
@@ -1608,7 +1673,7 @@ export default function AdminPage() {
                               }}
                               className="text-[10px] bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 hover:bg-amber-100 dark:hover:bg-amber-500/20 px-2 py-1 rounded-md transition"
                             >
-                              {c.hidden ? "👁️" : "🙈"}
+                              {c.hidden ? <Eye size={12} /> : <EyeOff size={12} />}
                             </button>
                             <button
                               onClick={() => openModal({
