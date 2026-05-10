@@ -1432,6 +1432,7 @@ try {
       .select().single();
 
     if (error) throw error;
+    broadcast("suggestions", {});
     res.json({ message: "Sugerencia procesada", suggestion });
   } catch (err) {
     console.error("Error IA completo:", JSON.stringify(err, null, 2));
