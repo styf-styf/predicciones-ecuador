@@ -131,6 +131,7 @@ export default function AdminPage() {
   } | null>(null);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const [marketFilter, setMarketFilter] = useState<"activos" | "todos" | "resueltos">("activos");
+  const [txFilter, setTxFilter] = useState<"transferencia" | "tarjeta" | "retiro">("transferencia");
 
   const showToast = (message: string, type: "success" | "error" | "info" = "success") => setToast({ message, type });
   const openModal = (opts: typeof modal) => setModal(opts);
@@ -1208,14 +1209,38 @@ export default function AdminPage() {
           {/* TRANSACCIONES */}
           {activeSection === "transacciones" && (
             <>
-              <div>
-                <h1 className="text-lg font-bold">Transacciones</h1>
-                <p className="text-[12px] text-slate-400 dark:text-white/30 mt-0.5">
-                  {transactions.filter(t => t.status === "pendiente").length} pendientes · {transactions.length} total
-                </p>
+              <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                  <h1 className="text-lg font-bold">Transacciones</h1>
+                  <p className="text-[12px] text-slate-400 dark:text-white/30 mt-0.5">
+                    {transactions.filter(t => t.status === "pendiente").length} pendientes · {transactions.length} total
+                  </p>
+                </div>
+                <div className="flex items-center gap-1 bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-lg p-1">
+                  {([
+                    { id: "transferencia", label: "Transferencia" },
+                    { id: "tarjeta",       label: "Tarjeta" },
+                    { id: "retiro",        label: "Retiro" },
+                  ] as const).map((t) => {
+                    const pending = transactions.filter(tx =>
+                      t.id === "retiro" ? tx.type === "retiro" && tx.status === "pendiente" :
+                      t.id === "tarjeta" ? (tx.payment_method === "tarjeta" || tx.payment_method === null) && tx.type === "recarga" && tx.status === "pendiente" :
+                      tx.payment_method === t.id && tx.type === "recarga" && tx.status === "pendiente"
+                    ).length;
+                    return (
+                      <button key={t.id} onClick={() => setTxFilter(t.id)}
+                        className={`relative px-3 py-1.5 rounded-md text-[11px] font-medium transition ${txFilter === t.id ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/70"}`}>
+                        {t.label}
+                        {pending > 0 && (
+                          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center">{pending}</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
-              {["transferencia", "tarjeta", "retiro"].map((method) => (
+              {[txFilter].map((method) => (
                 <div key={method} className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl overflow-hidden">
                   <div className="px-5 py-3 border-b border-slate-100 dark:border-white/[0.06] flex items-center justify-between">
                     <p className="text-[12px] font-semibold text-slate-700 dark:text-white/70 capitalize">
