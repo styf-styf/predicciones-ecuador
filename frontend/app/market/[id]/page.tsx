@@ -8,6 +8,17 @@ import Header from "@/components/Header";
 
 
 
+function formatCountdown(closesAt: string): string {
+  const diff = new Date(closesAt).getTime() - Date.now();
+  if (diff <= 0) return "Cerrado";
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  if (d > 0) return `Cierra en ${d}d ${h}h`;
+  if (h > 0) return `Cierra en ${h}h ${m}m`;
+  return `Cierra en ${m}m`;
+}
+
 export default function MarketPage() {
   const { id } = useParams();
   const searchParams = useSearchParams();
@@ -25,9 +36,8 @@ export default function MarketPage() {
   const [submitting, setSubmitting] = useState(false);
   const [bettingLoading, setBettingLoading] = useState(false);
   const [betSuccess, setBetSuccess] = useState(false);
-  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [token, setToken] = useState<string | null>(null);
-  const [userBet, setUserBet] = useState<{ type: "yes" | "no"; amount: number } | null>(null);
+  const [userBet, setUserBet] = useState<{ type: "yes" | "no"; amount: number; payout?: number; commission_paid?: number } | null>(null);
   const [changeCount, setChangeCount] = useState(0);
   const MAX_CHANGES = 3;
   const [betConfig, setBetConfig] = useState({ min_bet: 1, commission: 3 });
@@ -36,9 +46,16 @@ export default function MarketPage() {
   const [topHolders, setTopHolders] = useState<any[]>([]);
   const [allMarkets, setAllMarkets] = useState<any[]>([]);
   const [closingNews, setClosingNews] = useState<any[]>([]);
+  const [toast, setToast] = useState<{ text: string; type: "error" | "success" } | null>(null);
   useEffect(() => {
     setToken(localStorage.getItem("token"));
   }, []);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3500);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   const fetchMarket = async () => {
     const res = await fetch(`https://predicciones-ecuador.onrender.com/markets`);
@@ -105,7 +122,7 @@ export default function MarketPage() {
   if (res.ok) {
     const data = await res.json();
     if (data.bet) {
-      setUserBet({ type: data.bet.type, amount: data.bet.amount });
+      setUserBet({ type: data.bet.type, amount: data.bet.amount, payout: data.bet.payout ?? undefined, commission_paid: data.bet.commission_paid ?? undefined });
       setChangeCount(data.bet.changes ?? 0);
       setBetType(data.bet.type);
     }
@@ -151,12 +168,16 @@ export default function MarketPage() {
   }, [id]);
 
  const handleBet = async () => {
-  if (!token) { setShowLoginPrompt(true); return; }
+  if (!token) return;
   const amt = parseFloat(amount);
-  if (isNaN(amt) || amt < betConfig.min_bet)
-  return alert(`El monto mínimo es ${betConfig.min_bet} $`);
-  if (points !== null && amt > points)
-  return alert("Saldo insuficiente");
+  if (isNaN(amt) || amt < betConfig.min_bet) {
+    setToast({ text: `Monto mínimo: ${betConfig.min_bet} $`, type: "error" });
+    return;
+  }
+  if (points !== null && amt > points) {
+    setToast({ text: "Saldo insuficiente", type: "error" });
+    return;
+  }
   setBettingLoading(true);
   const res = await fetch("https://predicciones-ecuador.onrender.com/bet", {
     method: "POST",
@@ -175,16 +196,12 @@ export default function MarketPage() {
     fetchMarket();
     fetchHistory();
   } else {
-    alert(data.message);
+    setToast({ text: data.message || "Error al procesar la predicción", type: "error" });
   }
  };
 
   const handleComment = async () => {
-  if (!token) {
-    setShowLoginPrompt(true);
-    return;
-  }
-  setShowLoginPrompt(false);
+  if (!token) return;
   if (!newComment.trim()) return;
   setSubmitting(true);
   const res = await fetch(`https://predicciones-ecuador.onrender.com/markets/${id}/comments`, {
@@ -194,7 +211,7 @@ export default function MarketPage() {
   });
   const data = await res.json();
   if (res.ok) { setNewComment(""); fetchComments(); }
-  else alert(data.message);
+  else setToast({ text: data.message || "Error al enviar el comentario", type: "error" });
   setSubmitting(false);
  };
 
@@ -263,6 +280,32 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
     (m) => m.category === market.category && m.id !== market.id && !m.resolved
   ).slice(0, 4);
 
+ const resolvedBanner = market.resolved ? (
+  <div className="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-900 dark:to-slate-800/60 border border-slate-300 dark:border-slate-700 rounded-2xl p-4 flex items-center justify-between gap-4">
+    <div className="flex items-center gap-3">
+      <div className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 text-xl ${market.winner === "yes" ? "bg-emerald-500/20" : "bg-rose-500/20"}`}>
+        {market.winner === "yes" ? "✅" : "❌"}
+      </div>
+      <div>
+        <p className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold mb-0.5">Mercado cerrado</p>
+        <p className="text-base font-bold text-slate-900 dark:text-white">
+          Ganó:{" "}
+          <span className={market.winner === "yes" ? "text-emerald-500" : "text-rose-500"}>
+            {market.winner === "yes" ? "Sí" : "No"}
+          </span>
+        </p>
+      </div>
+    </div>
+    <div className="text-right shrink-0">
+      <p className="text-[9px] text-slate-400 uppercase tracking-widest mb-0.5">Resultado final</p>
+      <div className="flex items-baseline gap-1.5 justify-end">
+        <span className="text-2xl font-black text-emerald-500">{yesPct}%</span>
+        <span className="text-lg font-black text-rose-500">{noPct}%</span>
+      </div>
+    </div>
+  </div>
+) : null;
+
  return (
   <main className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
     <Header />
@@ -281,11 +324,47 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
   <h1 className="text-[14px] font-bold leading-snug">{market.question}</h1>
 </div>
 
-        {/* 2. Panel de apuesta */}
-       
+        {/* 2. Banner resuelto / resultado personal / panel de predicción */}
+        {resolvedBanner}
 
+        {market.resolved && token && userBet && (
+          <div className={`rounded-2xl p-5 border ${userBet.type === market.winner ? "border-emerald-400/40 bg-emerald-500/5 dark:bg-emerald-500/10" : "border-rose-400/40 bg-rose-500/5 dark:bg-rose-500/10"}`}>
+            <div className="text-center mb-4">
+              <div className="text-3xl mb-1">{userBet.type === market.winner ? "🏆" : "😔"}</div>
+              <p className={`font-bold text-base ${userBet.type === market.winner ? "text-emerald-500" : "text-rose-400"}`}>
+                {userBet.type === market.winner ? "¡Ganaste esta predicción!" : "Perdiste esta predicción"}
+              </p>
+            </div>
+            <div className="space-y-2.5 text-sm">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400">Tu predicción</span>
+                <span className={`font-bold ${userBet.type === "yes" ? "text-emerald-400" : "text-rose-400"}`}>{userBet.type === "yes" ? "✅ Sí" : "❌ No"}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400">Invertiste</span>
+                <span className="font-bold text-slate-900 dark:text-white">{userBet.amount} $</span>
+              </div>
+              {userBet.type === market.winner ? (
+                <>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400">Recibiste</span>
+                    <span className="font-bold text-emerald-500">+{(userBet.payout ?? 0).toFixed(2)} $</span>
+                  </div>
+                  <div className="flex justify-between items-center border-t border-emerald-500/20 pt-2.5">
+                    <span className="text-slate-400">Ganancia neta</span>
+                    <span className="font-black text-lg text-emerald-500">+{((userBet.payout ?? 0) - userBet.amount).toFixed(2)} $</span>
+                  </div>
+                </>
+              ) : (
+                <div className="flex justify-between items-center border-t border-rose-500/20 pt-2.5">
+                  <span className="text-slate-400">Perdiste</span>
+                  <span className="font-black text-lg text-rose-500">-{userBet.amount} $</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
-{/* 2. Panel de apuesta */}
 {!market.resolved && (
           <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
             <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
@@ -453,16 +532,17 @@ const oppPool = betType === "yes" ? noPool  : yesPool;
           <div className="border-t border-slate-100 dark:border-slate-800 px-5 py-3 flex items-center justify-between flex-wrap gap-3 bg-slate-50 dark:bg-slate-800/50">
             <div className="flex items-center gap-4 flex-wrap">
               {[
-                { icon: <BarChart2 size={12} />, label: "Total apostado", value: `$${(Number(market.yes) + Number(market.no)).toFixed(1)}` },
-                { icon: <Users size={12} />, label: "Participantes", value: uniqueBettors },
-                { icon: <Clock size={12} />, label: "Creado", value: new Date(market.created_at).toLocaleDateString("es-EC", { day: "numeric", month: "short", year: "numeric" }) },
-                { icon: <TrendingUp size={12} />, label: "Estado", value: market.resolved ? `Ganó ${market.winner === "yes" ? "Sí" : "No"}` : "En vivo" },
+                { icon: <BarChart2 size={12} />, label: "Total apostado", value: `$${(Number(market.yes) + Number(market.no)).toFixed(1)}`, red: false },
+                { icon: <Users size={12} />, label: "Participantes", value: uniqueBettors, red: false },
+                { icon: <Clock size={12} />, label: "Creado", value: new Date(market.created_at).toLocaleDateString("es-EC", { day: "numeric", month: "short", year: "numeric" }), red: false },
+                { icon: <TrendingUp size={12} />, label: "Estado", value: market.resolved ? `Ganó ${market.winner === "yes" ? "Sí" : "No"}` : "En vivo", red: false },
+                ...(market.closes_at && !market.resolved ? [{ icon: <Clock size={12} />, label: "Cierre", value: formatCountdown(market.closes_at), red: (new Date(market.closes_at).getTime() - Date.now()) < 3600000 }] : []),
               ].map((stat) => (
                 <div key={stat.label} className="flex items-center gap-1.5">
                   <span className="text-slate-400 dark:text-slate-500">{stat.icon}</span>
                   <div>
                     <p className="text-[9px] text-slate-400 dark:text-slate-500 uppercase tracking-widest">{stat.label}</p>
-                    <p className="text-[12px] font-bold text-slate-900 dark:text-white">{stat.value}</p>
+                    <p className={`text-[12px] font-bold ${stat.red ? "text-rose-500" : "text-slate-900 dark:text-white"}`}>{stat.value}</p>
                   </div>
                 </div>
               ))}
@@ -556,13 +636,14 @@ const oppPool = betType === "yes" ? noPool  : yesPool;
         {/* 6. Comentarios */}
         <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
           <h2 className="font-bold text-lg mb-4 flex items-center gap-2"><MessageCircle size={18} className="text-purple-400" /> Comentarios ({comments.length})</h2>
-          <div className="flex gap-2 mb-5">
-            <input placeholder="Escribe un comentario..." value={newComment} onChange={(e) => setNewComment(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleComment(); }} className="flex-1 bg-slate-200 dark:bg-slate-800 rounded-xl px-4 py-2.5 text-sm outline-none placeholder-slate-500" />
-            <button onClick={handleComment} disabled={submitting} className="bg-purple-500 text-white px-4 rounded-xl disabled:opacity-50 hover:bg-purple-600 transition"><Send size={16} /></button>
-          </div>
-          {showLoginPrompt && (
-            <div className="mb-4 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between gap-3">
-              <p className="text-sm text-slate-900 dark:text-slate-200">Debes iniciar sesión para comentar</p>
+          {token ? (
+            <div className="flex gap-2 mb-5">
+              <input placeholder="Escribe un comentario..." value={newComment} onChange={(e) => setNewComment(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleComment(); }} className="flex-1 bg-slate-200 dark:bg-slate-800 rounded-xl px-4 py-2.5 text-sm outline-none placeholder-slate-500" />
+              <button onClick={handleComment} disabled={submitting} className="bg-purple-500 text-white px-4 rounded-xl disabled:opacity-50 hover:bg-purple-600 transition"><Send size={16} /></button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-3 mb-5 p-4 bg-slate-200 dark:bg-slate-800 rounded-xl">
+              <p className="text-sm text-slate-600 dark:text-slate-300">Inicia sesión para comentar</p>
               <Link href="/login" className="shrink-0 bg-emerald-500 text-slate-950 font-bold text-sm px-4 py-2 rounded-xl">Iniciar sesión</Link>
             </div>
           )}
@@ -591,8 +672,9 @@ const oppPool = betType === "yes" ? noPool  : yesPool;
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
             <div className="p-5 sm:p-6">
               {market.category && <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2 block">{market.category}</span>}
-              <h1 className="text-xl sm:text-2xl font-bold leading-snug">{market.question}</h1>
+              <h1 className="text-xl sm:text-2xl font-bold leading-snug mb-0">{market.question}</h1>
             </div>
+            {resolvedBanner && <div className="px-5 sm:px-6 pb-4">{resolvedBanner}</div>}
             {history.length > 1 && (
               <div className="border-t border-slate-100 dark:border-slate-800 p-5 sm:p-6 pt-4">
                 <p className="text-[9px] text-slate-400 uppercase tracking-widest mb-3">Evolución de probabilidad</p>
@@ -611,16 +693,17 @@ const oppPool = betType === "yes" ? noPool  : yesPool;
             <div className="border-t border-slate-100 dark:border-slate-800 px-5 sm:px-6 py-3 flex items-center justify-between flex-wrap gap-3 bg-slate-50 dark:bg-slate-800/50">
               <div className="flex items-center gap-5 flex-wrap">
                 {[
-                  { icon: <BarChart2 size={12} />, label: "Total apostado", value: `$${(Number(market.yes) + Number(market.no)).toFixed(1)}` },
-                  { icon: <Users size={12} />, label: "Participantes", value: uniqueBettors },
-                  { icon: <Clock size={12} />, label: "Creado", value: new Date(market.created_at).toLocaleDateString("es-EC", { day: "numeric", month: "short", year: "numeric" }) },
-                  { icon: <TrendingUp size={12} />, label: "Estado", value: market.resolved ? `Ganó ${market.winner === "yes" ? "Sí" : "No"}` : "En vivo" },
+                  { icon: <BarChart2 size={12} />, label: "Total apostado", value: `$${(Number(market.yes) + Number(market.no)).toFixed(1)}`, red: false },
+                  { icon: <Users size={12} />, label: "Participantes", value: uniqueBettors, red: false },
+                  { icon: <Clock size={12} />, label: "Creado", value: new Date(market.created_at).toLocaleDateString("es-EC", { day: "numeric", month: "short", year: "numeric" }), red: false },
+                  { icon: <TrendingUp size={12} />, label: "Estado", value: market.resolved ? `Ganó ${market.winner === "yes" ? "Sí" : "No"}` : "En vivo", red: false },
+                  ...(market.closes_at && !market.resolved ? [{ icon: <Clock size={12} />, label: "Cierre", value: formatCountdown(market.closes_at), red: (new Date(market.closes_at).getTime() - Date.now()) < 3600000 }] : []),
                 ].map((stat) => (
                   <div key={stat.label} className="flex items-center gap-1.5">
                     <span className="text-slate-400 dark:text-slate-500">{stat.icon}</span>
                     <div>
                       <p className="text-[9px] text-slate-400 dark:text-slate-500 uppercase tracking-widest">{stat.label}</p>
-                      <p className="text-[12px] font-bold text-slate-900 dark:text-white">{stat.value}</p>
+                      <p className={`text-[12px] font-bold ${stat.red ? "text-rose-500" : "text-slate-900 dark:text-white"}`}>{stat.value}</p>
                     </div>
                   </div>
                 ))}
@@ -687,13 +770,14 @@ const oppPool = betType === "yes" ? noPool  : yesPool;
           {/* Comentarios */}
           <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
             <h2 className="font-bold text-lg mb-4 flex items-center gap-2"><MessageCircle size={18} className="text-purple-400" /> Comentarios ({comments.length})</h2>
-            <div className="flex gap-2 mb-5">
-              <input placeholder="Escribe un comentario..." value={newComment} onChange={(e) => setNewComment(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleComment(); }} className="flex-1 bg-slate-200 dark:bg-slate-800 rounded-xl px-4 py-2.5 text-sm outline-none placeholder-slate-500" />
-              <button onClick={handleComment} disabled={submitting} className="bg-purple-500 text-white px-4 rounded-xl disabled:opacity-50 hover:bg-purple-600 transition"><Send size={16} /></button>
-            </div>
-            {showLoginPrompt && (
-              <div className="mb-4 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between gap-3">
-                <p className="text-sm text-slate-900 dark:text-slate-200">Debes iniciar sesión para comentar</p>
+            {token ? (
+              <div className="flex gap-2 mb-5">
+                <input placeholder="Escribe un comentario..." value={newComment} onChange={(e) => setNewComment(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleComment(); }} className="flex-1 bg-slate-200 dark:bg-slate-800 rounded-xl px-4 py-2.5 text-sm outline-none placeholder-slate-500" />
+                <button onClick={handleComment} disabled={submitting} className="bg-purple-500 text-white px-4 rounded-xl disabled:opacity-50 hover:bg-purple-600 transition"><Send size={16} /></button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between gap-3 mb-5 p-4 bg-slate-200 dark:bg-slate-800 rounded-xl">
+                <p className="text-sm text-slate-600 dark:text-slate-300">Inicia sesión para comentar</p>
                 <Link href="/login" className="shrink-0 bg-emerald-500 text-slate-950 font-bold text-sm px-4 py-2 rounded-xl">Iniciar sesión</Link>
               </div>
             )}
@@ -858,6 +942,42 @@ const oppPool = betType === "yes" ? noPool  : yesPool;
                 </div>
               )}
             </div>
+          ) : token && userBet ? (
+            <div className={`rounded-2xl p-5 border ${userBet.type === market.winner ? "border-emerald-400/40 bg-emerald-500/5 dark:bg-emerald-500/10" : "border-rose-400/40 bg-rose-500/5 dark:bg-rose-500/10"}`}>
+              <div className="text-center mb-4">
+                <div className="text-3xl mb-1">{userBet.type === market.winner ? "🏆" : "😔"}</div>
+                <p className={`font-bold text-base ${userBet.type === market.winner ? "text-emerald-500" : "text-rose-400"}`}>
+                  {userBet.type === market.winner ? "¡Ganaste esta predicción!" : "Perdiste esta predicción"}
+                </p>
+              </div>
+              <div className="space-y-2.5 text-sm">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-400">Tu predicción</span>
+                  <span className={`font-bold ${userBet.type === "yes" ? "text-emerald-400" : "text-rose-400"}`}>{userBet.type === "yes" ? "✅ Sí" : "❌ No"}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-400">Invertiste</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{userBet.amount} $</span>
+                </div>
+                {userBet.type === market.winner ? (
+                  <>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400">Recibiste</span>
+                      <span className="font-bold text-emerald-500">+{(userBet.payout ?? 0).toFixed(2)} $</span>
+                    </div>
+                    <div className="flex justify-between items-center border-t border-emerald-500/20 pt-2.5">
+                      <span className="text-slate-400">Ganancia neta</span>
+                      <span className="font-black text-lg text-emerald-500">+{((userBet.payout ?? 0) - userBet.amount).toFixed(2)} $</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex justify-between items-center border-t border-rose-500/20 pt-2.5">
+                    <span className="text-slate-400">Perdiste</span>
+                    <span className="font-black text-lg text-rose-500">-{userBet.amount} $</span>
+                  </div>
+                )}
+              </div>
+            </div>
           ) : null}
 
           {/* Top apostadores desktop */}
@@ -923,6 +1043,12 @@ const nPct = isZeroM ? "50" : ((m.no / t) * 100).toFixed(0);
       )}
 
     </div>
+
+    {toast && (
+      <div className={`fixed bottom-6 right-4 z-50 px-5 py-3 rounded-xl text-sm font-semibold shadow-xl flex items-center gap-2 transition-all animate-in slide-in-from-bottom-4 ${toast.type === "error" ? "bg-rose-500 text-white" : "bg-emerald-500 text-slate-950"}`}>
+        {toast.type === "error" ? "❌" : "✅"} {toast.text}
+      </div>
+    )}
   </main>
 );
 }
