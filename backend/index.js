@@ -270,7 +270,7 @@ app.put("/me/profile", auth, async (req, res) => {
 app.get("/my-bets", auth, async (req, res) => {
   const { data, error } = await supabase
     .from("bets")
-    .select(`id, type, amount, created_at, markets ( question )`)
+    .select(`id, type, amount, payout, commission_paid, created_at, markets ( id, question, resolved, winner )`)
     .eq("user_id", req.userId)
     .order("created_at", { ascending: false });
 
@@ -904,6 +904,10 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
     await supabase.from("users")
       .update({ points: Number(user.points) + payout })
       .eq("id", bet.user_id);
+
+    await supabase.from("bets")
+      .update({ payout: parseFloat(payout.toFixed(2)), commission_paid: parseFloat(commission.toFixed(2)) })
+      .eq("id", bet.id);
 
     await supabase.from("notifications").insert([{
       user_id: bet.user_id,

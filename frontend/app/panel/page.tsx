@@ -206,19 +206,24 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
   const isGoogleUser = user?.provider === "google";
   const hasPaymentInfo = user?.cedula && user?.celular && user?.nombre;
 
-  // Movimientos unificados (por ahora solo apuestas, luego se agregan recargas/retiros)
   const movimientos = [
-  ...bets.map((bet) => ({
-    id: bet.id,
-    tipo: "apuesta",
-    descripcion: bet.markets?.question || "Mercado",
-    subtipo: bet.type === "yes" ? "Sí" : "No",
-    monto: -Number(bet.amount),
-    fecha: bet.created_at,
-    estado: bet.markets?.resolved
+  ...bets.map((bet) => {
+    const estado = bet.markets?.resolved
       ? bet.markets?.winner === bet.type ? "ganada" : "perdida"
-      : "pendiente",
-  })),
+      : "pendiente";
+    return {
+      id: bet.id,
+      tipo: "apuesta",
+      descripcion: bet.markets?.question || "Mercado",
+      subtipo: bet.type === "yes" ? "Sí" : "No",
+      monto: estado === "ganada" ? Number(bet.payout ?? bet.amount) : -Number(bet.amount),
+      apuesta: Number(bet.amount),
+      payout: bet.payout != null ? Number(bet.payout) : null,
+      commission_paid: bet.commission_paid != null ? Number(bet.commission_paid) : null,
+      fecha: bet.created_at,
+      estado,
+    };
+  }),
   ...transactions.map((tx) => ({
     id: tx.id,
     tipo: tx.type,
@@ -970,16 +975,27 @@ const badges: Record<string, string> = {
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium truncate">{mov.descripcion}</p>
-        <div className="flex items-center gap-2 mt-0.5">
+        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
           <span className={`text-[10px] px-1.5 py-0.5 rounded-md border ${badges[mov.estado] || badges.pendiente}`}>
             {mov.estado} · {mov.subtipo}
           </span>
+          {mov.estado === "ganada" && mov.commission_paid != null && (
+            <span className="text-[10px] text-slate-400">comisión: -{mov.commission_paid.toFixed(2)} $</span>
+          )}
+          {mov.estado === "ganada" && mov.payout != null && (
+            <span className="text-[10px] text-slate-400">apuesta: {mov.apuesta.toFixed(2)} $</span>
+          )}
           {full && <span className="text-[10px] text-slate-400">{new Date(mov.fecha).toLocaleDateString()}</span>}
         </div>
       </div>
-      <span className={`text-sm font-bold shrink-0 ${mov.estado === "ganada" ? "text-emerald-500" : mov.estado === "perdida" ? "text-rose-500" : "text-slate-400"}`}>
-        {mov.estado === "ganada" ? "+" : ""}{Math.abs(mov.monto)} $
-      </span>
+      <div className="text-right shrink-0">
+        <span className={`text-sm font-bold block ${mov.estado === "ganada" ? "text-emerald-500" : mov.estado === "perdida" ? "text-rose-500" : "text-slate-400"}`}>
+          {mov.estado === "ganada" ? `+${mov.monto.toFixed(2)} $` : mov.tipo === "apuesta" ? `-${Math.abs(mov.monto).toFixed(2)} $` : `${mov.monto > 0 ? "+" : ""}${mov.monto.toFixed(2)} $`}
+        </span>
+        {mov.estado === "ganada" && mov.payout != null && (
+          <span className="text-[10px] text-slate-400">neto: +{(mov.payout - mov.apuesta).toFixed(2)} $</span>
+        )}
+      </div>
     </div>
   );
 
