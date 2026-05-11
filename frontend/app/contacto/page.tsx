@@ -109,7 +109,7 @@ export default function ContactoPage() {
 
           <ReCAPTCHA
             ref={recaptchaRef}
-            sitekey="6LeZleMsAAAAAJTg98uzMKO5b8e_kzyxsliMgt3t"
+            sitekey="6Ld8y-MsAAAAALmNo01zc9pUYdN0q7oq5zjdZWRN"
           />
 
           {error && (
