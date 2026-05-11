@@ -897,10 +897,10 @@ export default function AdminPage() {
                       </button>
                     ))}
                   </div>
-                  <div className="flex items-center gap-1 bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-lg p-1">
+                  <div className="flex items-center gap-1 bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-lg p-1 overflow-x-auto max-w-[calc(100vw-2rem)] scrollbar-none">
                     {(["todas", "deporte", "farandula", "politica", "elecciones", "pais", "general"] as const).map((c) => (
                       <button key={c} onClick={() => setMarketCategoryFilter(c)}
-                        className={`px-3 py-1.5 rounded-md text-[11px] font-medium transition capitalize ${marketCategoryFilter === c ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/70"}`}>
+                        className={`shrink-0 px-3 py-1.5 rounded-md text-[11px] font-medium transition capitalize ${marketCategoryFilter === c ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/70"}`}>
                         {c === "farandula" ? "Farándula" : c === "politica" ? "Política" : c.charAt(0).toUpperCase() + c.slice(1)}
                       </button>
                     ))}
