@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   Wallet, Trophy, BarChart3, ArrowUpRight, Shield, X,
@@ -15,6 +15,7 @@ type Tab = "inicio" | "movimientos" | "wallet" | "perfil";
 
 export default function PanelPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [tab, setTab] = useState<Tab>("inicio");
   const [tabVisible, setTabVisible] = useState(true);
   const [user, setUser] = useState<any>(null);
@@ -95,6 +96,12 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const status = searchParams.get("status");
+    if (status === "exitoso") showToast("¡Pago completado! Tu saldo será actualizado en breve", "success");
+    else if (status === "cancelado") showToast("Pago cancelado", "info");
+  }, []);
 
   useEffect(() => {
     loadPanel();
@@ -559,21 +566,24 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
                     {!showPayphoneBox ? (
                       <button
                         onClick={async () => {
-                          console.log("Click pagar", { walletAmount, userId: user.id });
                           if (!walletAmount || parseFloat(walletAmount) < 1) return;
                           const clientId = `${user.id}-${Date.now()}`;
-                          console.log("ClientId generado:", clientId);
                           setPayphoneClientId(clientId);
                           const token = localStorage.getItem("token");
-                          await fetch("https://predicciones-ecuador.onrender.com/payphone/prepare", {
+                          const res = await fetch("https://predicciones-ecuador.onrender.com/payphone/prepare", {
                             method: "POST",
                             headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
-                            body: JSON.stringify({ 
+                            body: JSON.stringify({
                               amount: parseFloat(walletAmount),
                               clientTransactionId: clientId,
                             }),
                           });
-                          setShowPayphoneBox(true);
+                          if (res.ok) {
+                            showToast("Redirigiendo al pago con tarjeta...", "info");
+                            setShowPayphoneBox(true);
+                          } else {
+                            showToast("Error al iniciar el pago, intenta de nuevo", "error");
+                          }
                         }}
                         disabled={!walletAmount || parseFloat(walletAmount) < 1}
                         className="w-full bg-blue-500 hover:bg-blue-400 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl text-sm transition active:scale-[0.99]"

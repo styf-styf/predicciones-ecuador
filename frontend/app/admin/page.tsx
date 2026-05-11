@@ -89,6 +89,7 @@ export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [newQuestion, setNewQuestion] = useState("");
   const [newCategory, setNewCategory] = useState("deporte");
+  const [newClosesAt, setNewClosesAt] = useState("");
   const [winners, setWinners] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [users, setUsers] = useState<any[]>([]);
@@ -107,7 +108,7 @@ export default function AdminPage() {
     banco_nombre: "", banco_tipo: "", banco_cuenta: "", banco_titular: "", banco_cedula: "",
   });
   const [searchQuery, setSearchQuery] = useState("");
-  const [editingMarket, setEditingMarket] = useState<{ id: number, question: string } | null>(null);
+  const [editingMarket, setEditingMarket] = useState<{ id: number, question: string, closes_at?: string } | null>(null);
   const [refinPrompts, setRefinPrompts] = useState<{ [key: number]: string }>({});
   const [refining, setRefining] = useState<{ [key: number]: boolean }>({});
   const [suggestions, setSuggestions] = useState<any[]>([]);
@@ -367,7 +368,7 @@ export default function AdminPage() {
     const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/markets/${editingMarket.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` || "" },
-      body: JSON.stringify({ question: editingMarket.question }),
+      body: JSON.stringify({ question: editingMarket.question, closes_at: editingMarket.closes_at ?? "" }),
     });
     const data = await res.json();
     if (res.ok) { setEditingMarket(null); fetchMarkets(); showToast("Mercado actualizado", "success"); }
@@ -380,7 +381,7 @@ export default function AdminPage() {
     const res = await fetch("https://predicciones-ecuador.onrender.com/admin/markets", {
       method: "POST",
       headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` || "" },
-      body: JSON.stringify({ question: newQuestion, category: newCategory }),
+      body: JSON.stringify({ question: newQuestion, category: newCategory, closes_at: newClosesAt || undefined }),
     });
     const data = await res.json();
     if (res.ok) { setNewQuestion(""); fetchMarkets(); fetchStats(); showToast("Mercado creado ✅", "success"); }
@@ -804,10 +805,9 @@ export default function AdminPage() {
 
               <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-4">
                 <p className="text-[11px] text-slate-400 dark:text-white/30 uppercase tracking-widest mb-3">Nuevo mercado</p>
-                <div className="flex gap-2">
-                  <div className="flex flex-col sm:flex-row gap-2 flex-1">
+                <div className="flex flex-col gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <input value={newQuestion} onChange={(e) => setNewQuestion(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === "Enter") handleCreateMarket(); }}
                       placeholder="¿Cuál es la pregunta del mercado?"
                       className="flex-1 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-4 py-2.5 outline-none text-[13px] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:border-emerald-500/60 transition" />
                     <select value={newCategory} onChange={(e) => setNewCategory(e.target.value)}
@@ -819,7 +819,16 @@ export default function AdminPage() {
                       <option value="pais">País</option>
                     </select>
                   </div>
-                  <button onClick={handleCreateMarket} className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg px-5 py-2.5 text-[13px] transition active:scale-95">Crear</button>
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <label className="text-[10px] text-slate-400 dark:text-white/30 uppercase tracking-widest block mb-1">Fecha de cierre (opcional)</label>
+                      <input type="datetime-local" value={newClosesAt} onChange={(e) => setNewClosesAt(e.target.value)}
+                        className="w-full bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-4 py-2.5 outline-none text-[13px] text-slate-900 dark:text-white focus:border-emerald-500/60 transition" />
+                    </div>
+                    <div className="flex items-end">
+                      <button onClick={handleCreateMarket} className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg px-5 py-2.5 text-[13px] transition active:scale-95">Crear</button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -843,13 +852,21 @@ export default function AdminPage() {
                         <div className="col-span-4 flex items-center gap-2 min-w-0">
                           <Circle size={6} className={m.resolved ? "text-slate-300 dark:text-white/20 shrink-0" : "text-emerald-500 dark:text-emerald-400 shrink-0"} fill="currentColor" />
                           {editingMarket?.id === m.id ? (
-                            <input
-                              value={editingMarket?.question ?? ""}
-                              onChange={(e) => setEditingMarket((prev) => prev ? { ...prev, question: e.target.value } : null)}
-                              onKeyDown={(e) => { if (e.key === "Enter") handleEditMarket(); if (e.key === "Escape") setEditingMarket(null); }}
-                              className="flex-1 bg-slate-100 dark:bg-white/[0.06] border border-emerald-500/40 rounded-lg px-2 py-1 text-[12px] outline-none text-slate-900 dark:text-white"
-                              autoFocus
-                            />
+                            <div className="flex-1 flex flex-col gap-1">
+                              <input
+                                value={editingMarket?.question ?? ""}
+                                onChange={(e) => setEditingMarket((prev) => prev ? { ...prev, question: e.target.value } : null)}
+                                onKeyDown={(e) => { if (e.key === "Enter") handleEditMarket(); if (e.key === "Escape") setEditingMarket(null); }}
+                                className="w-full bg-slate-100 dark:bg-white/[0.06] border border-emerald-500/40 rounded-lg px-2 py-1 text-[12px] outline-none text-slate-900 dark:text-white"
+                                autoFocus
+                              />
+                              <input
+                                type="datetime-local"
+                                value={editingMarket?.closes_at ?? ""}
+                                onChange={(e) => setEditingMarket((prev) => prev ? { ...prev, closes_at: e.target.value } : null)}
+                                className="w-full bg-slate-100 dark:bg-white/[0.06] border border-emerald-500/40 rounded-lg px-2 py-1 text-[11px] outline-none text-slate-900 dark:text-white"
+                              />
+                            </div>
                           ) : (
                             <p className="text-[12px] text-slate-600 dark:text-white/70 truncate">{m.question}</p>
                           )}
@@ -932,7 +949,7 @@ export default function AdminPage() {
                                   <button onClick={() => setEditingMarket(null)} className="text-[10px] bg-slate-100 dark:bg-white/[0.04] text-slate-500 dark:text-white/30 border border-slate-200 dark:border-white/[0.08] px-2 py-1 rounded-md transition">✕</button>
                                 </>
                               ) : (
-                                <button onClick={() => setEditingMarket({ id: m.id, question: m.question })} className="text-[10px] bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-500/20 border border-amber-200 dark:border-amber-500/20 px-2.5 py-1 rounded-md transition">✏️</button>
+                                <button onClick={() => setEditingMarket({ id: m.id, question: m.question, closes_at: m.closes_at || "" })} className="text-[10px] bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-500/20 border border-amber-200 dark:border-amber-500/20 px-2.5 py-1 rounded-md transition">✏️</button>
                               )}
                              
                             </>
@@ -956,21 +973,29 @@ export default function AdminPage() {
   {!m.resolved && (
     <>
       {editingMarket?.id === m.id ? (
-        <div className="flex gap-1.5">
+        <div className="space-y-1.5">
           <input
             value={editingMarket?.question ?? ""}
             onChange={(e) => setEditingMarket((prev) => prev ? { ...prev, question: e.target.value } : null)}
-            className="flex-1 bg-slate-100 dark:bg-white/[0.06] border border-emerald-500/40 rounded-lg px-2 py-1.5 text-[12px] outline-none text-slate-900 dark:text-white"
+            className="w-full bg-slate-100 dark:bg-white/[0.06] border border-emerald-500/40 rounded-lg px-2 py-1.5 text-[12px] outline-none text-slate-900 dark:text-white"
             autoFocus
           />
-          <button onClick={handleEditMarket} className="px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-[11px] font-bold">✓</button>
-          <button onClick={() => setEditingMarket(null)} className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-white/[0.04] text-slate-500 dark:text-white/30 border border-slate-200 dark:border-white/[0.08] text-[11px]">✕</button>
+          <input
+            type="datetime-local"
+            value={editingMarket?.closes_at ?? ""}
+            onChange={(e) => setEditingMarket((prev) => prev ? { ...prev, closes_at: e.target.value } : null)}
+            className="w-full bg-slate-100 dark:bg-white/[0.06] border border-emerald-500/40 rounded-lg px-2 py-1.5 text-[11px] outline-none text-slate-900 dark:text-white"
+          />
+          <div className="flex gap-1.5">
+            <button onClick={handleEditMarket} className="flex-1 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-[11px] font-bold">✓ Guardar</button>
+            <button onClick={() => setEditingMarket(null)} className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-white/[0.04] text-slate-500 dark:text-white/30 border border-slate-200 dark:border-white/[0.08] text-[11px]">✕</button>
+          </div>
         </div>
       ) : (
         <div className="flex gap-1.5">
           <button onClick={() => resolveMarket(m.id, "yes")} className="flex-1 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-[11px] font-bold">Sí gana</button>
           <button onClick={() => resolveMarket(m.id, "no")} className="flex-1 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 text-[11px] font-bold">No gana</button>
-          <button onClick={() => setEditingMarket({ id: m.id, question: m.question })} className="px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 text-[11px]">✏️</button>
+          <button onClick={() => setEditingMarket({ id: m.id, question: m.question, closes_at: m.closes_at || "" })} className="px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 text-[11px]">✏️</button>
         </div>
       )}
     </>

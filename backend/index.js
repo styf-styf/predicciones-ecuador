@@ -934,8 +934,10 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
 // 👑 ADMIN - CREAR MERCADO
 // =======================
 app.post("/admin/markets", auth, async (req, res) => {
-  const { question, category } = req.body;
-  const { error } = await supabase.from("markets").insert([{ question, category: category || "general" }]);
+  const { question, category, closes_at } = req.body;
+  const insertData = { question, category: category || "general" };
+  if (closes_at) insertData.closes_at = closes_at;
+  const { error } = await supabase.from("markets").insert([insertData]);
   if (error) return res.status(400).json({ message: error.message });
 
   broadcast("markets", {});
@@ -1708,11 +1710,13 @@ app.put("/admin/markets/:id", auth, async (req, res) => {
     .from("users").select("role").eq("id", req.userId).single();
   if (!user || user.role !== "admin") return res.status(403).json({ message: "Solo admin" });
 
-  const { question } = req.body;
+  const { question, closes_at } = req.body;
   if (!question?.trim()) return res.status(400).json({ message: "Pregunta vacía" });
 
+  const updateData = { question };
+  if (closes_at !== undefined) updateData.closes_at = closes_at || null;
   const { error } = await supabase
-    .from("markets").update({ question }).eq("id", req.params.id);
+    .from("markets").update(updateData).eq("id", req.params.id);
 
   if (error) return res.status(500).json({ message: error.message });
   broadcast("markets", {});

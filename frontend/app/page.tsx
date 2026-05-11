@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
 import {
   TrendingUp, Trophy, Flame, Globe, Mic2,
@@ -21,6 +21,7 @@ interface Market {
   winner?: "yes" | "no";
   category?: string;
   created_at?: string;
+  closes_at?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -46,6 +47,21 @@ const CATEGORY_COLORS: Record<string, { border: string; bg: string }> = {
   pais:       { border: "hover:border-emerald-400 dark:hover:border-emerald-500", bg: "bg-emerald-500/[0.03] dark:bg-emerald-500/[0.05]"},
   general:    { border: "hover:border-slate-400 dark:hover:border-slate-500",     bg: ""                                              },
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+
+function formatCountdown(closesAt: string): string {
+  const diff = new Date(closesAt).getTime() - Date.now();
+  if (diff <= 0) return "Cerrado";
+  const days = Math.floor(diff / 86400000);
+  const hours = Math.floor((diff % 86400000) / 3600000);
+  const mins = Math.floor((diff % 3600000) / 60000);
+  if (days > 0) return `Cierra en ${days}d ${hours}h`;
+  if (hours > 0) return `Cierra en ${hours}h ${mins}m`;
+  return `Cierra en ${mins}m`;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HOOKS
@@ -395,8 +411,13 @@ function MarketCard({
       </div>
 
       {/* Total apostado */}
-      <div className="flex justify-end text-[11px] text-slate-400 dark:text-slate-500 mb-3">
+      <div className="flex justify-between text-[11px] text-slate-400 dark:text-slate-500 mb-3">
         <span>{(Number(market.yes) + Number(market.no)).toFixed(1)} $ en predicciones</span>
+        {market.closes_at && !market.resolved && (
+          <span className={new Date(market.closes_at).getTime() - Date.now() < 3600000 ? "text-rose-400" : ""}>
+            {formatCountdown(market.closes_at)}
+          </span>
+        )}
       </div>
 
       {/* Acción */}
