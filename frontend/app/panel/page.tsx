@@ -17,6 +17,7 @@ function PanelContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [tab, setTab] = useState<Tab>("inicio");
+  const [movPage, setMovPage] = useState(1);
   const [tabVisible, setTabVisible] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [bets, setBets] = useState<any[]>([]);
@@ -236,7 +237,6 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
  ].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
 
   const MOV_PAGE_SIZE = 10;
-  const [movPage, setMovPage] = useState(1);
   const movTotalPages = Math.ceil(movimientos.length / MOV_PAGE_SIZE);
   const movPaginated = movimientos.slice((movPage - 1) * MOV_PAGE_SIZE, movPage * MOV_PAGE_SIZE);
 
