@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import Link from "next/link";
 import {
   Search, TrendingUp, Trophy, Wallet,
@@ -134,6 +134,36 @@ export default function AdminPage() {
 
   const showToast = (message: string, type: "success" | "error" | "info" = "success") => setToast({ message, type });
   const openModal = (opts: typeof modal) => setModal(opts);
+
+  const searchRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) setSearchQuery("");
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const globalResults = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (q.length < 2) return [];
+    const results: { label: string; sub: string; section: Section; icon: string }[] = [];
+    markets.filter(m => m.question.toLowerCase().includes(q)).slice(0, 3).forEach(m =>
+      results.push({ label: m.question, sub: `Mercado · ${m.resolved ? "Cerrado" : "Activo"}`, section: "markets", icon: "📊" }));
+    users.filter(u => u.email?.toLowerCase().includes(q) || u.nombre?.toLowerCase().includes(q) || u.apellido?.toLowerCase().includes(q)).slice(0, 3).forEach(u =>
+      results.push({ label: u.nombre ? `${u.nombre} ${u.apellido || ""}`.trim() : u.email, sub: `Usuario · ${u.email}`, section: "users", icon: "👤" }));
+    transactions.filter(t => t.users?.email?.toLowerCase().includes(q) || String(t.amount).includes(q)).slice(0, 2).forEach(t =>
+      results.push({ label: t.users?.email || "—", sub: `Transacción · $${t.amount} · ${t.status}`, section: "transacciones", icon: "💳" }));
+    contactos.filter(c => c.nombre?.toLowerCase().includes(q) || c.email?.toLowerCase().includes(q) || c.asunto?.toLowerCase().includes(q)).slice(0, 2).forEach(c =>
+      results.push({ label: c.nombre || c.email, sub: `Contacto · ${c.asunto || "Sin asunto"}`, section: "contacto", icon: "✉️" }));
+    adminComments.filter(c => c.content?.toLowerCase().includes(q) || c.text?.toLowerCase().includes(q)).slice(0, 2).forEach(c =>
+      results.push({ label: (c.content || c.text || "").slice(0, 60), sub: "Comentario", section: "comentarios", icon: "💬" }));
+    suggestions.filter(s => s.question?.toLowerCase().includes(q) || s.content?.toLowerCase().includes(q)).slice(0, 2).forEach(s =>
+      results.push({ label: (s.question || s.content || "").slice(0, 60), sub: "Sugerencia", section: "suggestions", icon: "💡" }));
+    marketNews.filter(n => n.title?.toLowerCase().includes(q) || n.content?.toLowerCase().includes(q)).slice(0, 2).forEach(n =>
+      results.push({ label: (n.title || n.content || "").slice(0, 60), sub: "Noticia", section: "noticias", icon: "📰" }));
+    return results;
+  }, [searchQuery, markets, users, transactions, contactos, adminComments, suggestions, marketNews]);
 
   // ── Paginación ──
   const filteredMarkets = markets.filter(m => {
@@ -620,15 +650,34 @@ export default function AdminPage() {
             <span className="text-slate-700 dark:text-white/70">{navItems.find(n => n.id === activeSection)?.label}</span>
           </div>
 
-          <div className="ml-auto flex items-center gap-2 bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-1.5 w-48 sm:w-64">
-            <Search size={13} className="text-slate-400 dark:text-white/30 shrink-0" />
-            <input
-              placeholder="Buscar..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-transparent outline-none w-full text-[12px] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20"
-            />
-            {searchQuery && <button onClick={() => setSearchQuery("")}><X size={12} className="text-slate-400 dark:text-white/30" /></button>}
+          <div ref={searchRef} className="ml-auto relative w-48 sm:w-72">
+            <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-1.5">
+              <Search size={13} className="text-slate-400 dark:text-white/30 shrink-0" />
+              <input
+                placeholder="Buscar en todo el admin..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="bg-transparent outline-none w-full text-[12px] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20"
+              />
+              {searchQuery && <button onClick={() => setSearchQuery("")}><X size={12} className="text-slate-400 dark:text-white/30" /></button>}
+            </div>
+            {globalResults.length > 0 && (
+              <div className="absolute top-full mt-1.5 left-0 right-0 bg-white dark:bg-[#1a1a1a] border border-slate-200 dark:border-white/[0.08] rounded-xl shadow-xl z-50 overflow-hidden">
+                {globalResults.map((r, i) => (
+                  <button key={i} onClick={() => { setActiveSection(r.section); setSearchQuery(""); }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition text-left">
+                    <span className="text-base shrink-0">{r.icon}</span>
+                    <div className="min-w-0">
+                      <p className="text-[12px] text-slate-800 dark:text-white/80 truncate font-medium">{r.label}</p>
+                      <p className="text-[10px] text-slate-400 dark:text-white/30 truncate">{r.sub}</p>
+                    </div>
+                  </button>
+                ))}
+                {globalResults.length === 0 && (
+                  <p className="px-4 py-3 text-[12px] text-slate-400 dark:text-white/30 text-center">Sin resultados</p>
+                )}
+              </div>
+            )}
           </div>
 
           <ThemeToggle />
