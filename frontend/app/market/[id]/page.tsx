@@ -426,6 +426,55 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
     (m) => m.category === market.category && m.id !== market.id && !m.resolved
   ).slice(0, 4);
 
+ const isInResolution = !market.resolved && !!market.closes_at && new Date(market.closes_at) <= new Date();
+
+ // Ganancia estimada si el usuario gana (con el pool actual)
+ const estimatedWinnings = (() => {
+   if (!userBet) return null;
+   const myPool  = userBet.type === "yes" ? Number(market.yes) : Number(market.no);
+   const oppPool = userBet.type === "yes" ? Number(market.no) : Number(market.yes);
+   const grossProfit = myPool > 0 ? oppPool * (userBet.amount / myPool) : 0;
+   const commission  = grossProfit * ((betConfig.commission ?? 3) / 100);
+   return (userBet.amount + grossProfit - commission);
+ })();
+
+ const resolutionBanner = isInResolution ? (
+   <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-2xl p-4 flex items-center gap-3">
+     <div className="h-9 w-9 rounded-full bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center shrink-0 text-lg">⏳</div>
+     <div>
+       <p className="text-[10px] text-amber-600 dark:text-amber-400 uppercase tracking-widest font-semibold mb-0.5">Mercado en resolución</p>
+       <p className="text-sm font-semibold text-slate-800 dark:text-white">El resultado puede tardar hasta 24h en confirmarse</p>
+     </div>
+   </div>
+ ) : null;
+
+ const resolutionUserPanel = isInResolution && token && userBet ? (
+   <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3">
+     <p className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">Tu predicción</p>
+     <div className={`rounded-xl p-4 border ${userBet.type === "yes" ? "border-emerald-500/30 bg-emerald-500/5" : "border-rose-500/30 bg-rose-500/5"}`}>
+       <div className="flex items-center justify-between mb-3">
+         <span className={`text-lg font-black ${userBet.type === "yes" ? "text-emerald-500" : "text-rose-500"}`}>
+           {userBet.type === "yes" ? "✅ Sí" : "❌ No"}
+         </span>
+         <span className="text-sm font-bold text-slate-900 dark:text-white">{userBet.amount} $ apostados</span>
+       </div>
+       {estimatedWinnings !== null && (
+         <div className="border-t border-slate-200 dark:border-slate-700 pt-3 space-y-1.5 text-sm">
+           <div className="flex justify-between text-slate-400">
+             <span>Si ganas recibirías</span>
+             <span className="font-bold text-emerald-500">+{estimatedWinnings.toFixed(2)} $</span>
+           </div>
+           <div className="flex justify-between text-slate-400">
+             <span>Ganancia neta estimada</span>
+             <span className="font-bold text-emerald-500">+{(estimatedWinnings - userBet.amount).toFixed(2)} $</span>
+           </div>
+         </div>
+       )}
+     </div>
+     <p className="text-[11px] text-slate-400 dark:text-slate-500 text-center">Las predicciones están bloqueadas mientras se verifica el resultado</p>
+   </div>
+ ) : null;
+
  const resolvedBanner = market.resolved ? (
   <div className="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-900 dark:to-slate-800/60 border border-slate-300 dark:border-slate-700 rounded-2xl p-4 flex items-center justify-between gap-4">
     <div className="flex items-center gap-3">
@@ -487,8 +536,10 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
           </div>
         </div>
 
-        {/* 2. Banner resuelto / resultado personal / panel de predicción */}
+        {/* 2. Banner resuelto / en resolución / panel de predicción */}
         {resolvedBanner}
+        {resolutionBanner}
+        {resolutionUserPanel}
 
         {market.resolved && token && userBet && (
           <div className={`rounded-2xl p-5 border ${userBet.type === market.winner ? "border-emerald-400/40 bg-emerald-500/5 dark:bg-emerald-500/10" : "border-rose-400/40 bg-rose-500/5 dark:bg-rose-500/10"}`}>
@@ -528,7 +579,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
           </div>
         )}
 
-{!market.resolved && (
+{!market.resolved && !isInResolution && (
           <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
             <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
               <TrendingUp size={18} className="text-emerald-400" /> Realizar predicción
@@ -568,7 +619,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
                 { icon: <BarChart2 size={12} />, label: "Total apostado", value: `$${(Number(market.yes) + Number(market.no)).toFixed(1)}`, red: false },
                 { icon: <Users size={12} />, label: "Participantes", value: uniqueBettors, red: false },
                 { icon: <Clock size={12} />, label: "Creado", value: new Date(market.created_at).toLocaleDateString("es-EC", { day: "numeric", month: "short", year: "numeric" }), red: false },
-                { icon: <TrendingUp size={12} />, label: "Estado", value: market.resolved ? `Ganó ${market.winner === "yes" ? "Sí" : "No"}` : "En vivo", red: false },
+                { icon: <TrendingUp size={12} />, label: "Estado", value: market.resolved ? `Ganó ${market.winner === "yes" ? "Sí" : "No"}` : isInResolution ? "En resolución" : "En vivo", red: false },
                 ...(market.closes_at && !market.resolved ? [{ icon: <Clock size={12} />, label: "Cierre", value: formatCountdown(market.closes_at), red: (new Date(market.closes_at).getTime() - Date.now()) < 3600000 }] : []),
               ].map((stat) => (
                 <div key={stat.label} className="flex items-center gap-1.5">
@@ -746,7 +797,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
                   { icon: <BarChart2 size={12} />, label: "Total apostado", value: `$${(Number(market.yes) + Number(market.no)).toFixed(1)}`, red: false },
                   { icon: <Users size={12} />, label: "Participantes", value: uniqueBettors, red: false },
                   { icon: <Clock size={12} />, label: "Creado", value: new Date(market.created_at).toLocaleDateString("es-EC", { day: "numeric", month: "short", year: "numeric" }), red: false },
-                  { icon: <TrendingUp size={12} />, label: "Estado", value: market.resolved ? `Ganó ${market.winner === "yes" ? "Sí" : "No"}` : "En vivo", red: false },
+                  { icon: <TrendingUp size={12} />, label: "Estado", value: market.resolved ? `Ganó ${market.winner === "yes" ? "Sí" : "No"}` : isInResolution ? "En resolución" : "En vivo", red: false },
                   ...(market.closes_at && !market.resolved ? [{ icon: <Clock size={12} />, label: "Cierre", value: formatCountdown(market.closes_at), red: (new Date(market.closes_at).getTime() - Date.now()) < 3600000 }] : []),
                 ].map((stat) => (
                   <div key={stat.label} className="flex items-center gap-1.5">
@@ -849,8 +900,13 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
         {/* COLUMNA DERECHA desktop */}
         <div className="w-[360px] shrink-0 sticky top-24 space-y-4">
 
-          {/* Apostar */}
-          {!market.resolved ? (
+          {/* Apostar / En resolución / Resuelto */}
+          {isInResolution ? (
+            <div className="space-y-3">
+              {resolutionBanner}
+              {resolutionUserPanel}
+            </div>
+          ) : !market.resolved ? (
             <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
               <h2 className="font-bold text-lg mb-4 flex items-center gap-2"><TrendingUp size={18} className="text-emerald-400" /> Realizar predicción</h2>
               <BetPanel
