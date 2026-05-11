@@ -246,9 +246,160 @@ Reglas:
   }
 }
 
+async function checkClosingMarkets() {
+  try {
+    const now = new Date().toISOString();
+
+    const { data: closingMarkets } = await supabase
+      .from("markets")
+      .select("*")
+      .eq("resolved", false)
+      .not("closes_at", "is", null)
+      .lte("closes_at", now);
+
+    if (!closingMarkets || closingMarkets.length === 0) return;
+
+    for (const market of closingMarkets) {
+      // Evitar procesar el mismo mercado dos veces
+      const { data: existing } = await supabase
+        .from("news_suggestions")
+        .select("id")
+        .eq("resolves_market_id", market.id)
+        .eq("source", "bot_close")
+        .maybeSingle();
+
+      if (existing) continue;
+
+      console.log(`[bot] Analizando cierre: ${market.question}`);
+      await analyzeMarketClose(market);
+      await new Promise(r => setTimeout(r, 2000));
+    }
+  } catch (err) {
+    console.error("[bot] Error en checkClosingMarkets:", err.message);
+  }
+}
+
+async function analyzeMarketClose(market) {
+  try {
+    const today = new Date().toISOString().split("T")[0];
+    let newsContext = "";
+    let sourceUrls = [];
+
+    // Buscar en internet con Tavily
+    const tavilyKey = process.env.TAVILY_API_KEY;
+    if (tavilyKey) {
+      try {
+        const query = `Ecuador ${market.question}`;
+        const tavilyRes = await fetch("https://api.tavily.com/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            api_key: tavilyKey,
+            query,
+            search_depth: "advanced",
+            max_results: 5,
+            include_answer: true,
+            include_domains: [],
+          }),
+          signal: AbortSignal.timeout(20000),
+        });
+
+        const tavilyData = await tavilyRes.json();
+
+        if (tavilyData.results?.length > 0) {
+          sourceUrls = tavilyData.results.map(r => r.url);
+          newsContext = tavilyData.results
+            .map(r => `Fuente: ${r.url}\nTítulo: ${r.title}\nContenido: ${r.content?.slice(0, 600) || ""}`)
+            .join("\n\n---\n\n");
+        }
+
+        // Tavily puede dar una respuesta directa
+        if (tavilyData.answer) {
+          newsContext = `Resumen de búsqueda: ${tavilyData.answer}\n\n---\n\n${newsContext}`;
+        }
+
+        console.log(`[bot] Tavily encontró ${tavilyData.results?.length || 0} resultados para: ${market.question}`);
+      } catch (err) {
+        console.error("[bot] Error en Tavily:", err.message);
+      }
+    }
+
+    const hasNews = newsContext.length > 0;
+
+    const prompt = `Eres un analista experto con conocimiento del contexto de Ecuador y Latinoamérica.
+
+El siguiente mercado de predicción acaba de cerrar. Debes determinar el resultado basándote en la evidencia encontrada en internet:
+
+Pregunta del mercado: "${market.question}"
+Fecha de cierre: ${market.closes_at ? market.closes_at.split("T")[0] : today}
+Fecha de hoy: ${today}
+
+${hasNews
+  ? `Resultados encontrados en internet:\n\n${newsContext}`
+  : "No se encontraron noticias ni resultados en internet relacionados con esta pregunta."
+}
+
+Tu tarea:
+1. Analizar la evidencia y determinar si la respuesta es SÍ o NO
+2. Si no hay evidencia clara → el resultado conservador es NO (la pregunta no se cumplió)
+3. Generar un artículo de cierre profesional para publicar en la plataforma
+
+Responde SOLO en JSON sin markdown:
+{
+  "winner": "yes" o "no",
+  "confidence": número 0-100,
+  "has_evidence": true si encontraste evidencia clara en las fuentes, false si es suposición,
+  "close_headline": "titular del artículo de cierre (máximo 100 caracteres, como noticia periodística real)",
+  "close_content": "texto completo del artículo de cierre (2-4 párrafos). ${hasNews ? "Explica qué pasó, cita las fuentes encontradas y justifica el resultado SÍ o NO." : "Indica claramente que no se encontraron resultados públicos verificables para esta pregunta y que por ello el resultado más probable es NO."}",
+  "reasoning": "explicación breve de tu determinación en 1-2 oraciones"
+}`;
+
+    const aiRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${groqApiKey}`,
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        temperature: 0.2,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+
+    const aiData = await aiRes.json();
+    const rawText = aiData.choices?.[0]?.message?.content || "{}";
+    const clean = rawText.replace(/```json|```/g, "").trim();
+
+    let parsed;
+    try { parsed = JSON.parse(clean); } catch { return; }
+
+    await supabase.from("news_suggestions").insert({
+      title: parsed.close_headline || `Cierre: ${market.question}`,
+      summary: parsed.close_content || "No se encontraron resultados públicos verificables.",
+      new_market_question: null,
+      resolves_market_id: market.id,
+      resolves_as: parsed.winner,
+      source: "bot_close",
+      status: "pending",
+      probability_yes: parsed.winner === "yes" ? parsed.confidence : (100 - parsed.confidence),
+      probability_no: parsed.winner === "no" ? parsed.confidence : (100 - parsed.confidence),
+      probability_reasoning: parsed.reasoning || null,
+      url: sourceUrls[0] || null,
+      impact: parsed.has_evidence ? "alto" : "bajo",
+    });
+
+    if (broadcast) broadcast("suggestions", {});
+    console.log(`[bot] ✅ Cierre: "${market.question}" → ${parsed.winner.toUpperCase()} (${parsed.confidence}% confianza)`);
+  } catch (err) {
+    console.error("[bot] Error analizando cierre:", market.question, "-", err.message);
+  }
+}
+
 function startScheduler() {
   cron.schedule("* * * * *", async () => {
     await runBot();
+    await checkClosingMarkets();
   });
   console.log("[bot] Scheduler iniciado — revisando cada minuto");
 }

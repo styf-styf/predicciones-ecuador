@@ -1651,6 +1651,25 @@ app.put("/admin/news-suggestions/:id", async (req, res) => {
   res.status(400).json({ message: "Acción inválida" });
 });
 
+// Cambiar resolves_as de una sugerencia de cierre
+app.put("/admin/news-suggestions/:id/resolves-as", async (req, res) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ message: "No autorizado" });
+  try {
+    const decoded = jwt.verify(token, SECRET);
+    const { data: admin } = await supabase.from("users").select("role").eq("id", decoded.id).single();
+    if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+  } catch { return res.status(401).json({ message: "Token inválido" }); }
+
+  const { resolves_as } = req.body;
+  if (!["yes", "no"].includes(resolves_as)) return res.status(400).json({ message: "Valor inválido" });
+
+  const { error } = await supabase
+    .from("news_suggestions").update({ resolves_as }).eq("id", req.params.id);
+  if (error) return res.status(500).json({ message: error.message });
+  res.json({ message: "Actualizado" });
+});
+
 // Refinar pregunta de sugerencia con IA
 app.put("/admin/news-suggestions/:id/refine", async (req, res) => {
   const token = req.headers.authorization?.split(" ")[1];

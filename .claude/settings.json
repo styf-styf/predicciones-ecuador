@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(node -e \"const s = require\\('./scheduler'\\); console.log\\('OK'\\)\")"
+      "Bash(node -e \"const s = require\\('./scheduler'\\); console.log\\('OK'\\)\")",
+      "Bash(node -e \"require\\('./scheduler'\\); require\\('./scraper'\\); console.log\\('OK'\\)\")",
+      "Bash(node -e \"require\\('./scheduler'\\); console.log\\('OK'\\)\")"
     ]
   }
 }
