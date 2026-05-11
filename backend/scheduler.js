@@ -1,5 +1,59 @@
 const cron = require("node-cron");
-const { scrapeHeadlines } = require("./scraper");
+const { scrapeHeadlines, scrapeArticleContent } = require("./scraper");
+
+// Sitios de noticias ecuatorianos — se procesan todos sus artículos recientes
+const ECUADOR_SITES = [
+  "elcomercio.com", "eluniverso.com", "expreso.ec", "lahora.com.ec",
+  "primicias.ec", "metroecuador.com", "telegrafo.com.ec", "extra.ec",
+  "vistazo.com", "ecuavisa.com", "teleamazonas.com", "rts.com.ec",
+  "gkillcity.com", "planv.com.ec", "confirmado.net", "eltelegrafo.com.ec",
+  "ecuadorenvivo.com", "eldiario.ec", "ciudadanodigital.ec",
+];
+
+// Palabras clave Ecuador para filtrar sitios internacionales
+const ECUADOR_KEYWORDS = [
+  "ecuador", "ecuatoriano", "ecuatoriana", "ecuatorianos", "ecuatorianas",
+  "quito", "guayaquil", "cuenca", "loja", "manta", "ambato",
+  "riobamba", "esmeraldas", "ibarra", "latacunga", "santo domingo",
+  "noboa", "correa", "petroecuador", "banco central del ecuador",
+  "asamblea nacional", "iess", "senae", "conaie", "pachakutik",
+  "galápagos", "galapagos",
+];
+
+// Devuelve true si el artículo fue publicado hace menos de 48 horas
+function isRecent(articleUrl) {
+  const patterns = [
+    /\/(\d{4})\/(\d{2})\/(\d{2})\//,         // /2026/05/11/
+    /\/(\d{4})-(\d{2})-(\d{2})[-/]/,          // /2026-05-11-
+    /\/(\d{4})(\d{2})(\d{2})[-/]/,            // /20260511/
+    /[?&]date=(\d{4})-(\d{2})-(\d{2})/,       // ?date=2026-05-11
+    /-(\d{4})-(\d{2})-(\d{2})-/,              // -2026-05-11-
+  ];
+
+  for (const pattern of patterns) {
+    const m = articleUrl.match(pattern);
+    if (m) {
+      const articleDate = new Date(parseInt(m[1]), parseInt(m[2]) - 1, parseInt(m[3]));
+      const hoursSince = (Date.now() - articleDate.getTime()) / 3_600_000;
+      return hoursSince <= 48;
+    }
+  }
+  // Si la URL no tiene fecha reconocible, se permite (no podemos saber)
+  return true;
+}
+
+// Devuelve true si el artículo es relevante para Ecuador
+function isRelevant(headline, sourceUrl) {
+  try {
+    const domain = new URL(sourceUrl).hostname.replace("www.", "");
+    // Si es un sitio ecuatoriano, siempre es relevante
+    if (ECUADOR_SITES.some(site => domain.includes(site))) return true;
+  } catch { /* ignorar */ }
+
+  // Para sitios internacionales, el titular debe mencionar Ecuador
+  const title = headline.title.toLowerCase();
+  return ECUADOR_KEYWORDS.some(kw => title.includes(kw));
+}
 
 let supabase, groqApiKey, broadcast;
 let isRunning = false;
@@ -47,6 +101,18 @@ async function runBot() {
         .eq("id", botUrl.id);
 
       for (const headline of headlines) {
+        // Filtro 1: solo artículos recientes (< 48h)
+        if (!isRecent(headline.url)) {
+          console.log(`[bot] Saltando (antiguo): ${headline.title.slice(0, 60)}`);
+          continue;
+        }
+
+        // Filtro 2: solo Ecuador (para sitios internacionales)
+        if (!isRelevant(headline, botUrl.url)) {
+          console.log(`[bot] Saltando (no Ecuador): ${headline.title.slice(0, 60)}`);
+          continue;
+        }
+
         const { data: seen } = await supabase
           .from("bot_seen_urls")
           .select("id")
@@ -87,6 +153,10 @@ async function runBot() {
 
 async function processWithAI(headline) {
   try {
+    // Leer el artículo completo para darle contexto real a la IA
+    console.log(`[bot] Leyendo artículo: ${headline.url}`);
+    const articleContent = await scrapeArticleContent(headline.url);
+
     const { data: activeMarkets } = await supabase
       .from("markets")
       .select("id, question")
@@ -97,6 +167,10 @@ async function processWithAI(headline) {
     const today = new Date().toISOString().split("T")[0];
     const in5Days = new Date(Date.now() + 5 * 86400000).toISOString().split("T")[0];
 
+    const contentSection = articleContent
+      ? `\nContenido del artículo (primeras ~500 palabras):\n${articleContent}`
+      : "\nContenido del artículo: No disponible (usar solo el título)";
+
     const prompt = `Eres un experto analista con conocimiento del contexto de Ecuador y Latinoamérica.
 
 Noticia detectada automáticamente:
@@ -104,6 +178,7 @@ Título: ${headline.title}
 URL: ${headline.url}
 Fuente: ${headline.source}
 Fecha de hoy: ${today}
+${contentSection}
 
 Mercados activos (para evitar duplicados):
 ${marketsText}
@@ -113,13 +188,14 @@ Responde SOLO en JSON sin markdown:
   "new_market_question": "pregunta verificable con Sí/No que cierre entre 1 y 5 días, o null si la noticia no lo amerita",
   "probability_yes": número 0-100,
   "probability_no": número 0-100,
-  "probability_reasoning": "explicación breve en 1 oración",
+  "probability_reasoning": "explicación breve en 1 oración basada en el contenido del artículo",
   "suggested_close_date": "fecha YYYY-MM-DD entre ${today} y ${in5Days}",
   "impact": "alto o medio o bajo",
-  "summary": "resumen en 1-2 oraciones"
+  "summary": "resumen del artículo en 1-2 oraciones con los datos más relevantes"
 }
 
 Reglas:
+- Usa el contenido del artículo para hacer la pregunta lo más específica posible (nombres, cifras, fechas)
 - Solo genera pregunta si la noticia es relevante (economía, política, deporte, farándula, finanzas)
 - La pregunta no debe duplicar mercados activos
 - Si la noticia es trivial, devuelve null en new_market_question`;

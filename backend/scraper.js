@@ -1,5 +1,63 @@
 const cheerio = require("cheerio");
 
+async function scrapeArticleContent(url) {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "es-EC,es;q=0.9,en;q=0.8",
+      },
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+
+    if (!res.ok) return null;
+
+    const html = await res.text();
+    const $ = cheerio.load(html);
+
+    // Eliminar ruido
+    $("script, style, nav, header, footer, aside, [class*='menu'], [class*='sidebar'], [class*='ad'], [class*='banner'], [class*='social'], [class*='related'], [class*='comment']").remove();
+
+    // Intentar extraer contenido principal en orden de preferencia
+    const candidates = [
+      "article",
+      "[class*='article-body']",
+      "[class*='article-content']",
+      "[class*='story-body']",
+      "[class*='entry-content']",
+      "[class*='post-content']",
+      "[class*='content-body']",
+      "main",
+    ];
+
+    let text = "";
+    for (const selector of candidates) {
+      const el = $(selector).first();
+      if (el.length) {
+        text = el.find("p").map((_, p) => $(p).text().trim()).get().filter(t => t.length > 30).join(" ");
+        if (text.length > 100) break;
+      }
+    }
+
+    // Fallback: todos los párrafos de la página
+    if (text.length < 100) {
+      text = $("p").map((_, p) => $(p).text().trim()).get().filter(t => t.length > 40).join(" ");
+    }
+
+    // Limpiar y truncar a ~500 palabras
+    text = text.replace(/\s+/g, " ").trim();
+    const words = text.split(" ");
+    return words.slice(0, 500).join(" ");
+  } catch {
+    return null;
+  }
+}
+
 async function scrapeHeadlines(url) {
   try {
     const controller = new AbortController();
@@ -92,4 +150,4 @@ async function scrapeHeadlines(url) {
   }
 }
 
-module.exports = { scrapeHeadlines };
+module.exports = { scrapeHeadlines, scrapeArticleContent };
