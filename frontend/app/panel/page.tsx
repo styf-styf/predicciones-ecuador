@@ -235,6 +235,11 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
   })),
  ].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
 
+  const MOV_PAGE_SIZE = 10;
+  const [movPage, setMovPage] = useState(1);
+  const movTotalPages = Math.ceil(movimientos.length / MOV_PAGE_SIZE);
+  const movPaginated = movimientos.slice((movPage - 1) * MOV_PAGE_SIZE, movPage * MOV_PAGE_SIZE);
+
   const tabs = [
     { id: "inicio", label: "Inicio", icon: <Home size={15} /> },
     { id: "movimientos", label: "Movimientos", icon: <BarChart3 size={15} /> },
@@ -358,8 +363,8 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
                   </Link>
                 </div>
               ) : (
-                <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-                  {movimientos.slice(0, 10).map((mov) => (
+                <div className="space-y-2">
+                  {movimientos.slice(0, 5).map((mov) => (
                     <MovimientoRow key={mov.id} mov={mov} />
                   ))}
                 </div>
@@ -414,16 +419,54 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
         {/* ===== TAB: MOVIMIENTOS ===== */}
         {tab === "movimientos" && (
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
-            <h2 className="font-bold mb-1">Historial de movimientos</h2>
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="font-bold">Historial de movimientos</h2>
+              <span className="text-xs text-slate-400">{movimientos.length} registros</span>
+            </div>
             <p className="text-xs text-slate-400 mb-5">Predicciones, recargas y retiros</p>
             {movimientos.length === 0 ? (
               <p className="text-sm text-slate-400 py-8 text-center">Sin movimientos aún</p>
             ) : (
-              <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
-                {movimientos.slice(0, 100).map((mov) => (
-                  <MovimientoRow key={mov.id} mov={mov} full />
-                ))}
-              </div>
+              <>
+                <div className="space-y-2">
+                  {movPaginated.map((mov) => (
+                    <MovimientoRow key={mov.id} mov={mov} full />
+                  ))}
+                </div>
+                {movTotalPages > 1 && (
+                  <div className="flex items-center justify-center gap-2 mt-6">
+                    <button
+                      onClick={() => setMovPage((p) => Math.max(1, p - 1))}
+                      disabled={movPage === 1}
+                      className="px-4 py-2 rounded-xl text-sm font-medium border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                    >
+                      ← Anterior
+                    </button>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: movTotalPages }).map((_, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setMovPage(i + 1)}
+                          className={`w-8 h-8 rounded-lg text-sm font-medium transition-all ${
+                            movPage === i + 1
+                              ? "bg-emerald-500 text-white shadow-sm scale-[1.05]"
+                              : "bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300"
+                          }`}
+                        >
+                          {i + 1}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => setMovPage((p) => Math.min(movTotalPages, p + 1))}
+                      disabled={movPage === movTotalPages}
+                      className="px-4 py-2 rounded-xl text-sm font-medium border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                    >
+                      Siguiente →
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}

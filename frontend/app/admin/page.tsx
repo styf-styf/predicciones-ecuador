@@ -7,7 +7,7 @@ import {
   ShieldCheck, ShieldOff, Plus, Minus,
   Settings, X, LayoutDashboard, ChevronRight,
   ArrowUpRight, ArrowDownRight, Circle, Zap, MessageSquare, MessageCircle, Newspaper, Eye, EyeOff,
-  TrendingDown, PiggyBank, BarChart2
+  TrendingDown, PiggyBank, BarChart2, Lightbulb, Filter
 } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
@@ -130,12 +130,18 @@ export default function AdminPage() {
     title: string; description?: string; confirmLabel?: string; danger?: boolean; onConfirm: () => void;
   } | null>(null);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
+  const [marketFilter, setMarketFilter] = useState<"activos" | "todos" | "resueltos">("activos");
 
   const showToast = (message: string, type: "success" | "error" | "info" = "success") => setToast({ message, type });
   const openModal = (opts: typeof modal) => setModal(opts);
 
   // ── Paginación ──
-  const filteredMarkets = markets.filter(m => m.question.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredMarkets = markets.filter(m => {
+    const matchesSearch = m.question.toLowerCase().includes(searchQuery.toLowerCase());
+    if (marketFilter === "activos") return matchesSearch && !m.resolved;
+    if (marketFilter === "resueltos") return matchesSearch && m.resolved;
+    return matchesSearch;
+  });
   const filteredUsers = users.filter(u =>
     u.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     u.nombre?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -452,19 +458,28 @@ export default function AdminPage() {
     });
   };
 
-  const handlePoints = async (userId: string, amount: number) => {
-    const token = localStorage.getItem("token");
-    const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/users/${userId}/points`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` || "" },
-      body: JSON.stringify({ points: amount }),
+  const handlePoints = (userId: string, amount: number, userEmail: string) => {
+    if (!amount || isNaN(amount)) return;
+    openModal({
+      title: `${amount > 0 ? "Acreditar" : "Descontar"} ${Math.abs(amount)} $ al usuario`,
+      description: `${userEmail} · ${amount > 0 ? "+" : ""}${amount} $`,
+      confirmLabel: amount > 0 ? "Acreditar" : "Descontar",
+      danger: amount < 0,
+      onConfirm: async () => {
+        const token = localStorage.getItem("token");
+        const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/users/${userId}/points`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` || "" },
+          body: JSON.stringify({ points: amount }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          fetchUsers(); fetchStats();
+          setPointsInput((prev) => ({ ...prev, [userId]: "" }));
+          showToast(`${amount > 0 ? "+" : ""}${amount} $ aplicados`, "success");
+        } else showToast(data.message, "error");
+      },
     });
-    const data = await res.json();
-    if (res.ok) {
-      fetchUsers(); fetchStats();
-      setPointsInput((prev) => ({ ...prev, [userId]: "" }));
-      showToast(`${amount > 0 ? "+" : ""}${amount} $ aplicados`, "success");
-    } else showToast(data.message, "error");
   };
 
   const handleSuspend = async (userId: string, suspended: boolean) => {
@@ -507,12 +522,11 @@ export default function AdminPage() {
 
   const navItems = [
     { id: "overview", label: "Resumen", icon: <LayoutDashboard size={15} /> },
-    { id: "administracion", label: "Administración", icon: <PiggyBank size={15} /> },
+    { id: "administracion", label: "Finanzas", icon: <PiggyBank size={15} /> },
     { id: "markets", label: "Mercados", icon: <TrendingUp size={15} />, badge: markets.filter(m => !m.resolved).length },
     { id: "users", label: "Usuarios", icon: <Users size={15} />, badge: users.length },
-    { id: "winners", label: "Ganadores", icon: <Trophy size={15} /> },
     { id: "transacciones", label: "Transacciones", icon: <Wallet size={15} />, badge: transactions.filter(t => t.status === "pendiente").length },
-    { id: "suggestions", label: "Sugerencias", icon: <Newspaper size={15} />, badge: suggestions.filter(s => s.status === "pending").length },
+    { id: "suggestions", label: "Sugerencias", icon: <Lightbulb size={15} />, badge: suggestions.filter(s => s.status === "pending").length },
     { id: "noticias", label: "Noticias", icon: <Newspaper size={15} />, badge: marketNews.filter(n => n.status === "pending").length },
     { id: "comentarios", label: "Comentarios", icon: <MessageCircle size={15} />, badge: adminComments.length },
     { id: "contacto", label: "Contacto", icon: <MessageSquare size={15} />, badge: contactos.filter(c => !c.leido).length },
@@ -695,25 +709,45 @@ export default function AdminPage() {
                 </div>
               )}
 
-              <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl">
-                <div className="px-5 py-4 border-b border-slate-100 dark:border-white/[0.06] flex items-center justify-between">
-                  <p className="text-[12px] font-semibold text-slate-700 dark:text-white/70">Ganadores recientes</p>
-                  <button onClick={() => setActiveSection("winners")} className="text-[11px] text-slate-400 dark:text-white/25 hover:text-slate-600 dark:hover:text-white/50 transition flex items-center gap-1">
-                    Ver todos <ChevronRight size={11} />
-                  </button>
+              <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-100 dark:border-white/[0.06]">
+                  <p className="text-[12px] font-semibold text-slate-700 dark:text-white/70">Ganadores · {winners.length} registros</p>
+                </div>
+                <div className="px-5 py-3 border-b border-slate-100 dark:border-white/[0.06] hidden sm:block">
+                  <div className="grid grid-cols-12 text-[10px] text-slate-400 dark:text-white/25 uppercase tracking-widest">
+                    <span className="col-span-3">Usuario</span>
+                    <span className="col-span-5">Mercado</span>
+                    <span className="col-span-1 text-center">Pred.</span>
+                    <span className="col-span-2 text-right">Premio</span>
+                    <span className="col-span-1 text-right">Fecha</span>
+                  </div>
                 </div>
                 <div className="divide-y divide-slate-100 dark:divide-white/[0.04]">
-                  {winners.slice(0, 5).map((w) => (
-                    <div key={w.id} className="px-5 py-3 flex items-center justify-between gap-4">
-                      <div className="min-w-0">
-                        <p className="text-[12px] text-slate-600 dark:text-white/60 truncate">{w.users?.email}</p>
-                        <p className="text-[11px] text-slate-400 dark:text-white/25 truncate mt-0.5">{w.markets?.question}</p>
+                  {paginatedWinners.map((w) => (
+                    <div key={w.id} className="px-5 py-3 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition">
+                      <div className="hidden sm:grid grid-cols-12 items-center gap-2">
+                        <p className="col-span-3 text-[12px] text-slate-500 dark:text-white/50 truncate">{w.users?.email}</p>
+                        <p className="col-span-5 text-[12px] text-slate-600 dark:text-white/60 truncate">{w.markets?.question}</p>
+                        <div className="col-span-1 flex justify-center">
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-md ${w.prediction === "yes" ? "bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-rose-50 dark:bg-rose-500/15 text-rose-500 dark:text-rose-400"}`}>
+                            {w.prediction === "yes" ? "Sí" : "No"}
+                          </span>
+                        </div>
+                        <p className="col-span-2 text-right text-[12px] text-emerald-600 dark:text-emerald-400 font-bold tabular-nums">+{w.reward} $</p>
+                        <p className="col-span-1 text-right text-[10px] text-slate-400 dark:text-white/20">{new Date(w.created_at).toLocaleDateString()}</p>
                       </div>
-                      <span className="text-[12px] text-emerald-600 dark:text-emerald-400 font-bold tabular-nums shrink-0">+{w.reward} $</span>
+                      <div className="sm:hidden flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-[12px] text-slate-500 dark:text-white/50 truncate">{w.users?.email}</p>
+                          <p className="text-[11px] text-slate-400 dark:text-white/30 truncate">{w.markets?.question}</p>
+                        </div>
+                        <span className="text-[12px] text-emerald-500 dark:text-emerald-400 font-bold shrink-0">+{w.reward} $</span>
+                      </div>
                     </div>
                   ))}
                   {winners.length === 0 && <p className="px-5 py-8 text-[12px] text-slate-400 dark:text-white/20 text-center">Sin ganadores aún</p>}
                 </div>
+                <PaginationBar page={winnerPage} totalPages={winnerPages} setPage={setWinnerPage} />
               </div>
 
               <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl">
@@ -746,7 +780,7 @@ export default function AdminPage() {
           {activeSection === "administracion" && finance && (
             <>
               <div>
-                <h1 className="text-lg font-bold">Administración</h1>
+                <h1 className="text-lg font-bold">Finanzas</h1>
                 <p className="text-[12px] text-slate-400 dark:text-white/30 mt-0.5">Registros financieros de la plataforma</p>
               </div>
 
@@ -798,9 +832,19 @@ export default function AdminPage() {
           {/* MERCADOS */}
           {activeSection === "markets" && (
             <>
-              <div>
-                <h1 className="text-lg font-bold">Mercados</h1>
-                <p className="text-[12px] text-slate-400 dark:text-white/30 mt-0.5">{markets.filter(m => !m.resolved).length} activos · {markets.filter(m => m.resolved).length} cerrados</p>
+              <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                  <h1 className="text-lg font-bold">Mercados</h1>
+                  <p className="text-[12px] text-slate-400 dark:text-white/30 mt-0.5">{markets.filter(m => !m.resolved).length} activos · {markets.filter(m => m.resolved).length} cerrados</p>
+                </div>
+                <div className="flex items-center gap-1 bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-lg p-1">
+                  {(["activos", "todos", "resueltos"] as const).map((f) => (
+                    <button key={f} onClick={() => setMarketFilter(f)}
+                      className={`px-3 py-1.5 rounded-md text-[11px] font-medium transition capitalize ${marketFilter === f ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/70"}`}>
+                      {f}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-4">
@@ -1069,8 +1113,8 @@ export default function AdminPage() {
                           <input type="number" placeholder="0" value={pointsInput[u.id] || ""}
                             onChange={(e) => setPointsInput((prev) => ({ ...prev, [u.id]: e.target.value }))}
                             className="w-14 bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-md px-2 py-1 text-[11px] outline-none text-slate-900 dark:text-white text-center" />
-                          <button onClick={() => handlePoints(u.id, parseFloat(pointsInput[u.id] || "0"))} className="p-1 rounded-md bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-500/30 transition"><Plus size={11} /></button>
-                          <button onClick={() => handlePoints(u.id, -parseFloat(pointsInput[u.id] || "0"))} className="p-1 rounded-md bg-rose-100 dark:bg-rose-500/20 text-rose-500 dark:text-rose-400 hover:bg-rose-200 dark:hover:bg-rose-500/30 transition"><Minus size={11} /></button>
+                          <button onClick={() => handlePoints(u.id, parseFloat(pointsInput[u.id] || "0"), u.email)} className="p-1 rounded-md bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-500/30 transition"><Plus size={11} /></button>
+                          <button onClick={() => handlePoints(u.id, -parseFloat(pointsInput[u.id] || "0"), u.email)} className="p-1 rounded-md bg-rose-100 dark:bg-rose-500/20 text-rose-500 dark:text-rose-400 hover:bg-rose-200 dark:hover:bg-rose-500/30 transition"><Minus size={11} /></button>
                         </div>
                         <div className="col-span-2 flex justify-end gap-1.5">
                           <button onClick={() => handleChangeRole(u.id, u.role)} className="p-1.5 rounded-md bg-amber-50 dark:bg-amber-500/10 text-amber-500 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition"><ShieldCheck size={12} /></button>
@@ -1096,8 +1140,8 @@ export default function AdminPage() {
                           <input type="number" placeholder="$" value={pointsInput[u.id] || ""}
                             onChange={(e) => setPointsInput((prev) => ({ ...prev, [u.id]: e.target.value }))}
                             className="w-16 bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-md px-2 py-1.5 text-[11px] outline-none text-slate-900 dark:text-white text-center" />
-                          <button onClick={() => handlePoints(u.id, parseFloat(pointsInput[u.id] || "0"))} className="p-1.5 rounded-md bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"><Plus size={12} /></button>
-                          <button onClick={() => handlePoints(u.id, -parseFloat(pointsInput[u.id] || "0"))} className="p-1.5 rounded-md bg-rose-100 dark:bg-rose-500/20 text-rose-500 dark:text-rose-400"><Minus size={12} /></button>
+                          <button onClick={() => handlePoints(u.id, parseFloat(pointsInput[u.id] || "0"), u.email)} className="p-1.5 rounded-md bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"><Plus size={12} /></button>
+                          <button onClick={() => handlePoints(u.id, -parseFloat(pointsInput[u.id] || "0"), u.email)} className="p-1.5 rounded-md bg-rose-100 dark:bg-rose-500/20 text-rose-500 dark:text-rose-400"><Minus size={12} /></button>
                           <div className="ml-auto flex gap-1.5">
                             <button onClick={() => handleChangeRole(u.id, u.role)} className="p-1.5 rounded-md bg-amber-50 dark:bg-amber-500/10 text-amber-500 dark:text-amber-400"><ShieldCheck size={13} /></button>
                             <button onClick={() => handleSuspend(u.id, !u.suspended)} className={`p-1.5 rounded-md ${u.suspended ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400"}`}><ShieldOff size={13} /></button>
@@ -1108,53 +1152,6 @@ export default function AdminPage() {
                   ))}
                 </div>
                 <PaginationBar page={userPage} totalPages={userPages} setPage={setUserPage} />
-              </div>
-            </>
-          )}
-
-          {/* GANADORES */}
-          {activeSection === "winners" && (
-            <>
-              <div>
-                <h1 className="text-lg font-bold">Ganadores</h1>
-                <p className="text-[12px] text-slate-400 dark:text-white/30 mt-0.5">{winners.length} registros</p>
-              </div>
-              <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl overflow-hidden">
-                <div className="px-5 py-3 border-b border-slate-100 dark:border-white/[0.06] hidden sm:block">
-                  <div className="grid grid-cols-12 text-[10px] text-slate-400 dark:text-white/25 uppercase tracking-widest">
-                    <span className="col-span-3">Usuario</span>
-                    <span className="col-span-5">Mercado</span>
-                    <span className="col-span-1 text-center">Pred.</span>
-                    <span className="col-span-2 text-right">Premio</span>
-                    <span className="col-span-1 text-right">Fecha</span>
-                  </div>
-                </div>
-                <div className="divide-y divide-slate-100 dark:divide-white/[0.03]">
-                  {paginatedWinners.map((w) => (
-                    <div key={w.id} className="px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition">
-                      <div className="hidden sm:grid grid-cols-12 items-center gap-2">
-                        <p className="col-span-3 text-[12px] text-slate-500 dark:text-white/50 truncate">{w.users?.email}</p>
-                        <p className="col-span-5 text-[12px] text-slate-600 dark:text-white/60 truncate">{w.markets?.question}</p>
-                        <div className="col-span-1 flex justify-center">
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded-md ${w.prediction === "yes" ? "bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-rose-50 dark:bg-rose-500/15 text-rose-500 dark:text-rose-400"}`}>
-                            {w.prediction === "yes" ? "Sí" : "No"}
-                          </span>
-                        </div>
-                        <p className="col-span-2 text-right text-[12px] text-amber-500 dark:text-amber-400 font-bold tabular-nums">+{w.reward} $</p>
-                        <p className="col-span-1 text-right text-[10px] text-slate-400 dark:text-white/20">{new Date(w.created_at).toLocaleDateString()}</p>
-                      </div>
-                      <div className="sm:hidden space-y-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="text-[12px] text-slate-500 dark:text-white/50 truncate">{w.users?.email}</p>
-                          <span className="text-[12px] text-amber-500 dark:text-amber-400 font-bold shrink-0">+{w.reward} $</span>
-                        </div>
-                        <p className="text-[11px] text-slate-400 dark:text-white/30 truncate">{w.markets?.question}</p>
-                      </div>
-                    </div>
-                  ))}
-                  {winners.length === 0 && <p className="px-5 py-10 text-[12px] text-slate-400 dark:text-white/20 text-center">Sin ganadores registrados</p>}
-                </div>
-                <PaginationBar page={winnerPage} totalPages={winnerPages} setPage={setWinnerPage} />
               </div>
             </>
           )}
@@ -1175,13 +1172,28 @@ export default function AdminPage() {
                     <p className="text-[12px] font-semibold text-slate-700 dark:text-white/70 capitalize">
                       {method === "transferencia" ? "🏦 Recargas por transferencia" : method === "tarjeta" ? "💳 Recargas con tarjeta" : "📤 Solicitudes de retiro"}
                     </p>
-                    <span className="text-[10px] bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-white/30 px-2 py-0.5 rounded-md">
-                      {transactions.filter(t =>
-                        method === "retiro" ? t.type === "retiro" :
-                        method === "tarjeta" ? (t.payment_method === "tarjeta" || t.payment_method === null) && t.type === "recarga" :
-                        t.payment_method === method && t.type === "recarga"
-                      ).length} registros
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {(() => {
+                        const all = transactions.filter(t =>
+                          method === "retiro" ? t.type === "retiro" :
+                          method === "tarjeta" ? (t.payment_method === "tarjeta" || t.payment_method === null) && t.type === "recarga" :
+                          t.payment_method === method && t.type === "recarga"
+                        );
+                        const pending = all.filter(t => t.status === "pendiente").length;
+                        return (
+                          <>
+                            {pending > 0 && (
+                              <span className="text-[10px] bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 px-2 py-0.5 rounded-md font-medium">
+                                {pending} pendiente{pending !== 1 ? "s" : ""}
+                              </span>
+                            )}
+                            <span className="text-[10px] bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-white/30 px-2 py-0.5 rounded-md">
+                              {all.length} total
+                            </span>
+                          </>
+                        );
+                      })()}
+                    </div>
                   </div>
 
                   <div className="px-5 py-3 border-b border-slate-100 dark:border-white/[0.04] hidden sm:block">
