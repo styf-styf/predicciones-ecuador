@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { Suspense } from "react";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -13,7 +13,7 @@ import Header from "@/components/Header";
 
 type Tab = "inicio" | "movimientos" | "wallet" | "perfil";
 
-export default function PanelPage() {
+function PanelContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [tab, setTab] = useState<Tab>("inicio");
@@ -983,5 +983,12 @@ const badges: Record<string, string> = {
     </div>
   );
 
- 
+}
+
+export default function PanelPage() {
+  return (
+    <Suspense>
+      <PanelContent />
+    </Suspense>
+  );
 }
