@@ -154,9 +154,9 @@ export default function MarketPage() {
   if (!token) { setShowLoginPrompt(true); return; }
   const amt = parseFloat(amount);
   if (isNaN(amt) || amt < betConfig.min_bet)
-  return alert(`El monto mínimo es ${betConfig.min_bet} punto`);
+  return alert(`El monto mínimo es ${betConfig.min_bet} $`);
   if (points !== null && amt > points)
-  return alert("No tienes suficientes puntos");
+  return alert("Saldo insuficiente");
   setBettingLoading(true);
   const res = await fetch("https://predicciones-ecuador.onrender.com/bet", {
     method: "POST",
@@ -294,7 +294,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
             
             {token && betSuccess && (
               <div className="mb-4 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-center text-sm font-semibold text-emerald-500 flex items-center justify-center gap-2">
-                ✅ ¡Apuesta registrada exitosamente!
+                ✅ ¡Predicción registrada exitosamente!
               </div>
             )}
             {token && points !== null && <p className="text-sm text-slate-400 mb-4">Tu balance: <span className="text-slate-900 dark:text-white font-bold">{points} $</span></p>}
@@ -724,7 +724,7 @@ const oppPool = betType === "yes" ? noPool  : yesPool;
               <h2 className="font-bold text-lg mb-4 flex items-center gap-2"><TrendingUp size={18} className="text-emerald-400" /> Realizar predicción</h2>
              
               {token && betSuccess && (
-                <div className="mb-4 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-center text-sm font-semibold text-emerald-500 flex items-center justify-center gap-2">✅ ¡Apuesta registrada exitosamente!</div>
+                <div className="mb-4 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-center text-sm font-semibold text-emerald-500 flex items-center justify-center gap-2">✅ ¡Predicción registrada exitosamente!</div>
               )}
               {token && points !== null && <p className="text-sm text-slate-400 mb-4">Tu balance: <span className="text-slate-900 dark:text-white font-bold">{points} $</span></p>}
             {token && userBet ? (

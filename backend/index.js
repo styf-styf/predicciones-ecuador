@@ -649,7 +649,7 @@ app.put("/admin/users/:id/points", auth, async (req, res) => {
   }
 
   const { points } = req.body;
-  if (isNaN(points)) return res.status(400).json({ message: "Puntos inválidos" });
+  if (isNaN(points)) return res.status(400).json({ message: "Valor inválido" });
 
   const { data: user } = await supabase
     .from("users").select("points").eq("id", req.params.id).single();
@@ -658,7 +658,7 @@ app.put("/admin/users/:id/points", auth, async (req, res) => {
 
   const newPoints = Number(user.points) + Number(points);
   if (newPoints < 0) {
-    return res.status(400).json({ message: "El usuario no puede tener puntos negativos" });
+    return res.status(400).json({ message: "El saldo no puede ser negativo" });
   }
 
   const { error } = await supabase
@@ -666,7 +666,7 @@ app.put("/admin/users/:id/points", auth, async (req, res) => {
 
   if (error) return res.status(500).json({ message: error.message });
   broadcast("users", {});
-  res.json({ message: "Puntos actualizados", newPoints });
+  res.json({ message: "Saldo actualizado", newPoints });
 });
 
 app.put("/admin/users/:id/suspend", auth, async (req, res) => {
@@ -741,7 +741,7 @@ app.post("/bet", auth, async (req, res) => {
 
   if (isNaN(betAmount) || betAmount < minBet || betAmount > maxBet) {
     return res.status(400).json({
-      message: `El monto debe ser entre ${minBet} y ${maxBet} puntos`
+      message: `El monto debe ser entre ${minBet} y ${maxBet} $`
     });
   }
 
@@ -778,7 +778,7 @@ app.post("/bet", auth, async (req, res) => {
   const pointsDiff = betAmount - previousAmount;
 
   if (user.points < pointsDiff) {
-    return res.status(400).json({ message: "Sin puntos suficientes" });
+    return res.status(400).json({ message: "Saldo insuficiente" });
   }
 
   // ✅ Actualizar puntos del usuario (solo la diferencia)
@@ -840,7 +840,7 @@ console.log("Snapshot guardado:", { marketId, yes_pct: ((Number(updatedMarket.ye
 
 broadcast("bets", { market_id: marketId });
 broadcast("market_history", { market_id: marketId });
-res.json({ message: "Apuesta realizada", points: newPoints, market: updatedMarket });
+res.json({ message: "Predicción realizada", points: newPoints, market: updatedMarket });
 });
 // =======================
 // 💰 RESOLVER MERCADO
@@ -911,8 +911,8 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
 
     await supabase.from("notifications").insert([{
       user_id: bet.user_id,
-      title: "🎉 Ganaste una apuesta",
-      message: `Apostaste ${amount} pts • Utilidad bruta: ${grossProfit.toFixed(2)} pts • Comisión (${config?.commission ?? 3}%): ${commission.toFixed(2)} pts • Total recibido: ${payout.toFixed(2)} pts`,
+      title: "🎉 ¡Ganaste una predicción!",
+      message: `Apostaste ${amount.toFixed(2)} $ a "${market.question}" · Comisión (${config?.commission ?? 3}%): -${commission.toFixed(2)} $ · Total recibido: ${payout.toFixed(2)} $`,
       read: false,
     }]);
 
@@ -921,6 +921,17 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
       market_id: marketId,
       prediction: winner,
       reward: parseFloat(payout.toFixed(2)),
+    }]);
+  }
+
+  for (const bet of losingBets) {
+    const amount = Number(bet.amount);
+    await supabase.from("bets").update({ payout: 0, commission_paid: 0 }).eq("id", bet.id);
+    await supabase.from("notifications").insert([{
+      user_id: bet.user_id,
+      title: "❌ Perdiste una predicción",
+      message: `Apostaste ${amount.toFixed(2)} $ a "${market.question}" y no fue el resultado ganador. Saldo descontado: -${amount.toFixed(2)} $`,
+      read: false,
     }]);
   }
 
@@ -1268,7 +1279,7 @@ async function procesarPagoPayphone(clientTransactionId, payphoneId) {
     await supabase.from("notifications").insert([{
       user_id: transaction.user_id,
       title: "✅ Recarga exitosa",
-      message: `Se acreditaron ${transaction.amount} puntos a tu cuenta.`,
+      message: `Se acreditaron ${transaction.amount} $ a tu cuenta.`,
       read: false,
     }]);
   } catch (err) {
@@ -1400,7 +1411,7 @@ app.post("/payphone/callback", async (req, res) => {
     await supabase.from("notifications").insert([{
       user_id: transaction.user_id,
       title: "✅ Recarga exitosa",
-      message: `Se acreditaron ${transaction.amount} puntos a tu cuenta.`,
+      message: `Se acreditaron ${transaction.amount} $ a tu cuenta.`,
       read: false,
     }]);
 
@@ -1735,7 +1746,7 @@ app.post("/withdrawal", auth, async (req, res) => {
   const withdrawAmount = parseFloat(amount);
 
   if (!withdrawAmount || withdrawAmount < 10) {
-    return res.status(400).json({ message: "Monto mínimo de retiro: 10 puntos" });
+    return res.status(400).json({ message: "Monto mínimo de retiro: 10 $" });
   }
 
   const { data: user } = await supabase
@@ -1997,7 +2008,7 @@ app.put("/admin/transactions/:id/status", auth, async (req, res) => {
       await supabase.from("users").update({ points: Number(user.points) + Number(amount) }).eq("id", userId);
       await supabase.from("notifications").insert([{
         user_id: userId, title: "✅ Recarga exitosa",
-        message: `Se acreditaron ${amount} puntos a tu cuenta por transferencia bancaria.`, read: false,
+        message: `Se acreditaron ${amount} $ a tu cuenta por transferencia bancaria.`, read: false,
       }]);
     } else if (type === "retiro") {
       await supabase.from("notifications").insert([{
@@ -2010,7 +2021,7 @@ app.put("/admin/transactions/:id/status", auth, async (req, res) => {
       await supabase.from("users").update({ points: Number(user.points) + Number(amount) }).eq("id", userId);
       await supabase.from("notifications").insert([{
         user_id: userId, title: "❌ Retiro rechazado",
-        message: `Tu solicitud de retiro por $${amount} fue rechazada. Los puntos fueron devueltos a tu cuenta.`, read: false,
+        message: `Tu solicitud de retiro por $${amount} fue rechazada. El saldo fue devuelto a tu cuenta.`, read: false,
       }]);
     } else {
       await supabase.from("notifications").insert([{

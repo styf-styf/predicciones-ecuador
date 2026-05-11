@@ -213,7 +213,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
       : "pendiente";
     return {
       id: bet.id,
-      tipo: "apuesta",
+      tipo: "prediccion",
       descripcion: bet.markets?.question || "Mercado",
       subtipo: bet.type === "yes" ? "Sí" : "No",
       monto: estado === "ganada" ? Number(bet.payout ?? bet.amount) : -Number(bet.amount),
@@ -325,8 +325,8 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
             {/* Stats */}
             <div className="grid grid-cols-4 gap-2">
   {[
-    { label: "Puntos", value: `${user.points}`, icon: <Wallet size={12} />, color: "text-emerald-500" },
-    { label: "Apuestas", value: totalBets, icon: <BarChart3 size={12} />, color: "text-blue-500" },
+    { label: "Saldo", value: `${user.points}`, icon: <Wallet size={12} />, color: "text-emerald-500" },
+    { label: "Predicciones", value: totalBets, icon: <BarChart3 size={12} />, color: "text-blue-500" },
     { label: "Apostado", value: `${totalBet.toFixed(0)}$`, icon: <ArrowUpRight size={12} />, color: "text-amber-500" },
     { label: "Ranking", value: userRankIndex !== -1 ? `#${userRankIndex + 1}` : "—", icon: <Trophy size={12} />, color: "text-rose-500" },
   ].map((stat) => (
@@ -415,7 +415,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
         {tab === "movimientos" && (
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
             <h2 className="font-bold mb-1">Historial de movimientos</h2>
-            <p className="text-xs text-slate-400 mb-5">Apuestas, recargas y retiros</p>
+            <p className="text-xs text-slate-400 mb-5">Predicciones, recargas y retiros</p>
             {movimientos.length === 0 ? (
               <p className="text-sm text-slate-400 py-8 text-center">Sin movimientos aún</p>
             ) : (
@@ -436,7 +436,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 text-center">
               <p className="text-sm text-slate-400 mb-1">Balance disponible</p>
               <p className="text-4xl font-bold text-emerald-500">{user.points}</p>
-              <p className="text-sm text-slate-400 mt-1">puntos</p>
+              <p className="text-sm text-slate-400 mt-1">$</p>
             </div>
 
             {/* Toggle Recarga / Retiro */}
@@ -459,7 +459,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
             {walletAction === "recarga" && (
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-5">
                 <div>
-                  <h3 className="font-bold mb-1">Recargar puntos</h3>
+                  <h3 className="font-bold mb-1">Recargar saldo</h3>
                   <p className="text-xs text-slate-400">Transfiere al número de cuenta y envía el comprobante</p>
                 </div>
 
@@ -615,7 +615,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
 {walletAction === "retiro" && (
   <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-5">
     <div>
-      <h3 className="font-bold mb-1">Retirar puntos</h3>
+      <h3 className="font-bold mb-1">Retirar saldo</h3>
       <p className="text-xs text-slate-400">Los retiros se procesan en 1-3 días hábiles</p>
     </div>
 
@@ -722,7 +722,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
     {sendingRetiro ? "Enviando..." : "Solicitar retiro"}
   </button>
 )}
-<p className="text-xs text-slate-400 text-center">Mínimo de retiro: 10 puntos</p>
+<p className="text-xs text-slate-400 text-center">Mínimo de retiro: 10 $</p>
               </div>
             )}
           </div>
@@ -983,14 +983,14 @@ const badges: Record<string, string> = {
             <span className="text-[10px] text-slate-400">comisión: -{mov.commission_paid.toFixed(2)} $</span>
           )}
           {mov.estado === "ganada" && mov.payout != null && (
-            <span className="text-[10px] text-slate-400">apuesta: {mov.apuesta.toFixed(2)} $</span>
+            <span className="text-[10px] text-slate-400">predicción: {mov.apuesta.toFixed(2)} $</span>
           )}
           {full && <span className="text-[10px] text-slate-400">{new Date(mov.fecha).toLocaleDateString()}</span>}
         </div>
       </div>
       <div className="text-right shrink-0">
         <span className={`text-sm font-bold block ${mov.estado === "ganada" ? "text-emerald-500" : mov.estado === "perdida" ? "text-rose-500" : "text-slate-400"}`}>
-          {mov.estado === "ganada" ? `+${mov.monto.toFixed(2)} $` : mov.tipo === "apuesta" ? `-${Math.abs(mov.monto).toFixed(2)} $` : `${mov.monto > 0 ? "+" : ""}${mov.monto.toFixed(2)} $`}
+          {mov.estado === "ganada" ? `+${mov.monto.toFixed(2)} $` : mov.tipo === "prediccion" ? `-${Math.abs(mov.monto).toFixed(2)} $` : `${mov.monto > 0 ? "+" : ""}${mov.monto.toFixed(2)} $`}
         </span>
         {mov.estado === "ganada" && mov.payout != null && (
           <span className="text-[10px] text-slate-400">neto: +{(mov.payout - mov.apuesta).toFixed(2)} $</span>

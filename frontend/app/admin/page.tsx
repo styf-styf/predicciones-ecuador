@@ -392,7 +392,7 @@ export default function AdminPage() {
   const handleDeleteMarket = (id: any) => {
     openModal({
       title: "¿Eliminar este mercado?",
-      description: "Se borrarán todas las apuestas asociadas. Esta acción es irreversible.",
+      description: "Se borrarán todas las predicciones asociadas. Esta acción es irreversible.",
       confirmLabel: "Eliminar",
       danger: true,
       onConfirm: async () => {
@@ -463,7 +463,7 @@ export default function AdminPage() {
     if (res.ok) {
       fetchUsers(); fetchStats();
       setPointsInput((prev) => ({ ...prev, [userId]: "" }));
-      showToast(`${amount > 0 ? "+" : ""}${amount} puntos aplicados`, "success");
+      showToast(`${amount > 0 ? "+" : ""}${amount} $ aplicados`, "success");
     } else showToast(data.message, "error");
   };
 
@@ -637,7 +637,7 @@ export default function AdminPage() {
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
                   { label: "Usuarios totales", value: stats?.totalUsers ?? "—", sub: `+${stats?.newUsersToday ?? 0} hoy`, icon: <Users size={13} />, color: "text-blue-500 dark:text-blue-400", up: true },
-                  { label: "Puntos circulando", value: stats?.totalPoints ?? "—", sub: "suma total", icon: <Wallet size={13} />, color: "text-emerald-500 dark:text-emerald-400", up: true },
+                  { label: "$ en circulación", value: stats?.totalPoints ?? "—", sub: "suma total", icon: <Wallet size={13} />, color: "text-emerald-500 dark:text-emerald-400", up: true },
                   { label: "Total apostado", value: stats?.totalBetted ?? "—", sub: `${stats?.betsToday ?? 0} hoy`, icon: <DollarSign size={13} />, color: "text-amber-500 dark:text-amber-400", up: true },
                   { label: "Mercados activos", value: stats?.activeMarkets ?? "—", sub: `${stats?.closedMarkets ?? 0} cerrados`, icon: <Activity size={13} />, color: "text-rose-500 dark:text-rose-400", up: false },
                 ].map((kpi) => (
@@ -658,7 +658,7 @@ export default function AdminPage() {
                   <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-5">
                     <div className="flex items-center justify-between mb-4">
                       <div>
-                        <p className="text-[12px] font-semibold text-slate-700 dark:text-white/70">Apuestas / día</p>
+                        <p className="text-[12px] font-semibold text-slate-700 dark:text-white/70">Predicciones / día</p>
                         <p className="text-[10px] text-slate-400 dark:text-white/25 mt-0.5">Últimos 7 días</p>
                       </div>
                       <Zap size={13} className="text-emerald-500/50" />
@@ -755,8 +755,8 @@ export default function AdminPage() {
                 {[
                   { label: "Entradas totales", value: `$${finance.totalEntradas}`, sub: `${finance.totalRecargas} recargas aprobadas`, icon: <ArrowUpRight size={16} />, color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-500/10" },
                   { label: "Salidas totales", value: `$${finance.totalSalidas}`, sub: `${finance.totalRetiros} retiros aprobados`, icon: <TrendingDown size={16} />, color: "text-rose-500", bg: "bg-rose-50 dark:bg-rose-500/10" },
-                  { label: "En circulación", value: `$${finance.totalCirculacion}`, sub: "Puntos en wallets de usuarios", icon: <Wallet size={16} />, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-500/10" },
-                  { label: "Total apostado", value: `$${finance.totalApuestado}`, sub: `${finance.totalApuestas} apuestas realizadas`, icon: <BarChart2 size={16} />, color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-500/10" },
+                  { label: "En circulación", value: `$${finance.totalCirculacion}`, sub: "Saldo en wallets de usuarios", icon: <Wallet size={16} />, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-500/10" },
+                  { label: "Total predicho", value: `$${finance.totalApuestado}`, sub: `${finance.totalApuestas} predicciones realizadas`, icon: <BarChart2 size={16} />, color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-500/10" },
                   { label: "Comisiones generadas", value: `$${finance.totalComisiones}`, sub: `Tasa: ${finance.commissionRate}%`, icon: <DollarSign size={16} />, color: "text-purple-500", bg: "bg-purple-50 dark:bg-purple-500/10" },
                   { label: "Premios pagados", value: `$${finance.totalPagado}`, sub: "A ganadores de mercados", icon: <Trophy size={16} />, color: "text-amber-400", bg: "bg-amber-50 dark:bg-amber-500/10" },
                 ].map((item) => (
@@ -1885,7 +1885,7 @@ export default function AdminPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
                   { key: "commission", label: "Comisión (%)", step: "0.1" },
-                  { key: "welcome_points", label: "Puntos de bienvenida", step: "1" },
+                  { key: "welcome_points", label: "Saldo de bienvenida", step: "1" },
                 ].map((field) => (
                   <div key={field.key} className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-4 space-y-2">
                     <label className="text-[11px] text-slate-400 dark:text-white/30 uppercase tracking-widest block">{field.label}</label>
