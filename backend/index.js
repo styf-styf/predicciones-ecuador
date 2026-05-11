@@ -5,6 +5,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const supabase = require("./supabase");
 const { OAuth2Client } = require("google-auth-library");
+const scheduler = require("./scheduler");
 
 const googleClient = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -2125,6 +2126,90 @@ app.get("/events", (req, res) => {
     console.log(`SSE cliente desconectado. Total: ${sseClients.size}`);
   });
 });
+
+// =======================
+// 🤖 BOT NEWS — URLs
+// =======================
+app.get("/admin/bot/urls", auth, async (req, res) => {
+  const { data: admin } = await supabase.from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const { data, error } = await supabase
+    .from("bot_urls").select("*").order("created_at", { ascending: false });
+  if (error) return res.status(500).json({ message: error.message });
+  res.json(data);
+});
+
+app.post("/admin/bot/urls", auth, async (req, res) => {
+  const { data: admin } = await supabase.from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const { url, label, interval_min } = req.body;
+  if (!url?.trim()) return res.status(400).json({ message: "URL requerida" });
+
+  try { new URL(url); } catch { return res.status(400).json({ message: "URL inválida" }); }
+
+  const { data, error } = await supabase.from("bot_urls").insert([{
+    url: url.trim(),
+    label: label?.trim() || new URL(url.trim()).hostname.replace("www.", ""),
+    interval_min: interval_min || 15,
+    active: true,
+  }]).select().single();
+
+  if (error) return res.status(500).json({ message: error.message });
+  res.json({ message: "URL agregada", url: data });
+});
+
+app.put("/admin/bot/urls/:id", auth, async (req, res) => {
+  const { data: admin } = await supabase.from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const { active, interval_min } = req.body;
+  const update = {};
+  if (active !== undefined) update.active = active;
+  if (interval_min !== undefined) update.interval_min = interval_min;
+
+  const { error } = await supabase.from("bot_urls").update(update).eq("id", req.params.id);
+  if (error) return res.status(500).json({ message: error.message });
+  res.json({ message: "URL actualizada" });
+});
+
+app.delete("/admin/bot/urls/:id", auth, async (req, res) => {
+  const { data: admin } = await supabase.from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const { error } = await supabase.from("bot_urls").delete().eq("id", req.params.id);
+  if (error) return res.status(500).json({ message: error.message });
+  res.json({ message: "URL eliminada" });
+});
+
+app.get("/admin/bot/status", auth, async (req, res) => {
+  const { data: admin } = await supabase.from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const status = scheduler.getStatus();
+  const { count } = await supabase
+    .from("news_suggestions").select("*", { count: "exact", head: true })
+    .eq("source", "bot").eq("status", "pending");
+
+  res.json({ ...status, pendingCount: count || 0 });
+});
+
+app.post("/admin/bot/run", auth, async (req, res) => {
+  const { data: admin } = await supabase.from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const result = await scheduler.runBot();
+  res.json({ message: "Bot ejecutado", ...result });
+});
+
+// Inicializar y arrancar el scheduler
+scheduler.init({
+  supabase,
+  groqApiKey: process.env.GROQ_API_KEY,
+  broadcast,
+});
+scheduler.startScheduler();
 
 app.listen(4000, () => {
   console.log("Servidor en https://predicciones-ecuador.onrender.com");

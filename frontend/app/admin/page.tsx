@@ -13,7 +13,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import ThemeToggle from "@/components/ThemeToggle";
 
-type Section = "overview" | "administracion" | "markets" | "users" | "settings" | "winners" | "transacciones" | "contacto" | "suggestions" | "noticias" | "comentarios";
+type Section = "overview" | "administracion" | "markets" | "users" | "settings" | "winners" | "transacciones" | "contacto" | "suggestions" | "noticias" | "comentarios" | "botnews";
 
 // ─── Toast ─────────────────────────────────────────────────────────────────────
 function Toast({ message, type, onClose }: { message: string; type: "success" | "error" | "info"; onClose: () => void }) {
@@ -123,6 +123,14 @@ export default function AdminPage() {
   const [adminComments, setAdminComments] = useState<any[]>([]);
   const [commentMarketFilter, setCommentMarketFilter] = useState<string>("all");
   const [finance, setFinance] = useState<any>(null);
+
+  // ── BotNews ──
+  const [botUrls, setBotUrls] = useState<any[]>([]);
+  const [botStatus, setBotStatus] = useState<any>(null);
+  const [botUrlInput, setBotUrlInput] = useState("");
+  const [botInterval, setBotInterval] = useState(15);
+  const [botRunning, setBotRunning] = useState(false);
+  const [botSuggestions, setBotSuggestions] = useState<any[]>([]);
 
   // ── Nuevos estados ──
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
@@ -285,6 +293,33 @@ export default function AdminPage() {
     if (res.ok) setMarketNews(data);
   };
 
+  const fetchBotUrls = async () => {
+    const token = localStorage.getItem("token");
+    const res = await fetch("https://predicciones-ecuador.onrender.com/admin/bot/urls", {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (res.ok) setBotUrls(data);
+  };
+
+  const fetchBotStatus = async () => {
+    const token = localStorage.getItem("token");
+    const res = await fetch("https://predicciones-ecuador.onrender.com/admin/bot/status", {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (res.ok) setBotStatus(data);
+  };
+
+  const fetchBotSuggestions = async () => {
+    const token = localStorage.getItem("token");
+    const res = await fetch("https://predicciones-ecuador.onrender.com/admin/news-suggestions", {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (res.ok) setBotSuggestions(data.filter((s: any) => s.source === "bot"));
+  };
+
   const fetchFinance = async () => {
     const token = localStorage.getItem("token");
     const res = await fetch("https://predicciones-ecuador.onrender.com/admin/finance", {
@@ -393,7 +428,7 @@ export default function AdminPage() {
       const data = await res.json();
       if (data.role !== "admin") { window.location.href = "/"; return; }
       setIsLogged(true); setIsAdmin(true); setPoints(data.points || 0);
-      fetchWinners(); fetchStats(); fetchUsers(); fetchSettings(); fetchCharts(); fetchTransactions(); fetchContactos(); fetchSuggestions(); fetchMarketNews(); fetchExtensionTokens(); fetchAdminComments(); fetchFinance();
+      fetchWinners(); fetchStats(); fetchUsers(); fetchSettings(); fetchCharts(); fetchTransactions(); fetchContactos(); fetchSuggestions(); fetchMarketNews(); fetchExtensionTokens(); fetchAdminComments(); fetchFinance(); fetchBotUrls(); fetchBotStatus(); fetchBotSuggestions();
     } catch {
       localStorage.removeItem("token");
       window.location.href = "/login";
@@ -558,6 +593,7 @@ export default function AdminPage() {
     { id: "markets", label: "Mercados", icon: <TrendingUp size={15} />, badge: markets.filter(m => !m.resolved).length },
     { id: "users", label: "Usuarios", icon: <Users size={15} />, badge: users.length },
     { id: "transacciones", label: "Transacciones", icon: <Wallet size={15} />, badge: transactions.filter(t => t.status === "pendiente").length },
+    { id: "botnews", label: "BotNews", icon: <span className="text-[13px]">🤖</span>, badge: botSuggestions.filter(s => s.status === "pending").length },
     { id: "suggestions", label: "Sugerencias", icon: <Lightbulb size={15} />, badge: suggestions.filter(s => s.status === "pending").length },
     { id: "noticias", label: "Noticias", icon: <Newspaper size={15} />, badge: marketNews.filter(n => n.status === "pending").length },
     { id: "comentarios", label: "Comentarios", icon: <MessageCircle size={15} />, badge: adminComments.length },
@@ -1955,7 +1991,351 @@ export default function AdminPage() {
             </>
           )}
 
-          
+          {/* BOT NEWS */}
+          {activeSection === "botnews" && (
+            <>
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-lg font-bold flex items-center gap-2">
+                    🤖 BotNews
+                  </h1>
+                  <p className="text-[12px] text-slate-400 dark:text-white/30 mt-0.5">
+                    {botSuggestions.filter(s => s.status === "pending").length} preguntas pendientes de revisión
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {botStatus?.isRunning ? (
+                    <span className="flex items-center gap-1.5 text-[11px] text-amber-600 dark:text-amber-400">
+                      <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                      Procesando...
+                    </span>
+                  ) : botUrls.filter(u => u.active).length > 0 ? (
+                    <span className="flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                      Monitoreando
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1.5 text-[11px] text-slate-400 dark:text-white/30">
+                      <span className="h-2 w-2 rounded-full bg-slate-300 dark:bg-white/20" />
+                      Sin URLs activas
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Configuración del bot */}
+              <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-5 space-y-4">
+                <p className="text-[11px] text-slate-400 dark:text-white/30 uppercase tracking-widest">Fuentes de noticias</p>
+
+                {/* Input agregar URL */}
+                <div className="flex gap-2">
+                  <input
+                    placeholder="https://www.elcomercio.com, https://reuters.com..."
+                    value={botUrlInput}
+                    onChange={(e) => setBotUrlInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        const url = botUrlInput.trim();
+                        if (!url) return;
+                        const token = localStorage.getItem("token");
+                        fetch("https://predicciones-ecuador.onrender.com/admin/bot/urls", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+                          body: JSON.stringify({ url, interval_min: botInterval }),
+                        }).then(r => r.json()).then(d => {
+                          if (d.url) { setBotUrlInput(""); fetchBotUrls(); showToast("URL agregada ✅", "success"); }
+                          else showToast(d.message || "Error", "error");
+                        });
+                      }
+                    }}
+                    className="flex-1 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] outline-none text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:border-emerald-500/50 transition"
+                  />
+                  <button
+                    onClick={async () => {
+                      const url = botUrlInput.trim();
+                      if (!url) return;
+                      const token = localStorage.getItem("token");
+                      const res = await fetch("https://predicciones-ecuador.onrender.com/admin/bot/urls", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+                        body: JSON.stringify({ url, interval_min: botInterval }),
+                      });
+                      const data = await res.json();
+                      if (res.ok) { setBotUrlInput(""); fetchBotUrls(); showToast("URL agregada ✅", "success"); }
+                      else showToast(data.message || "Error", "error");
+                    }}
+                    className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg px-4 py-2.5 text-[12px] transition shrink-0"
+                  >
+                    + Agregar
+                  </button>
+                </div>
+
+                {/* Chips de URLs */}
+                {botUrls.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {botUrls.map((u) => (
+                      <div key={u.id} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[12px] transition ${
+                        u.active
+                          ? "bg-slate-50 dark:bg-white/[0.04] border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-white/70"
+                          : "bg-slate-50/50 dark:bg-white/[0.02] border-slate-100 dark:border-white/[0.04] text-slate-400 dark:text-white/30"
+                      }`}>
+                        <span className="text-[10px]">🔗</span>
+                        <button
+                          onClick={async () => {
+                            const token = localStorage.getItem("token");
+                            await fetch(`https://predicciones-ecuador.onrender.com/admin/bot/urls/${u.id}`, {
+                              method: "PUT",
+                              headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+                              body: JSON.stringify({ active: !u.active }),
+                            });
+                            fetchBotUrls();
+                          }}
+                          className="hover:opacity-70 transition"
+                          title={u.active ? "Pausar" : "Activar"}
+                        >
+                          {u.label || new URL(u.url).hostname.replace("www.", "")}
+                        </button>
+                        <button
+                          onClick={async () => {
+                            const token = localStorage.getItem("token");
+                            await fetch(`https://predicciones-ecuador.onrender.com/admin/bot/urls/${u.id}`, {
+                              method: "DELETE",
+                              headers: { authorization: `Bearer ${token}` },
+                            });
+                            fetchBotUrls();
+                            showToast("URL eliminada", "info");
+                          }}
+                          className="text-slate-400 dark:text-white/30 hover:text-rose-500 transition ml-0.5"
+                        >
+                          <X size={11} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Intervalo y acciones */}
+                <div className="flex items-center justify-between gap-3 pt-1 border-t border-slate-100 dark:border-white/[0.04]">
+                  <div className="flex items-center gap-2 text-[12px] text-slate-400 dark:text-white/30">
+                    <span>🕐 Revisión cada</span>
+                    <select
+                      value={botInterval}
+                      onChange={async (e) => {
+                        const val = Number(e.target.value);
+                        setBotInterval(val);
+                        const token = localStorage.getItem("token");
+                        for (const u of botUrls) {
+                          await fetch(`https://predicciones-ecuador.onrender.com/admin/bot/urls/${u.id}`, {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+                            body: JSON.stringify({ interval_min: val }),
+                          });
+                        }
+                        fetchBotUrls();
+                      }}
+                      className="bg-slate-100 dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.08] rounded-lg px-2 py-1 text-[12px] text-slate-700 dark:text-white/60 outline-none"
+                    >
+                      {[5, 10, 15, 30, 60].map(v => <option key={v} value={v}>{v} min</option>)}
+                    </select>
+                    {botStatus?.lastRun && (
+                      <span className="text-slate-300 dark:text-white/20">
+                        · Última: {new Date(botStatus.lastRun).toLocaleTimeString("es-EC", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    disabled={botRunning || botUrls.filter(u => u.active).length === 0}
+                    onClick={async () => {
+                      setBotRunning(true);
+                      const token = localStorage.getItem("token");
+                      const res = await fetch("https://predicciones-ecuador.onrender.com/admin/bot/run", {
+                        method: "POST",
+                        headers: { authorization: `Bearer ${token}` },
+                      });
+                      const data = await res.json();
+                      setBotRunning(false);
+                      fetchBotSuggestions(); fetchBotStatus();
+                      showToast(`Bot ejecutado · ${data.processed || 0} preguntas generadas`, "info");
+                    }}
+                    className="bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-white/50 px-3 py-1.5 rounded-lg text-[12px] transition disabled:opacity-40 shrink-0"
+                  >
+                    {botRunning ? "⏳ Ejecutando..." : "▶ Ejecutar ahora"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Feed de noticias */}
+              <div>
+                <p className="text-[11px] text-slate-400 dark:text-white/30 uppercase tracking-widest mb-3">Noticias detectadas</p>
+
+                {botSuggestions.length === 0 && (
+                  <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-10 text-center">
+                    <p className="text-[12px] text-slate-400 dark:text-white/20">
+                      El bot aún no ha detectado noticias. Agrega URLs y ejecuta el bot.
+                    </p>
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  {botSuggestions.map((s) => (
+                    <div key={s.id} className={`bg-white dark:bg-[#111111] border rounded-xl p-5 transition ${
+                      s.status === "pending" ? "border-slate-200 dark:border-white/[0.08]"
+                      : s.status === "approved" ? "border-emerald-200 dark:border-emerald-500/20 opacity-50"
+                      : "border-slate-100 dark:border-white/[0.04] opacity-30"
+                    }`}>
+                      {/* Cabecera noticia */}
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[13px] font-semibold text-slate-900 dark:text-white leading-snug">{s.title}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            {s.url && (
+                              <a href={s.url} target="_blank" rel="noopener noreferrer"
+                                className="text-[11px] text-slate-400 dark:text-white/30 hover:text-blue-500 transition truncate max-w-[200px]">
+                                🔗 {(() => { try { return new URL(s.url).hostname.replace("www.", ""); } catch { return s.url; } })()}
+                              </a>
+                            )}
+                            <span className="text-[11px] text-slate-300 dark:text-white/20">
+                              {new Date(s.created_at).toLocaleString("es-EC", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {s.impact && (
+                            <span className={`text-[10px] px-2 py-0.5 rounded-md uppercase tracking-wider font-bold ${
+                              s.impact === "alto" ? "bg-rose-50 dark:bg-rose-500/15 text-rose-600 dark:text-rose-400"
+                              : s.impact === "medio" ? "bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                              : "bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-white/30"
+                            }`}>
+                              {s.impact === "alto" ? "● Alto impacto" : s.impact === "medio" ? "▶ Medio" : "○ Bajo"}
+                            </span>
+                          )}
+                          <span className={`text-[10px] px-2 py-0.5 rounded-md uppercase tracking-wider ${
+                            s.status === "pending" ? "bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                            : s.status === "approved" ? "bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                            : "bg-slate-100 dark:bg-white/[0.06] text-slate-400 dark:text-white/30"
+                          }`}>
+                            {s.status === "pending" ? "Pendiente" : s.status === "approved" ? "Aprobado" : "Rechazado"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Resumen */}
+                      {s.summary && (
+                        <p className="text-[12px] text-slate-500 dark:text-white/40 mb-4 leading-relaxed border-l-2 border-slate-200 dark:border-white/10 pl-3">
+                          {s.summary}
+                        </p>
+                      )}
+
+                      {/* Pregunta generada */}
+                      {s.new_market_question && (
+                        <div className="bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.06] rounded-xl px-4 py-3 mb-3 space-y-3">
+                          <p className="text-[10px] text-slate-400 dark:text-white/30 uppercase tracking-widest">✦ Pregunta de predicción</p>
+                          <p className="text-[13px] text-slate-900 dark:text-white font-semibold">{s.new_market_question}</p>
+
+                          {/* Refinar */}
+                          {s.status === "pending" && (
+                            <div className="flex gap-2">
+                              <input
+                                placeholder="Refinar: hazla más específica, cambia el plazo..."
+                                value={refinPrompts[s.id] || ""}
+                                onChange={(e) => setRefinPrompts((prev) => ({ ...prev, [s.id]: e.target.value }))}
+                                onKeyDown={(e) => { if (e.key === "Enter") handleRefine(s.id, s.new_market_question); }}
+                                className="flex-1 bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-[12px] outline-none text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:border-emerald-500/40 transition"
+                              />
+                              <button
+                                onClick={() => handleRefine(s.id, s.new_market_question)}
+                                disabled={refining[s.id]}
+                                className="bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-white/60 px-3 py-2 rounded-lg text-[12px] transition disabled:opacity-50 shrink-0"
+                              >
+                                {refining[s.id] ? "⏳" : "✨ Refinar"}
+                              </button>
+                            </div>
+                          )}
+
+                          {/* Probabilidades */}
+                          {s.probability_yes != null && (
+                            <div className="space-y-1.5">
+                              <div className="flex justify-between text-[11px]">
+                                <span className="text-emerald-600 dark:text-emerald-400 font-bold">Sí {s.probability_yes}%</span>
+                                <span className="text-rose-500 dark:text-rose-400 font-bold">No {s.probability_no}%</span>
+                              </div>
+                              <div className="h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden flex">
+                                <div className="bg-emerald-500 transition-all" style={{ width: `${s.probability_yes}%` }} />
+                                <div className="bg-rose-500 flex-1" />
+                              </div>
+                              {s.probability_reasoning && (
+                                <p className="text-[11px] text-slate-400 dark:text-white/25 italic">{s.probability_reasoning}</p>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Fecha sugerida */}
+                          {s.suggested_close_date && (
+                            <p className="text-[11px] text-slate-400 dark:text-white/30">
+                              📅 Cierre sugerido: <span className="font-semibold">{s.suggested_close_date}</span>
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Acciones */}
+                      {s.status === "pending" && (
+                        <div className="flex gap-2">
+                          {s.new_market_question && (
+                            <button
+                              onClick={async () => {
+                                const token = localStorage.getItem("token");
+                                const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/news-suggestions/${s.id}`, {
+                                  method: "PUT",
+                                  headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+                                  body: JSON.stringify({ action: "approve_market" }),
+                                });
+                                const data = await res.json();
+                                if (res.ok) { showToast("Mercado creado ✅", "success"); fetchBotSuggestions(); fetchMarkets(); }
+                                else showToast(data.message || "Error", "error");
+                              }}
+                              className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg py-2 text-[12px] transition"
+                            >
+                              ✓ Crear mercado
+                            </button>
+                          )}
+                          <button
+                            onClick={async () => {
+                              const token = localStorage.getItem("token");
+                              await fetch(`https://predicciones-ecuador.onrender.com/admin/news-suggestions/${s.id}`, {
+                                method: "PUT",
+                                headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+                                body: JSON.stringify({ action: "reject" }),
+                              });
+                              fetchBotSuggestions();
+                            }}
+                            className="px-4 py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] text-[12px] text-slate-500 dark:text-white/40 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-500 hover:border-rose-200 dark:hover:border-rose-500/20 transition"
+                          >
+                            ✕ Rechazar
+                          </button>
+                          <button
+                            onClick={async () => {
+                              const token = localStorage.getItem("token");
+                              await fetch(`https://predicciones-ecuador.onrender.com/admin/news-suggestions/${s.id}`, {
+                                method: "DELETE",
+                                headers: { authorization: `Bearer ${token}` },
+                              });
+                              fetchBotSuggestions();
+                              showToast("Eliminado", "info");
+                            }}
+                            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] text-[12px] text-slate-400 dark:text-white/25 hover:text-rose-500 transition"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
 
           {/* CONFIGURACIÓN */}
           {activeSection === "settings" && config && (
