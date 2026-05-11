@@ -162,6 +162,20 @@ function useToast() {
 // HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
 
+function getPageNumbers(current: number, total: number): (number | "...")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const range: (number | "...")[] = [1];
+  const start = Math.max(2, current - 1);
+  const end   = Math.min(total - 1, current + 1);
+  if (start === 3) range.push(2);
+  else if (start > 3) range.push("...");
+  for (let i = start; i <= end; i++) range.push(i);
+  if (end === total - 2) range.push(total - 1);
+  else if (end < total - 2) range.push("...");
+  range.push(total);
+  return range;
+}
+
 function filterMarkets(markets: Market[], category: string, favorites: number[]): Market[] {
   switch (category) {
     case "all":
@@ -169,7 +183,7 @@ function filterMarkets(markets: Market[], category: string, favorites: number[])
         .filter((m) => !m.resolved)
         .sort((a, b) => (b.yes + b.no) - (a.yes + a.no));
     case "mercados":
-      return markets.filter((m) => !m.resolved);
+      return markets;
     case "resueltos":
       return markets.filter((m) => m.resolved);
     case "favoritos":
@@ -422,15 +436,18 @@ function MarketCard({
 
       {/* Acción */}
       {isResolved ? (
-        <div
-          className={`text-center text-sm px-3 py-3 rounded-xl font-bold flex items-center justify-center gap-1.5 ${
-            market.winner === "yes"
-              ? "bg-emerald-500/10 text-emerald-400"
-              : "bg-rose-500/10 text-rose-400"
-          }`}
-        >
-          <Trophy size={14} />
-          {market.winner === "yes" ? "Ganó SÍ" : "Ganó NO"}
+        <div className={`px-3 py-2.5 rounded-xl text-sm font-bold flex items-center justify-between gap-2 ${
+          market.winner === "yes" ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"
+        }`}>
+          <div className="flex items-center gap-1.5">
+            <Trophy size={13} />
+            {market.winner === "yes" ? "Ganó SÍ" : "Ganó NO"}
+          </div>
+          <div className="flex items-center gap-1 text-xs font-medium">
+            <span className={market.winner === "yes" ? "font-bold" : "text-slate-400"}>{yesPct}%</span>
+            <span className="text-slate-400 font-normal">/</span>
+            <span className={market.winner === "no" ? "font-bold" : "text-slate-400"}>{noPct}%</span>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-2">
@@ -645,14 +662,26 @@ export default function Home() {
         <section>
           {/* Encabezado dinámico */}
           <div className="flex items-center gap-2 mb-4">
-            <SectionHeader category={activeCategory} count={visibleMarkets.length} />
+            <SectionHeader category={activeCategory} count={filteredMarkets.length} />
           </div>
 
           {/* Empty state */}
-          {visibleMarkets.length === 0 && <EmptyState category={activeCategory} />}
+          {activeCategory === "favoritos" && !getToken() ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <HeartIcon size={40} />
+              <p className="text-sm text-center max-w-xs text-slate-400">
+                Inicia sesión para guardar y ver tus mercados favoritos
+              </p>
+              <Link href="/login" className="px-5 py-2.5 bg-emerald-500 text-slate-950 font-bold text-sm rounded-xl hover:bg-emerald-600 active:scale-95 transition-all">
+                Iniciar sesión
+              </Link>
+            </div>
+          ) : visibleMarkets.length === 0 ? (
+            <EmptyState category={activeCategory} />
+          ) : null}
 
           {/* Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div key={`${activeCategory}-${currentPage}`} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-fadein">
             {visibleMarkets.map((market) => (
               <MarketCard
                 key={market.id}
@@ -675,19 +704,23 @@ export default function Home() {
               </button>
 
               <div className="flex items-center gap-1">
-                {Array.from({ length: totalPages }).map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setCurrentPage(i + 1)}
-                    className={`w-8 h-8 rounded-lg text-sm font-medium transition-all ${
-                      currentPage === i + 1
-                        ? "bg-emerald-500 text-white shadow-sm scale-[1.05]"
-                        : "bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300"
-                    }`}
-                  >
-                    {i + 1}
-                  </button>
-                ))}
+                {getPageNumbers(currentPage, totalPages).map((page, i) =>
+                  page === "..." ? (
+                    <span key={`ellipsis-${i}`} className="w-8 h-8 flex items-center justify-center text-sm text-slate-400 select-none">…</span>
+                  ) : (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-8 h-8 rounded-lg text-sm font-medium transition-all ${
+                        currentPage === page
+                          ? "bg-emerald-500 text-white shadow-sm scale-[1.05]"
+                          : "bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  )
+                )}
               </div>
 
               <button
