@@ -131,6 +131,7 @@ export default function AdminPage() {
   } | null>(null);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const [marketFilter, setMarketFilter] = useState<"activos" | "todos" | "resueltos">("activos");
+  const [marketCategoryFilter, setMarketCategoryFilter] = useState<string>("todas");
   const [txFilter, setTxFilter] = useState<"transferencia" | "tarjeta" | "retiro">("transferencia");
 
   const showToast = (message: string, type: "success" | "error" | "info" = "success") => setToast({ message, type });
@@ -169,9 +170,9 @@ export default function AdminPage() {
   // ── Paginación ──
   const filteredMarkets = markets.filter(m => {
     const matchesSearch = m.question.toLowerCase().includes(searchQuery.toLowerCase());
-    if (marketFilter === "activos") return matchesSearch && !m.resolved;
-    if (marketFilter === "resueltos") return matchesSearch && m.resolved;
-    return matchesSearch;
+    const matchesStatus = marketFilter === "activos" ? !m.resolved : marketFilter === "resueltos" ? m.resolved : true;
+    const matchesCategory = marketCategoryFilter === "todas" ? true : m.category === marketCategoryFilter;
+    return matchesSearch && matchesStatus && matchesCategory;
   });
   const filteredUsers = users.filter(u =>
     u.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -887,13 +888,23 @@ export default function AdminPage() {
                   <h1 className="text-lg font-bold">Mercados</h1>
                   <p className="text-[12px] text-slate-400 dark:text-white/30 mt-0.5">{markets.filter(m => !m.resolved).length} activos · {markets.filter(m => m.resolved).length} cerrados</p>
                 </div>
-                <div className="flex items-center gap-1 bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-lg p-1">
-                  {(["activos", "todos", "resueltos"] as const).map((f) => (
-                    <button key={f} onClick={() => setMarketFilter(f)}
-                      className={`px-3 py-1.5 rounded-md text-[11px] font-medium transition capitalize ${marketFilter === f ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/70"}`}>
-                      {f}
-                    </button>
-                  ))}
+                <div className="flex flex-col gap-2 items-end">
+                  <div className="flex items-center gap-1 bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-lg p-1">
+                    {(["activos", "todos", "resueltos"] as const).map((f) => (
+                      <button key={f} onClick={() => setMarketFilter(f)}
+                        className={`px-3 py-1.5 rounded-md text-[11px] font-medium transition capitalize ${marketFilter === f ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/70"}`}>
+                        {f}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-1 bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-lg p-1">
+                    {(["todas", "deporte", "farandula", "politica", "elecciones", "pais", "general"] as const).map((c) => (
+                      <button key={c} onClick={() => setMarketCategoryFilter(c)}
+                        className={`px-3 py-1.5 rounded-md text-[11px] font-medium transition capitalize ${marketCategoryFilter === c ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/70"}`}>
+                        {c === "farandula" ? "Farándula" : c === "politica" ? "Política" : c.charAt(0).toUpperCase() + c.slice(1)}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
