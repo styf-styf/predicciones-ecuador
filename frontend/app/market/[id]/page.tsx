@@ -191,7 +191,8 @@ export default function MarketPage() {
   };
 
   const handleShare = async () => {
-    if (typeof navigator !== "undefined" && navigator.share) {
+    const isMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 1023px)").matches;
+    if (isMobile && typeof navigator !== "undefined" && navigator.share) {
       try {
         await navigator.share({ title: market?.question ?? "", url: window.location.href });
       } catch {
