@@ -358,8 +358,8 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
                   </Link>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {movimientos.slice(0, 5).map((mov) => (
+                <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                  {movimientos.slice(0, 10).map((mov) => (
                     <MovimientoRow key={mov.id} mov={mov} />
                   ))}
                 </div>
@@ -419,8 +419,8 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
             {movimientos.length === 0 ? (
               <p className="text-sm text-slate-400 py-8 text-center">Sin movimientos aún</p>
             ) : (
-              <div className="space-y-2">
-                {movimientos.map((mov) => (
+              <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
+                {movimientos.slice(0, 100).map((mov) => (
                   <MovimientoRow key={mov.id} mov={mov} full />
                 ))}
               </div>
