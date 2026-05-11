@@ -190,6 +190,18 @@ export default function MarketPage() {
     setToast({ text: "¡Enlace copiado!", type: "success" });
   };
 
+  const handleShare = async () => {
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ title: market?.question ?? "", url: window.location.href });
+      } catch {
+        // usuario canceló
+      }
+    } else {
+      setShowShare(s => !s);
+    }
+  };
+
   const fetchMarket = async () => {
     const res = await fetch(`https://predicciones-ecuador.onrender.com/markets`);
     const data = await res.json();
@@ -457,7 +469,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
           <div className="flex items-start justify-between gap-2">
             <h1 className="text-[14px] font-bold leading-snug flex-1">{market.question}</h1>
             <div className="relative shrink-0">
-              <button onClick={() => setShowShare(s => !s)} className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
+              <button onClick={handleShare} className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
                 <Share2 size={14} />
               </button>
               {showShare && (
@@ -695,7 +707,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
               <div className="flex items-start justify-between gap-3">
                 <h1 className="text-xl sm:text-2xl font-bold leading-snug flex-1">{market.question}</h1>
                 <div className="relative shrink-0 mt-1">
-                  <button onClick={() => setShowShare(s => !s)} className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
+                  <button onClick={handleShare} className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
                     <Share2 size={15} />
                   </button>
                   {showShare && (
