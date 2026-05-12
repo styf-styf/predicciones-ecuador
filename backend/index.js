@@ -1947,14 +1947,14 @@ app.post("/admin/news-suggestions/:id/chat", async (req, res) => {
   }
 
   try {
-    const aiRes = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
+    const aiRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.GEMINI_API_KEY}`,
+        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "gemini-2.0-flash",
+        model: "llama-3.1-8b-instant",
         temperature: 0.3,
         messages: [
           { role: "system", content: systemPrompt },
