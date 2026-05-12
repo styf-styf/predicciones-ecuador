@@ -1859,6 +1859,7 @@ app.post("/admin/news-suggestions/:id/chat", async (req, res) => {
   const { messages, suggestion } = req.body;
   if (!messages || !suggestion) return res.status(400).json({ message: "Faltan datos" });
 
+  const isNewsMode = suggestion.mode === "news";
   const userQuestion = messages[messages.length - 1]?.content || "";
 
   // 1. Intentar obtener el contenido completo del artículo
@@ -1912,7 +1913,29 @@ app.post("/admin/news-suggestions/:id/chat", async (req, res) => {
     }
   }
 
-  const systemPrompt = `Eres un asistente experto en mercados de predicción para Ecuador. Ayudas al administrador a verificar y refinar preguntas generadas automáticamente.
+  const systemPrompt = isNewsMode
+    ? `Eres un asistente que ayuda al administrador a analizar y reformular noticias de mercados para Ecuador.
+
+NOTICIA:
+- Título: ${suggestion.title || "N/A"}
+- URL: ${suggestion.url || "N/A"}
+- Contenido: ${suggestion.summary || "N/A"}
+
+${articleContent ? `CONTENIDO COMPLETO DEL ARTÍCULO:\n${articleContent}\n` : ""}
+${tavilyContext ? `BÚSQUEDA EN INTERNET:\n${tavilyContext}\n` : ""}
+
+Tu rol:
+1. Responder preguntas sobre la noticia usando el artículo y la búsqueda
+2. Si el admin pide reformular o mejorar el título/contenido, propón una versión mejorada en el campo "new_text"
+3. Indicar de dónde sacas la información
+4. Ser conciso y directo
+
+IMPORTANTE: Responde SIEMPRE en JSON sin markdown:
+{
+  "reply": "tu respuesta aquí",
+  "new_text": "título o texto reformulado si se pidió, si no null"
+}`
+    : `Eres un asistente experto en mercados de predicción para Ecuador. Ayudas al administrador a verificar y refinar preguntas generadas automáticamente.
 
 NOTICIA ORIGINAL:
 - Título: ${suggestion.title || "N/A"}
@@ -1958,9 +1981,13 @@ IMPORTANTE: Responde SIEMPRE en JSON sin markdown:
     const clean = rawText.replace(/```json|```/g, "").trim();
     let parsed;
     try { parsed = JSON.parse(clean); }
-    catch { parsed = { reply: clean, new_question: null }; }
+    catch { parsed = { reply: clean, new_question: null, new_text: null }; }
 
-    res.json({ reply: parsed.reply || "Sin respuesta", new_question: parsed.new_question || null });
+    res.json({
+      reply: parsed.reply || "Sin respuesta",
+      new_question: isNewsMode ? null : (parsed.new_question || null),
+      new_text: isNewsMode ? (parsed.new_text || null) : null,
+    });
   } catch (err) {
     console.error("Error en chat IA:", err);
     res.status(500).json({ message: "Error al contactar la IA" });

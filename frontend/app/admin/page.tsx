@@ -224,6 +224,7 @@ export default function AdminPage() {
       const assistantMsg = { role: "assistant", content: data.reply || "Error al responder" };
       setChatMessages(prev => ({ ...prev, [key]: [...history, assistantMsg] }));
       if (data.new_question) setChatPending(prev => ({ ...prev, [key]: data.new_question }));
+      if (data.new_text) setChatPending(prev => ({ ...prev, [key]: data.new_text }));
     } catch {
       setChatMessages(prev => ({ ...prev, [key]: [...history, { role: "assistant", content: "Error de conexión" }] }));
     } finally {
@@ -240,6 +241,7 @@ export default function AdminPage() {
     });
     if (res.ok) {
       fetchBotSuggestions();
+      fetchSuggestions();
       setChatPending(prev => ({ ...prev, [key]: null }));
       showToast("Pregunta actualizada ✅", "success");
     }
@@ -1819,12 +1821,18 @@ export default function AdminPage() {
                         )}
                         {chatPending[`n-${n.id}`] && (
                           <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 rounded-xl p-3 space-y-2">
-                            <p className="text-[10px] text-emerald-600 dark:text-emerald-400 uppercase tracking-widest font-bold">✦ Nueva pregunta sugerida</p>
+                            <p className="text-[10px] text-emerald-600 dark:text-emerald-400 uppercase tracking-widest font-bold">✦ Texto reformulado</p>
                             <p className="text-[12px] text-slate-900 dark:text-white font-medium">{chatPending[`n-${n.id}`]}</p>
-                            <button
-                              onClick={() => setChatPending(prev => ({ ...prev, [`n-${n.id}`]: null }))}
-                              className="text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-white/60 transition"
-                            >Ignorar</button>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => { navigator.clipboard.writeText(chatPending[`n-${n.id}`]!); showToast("Copiado al portapapeles", "info"); }}
+                                className="bg-emerald-500 hover:bg-emerald-400 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition"
+                              >📋 Copiar</button>
+                              <button
+                                onClick={() => setChatPending(prev => ({ ...prev, [`n-${n.id}`]: null }))}
+                                className="text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-white/60 px-2 py-1.5 transition"
+                              >Ignorar</button>
+                            </div>
                           </div>
                         )}
                         <div className="flex gap-2">
@@ -1832,12 +1840,12 @@ export default function AdminPage() {
                             placeholder="Pregunta a la IA sobre esta noticia..."
                             value={chatInput[`n-${n.id}`] || ""}
                             onChange={(e) => setChatInput(prev => ({ ...prev, [`n-${n.id}`]: e.target.value }))}
-                            onKeyDown={(e) => { if (e.key === "Enter" && !chatSending[`n-${n.id}`]) handleChat(`n-${n.id}`, n.id, { title: n.title, summary: n.content, current_question: null, url: n.url }); }}
+                            onKeyDown={(e) => { if (e.key === "Enter" && !chatSending[`n-${n.id}`]) handleChat(`n-${n.id}`, n.id, { title: n.title, summary: n.content, current_question: null, url: n.url, mode: "news" }); }}
                             disabled={chatSending[`n-${n.id}`]}
                             className="flex-1 bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-[12px] outline-none text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:border-emerald-500/40 transition disabled:opacity-50"
                           />
                           <button
-                            onClick={() => handleChat(`n-${n.id}`, n.id, { title: n.title, summary: n.content, current_question: null, url: n.url })}
+                            onClick={() => handleChat(`n-${n.id}`, n.id, { title: n.title, summary: n.content, current_question: null, url: n.url, mode: "news" })}
                             disabled={chatSending[`n-${n.id}`] || !chatInput[`n-${n.id}`]?.trim()}
                             className="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-white px-3 py-2 rounded-lg text-[12px] font-bold transition shrink-0"
                           >
