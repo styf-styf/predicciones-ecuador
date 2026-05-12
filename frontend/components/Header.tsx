@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Bell, Search, LogOut, LogIn, Menu, X } from "lucide-react";
+import { Bell, Search, LogOut, LogIn, X } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 
 export default function Header() {
@@ -13,7 +13,6 @@ export default function Header() {
   const userMenuRef = useRef<any>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -105,7 +104,7 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-3">
 
         {/* Logo */}
-        <Link href="/" onClick={() => setShowMobileMenu(false)} className="flex items-center gap-2 sm:gap-3 min-w-0">
+        <Link href="/" className="flex items-center gap-2 sm:gap-3 min-w-0">
           <div className="h-9 w-9 sm:h-10 sm:w-10 shrink-0 rounded-2xl bg-emerald-500 grid place-items-center font-bold text-slate-950 text-sm sm:text-base">P</div>
           <div className="min-w-0 hidden sm:block">
             <h1 className="text-base sm:text-xl font-bold leading-tight truncate">Predicciones Ecuador</h1>
@@ -153,7 +152,11 @@ export default function Header() {
 
         {/* Acciones */}
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="hidden sm:block"><ThemeToggle /></div>
+          {/* Búsqueda móvil */}
+          <button onClick={() => setShowMobileSearch(!showMobileSearch)} className="sm:hidden p-2 rounded-xl bg-slate-200 dark:bg-slate-900 text-slate-900 dark:text-white">
+            <Search size={18} />
+          </button>
+          <ThemeToggle />
 
           {/* Notificaciones */}
           <div className="relative" ref={notifRef}>
@@ -207,7 +210,7 @@ export default function Header() {
             {!mounted ? (
               <div className="w-8 h-8 sm:w-20 bg-slate-100 dark:bg-slate-900 rounded-xl animate-pulse" />
             ) : !isLogged ? (
-              <Link href="/login" className="hidden sm:flex text-sm font-semibold text-emerald-500 hover:text-emerald-400 transition-colors items-center gap-1.5">
+              <Link href="/login" className="flex text-sm font-semibold text-emerald-500 hover:text-emerald-400 transition-colors items-center gap-1.5">
                 <LogIn size={15} /> Login
               </Link>
             ) : (
@@ -253,13 +256,6 @@ export default function Header() {
             )}
           </div>
 
-          {/* Hamburguesa móvil */}
-          <button onClick={() => { setShowMobileSearch(!showMobileSearch); setShowMobileMenu(false); }} className="sm:hidden p-2 rounded-xl bg-slate-200 dark:bg-slate-900 text-slate-900 dark:text-white">
-            <Search size={18} />
-          </button>
-          <button onClick={() => { setShowMobileMenu(!showMobileMenu); setShowMobileSearch(false); }} className="sm:hidden p-2 rounded-xl bg-slate-200 dark:bg-slate-900 text-slate-900 dark:text-white">
-            {showMobileMenu ? <X size={18} /> : <Menu size={18} />}
-          </button>
         </div>
       </div>
 
@@ -298,46 +294,6 @@ export default function Header() {
         </div>
       )}
 
-      {/* Menú móvil */}
-      {showMobileMenu && (
-        <div className="sm:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-4 space-y-3"
-          style={{ animation: "slideDown 0.15s ease" }}>
-
-          {/* Modo claro/oscuro */}
-          <div className="flex justify-center">
-            <ThemeToggle />
-          </div>
-
-          {/* Links */}
-          <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
-            {isLogged && (
-              <Link href="/panel" onClick={() => setShowMobileMenu(false)}
-                className="flex items-center gap-3 px-4 py-3 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition border-b border-slate-100 dark:border-slate-800">
-                <span>👤</span> Mi panel
-              </Link>
-            )}
-            {isAdmin && (
-              <Link href="/admin" onClick={() => setShowMobileMenu(false)}
-                className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition border-b border-slate-100 dark:border-slate-800">
-                <span>⚙️</span> Admin
-              </Link>
-            )}
-            {isLogged ? (
-              <button
-                onClick={() => { localStorage.removeItem("token"); localStorage.removeItem("role"); localStorage.removeItem("points"); setIsLogged(false); setPoints(null); setIsAdmin(false); setShowMobileMenu(false); window.location.href = "/"; }}
-                className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition w-full">
-                <LogOut size={15} /> Cerrar sesión
-              </button>
-            ) : (
-              <Link href="/login" onClick={() => setShowMobileMenu(false)}
-                className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition">
-                <LogIn size={15} /> Iniciar sesión
-              </Link>
-            )}
-          </div>
-
-        </div>
-      )}
   </header>
     </>
   );
