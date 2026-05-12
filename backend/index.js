@@ -886,18 +886,24 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
   if (!market) return res.status(404).json({ message: "Mercado no encontrado" });
   if (market.resolved) return res.status(400).json({ message: "Mercado ya resuelto" });
 
-  const { data: allBets } = await supabase
+  const { data: allBets, error: allBetsError } = await supabase
     .from("bets").select("*").eq("market_id", marketId);
+
+  console.log(`[resolve] Mercado ${marketId} | winner=${winner} | bets=${allBets?.length ?? 0} | error=${allBetsError?.message ?? "none"}`);
 
   if (!allBets || allBets.length === 0) {
     await supabase.from("markets").update({ resolved: true, winner }).eq("id", marketId);
     return res.json({ message: "Mercado resuelto, no hubo apuestas" });
   }
 
-  const winningBets = allBets.filter((b) => b.type === winner);
-  const losingBets = allBets.filter((b) => b.type !== winner);
+  // Normalizar tipo para evitar problemas de espacios o mayúsculas
+  const winningBets = allBets.filter((b) => b.type?.trim().toLowerCase() === winner);
+  const losingBets = allBets.filter((b) => b.type?.trim().toLowerCase() !== winner);
   const losingPool = losingBets.reduce((sum, b) => sum + Number(b.amount), 0);
   const winningPool = winningBets.reduce((sum, b) => sum + Number(b.amount), 0);
+
+  console.log(`[resolve] winningBets=${winningBets.length} | losingBets=${losingBets.length} | winningPool=${winningPool} | losingPool=${losingPool} | COMMISSION=${COMMISSION}`);
+  console.log(`[resolve] Tipos encontrados en bets:`, allBets.map(b => `id=${b.id} type="${b.type}" amount=${b.amount} user_id=${b.user_id}`));
 
   if (winningBets.length === 0) {
     await supabase.from("markets").update({ resolved: true, winner }).eq("id", marketId);
@@ -908,8 +914,10 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
 
   for (const bet of winningBets) {
     const amount = Number(bet.amount);
+    console.log(`[resolve] → Procesando bet ganador id=${bet.id} | user_id=${bet.user_id} | amount=${amount} | type=${bet.type}`);
+
     if (!amount || isNaN(amount) || amount <= 0) {
-      console.error(`[resolve] Bet ${bet.id} tiene amount inválido:`, bet.amount);
+      console.error(`[resolve] ✗ SKIP bet ${bet.id}: amount inválido (${bet.amount})`);
       continue;
     }
     const participation = winningPool > 0 ? amount / winningPool : 0;
@@ -918,27 +926,35 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
     totalCommission += commission;
     const netProfit = grossProfit - commission;
     const payout = parseFloat((amount + netProfit).toFixed(2));
+
+    console.log(`[resolve] Cálculo bet ${bet.id}: participation=${participation.toFixed(4)} | grossProfit=${grossProfit.toFixed(2)} | commission=${commission.toFixed(2)} | payout=${payout}`);
+
     if (isNaN(payout) || payout <= 0) {
-      console.error(`[resolve] Payout inválido para bet ${bet.id}:`, payout);
+      console.error(`[resolve] ✗ SKIP bet ${bet.id}: payout inválido (${payout})`);
       continue;
     }
 
     const { data: user, error: userError } = await supabase
       .from("users").select("points").eq("id", bet.user_id).single();
 
+    console.log(`[resolve] User fetch para ${bet.user_id}: data=${JSON.stringify(user)} | error=${userError?.message ?? "none"} | code=${userError?.code ?? "none"}`);
+
     if (userError || !user) {
-      console.error(`[resolve] Error obteniendo usuario ${bet.user_id}:`, userError?.message);
+      console.error(`[resolve] ✗ SKIP bet ${bet.id}: usuario no encontrado (user_id=${bet.user_id})`);
       continue;
     }
 
     const newPoints = parseFloat((Number(user.points) + payout).toFixed(2));
+    console.log(`[resolve] Actualizando saldo: ${user.points} + ${payout} = ${newPoints}`);
 
     const { error: updateError } = await supabase.from("users")
       .update({ points: newPoints })
       .eq("id", bet.user_id);
 
+    console.log(`[resolve] Users update: error=${updateError?.message ?? "none"}`);
+
     if (updateError) {
-      console.error(`[resolve] Error actualizando puntos de ${bet.user_id}:`, updateError.message);
+      console.error(`[resolve] ✗ SKIP bet ${bet.id}: error actualizando puntos de ${bet.user_id}: ${updateError.message}`);
       continue;
     }
 
@@ -946,8 +962,11 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
     const { error: payoutError } = await supabase.from("bets")
       .update({ payout })
       .eq("id", bet.id);
+
+    console.log(`[resolve] Bets payout update id=${bet.id}: payout=${payout} | error=${payoutError?.message ?? "none"}`);
+
     if (payoutError) {
-      console.error(`[resolve] Error guardando payout en bet ${bet.id}:`, payoutError.message);
+      console.error(`[resolve] ✗ Error guardando payout en bet ${bet.id}:`, payoutError.message);
     }
 
     // Guardar commission_paid por separado (informativo, no crítico)
