@@ -69,11 +69,12 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
         fetch("https://predicciones-ecuador.onrender.com/my-movements", { headers }),
         fetch("https://predicciones-ecuador.onrender.com/config", { headers }),
       ]);
+      if (!meRes.ok) { router.push("/login"); return; }
       const meData = await meRes.json();
-      const betsData = await betsRes.json();
-      const rankData = await rankRes.json();
-      const movData = await movRes.json();
-      const configData = await configRes.json();
+      const betsData = betsRes.ok ? await betsRes.json() : [];
+      const rankData = rankRes.ok ? await rankRes.json() : [];
+      const movData = movRes.ok ? await movRes.json() : [];
+      const configData = configRes.ok ? await configRes.json() : null;
 
       setUser(meData);
       setBets(betsData || []);
@@ -95,7 +96,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
       setBankConfig(configData);
       setLoading(false);
     } catch (error) {
-      setLoading(false);
+      router.push("/login");
     }
   };
 
