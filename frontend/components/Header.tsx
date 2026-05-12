@@ -196,9 +196,9 @@ export default function Header() {
                       const base = `p-3 rounded-xl border ${n.read ? "border-slate-200 dark:border-slate-800" : "border-emerald-500/30"}`;
                       const inner = (
                         <>
-                          <p className="font-semibold text-sm">{n.title}</p>
-                          <p className="text-xs text-slate-300 mt-1">{n.message}</p>
-                          <p className="text-[10px] text-slate-500 mt-2">{new Date(n.created_at).toLocaleString()}</p>
+                          <p className="font-semibold text-sm text-slate-900 dark:text-white">{n.title}</p>
+                          <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">{n.message}</p>
+                          <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-2">{new Date(n.created_at).toLocaleString()}</p>
                         </>
                       );
                       return n.market_id ? (
