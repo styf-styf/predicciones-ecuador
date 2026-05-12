@@ -107,7 +107,7 @@ export default function Header() {
         {/* Logo */}
         <Link href="/" onClick={() => setShowMobileMenu(false)} className="flex items-center gap-2 sm:gap-3 min-w-0">
           <div className="h-9 w-9 sm:h-10 sm:w-10 shrink-0 rounded-2xl bg-emerald-500 grid place-items-center font-bold text-slate-950 text-sm sm:text-base">P</div>
-          <div className="min-w-0">
+          <div className="min-w-0 hidden sm:block">
             <h1 className="text-base sm:text-xl font-bold leading-tight truncate">Predicciones Ecuador</h1>
             <p className="text-[10px] sm:text-xs text-slate-400 hidden sm:block">Mercados predictivos en tiempo real</p>
           </div>
@@ -304,8 +304,7 @@ export default function Header() {
           style={{ animation: "slideDown 0.15s ease" }}>
 
           {/* Modo claro/oscuro */}
-          <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3">
-            <span className="text-sm text-slate-600 dark:text-slate-300">Modo de color</span>
+          <div className="flex justify-center">
             <ThemeToggle />
           </div>
 
