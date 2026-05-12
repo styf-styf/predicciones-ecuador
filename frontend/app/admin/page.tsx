@@ -843,7 +843,7 @@ export default function AdminPage() {
                           </span>
                         </div>
                         <p className="col-span-2 text-right text-[12px] text-emerald-600 dark:text-emerald-400 font-bold tabular-nums">+{w.reward} $</p>
-                        <p className="col-span-1 text-right text-[10px] text-slate-400 dark:text-white/20">{new Date(w.created_at).toLocaleDateString()}</p>
+                        <p className="col-span-1 text-right text-[10px] text-slate-400 dark:text-white/20">{new Date(w.created_at + "Z").toLocaleDateString("es-EC", { timeZone: "America/Guayaquil", day: "numeric", month: "short", year: "numeric" })}</p>
                       </div>
                       <div className="sm:hidden flex items-center justify-between gap-2">
                         <div className="min-w-0">
@@ -1553,7 +1553,7 @@ export default function AdminPage() {
                             <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-white/40">
                               <span>📅 Fecha sugerida de cierre:</span>
                               <span className="text-slate-700 dark:text-white/60 font-semibold">
-                                {new Date(s.suggested_close_date).toLocaleDateString("es-EC", { day: "numeric", month: "long", year: "numeric" })}
+                                {new Date(s.suggested_close_date + "T12:00:00").toLocaleDateString("es-EC", { timeZone: "America/Guayaquil", day: "numeric", month: "long", year: "numeric" })}
                               </span>
                             </div>
                           )}
@@ -1625,7 +1625,7 @@ export default function AdminPage() {
                       </div>
                     )}
 
-                    <p className="text-[10px] text-slate-300 dark:text-white/15 mt-3">{new Date(s.created_at).toLocaleString()}</p>
+                    <p className="text-[10px] text-slate-300 dark:text-white/15 mt-3">{new Date(s.created_at + "Z").toLocaleString("es-EC", { timeZone: "America/Guayaquil", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
                     {s.status !== "pending" && (
                       <button
                         onClick={async () => {
@@ -2234,7 +2234,7 @@ export default function AdminPage() {
                     </select>
                     {botStatus?.lastRun && (
                       <span className="text-slate-300 dark:text-white/20">
-                        · Última: {new Date(botStatus.lastRun).toLocaleTimeString("es-EC", { hour: "2-digit", minute: "2-digit" })}
+                        · Última: {new Date(botStatus.lastRun + "Z").toLocaleTimeString("es-EC", { timeZone: "America/Guayaquil", hour: "2-digit", minute: "2-digit" })}
                       </span>
                     )}
                   </div>
@@ -2476,7 +2476,7 @@ export default function AdminPage() {
               <div>
                 <h1 className="text-lg font-bold">Configuración</h1>
                 <p className="text-[12px] text-slate-400 dark:text-white/30 mt-0.5">
-                  {config.updated_at ? `Actualizado ${new Date(config.updated_at).toLocaleString()}` : "Parámetros de la plataforma"}
+                  {config.updated_at ? `Actualizado ${new Date(config.updated_at + "Z").toLocaleString("es-EC", { timeZone: "America/Guayaquil", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}` : "Parámetros de la plataforma"}
                 </p>
               </div>
 
@@ -2596,7 +2596,7 @@ export default function AdminPage() {
                     <div key={t.id} className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-3 space-y-2">
                       <div className="flex items-center justify-between gap-2">
                         <p className="text-[12px] font-semibold text-slate-700 dark:text-white/70">{t.label}</p>
-                        <p className="text-[10px] text-slate-400 dark:text-white/25">{new Date(t.created_at).toLocaleDateString("es-EC")}</p>
+                        <p className="text-[10px] text-slate-400 dark:text-white/25">{new Date(t.created_at + "Z").toLocaleDateString("es-EC", { timeZone: "America/Guayaquil", day: "numeric", month: "short", year: "numeric" })}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <code className="flex-1 text-[10px] bg-slate-100 dark:bg-white/[0.04] text-slate-600 dark:text-white/40 px-2 py-1.5 rounded-lg truncate font-mono">

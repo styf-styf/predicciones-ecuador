@@ -499,8 +499,8 @@ app.get("/admin/charts", auth, async (req, res) => {
   const groupByDay = (items, field = "created_at") => {
     const map = {};
     items?.forEach((item) => {
-      const day = new Date(item[field]).toLocaleDateString("es-EC", {
-        month: "short", day: "numeric"
+      const day = new Date(item[field] + "Z").toLocaleDateString("es-EC", {
+        timeZone: "America/Guayaquil", month: "short", day: "numeric"
       });
       map[day] = (map[day] || 0) + 1;
     });
@@ -510,8 +510,8 @@ app.get("/admin/charts", auth, async (req, res) => {
   const groupAmountByDay = (items) => {
     const map = {};
     items?.forEach((item) => {
-      const day = new Date(item.created_at).toLocaleDateString("es-EC", {
-        month: "short", day: "numeric"
+      const day = new Date(item.created_at + "Z").toLocaleDateString("es-EC", {
+        timeZone: "America/Guayaquil", month: "short", day: "numeric"
       });
       map[day] = (map[day] || 0) + Number(item.amount);
     });
@@ -525,7 +525,7 @@ app.get("/admin/charts", auth, async (req, res) => {
   const last7Days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() - (6 - i));
-    return d.toLocaleDateString("es-EC", { month: "short", day: "numeric" });
+    return d.toLocaleDateString("es-EC", { timeZone: "America/Guayaquil", month: "short", day: "numeric" });
   });
 
   const chartData = last7Days.map((day) => ({

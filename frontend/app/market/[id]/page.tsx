@@ -604,7 +604,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
             <div className="p-5 pt-4">
               <p className="text-[9px] text-slate-400 uppercase tracking-widest mb-3">Evolución de probabilidad</p>
               <ResponsiveContainer width="100%" height={160}>
-                <LineChart data={history.map((h) => ({ time: new Date(h.created_at).toLocaleTimeString("es-EC", { hour: "2-digit", minute: "2-digit" }), Sí: parseFloat(h.yes_pct), No: parseFloat(h.no_pct) }))}>
+                <LineChart data={history.map((h) => ({ time: new Date(h.created_at + "Z").toLocaleTimeString("es-EC", { timeZone: "America/Guayaquil", hour: "2-digit", minute: "2-digit" }), Sí: parseFloat(h.yes_pct), No: parseFloat(h.no_pct) }))}>
                   <CartesianGrid strokeDasharray="2 4" stroke="#94a3b820" vertical={false} />
                   <XAxis dataKey="time" tick={{ fill: "#94a3b8", fontSize: 9 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fill: "#94a3b8", fontSize: 9 }} axisLine={false} tickLine={false} width={28} domain={[0, 100]} />
@@ -620,7 +620,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
               {[
                 { icon: <BarChart2 size={12} />, label: "Total apostado", value: `$${(Number(market.yes) + Number(market.no)).toFixed(1)}`, red: false },
                 { icon: <Users size={12} />, label: "Participantes", value: uniqueBettors, red: false },
-                { icon: <Clock size={12} />, label: "Creado", value: new Date(market.created_at).toLocaleDateString("es-EC", { day: "numeric", month: "short", year: "numeric" }), red: false },
+                { icon: <Clock size={12} />, label: "Creado", value: new Date(market.created_at + "Z").toLocaleDateString("es-EC", { timeZone: "America/Guayaquil", day: "numeric", month: "short", year: "numeric" }), red: false },
                 { icon: <TrendingUp size={12} />, label: "Estado", value: market.resolved ? `Ganó ${market.winner === "yes" ? "Sí" : "No"}` : isInResolution ? "En resolución" : "En vivo", red: false },
                 ...(market.closes_at && !market.resolved ? [{ icon: <Clock size={12} />, label: "Cierre", value: formatCountdown(market.closes_at), red: (new Date(market.closes_at).getTime() - Date.now()) < 3600000 }] : []),
               ].map((stat) => (
@@ -674,7 +674,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
           <h2 className="font-bold text-lg mb-4 flex items-center gap-2"><Newspaper size={18} className="text-blue-400" /> Noticias relacionadas</h2>
           {market.news_title && (
             <div className="mb-4 space-y-3">
-              {market.news_date && <span className="text-[10px] text-slate-400">{new Date(market.news_date).toLocaleDateString("es-EC", { day: "numeric", month: "long", year: "numeric" })}</span>}
+              {market.news_date && <span className="text-[10px] text-slate-400">{new Date(market.news_date + "T12:00:00").toLocaleDateString("es-EC", { timeZone: "America/Guayaquil", day: "numeric", month: "long", year: "numeric" })}</span>}
               <p className="font-bold text-sm text-slate-900 dark:text-white leading-snug">{market.news_title}</p>
               {market.news_summary && <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-l-2 border-blue-400 pl-3">{market.news_summary}</p>}
               <div className="flex items-center justify-between gap-2 pt-1">
@@ -688,7 +688,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
             <div className="space-y-3">{news.map((n, i) => (
               <a key={i} href={n.url} target="_blank" rel="noopener noreferrer" className="block bg-slate-200 dark:bg-slate-800 rounded-xl p-4 hover:bg-slate-300 dark:hover:bg-slate-700 transition">
                 <p className="font-semibold text-sm leading-snug">{n.title}</p>
-                <p className="text-xs text-slate-400 mt-1">{n.source?.name} • {new Date(n.publishedAt).toLocaleDateString()}</p>
+                <p className="text-xs text-slate-400 mt-1">{n.source?.name} • {new Date(n.publishedAt + "Z").toLocaleDateString("es-EC", { timeZone: "America/Guayaquil", day: "numeric", month: "short", year: "numeric" })}</p>
               </a>
             ))}</div>
           }
@@ -710,7 +710,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
                     {n.source && <span className="text-[11px] text-slate-500 flex items-center gap-1">🌐 <span className="font-medium">{n.source}</span></span>}
                     {n.url && <a href={n.url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-emerald-400 hover:underline">Ver noticia completa →</a>}
                   </div>
-                  <p className="text-[10px] text-slate-400">{new Date(n.created_at).toLocaleDateString("es-EC", { day: "numeric", month: "long", year: "numeric" })}</p>
+                  <p className="text-[10px] text-slate-400">{new Date(n.created_at + "Z").toLocaleDateString("es-EC", { timeZone: "America/Guayaquil", day: "numeric", month: "long", year: "numeric" })}</p>
                 </div>
               ))}
             </div>
@@ -738,7 +738,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
               <div key={c.id} className="bg-slate-200 dark:bg-slate-800 rounded-xl p-3">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm font-semibold text-purple-400">{c.username}</span>
-                  <span className="text-[10px] text-slate-500">{new Date(c.created_at).toLocaleString()}</span>
+                  <span className="text-[10px] text-slate-500">{new Date(c.created_at + "Z").toLocaleString("es-EC", { timeZone: "America/Guayaquil", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
                 </div>
                 <p className="text-sm text-slate-900 dark:text-slate-200">{c.content}</p>
               </div>
@@ -782,7 +782,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
               <div className="border-t border-slate-100 dark:border-slate-800 p-5 sm:p-6 pt-4">
                 <p className="text-[9px] text-slate-400 uppercase tracking-widest mb-3">Evolución de probabilidad</p>
                 <ResponsiveContainer width="100%" height={160}>
-                  <LineChart data={history.map((h) => ({ time: new Date(h.created_at).toLocaleTimeString("es-EC", { hour: "2-digit", minute: "2-digit" }), Sí: parseFloat(h.yes_pct), No: parseFloat(h.no_pct) }))}>
+                  <LineChart data={history.map((h) => ({ time: new Date(h.created_at + "Z").toLocaleTimeString("es-EC", { timeZone: "America/Guayaquil", hour: "2-digit", minute: "2-digit" }), Sí: parseFloat(h.yes_pct), No: parseFloat(h.no_pct) }))}>
                     <CartesianGrid strokeDasharray="2 4" stroke="#94a3b820" vertical={false} />
                     <XAxis dataKey="time" tick={{ fill: "#94a3b8", fontSize: 9 }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fill: "#94a3b8", fontSize: 9 }} axisLine={false} tickLine={false} width={28} domain={[0, 100]} />
@@ -798,7 +798,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
                 {[
                   { icon: <BarChart2 size={12} />, label: "Total apostado", value: `$${(Number(market.yes) + Number(market.no)).toFixed(1)}`, red: false },
                   { icon: <Users size={12} />, label: "Participantes", value: uniqueBettors, red: false },
-                  { icon: <Clock size={12} />, label: "Creado", value: new Date(market.created_at).toLocaleDateString("es-EC", { day: "numeric", month: "short", year: "numeric" }), red: false },
+                  { icon: <Clock size={12} />, label: "Creado", value: new Date(market.created_at + "Z").toLocaleDateString("es-EC", { timeZone: "America/Guayaquil", day: "numeric", month: "short", year: "numeric" }), red: false },
                   { icon: <TrendingUp size={12} />, label: "Estado", value: market.resolved ? `Ganó ${market.winner === "yes" ? "Sí" : "No"}` : isInResolution ? "En resolución" : "En vivo", red: false },
                   ...(market.closes_at && !market.resolved ? [{ icon: <Clock size={12} />, label: "Cierre", value: formatCountdown(market.closes_at), red: (new Date(market.closes_at).getTime() - Date.now()) < 3600000 }] : []),
                 ].map((stat) => (
@@ -827,7 +827,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
             <h2 className="font-bold text-lg mb-4 flex items-center gap-2"><Newspaper size={18} className="text-blue-400" /> Noticias relacionadas</h2>
             {market.news_title && (
               <div className="mb-4 space-y-3">
-                {market.news_date && <span className="text-[10px] text-slate-400">{new Date(market.news_date).toLocaleDateString("es-EC", { day: "numeric", month: "long", year: "numeric" })}</span>}
+                {market.news_date && <span className="text-[10px] text-slate-400">{new Date(market.news_date + "T12:00:00").toLocaleDateString("es-EC", { timeZone: "America/Guayaquil", day: "numeric", month: "long", year: "numeric" })}</span>}
                 <p className="font-bold text-sm text-slate-900 dark:text-white leading-snug">{market.news_title}</p>
                 {market.news_summary && <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-l-2 border-blue-400 pl-3">{market.news_summary}</p>}
                 <div className="flex items-center justify-between gap-2 pt-1">
@@ -841,7 +841,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
               <div className="space-y-3">{news.map((n, i) => (
                 <a key={i} href={n.url} target="_blank" rel="noopener noreferrer" className="block bg-slate-200 dark:bg-slate-800 rounded-xl p-4 hover:bg-slate-300 dark:hover:bg-slate-700 transition">
                   <p className="font-semibold text-sm leading-snug">{n.title}</p>
-                  <p className="text-xs text-slate-400 mt-1">{n.source?.name} • {new Date(n.publishedAt).toLocaleDateString()}</p>
+                  <p className="text-xs text-slate-400 mt-1">{n.source?.name} • {new Date(n.publishedAt + "Z").toLocaleDateString("es-EC", { timeZone: "America/Guayaquil", day: "numeric", month: "short", year: "numeric" })}</p>
                 </a>
               ))}</div>
             }
@@ -863,7 +863,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
                       {n.source && <span className="text-[11px] text-slate-500 flex items-center gap-1">🌐 <span className="font-medium">{n.source}</span></span>}
                       {n.url && <a href={n.url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-emerald-400 hover:underline">Ver noticia completa →</a>}
                     </div>
-                    <p className="text-[10px] text-slate-400">{new Date(n.created_at).toLocaleDateString("es-EC", { day: "numeric", month: "long", year: "numeric" })}</p>
+                    <p className="text-[10px] text-slate-400">{new Date(n.created_at + "Z").toLocaleDateString("es-EC", { timeZone: "America/Guayaquil", day: "numeric", month: "long", year: "numeric" })}</p>
                   </div>
                 ))}
               </div>
@@ -889,7 +889,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
                 <div key={c.id} className="bg-slate-200 dark:bg-slate-800 rounded-xl p-3">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm font-semibold text-purple-400">{c.username}</span>
-                    <span className="text-[10px] text-slate-500">{new Date(c.created_at).toLocaleString()}</span>
+                    <span className="text-[10px] text-slate-500">{new Date(c.created_at + "Z").toLocaleString("es-EC", { timeZone: "America/Guayaquil", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
                   </div>
                   <p className="text-sm text-slate-900 dark:text-slate-200">{c.content}</p>
                 </div>

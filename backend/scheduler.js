@@ -302,10 +302,11 @@ async function checkClosingMarkets() {
 async function analyzeMarketClose(market) {
   try {
     const today = new Date().toISOString().split("T")[0];
+    const fromDate = market.created_at ? market.created_at.split("T")[0] : today;
     let newsContext = "";
     let sourceUrls = [];
 
-    // Buscar en internet con Tavily
+    // Buscar en internet con Tavily desde la fecha de creación del mercado
     const tavilyKey = process.env.TAVILY_API_KEY;
     if (tavilyKey) {
       try {
@@ -320,6 +321,7 @@ async function analyzeMarketClose(market) {
             max_results: 5,
             include_answer: true,
             include_domains: [],
+            from_date: fromDate,
           }),
           signal: AbortSignal.timeout(20000),
         });
@@ -351,12 +353,13 @@ async function analyzeMarketClose(market) {
 El siguiente mercado de predicción acaba de cerrar. Debes determinar el resultado basándote en la evidencia encontrada en internet:
 
 Pregunta del mercado: "${market.question}"
+Fecha de creación del mercado: ${fromDate}
 Fecha de cierre: ${market.closes_at ? market.closes_at.split("T")[0] : today}
 Fecha de hoy: ${today}
 
 ${hasNews
-  ? `Resultados encontrados en internet:\n\n${newsContext}`
-  : "No se encontraron noticias ni resultados en internet relacionados con esta pregunta."
+  ? `Resultados encontrados en internet (desde ${fromDate}):\n\n${newsContext}`
+  : `No se encontraron noticias ni resultados en internet relacionados con esta pregunta en el período desde ${fromDate} hasta ${today}.`
 }
 
 Tu tarea:
@@ -370,7 +373,7 @@ Responde SOLO en JSON sin markdown:
   "confidence": número 0-100,
   "has_evidence": true si encontraste evidencia clara en las fuentes, false si es suposición,
   "close_headline": "titular del artículo de cierre (máximo 100 caracteres, como noticia periodística real)",
-  "close_content": "texto completo del artículo de cierre (2-4 párrafos). ${hasNews ? "Explica qué pasó, cita las fuentes encontradas y justifica el resultado SÍ o NO." : "Indica claramente que no se encontraron resultados públicos verificables para esta pregunta y que por ello el resultado más probable es NO."}",
+  "close_content": "texto completo del artículo de cierre (2-4 párrafos). ${hasNews ? `Explica qué pasó entre ${fromDate} y ${today}, cita las fuentes encontradas y justifica el resultado SÍ o NO.` : `Indica claramente que no se encontraron resultados públicos verificables para esta pregunta en el período comprendido entre ${fromDate} y ${today}, y que por ausencia de evidencia el resultado determinado es NO.`}",
   "reasoning": "explicación breve de tu determinación en 1-2 oraciones"
 }`;
 

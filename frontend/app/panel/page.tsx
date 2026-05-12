@@ -794,7 +794,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
                   { label: "Email", value: user.email, disabled: true },
                   { label: "Rol", value: user.role, disabled: true },
                   { label: "Estado", value: user.suspended ? "Suspendido" : "Activo", disabled: true },
-                  { label: "Miembro desde", value: new Date(user.created_at).toLocaleDateString(), disabled: true },
+                  { label: "Miembro desde", value: new Date(user.created_at + "Z").toLocaleDateString("es-EC", { timeZone: "America/Guayaquil", day: "numeric", month: "long", year: "numeric" }), disabled: true },
                 ].map((item) => (
                   <div key={item.label}>
                     <label className="text-xs text-slate-400 uppercase tracking-widest block mb-1">{item.label}</label>
@@ -1028,7 +1028,7 @@ const badges: Record<string, string> = {
           {mov.estado === "ganada" && mov.payout != null && (
             <span className="text-[10px] text-slate-400">predicción: {mov.apuesta.toFixed(2)} $</span>
           )}
-          {full && <span className="text-[10px] text-slate-400">{new Date(mov.fecha).toLocaleDateString()}</span>}
+          {full && <span className="text-[10px] text-slate-400">{new Date(mov.fecha + "Z").toLocaleDateString("es-EC", { timeZone: "America/Guayaquil", day: "numeric", month: "short" })}</span>}
         </div>
       </div>
       <div className="text-right shrink-0">
