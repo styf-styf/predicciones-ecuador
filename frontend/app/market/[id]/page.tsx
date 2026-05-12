@@ -568,7 +568,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
                   </div>
                   <div className="flex justify-between items-center border-t border-emerald-500/20 pt-2.5">
                     <span className="text-slate-400">Ganancia neta</span>
-                    <span className="font-black text-lg text-emerald-500">+{((userBet.payout ?? 0) - userBet.amount).toFixed(2)} $</span>
+                    {(() => { const net = (userBet.payout ?? 0) - userBet.amount; return <span className="font-black text-lg text-emerald-500">{net >= 0 ? "+" : ""}{net.toFixed(2)} $</span>; })()}
                   </div>
                 </>
               ) : (
@@ -946,7 +946,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
                     </div>
                     <div className="flex justify-between items-center border-t border-emerald-500/20 pt-2.5">
                       <span className="text-slate-400">Ganancia neta</span>
-                      <span className="font-black text-lg text-emerald-500">+{((userBet.payout ?? 0) - userBet.amount).toFixed(2)} $</span>
+                      {(() => { const net = (userBet.payout ?? 0) - userBet.amount; return <span className="font-black text-lg text-emerald-500">{net >= 0 ? "+" : ""}{net.toFixed(2)} $</span>; })()}
                     </div>
                   </>
                 ) : (

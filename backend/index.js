@@ -732,6 +732,9 @@ app.put("/notifications/:id/read", auth, async (req, res) => {
 // =======================
 app.post("/bet", auth, async (req, res) => {
   const { marketId, type, amount } = req.body;
+  if (type !== "yes" && type !== "no") {
+    return res.status(400).json({ message: "Tipo de apuesta inválido" });
+  }
   const betAmount = parseFloat(amount);
 
   const { data: config } = await supabase
@@ -784,7 +787,11 @@ app.post("/bet", auth, async (req, res) => {
 
   // ✅ Actualizar puntos del usuario (solo la diferencia)
   const newPoints = Number(user.points) - pointsDiff;
-  await supabase.from("users").update({ points: newPoints }).eq("id", user.id);
+  const { error: balanceError } = await supabase.from("users").update({ points: newPoints }).eq("id", user.id);
+  if (balanceError) {
+    console.error("[bet] Error descontando puntos:", balanceError.message);
+    return res.status(500).json({ message: "Error al procesar el saldo. Intenta de nuevo." });
+  }
 
   // ✅ Revertir apuesta anterior del mercado y aplicar la nueva
   let newYes = Number(market.yes);
@@ -854,6 +861,9 @@ res.json({ message: "Predicción realizada", points: newPoints, market: updatedM
 // =======================
 app.post("/admin/resolve/:id", auth, async (req, res) => {
   const { winner } = req.body;
+  if (winner !== "yes" && winner !== "no") {
+    return res.status(400).json({ message: "Ganador inválido, debe ser 'yes' o 'no'" });
+  }
   const marketId = Number(req.params.id);
 
   // ✅ Obtener comisión desde config
@@ -898,12 +908,20 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
 
   for (const bet of winningBets) {
     const amount = Number(bet.amount);
-    const participation = amount / winningPool;
+    if (!amount || isNaN(amount) || amount <= 0) {
+      console.error(`[resolve] Bet ${bet.id} tiene amount inválido:`, bet.amount);
+      continue;
+    }
+    const participation = winningPool > 0 ? amount / winningPool : 0;
     const grossProfit = losingPool * participation;
     const commission = grossProfit * COMMISSION;
     totalCommission += commission;
     const netProfit = grossProfit - commission;
     const payout = parseFloat((amount + netProfit).toFixed(2));
+    if (isNaN(payout) || payout <= 0) {
+      console.error(`[resolve] Payout inválido para bet ${bet.id}:`, payout);
+      continue;
+    }
 
     const { data: user, error: userError } = await supabase
       .from("users").select("points").eq("id", bet.user_id).single();
@@ -954,7 +972,8 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
 
   for (const bet of losingBets) {
     const amount = Number(bet.amount);
-    await supabase.from("bets").update({ payout: 0, commission_paid: 0 }).eq("id", bet.id);
+    await supabase.from("bets").update({ payout: 0 }).eq("id", bet.id);
+    await supabase.from("bets").update({ commission_paid: 0 }).eq("id", bet.id);
     await supabase.from("notifications").insert([{
       user_id: bet.user_id,
       title: "❌ Perdiste una predicción",
