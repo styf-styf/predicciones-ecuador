@@ -164,14 +164,14 @@ export default function RegisterPage() {
       <div className="flex-1 grid lg:grid-cols-2">
 
         {/* Izquierda — branding */}
-        <div className="hidden lg:flex flex-col items-center justify-center bg-emerald-500 px-12 py-16 text-slate-950">
-          <div className="h-20 w-20 rounded-3xl bg-slate-950/10 grid place-items-center font-bold text-slate-950 text-4xl mb-6">P</div>
-          <h1 className="text-3xl font-bold text-center">Predicciones Ecuador</h1>
-          <p className="text-slate-950/70 text-center mt-2 text-base">Mercados predictivos en tiempo real</p>
-          <div className="mt-10 space-y-3 w-full max-w-xs">
+        <div className="hidden lg:flex flex-col items-center justify-center bg-emerald-500 px-10 py-8 text-slate-950">
+          <div className="h-14 w-14 rounded-2xl bg-slate-950/10 grid place-items-center font-bold text-slate-950 text-3xl mb-4">P</div>
+          <h1 className="text-2xl font-bold text-center">Predicciones Ecuador</h1>
+          <p className="text-slate-950/70 text-center mt-1 text-sm">Mercados predictivos en tiempo real</p>
+          <div className="mt-6 space-y-2 w-full max-w-xs">
             {FEATURES.map((item) => (
-              <div key={item.text} className="flex items-center gap-3 bg-slate-950/10 rounded-xl px-4 py-3">
-                <span className="text-xl">{item.icon}</span>
+              <div key={item.text} className="flex items-center gap-3 bg-slate-950/10 rounded-xl px-4 py-2.5">
+                <span className="text-lg">{item.icon}</span>
                 <span className="text-sm font-medium">{item.text}</span>
               </div>
             ))}
@@ -179,126 +179,115 @@ export default function RegisterPage() {
         </div>
 
         {/* Derecha — formulario */}
-        <div className="flex items-center justify-center px-4 py-10 overflow-y-auto">
+        <div className="flex items-center justify-center px-4 py-4 overflow-y-auto">
           <div className="w-full max-w-md">
 
-            <div className="text-center mb-8">
-              <div className="h-14 w-14 rounded-2xl bg-emerald-500 grid place-items-center font-bold text-slate-950 text-2xl mx-auto mb-4 lg:hidden">P</div>
-              <h2 className="text-2xl font-bold">Crear cuenta</h2>
-              <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Únete a Predicciones Ecuador</p>
+            <div className="text-center mb-4">
+              <div className="h-12 w-12 rounded-2xl bg-emerald-500 grid place-items-center font-bold text-slate-950 text-xl mx-auto mb-2 lg:hidden">P</div>
+              <h2 className="text-xl font-bold">Crear cuenta</h2>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">Únete a Predicciones Ecuador</p>
             </div>
 
-            <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl">
-              <form onSubmit={handleRegister} className="space-y-6">
+            <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl">
+              <form onSubmit={handleRegister} className="space-y-4">
 
                 {/* Datos personales */}
                 <div>
-                  <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Datos personales</h2>
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-3">
+                  <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Datos personales</h2>
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">Nombre *</label>
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 block">Nombre *</label>
                         <input name="nombre" placeholder="Juan" onChange={handleChange}
-                          className="w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400" />
+                          className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400" />
                       </div>
                       <div>
-                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">Apellido *</label>
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 block">Apellido *</label>
                         <input name="apellido" placeholder="Pérez" onChange={handleChange}
-                          className="w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400" />
+                          className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400" />
                       </div>
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">Cédula de identidad</label>
+                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 block">Cédula de identidad</label>
                       <input name="cedula" placeholder="1234567890" onChange={handleChange}
-                        className="w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400" />
+                        className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400" />
                     </div>
                   </div>
                 </div>
 
                 {/* Cuenta */}
                 <div>
-                  <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Cuenta</h2>
-                  <div className="space-y-3">
+                  <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Cuenta</h2>
+                  <div className="space-y-2">
                     <div>
-                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">Correo electrónico *</label>
+                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 block">Correo electrónico *</label>
                       <input name="email" type="email" placeholder="tu@correo.com" onChange={handleChange}
-                        className="w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400" />
+                        className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400" />
                     </div>
-                    <div>
-                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">Contraseña *</label>
-                      <div className="relative">
-                        <input name="password" type={showPassword ? "text" : "password"} placeholder="••••••••" onChange={handleChange}
-                          className="w-full px-4 py-3 pr-11 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400" />
-                        <button type="button" onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white transition">
-                          {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                        </button>
-                      </div>
-                      {strength && (
-                        <div className="mt-2">
-                          <div className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                            <div className={`h-full rounded-full transition-all ${strength.color} ${strength.width}`} />
-                          </div>
-                          <p className={`text-xs mt-1 ${strength.color.replace("bg-", "text-")}`}>{strength.label}</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 block">Contraseña *</label>
+                        <div className="relative">
+                          <input name="password" type={showPassword ? "text" : "password"} placeholder="••••••••" onChange={handleChange}
+                            className="w-full px-3 py-2 pr-9 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400" />
+                          <button type="button" onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white transition">
+                            {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                          </button>
                         </div>
-                      )}
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">Confirmar contraseña *</label>
-                      <div className="relative">
-                        <input name="confirmPassword" type={showConfirm ? "text" : "password"} placeholder="••••••••" onChange={handleChange}
-                          className={`w-full px-4 py-3 pr-11 rounded-xl bg-white dark:bg-slate-800 border outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400 ${form.confirmPassword && form.password !== form.confirmPassword ? "border-rose-500" : "border-slate-200 dark:border-slate-700"}`} />
-                        <button type="button" onClick={() => setShowConfirm(!showConfirm)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white transition">
-                          {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
-                        </button>
+                        {strength && (
+                          <div className="mt-1">
+                            <div className="h-1 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                              <div className={`h-full rounded-full transition-all ${strength.color} ${strength.width}`} />
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      {form.confirmPassword && form.password !== form.confirmPassword && (
-                        <p className="text-xs text-rose-400 mt-1">Las contraseñas no coinciden</p>
-                      )}
+                      <div>
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 block">Confirmar *</label>
+                        <div className="relative">
+                          <input name="confirmPassword" type={showConfirm ? "text" : "password"} placeholder="••••••••" onChange={handleChange}
+                            className={`w-full px-3 py-2 pr-9 rounded-xl bg-white dark:bg-slate-800 border outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400 ${form.confirmPassword && form.password !== form.confirmPassword ? "border-rose-500" : "border-slate-200 dark:border-slate-700"}`} />
+                          <button type="button" onClick={() => setShowConfirm(!showConfirm)}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white transition">
+                            {showConfirm ? <EyeOff size={14} /> : <Eye size={14} />}
+                          </button>
+                        </div>
+                        {form.confirmPassword && form.password !== form.confirmPassword && (
+                          <p className="text-xs text-rose-400 mt-0.5">No coinciden</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Contacto */}
                 <div>
-                  <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Contacto <span className="normal-case font-normal">(opcional)</span></h2>
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">Celular</label>
-                        <input name="celular" placeholder="0991234567" onChange={handleChange}
-                          className="w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400" />
-                      </div>
-                      <div>
-                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">Ciudad</label>
-                        <input name="ciudad" placeholder="Quito" onChange={handleChange}
-                          className="w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400" />
-                      </div>
+                  <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Contacto <span className="normal-case font-normal">(opcional)</span></h2>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 block">Celular</label>
+                      <input name="celular" placeholder="0991234567" onChange={handleChange}
+                        className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400" />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">Dirección</label>
-                      <input name="direccion" placeholder="Av. Principal 123" onChange={handleChange}
-                        className="w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400" />
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">País</label>
-                      <input value="Ecuador" disabled
-                        className="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-500 text-sm cursor-not-allowed" />
+                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 block">Ciudad</label>
+                      <input name="ciudad" placeholder="Quito" onChange={handleChange}
+                        className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400" />
                     </div>
                   </div>
                 </div>
 
                 {error && (
-                  <div className="text-sm px-4 py-3 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/30">{error}</div>
+                  <div className="text-sm px-3 py-2.5 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/30">{error}</div>
                 )}
                 {success && (
-                  <div className="text-sm px-4 py-3 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">{success}</div>
+                  <div className="text-sm px-3 py-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">{success}</div>
                 )}
 
                 <button type="submit" disabled={loading}
-                  className="w-full bg-emerald-500 text-slate-950 font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-emerald-400 active:scale-95 transition disabled:opacity-60">
-                  {loading ? <Loader2 size={18} className="animate-spin" /> : <UserPlus size={18} />}
+                  className="w-full bg-emerald-500 text-slate-950 font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 hover:bg-emerald-400 active:scale-95 transition disabled:opacity-60">
+                  {loading ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
                   {loading ? "Creando cuenta..." : "Crear cuenta"}
                 </button>
 
@@ -311,7 +300,7 @@ export default function RegisterPage() {
                 <button type="button"
                   onClick={() => { setGoogleLoading(true); googleLogin(); }}
                   disabled={googleLoading}
-                  className="w-full flex items-center justify-center gap-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-95 transition disabled:opacity-60 text-sm">
+                  className="w-full flex items-center justify-center gap-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-95 transition disabled:opacity-60 text-sm">
                   {googleLoading ? (
                     <Loader2 size={16} className="animate-spin" />
                   ) : (
@@ -328,7 +317,7 @@ export default function RegisterPage() {
               </form>
             </div>
 
-            <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-6">
+            <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-3">
               ¿Ya tienes cuenta?{" "}
               <Link href="/login" className="text-emerald-500 font-semibold hover:text-emerald-400 transition">
                 Inicia sesión

@@ -153,14 +153,14 @@ export default function Login() {
       <div className="flex-1 grid lg:grid-cols-2">
 
         {/* Izquierda — branding */}
-        <div className="hidden lg:flex flex-col items-center justify-center bg-emerald-500 px-12 py-16 text-slate-950">
-          <div className="h-20 w-20 rounded-3xl bg-slate-950/10 grid place-items-center font-bold text-slate-950 text-4xl mb-6">P</div>
-          <h1 className="text-3xl font-bold text-center">Predicciones Ecuador</h1>
-          <p className="text-slate-950/70 text-center mt-2 text-base">Mercados predictivos en tiempo real</p>
-          <div className="mt-10 space-y-3 w-full max-w-xs">
+        <div className="hidden lg:flex flex-col items-center justify-center bg-emerald-500 px-10 py-8 text-slate-950">
+          <div className="h-14 w-14 rounded-2xl bg-slate-950/10 grid place-items-center font-bold text-slate-950 text-3xl mb-4">P</div>
+          <h1 className="text-2xl font-bold text-center">Predicciones Ecuador</h1>
+          <p className="text-slate-950/70 text-center mt-1 text-sm">Mercados predictivos en tiempo real</p>
+          <div className="mt-6 space-y-2 w-full max-w-xs">
             {FEATURES.map((item) => (
-              <div key={item.text} className="flex items-center gap-3 bg-slate-950/10 rounded-xl px-4 py-3">
-                <span className="text-xl">{item.icon}</span>
+              <div key={item.text} className="flex items-center gap-3 bg-slate-950/10 rounded-xl px-4 py-2.5">
+                <span className="text-lg">{item.icon}</span>
                 <span className="text-sm font-medium">{item.text}</span>
               </div>
             ))}
@@ -168,31 +168,31 @@ export default function Login() {
         </div>
 
         {/* Derecha — formulario */}
-        <div className="flex items-center justify-center px-4 py-12">
+        <div className="flex items-center justify-center px-4 py-4">
           <div className="w-full max-w-sm">
 
-            <div className="text-center mb-8">
-              <div className="h-14 w-14 rounded-2xl bg-emerald-500 grid place-items-center font-bold text-slate-950 text-2xl mx-auto mb-4 lg:hidden">P</div>
-              <h2 className="text-2xl font-bold">Bienvenido</h2>
-              <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Inicia sesión para continuar</p>
+            <div className="text-center mb-5">
+              <div className="h-12 w-12 rounded-2xl bg-emerald-500 grid place-items-center font-bold text-slate-950 text-xl mx-auto mb-3 lg:hidden">P</div>
+              <h2 className="text-xl font-bold">Bienvenido</h2>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">Inicia sesión para continuar</p>
             </div>
 
-            <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl space-y-4">
+            <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xl space-y-3">
 
               <div>
-                <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">Correo electrónico</label>
+                <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 block">Correo electrónico</label>
                 <input
                   type="email"
                   placeholder="tu@correo.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  className="w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition text-slate-900 dark:text-white placeholder-slate-400"
+                  className="w-full px-3 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition text-slate-900 dark:text-white placeholder-slate-400"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">Contraseña</label>
+                <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 block">Contraseña</label>
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
@@ -200,20 +200,20 @@ export default function Login() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    className="w-full px-4 py-3 pr-11 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition text-slate-900 dark:text-white placeholder-slate-400"
+                    className="w-full px-3 py-2.5 pr-10 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition text-slate-900 dark:text-white placeholder-slate-400"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white transition"
                   >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                   </button>
                 </div>
               </div>
 
               {message && (
-                <div className={`text-sm px-4 py-3 rounded-xl ${isError ? "bg-rose-500/10 text-rose-400 border border-rose-500/30" : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"}`}>
+                <div className={`text-sm px-3 py-2.5 rounded-xl ${isError ? "bg-rose-500/10 text-rose-400 border border-rose-500/30" : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"}`}>
                   {message}
                 </div>
               )}
@@ -221,9 +221,9 @@ export default function Login() {
               <button
                 onClick={handleLogin}
                 disabled={loading}
-                className="w-full bg-emerald-500 text-slate-950 font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-emerald-400 active:scale-95 transition disabled:opacity-60"
+                className="w-full bg-emerald-500 text-slate-950 font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 hover:bg-emerald-400 active:scale-95 transition disabled:opacity-60"
               >
-                {loading ? <Loader2 size={18} className="animate-spin" /> : <LogIn size={18} />}
+                {loading ? <Loader2 size={16} className="animate-spin" /> : <LogIn size={16} />}
                 {loading ? "Iniciando sesión..." : "Iniciar sesión"}
               </button>
 
@@ -236,7 +236,7 @@ export default function Login() {
               <button
                 onClick={() => { setGoogleLoading(true); googleLogin(); }}
                 disabled={googleLoading}
-                className="w-full flex items-center justify-center gap-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-95 transition disabled:opacity-60 text-sm"
+                className="w-full flex items-center justify-center gap-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-95 transition disabled:opacity-60 text-sm"
               >
                 {googleLoading ? (
                   <Loader2 size={16} className="animate-spin" />
@@ -253,7 +253,7 @@ export default function Login() {
 
             </div>
 
-            <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-6">
+            <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-3">
               ¿No tienes cuenta?{" "}
               <Link href="/register" className="text-emerald-500 font-semibold hover:text-emerald-400 transition">
                 Regístrate aquí
