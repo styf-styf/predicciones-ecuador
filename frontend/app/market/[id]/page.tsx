@@ -71,7 +71,7 @@ function BetPanel({
             className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700">+{val}</button>
         ))}
         <button onClick={() => setAmount(String(points !== null ? points : 0))} className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700">Máx.</button>
-        {amount && <button onClick={() => setAmount("")} className="px-3 py-1.5 rounded-full text-xs font-medium bg-slate-200 dark:bg-slate-800 text-rose-500 dark:text-rose-400 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700">Limpiar</button>}
+        {amount && <button onClick={() => setAmount("")} className="px-3 py-1.5 rounded-full text-xs font-medium bg-slate-200 dark:bg-slate-800 text-rose-500 dark:text-rose-400 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700">Borrar</button>}
       </div>
     </div>
   );
