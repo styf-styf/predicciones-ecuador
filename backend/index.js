@@ -1954,7 +1954,7 @@ app.post("/admin/news-suggestions/:id/chat", async (req, res) => {
         "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        model: "llama-3.1-8b-instant",
         temperature: 0.3,
         messages: [
           { role: "system", content: systemPrompt },
