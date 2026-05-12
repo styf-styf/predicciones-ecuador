@@ -90,9 +90,6 @@ function BetPanel({
           ✅ ¡Predicción registrada exitosamente!
         </div>
       )}
-      {token && points !== null && (
-        <p className="text-sm text-slate-400">Tu balance: <span className="text-slate-900 dark:text-white font-bold">{points} $</span></p>
-      )}
       {token && userBet ? (
         <div className="space-y-4">
           <div className={`rounded-xl p-4 text-center border ${userBet.type === "yes" ? "border-emerald-500/40 bg-emerald-500/10" : "border-rose-500/40 bg-rose-500/10"}`}>
