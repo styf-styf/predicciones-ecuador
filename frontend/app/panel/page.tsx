@@ -208,7 +208,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
   const isGoogleUser = user?.provider === "google";
   const hasPaymentInfo = user?.cedula && user?.celular && user?.nombre;
 
-  const movimientos = [
+  let movimientos = [
   ...bets.map((bet) => {
     const estado = bet.markets?.resolved
       ? bet.markets?.winner === bet.type ? "ganada" : "perdida"
@@ -223,17 +223,14 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
       payout: bet.payout != null ? Number(bet.payout) : null,
       commission_paid: bet.commission_paid != null ? Number(bet.commission_paid) : null,
       fecha: bet.created_at,
+      sort_fecha: bet.created_at,
       estado,
+      balance_before: null as number | null,
+      balance_after: null as number | null,
     };
   }),
   ...transactions.map((tx) => {
-    const bb = tx.balance_before != null ? Number(tx.balance_before) : null;
     const amt = Number(tx.amount);
-    let ba: number | null = null;
-    if (bb != null) {
-      if (tx.type === "retiro") ba = bb - amt;
-      else if (tx.type === "recarga" && tx.status === "aprobado") ba = bb + amt;
-    }
     return {
       id: tx.id,
       tipo: tx.type,
@@ -241,12 +238,37 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
       subtipo: tx.payment_method === "transferencia" ? "Transferencia" : "Tarjeta",
       monto: tx.type === "recarga" ? amt : -amt,
       fecha: tx.created_at,
+      sort_fecha: tx.updated_at || tx.created_at,
       estado: tx.status,
-      balance_before: bb,
-      balance_after: ba,
+      balance_before: tx.balance_before != null ? Number(tx.balance_before) : null,
+      balance_after: tx.balance_after != null ? Number(tx.balance_after) : null,
+      apuesta: null as number | null,
+      payout: null as number | null,
+      commission_paid: null as number | null,
     };
   }),
- ].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+ ].sort((a, b) => new Date(b.sort_fecha).getTime() - new Date(a.sort_fecha).getTime());
+
+  // Reconstruir saldo anterior/actual para cada movimiento usando el saldo actual como punto de partida
+  let _running = Number(user.points);
+  movimientos = movimientos.map((mov) => {
+    const balanceAfter = _running;
+    let effect = 0;
+    if (mov.tipo === "prediccion") {
+      effect = mov.monto; // ganada: +payout, perdida/pendiente: -amount
+    } else if (mov.tipo === "recarga" && mov.estado === "aprobado") {
+      effect = mov.monto;
+    } else if (mov.tipo === "retiro") {
+      effect = mov.monto; // negativo, se descuenta al crear
+    }
+    const balanceBefore = balanceAfter - effect;
+    _running = balanceBefore;
+    return {
+      ...mov,
+      balance_before: mov.balance_before != null ? mov.balance_before : balanceBefore,
+      balance_after: mov.balance_after != null ? mov.balance_after : balanceAfter,
+    };
+  });
 
   const MOV_PAGE_SIZE = 10;
   const movTotalPages = Math.ceil(movimientos.length / MOV_PAGE_SIZE);
@@ -1094,7 +1116,9 @@ function MovimientoRow({ mov }: { mov: any }) {
     hour: "2-digit", minute: "2-digit",
   });
 
-  const showBalances = mov.balance_before != null;
+  const bb = mov.balance_before as number;
+  const ba = mov.balance_after as number;
+  const balanceColor = ba > bb ? "text-emerald-500" : ba < bb ? "text-rose-500" : "text-slate-500 dark:text-slate-400";
 
   return (
     <div className="p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-xl">
@@ -1113,33 +1137,23 @@ function MovimientoRow({ mov }: { mov: any }) {
           </div>
 
           {/* Badge de estado */}
-          <div className="flex items-center gap-2 mt-1 flex-wrap">
+          <div className="flex items-center gap-2 mt-1">
             <span className={`text-[10px] px-1.5 py-0.5 rounded-md border ${badges[mov.estado] || badges.pendiente}`}>
               {mov.estado} · {mov.subtipo}
             </span>
-            {mov.estado === "ganada" && mov.commission_paid != null && (
-              <span className="text-[10px] text-slate-400">comisión: -{mov.commission_paid.toFixed(2)} $</span>
-            )}
-            {mov.estado === "ganada" && mov.payout != null && (
-              <span className="text-[10px] text-slate-400">apostado: {mov.apuesta.toFixed(2)} $</span>
-            )}
           </div>
 
-          {/* Saldo anterior → actual */}
-          {showBalances && (
-            <div className="flex items-center gap-1.5 mt-1.5 text-[11px]">
-              <span className="text-slate-400">Saldo:</span>
-              <span className="font-medium text-slate-600 dark:text-slate-300">{(mov.balance_before as number).toFixed(2)} $</span>
-              <span className="text-slate-400">→</span>
-              {mov.balance_after != null ? (
-                <span className={`font-semibold ${(mov.balance_after as number) >= (mov.balance_before as number) ? "text-emerald-500" : "text-rose-500"}`}>
-                  {(mov.balance_after as number).toFixed(2)} $
-                </span>
-              ) : (
-                <span className="text-amber-500 font-medium">pendiente</span>
-              )}
-            </div>
-          )}
+          {/* Saldo anterior → actual (y comisión si es inversión) */}
+          <div className="flex items-center gap-1.5 mt-1.5 text-[11px] flex-wrap">
+            <span className="text-slate-400">Ant.:</span>
+            <span className="font-medium text-slate-600 dark:text-slate-300">{bb.toFixed(2)} $</span>
+            <span className="text-slate-300 dark:text-slate-600">→</span>
+            <span className="text-slate-400">Act.:</span>
+            <span className={`font-semibold ${balanceColor}`}>{ba.toFixed(2)} $</span>
+            {mov.tipo === "prediccion" && mov.commission_paid != null && mov.commission_paid > 0 && (
+              <span className="text-slate-400 dark:text-slate-500">· Com.: -{(mov.commission_paid as number).toFixed(2)} $</span>
+            )}
+          </div>
         </div>
       </div>
     </div>

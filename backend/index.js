@@ -2094,7 +2094,7 @@ app.put("/admin/transactions/:id/status", auth, async (req, res) => {
     return res.status(400).json({ message: "Estado inválido" });
   }
 
-  const { error } = await supabase.from("transactions").update({ status }).eq("id", req.params.id);
+  const { error } = await supabase.from("transactions").update({ status, updated_at: new Date().toISOString() }).eq("id", req.params.id);
   if (error) return res.status(500).json({ message: error.message });
 
   const { data: user } = await supabase.from("users").select("points").eq("id", userId).single();
