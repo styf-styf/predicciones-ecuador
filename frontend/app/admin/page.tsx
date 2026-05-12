@@ -109,8 +109,6 @@ export default function AdminPage() {
   });
   const [searchQuery, setSearchQuery] = useState("");
   const [editingMarket, setEditingMarket] = useState<{ id: number, question: string, closes_at?: string } | null>(null);
-  const [refinPrompts, setRefinPrompts] = useState<{ [key: number]: string }>({});
-  const [refining, setRefining] = useState<{ [key: number]: boolean }>({});
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [suggestionCategories, setSuggestionCategories] = useState<{ [key: number]: string }>({});
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -206,22 +204,6 @@ export default function AdminPage() {
     });
     const data = await res.json();
     if (res.ok) setSuggestions(data.filter((s: any) => s.source !== "bot"));
-  };
-
-  const handleRefine = async (id: number, currentQuestion: string) => {
-    const prompt = refinPrompts[id];
-    if (!prompt?.trim()) return;
-    const token = localStorage.getItem("token");
-    setRefining((prev) => ({ ...prev, [id]: true }));
-    const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/news-suggestions/${id}/refine`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` || "" },
-      body: JSON.stringify({ current_question: currentQuestion, refine_prompt: prompt }),
-    });
-    const data = await res.json();
-    if (res.ok) { fetchSuggestions(); setRefinPrompts((prev) => ({ ...prev, [id]: "" })); }
-    else showToast(data.message, "error");
-    setRefining((prev) => ({ ...prev, [id]: false }));
   };
 
   const handleChat = async (id: number, suggestion: any) => {
@@ -1566,24 +1548,6 @@ export default function AdminPage() {
                         <div className="bg-emerald-50 dark:bg-emerald-500/[0.08] border border-emerald-200 dark:border-emerald-500/20 rounded-lg px-4 py-3 space-y-3">
                           <p className="text-[10px] text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">💡 Mercado sugerido</p>
                           <p className="text-[13px] text-slate-900 dark:text-white font-semibold">{s.new_market_question}</p>
-                          {s.status === "pending" && (
-                            <div className="flex gap-2 mt-2">
-                              <input
-                                placeholder="Ej: hazla más específica, cambia el plazo a agosto..."
-                                value={refinPrompts[s.id] || ""}
-                                onChange={(e) => setRefinPrompts((prev) => ({ ...prev, [s.id]: e.target.value }))}
-                                onKeyDown={(e) => { if (e.key === "Enter") handleRefine(s.id, s.new_market_question); }}
-                                className="flex-1 bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-[12px] outline-none text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:border-emerald-500/40 transition"
-                              />
-                              <button
-                                onClick={() => handleRefine(s.id, s.new_market_question)}
-                                disabled={refining[s.id]}
-                                className="bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-white/60 px-3 py-2 rounded-lg text-[12px] transition disabled:opacity-50 shrink-0"
-                              >
-                                {refining[s.id] ? "⏳" : "✨ Refinar"}
-                              </button>
-                            </div>
-                          )}
                           {s.probability_yes && (
                             <div className="space-y-1.5">
                               <div className="flex justify-between text-[11px]">
@@ -2403,26 +2367,6 @@ export default function AdminPage() {
                         <div className="bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.06] rounded-xl px-4 py-3 mb-3 space-y-3">
                           <p className="text-[10px] text-slate-400 dark:text-white/30 uppercase tracking-widest">✦ Pregunta de predicción</p>
                           <p className="text-[13px] text-slate-900 dark:text-white font-semibold">{s.new_market_question}</p>
-
-                          {/* Refinar */}
-                          {s.status === "pending" && (
-                            <div className="flex gap-2">
-                              <input
-                                placeholder="Refinar: hazla más específica, cambia el plazo..."
-                                value={refinPrompts[s.id] || ""}
-                                onChange={(e) => setRefinPrompts((prev) => ({ ...prev, [s.id]: e.target.value }))}
-                                onKeyDown={(e) => { if (e.key === "Enter") handleRefine(s.id, s.new_market_question); }}
-                                className="flex-1 bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-[12px] outline-none text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:border-emerald-500/40 transition"
-                              />
-                              <button
-                                onClick={() => handleRefine(s.id, s.new_market_question)}
-                                disabled={refining[s.id]}
-                                className="bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-white/60 px-3 py-2 rounded-lg text-[12px] transition disabled:opacity-50 shrink-0"
-                              >
-                                {refining[s.id] ? "⏳" : "✨ Refinar"}
-                              </button>
-                            </div>
-                          )}
 
                           {/* Chat IA */}
                           {s.status === "pending" && (
