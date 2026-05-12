@@ -2498,12 +2498,12 @@ export default function AdminPage() {
                                       placeholder="Ej: ¿Cuándo es exactamente el evento? Cambia el plazo a noviembre..."
                                       value={chatInput[s.id] || ""}
                                       onChange={(e) => setChatInput(prev => ({ ...prev, [s.id]: e.target.value }))}
-                                      onKeyDown={(e) => { if (e.key === "Enter" && !chatSending[s.id]) handleChat(s.id, { title: s.title, summary: s.summary, current_question: s.new_market_question, suggested_close_date: s.suggested_close_date }); }}
+                                      onKeyDown={(e) => { if (e.key === "Enter" && !chatSending[s.id]) handleChat(s.id, { title: s.title, summary: s.summary, current_question: s.new_market_question, suggested_close_date: s.suggested_close_date, url: s.url }); }}
                                       disabled={chatSending[s.id]}
                                       className="flex-1 bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-[12px] outline-none text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:border-emerald-500/40 transition disabled:opacity-50"
                                     />
                                     <button
-                                      onClick={() => handleChat(s.id, { title: s.title, summary: s.summary, current_question: s.new_market_question, suggested_close_date: s.suggested_close_date })}
+                                      onClick={() => handleChat(s.id, { title: s.title, summary: s.summary, current_question: s.new_market_question, suggested_close_date: s.suggested_close_date, url: s.url })}
                                       disabled={chatSending[s.id] || !chatInput[s.id]?.trim()}
                                       className="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-white px-3 py-2 rounded-lg text-[12px] font-bold transition shrink-0"
                                     >

@@ -1859,22 +1859,80 @@ app.post("/admin/news-suggestions/:id/chat", async (req, res) => {
   const { messages, suggestion } = req.body;
   if (!messages || !suggestion) return res.status(400).json({ message: "Faltan datos" });
 
+  const userQuestion = messages[messages.length - 1]?.content || "";
+
+  // 1. Intentar obtener el contenido completo del artículo
+  let articleContent = "";
+  if (suggestion.url) {
+    try {
+      const articleRes = await fetch(suggestion.url, {
+        headers: { "User-Agent": "Mozilla/5.0" },
+        signal: AbortSignal.timeout(8000),
+      });
+      const html = await articleRes.text();
+      // Extraer texto limpio quitando tags HTML
+      articleContent = html
+        .replace(/<script[\s\S]*?<\/script>/gi, "")
+        .replace(/<style[\s\S]*?<\/style>/gi, "")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 4000);
+    } catch (err) {
+      console.error("[chat] Error fetcheando artículo:", err.message);
+    }
+  }
+
+  // 2. Buscar en Tavily con la pregunta del usuario
+  let tavilyContext = "";
+  const tavilyKey = process.env.TAVILY_API_KEY;
+  if (tavilyKey) {
+    try {
+      const tavilyRes = await fetch("https://api.tavily.com/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          api_key: tavilyKey,
+          query: `Ecuador ${suggestion.title || ""} ${userQuestion}`,
+          search_depth: "basic",
+          max_results: 4,
+          include_answer: true,
+        }),
+        signal: AbortSignal.timeout(15000),
+      });
+      const tavilyData = await tavilyRes.json();
+      if (tavilyData.answer) tavilyContext += `Respuesta directa de búsqueda: ${tavilyData.answer}\n\n`;
+      if (tavilyData.results?.length > 0) {
+        tavilyContext += tavilyData.results
+          .map(r => `Fuente: ${r.url}\nTítulo: ${r.title}\n${r.content?.slice(0, 500) || ""}`)
+          .join("\n---\n");
+      }
+    } catch (err) {
+      console.error("[chat] Error en Tavily:", err.message);
+    }
+  }
+
   const systemPrompt = `Eres un asistente experto en mercados de predicción para Ecuador. Ayudas al administrador a verificar y refinar preguntas generadas automáticamente.
 
-Contexto de la noticia:
+NOTICIA ORIGINAL:
 - Título: ${suggestion.title || "N/A"}
+- URL: ${suggestion.url || "N/A"}
 - Resumen: ${suggestion.summary || "N/A"}
 - Pregunta actual: "${suggestion.current_question || "N/A"}"
 - Fecha de cierre sugerida: ${suggestion.suggested_close_date || "N/A"}
 
+${articleContent ? `CONTENIDO COMPLETO DEL ARTÍCULO:\n${articleContent}\n` : ""}
+${tavilyContext ? `BÚSQUEDA EN INTERNET:\n${tavilyContext}\n` : ""}
+
 Tu rol:
-1. Responder preguntas sobre fechas, datos o contexto de la noticia
-2. Si el admin pide modificar la pregunta, propón una versión mejorada
-3. Ser conciso y directo
+1. Responder usando primero el contenido del artículo, luego los resultados de búsqueda
+2. Si el admin pide modificar la pregunta, propón una versión mejorada basándote en los datos reales
+3. Indicar la fuente de donde sacas la información
+4. Ser conciso y directo
 
 IMPORTANTE: Responde SIEMPRE en JSON sin markdown:
 {
-  "reply": "tu respuesta conversacional aquí",
+  "reply": "tu respuesta aquí, indicando de dónde sacas los datos",
   "new_question": "nueva pregunta si se pidió modificarla, si no null"
 }`;
 
@@ -1887,7 +1945,7 @@ IMPORTANTE: Responde SIEMPRE en JSON sin markdown:
       },
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",
-        temperature: 0.4,
+        temperature: 0.3,
         messages: [
           { role: "system", content: systemPrompt },
           ...messages,
