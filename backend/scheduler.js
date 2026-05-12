@@ -42,17 +42,30 @@ function isRecent(articleUrl) {
   return true;
 }
 
+// Secciones de portada que cubren noticias locales ecuatorianas
+const ECUADOR_SECTIONS = [
+  "/ecuador/", "/pais/", "/politica/", "/economia/", "/sociedad/",
+  "/deportes/", "/farandula/", "/entretenimiento/", "/quito/", "/guayaquil/",
+  "/seguridad/", "/judicial/", "/negocios/", "/local/",
+];
+
 // Devuelve true si el artículo es relevante para Ecuador
 function isRelevant(headline, sourceUrl) {
+  const title = headline.title.toLowerCase();
+  const articleUrl = (headline.url || "").toLowerCase();
+
+  // Si el título menciona Ecuador directamente → relevante siempre
+  if (ECUADOR_KEYWORDS.some(kw => title.includes(kw))) return true;
+
   try {
     const domain = new URL(sourceUrl).hostname.replace("www.", "");
-    // Si es un sitio ecuatoriano, siempre es relevante
-    if (ECUADOR_SITES.some(site => domain.includes(site))) return true;
+    if (ECUADOR_SITES.some(site => domain.includes(site))) {
+      // Sitio ecuatoriano: aceptar solo si la URL del artículo es de una sección local
+      return ECUADOR_SECTIONS.some(sec => articleUrl.includes(sec));
+    }
   } catch { /* ignorar */ }
 
-  // Para sitios internacionales, el titular debe mencionar Ecuador
-  const title = headline.title.toLowerCase();
-  return ECUADOR_KEYWORDS.some(kw => title.includes(kw));
+  return false;
 }
 
 let supabase, groqApiKey, broadcast;
@@ -196,10 +209,11 @@ Responde SOLO en JSON sin markdown:
 }
 
 Reglas:
+- CRÍTICO: Solo genera pregunta si el evento ocurre EN Ecuador o afecta DIRECTAMENTE a Ecuador o a ecuatorianos. Si la noticia es sobre otro país (España, Colombia, EE.UU., etc.) y Ecuador no es el actor principal, devuelve null en new_market_question
 - Usa el contenido del artículo para hacer la pregunta lo más específica posible (nombres, cifras, fechas)
 - Solo genera pregunta si la noticia es relevante (economía, política, deporte, farándula, finanzas)
 - La pregunta no debe duplicar mercados activos
-- Si la noticia es trivial, devuelve null en new_market_question
+- Si la noticia es trivial o no involucra a Ecuador, devuelve null en new_market_question
 - category debe ser una de las 6 opciones exactas, elige según el tema principal de la noticia`;
 
     const aiRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {

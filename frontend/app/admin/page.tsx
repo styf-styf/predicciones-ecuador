@@ -198,7 +198,7 @@ export default function AdminPage() {
       headers: { authorization: `Bearer ${token}` || "" },
     });
     const data = await res.json();
-    if (res.ok) setSuggestions(data);
+    if (res.ok) setSuggestions(data.filter((s: any) => s.source !== "bot"));
   };
 
   const handleRefine = async (id: number, currentQuestion: string) => {
