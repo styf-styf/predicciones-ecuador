@@ -603,16 +603,32 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
           {history.length > 1 && (
             <div className="p-5 pt-4">
               <p className="text-[9px] text-slate-400 uppercase tracking-widest mb-3">Evolución de probabilidad</p>
-              <ResponsiveContainer width="100%" height={160}>
-                <LineChart data={history.map((h) => ({ time: new Date(h.created_at + "Z").toLocaleTimeString("es-EC", { timeZone: "America/Guayaquil", hour: "2-digit", minute: "2-digit" }), Sí: parseFloat(h.yes_pct), No: parseFloat(h.no_pct) }))}>
-                  <CartesianGrid strokeDasharray="2 4" stroke="#94a3b820" vertical={false} />
-                  <XAxis dataKey="time" tick={{ fill: "#94a3b8", fontSize: 9 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: "#94a3b8", fontSize: 9 }} axisLine={false} tickLine={false} width={28} domain={[0, 100]} />
-                  <Tooltip contentStyle={{ backgroundColor: "#1e293b", border: "1px solid #334155", borderRadius: "8px", fontSize: "11px" }} labelStyle={{ color: "#94a3b8" }} />
-                  <Line type="monotone" dataKey="Sí" stroke="#10b981" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="No" stroke="#f43f5e" strokeWidth={2} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
+              {(() => {
+                const last = history[history.length - 1];
+                const siDominant = !last || parseFloat(last.yes_pct) >= 50;
+                const chartData = history.map((h) => ({ time: new Date(h.created_at + "Z").toLocaleTimeString("es-EC", { timeZone: "America/Guayaquil", hour: "2-digit", minute: "2-digit" }), Sí: parseFloat(h.yes_pct), No: parseFloat(h.no_pct) }));
+                return (
+                  <ResponsiveContainer width="100%" height={160}>
+                    <LineChart data={chartData}>
+                      <CartesianGrid strokeDasharray="2 4" stroke="#94a3b820" vertical={false} />
+                      <XAxis dataKey="time" tick={{ fill: "#94a3b8", fontSize: 9 }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fill: "#94a3b8", fontSize: 9 }} axisLine={false} tickLine={false} width={28} domain={[0, 100]} />
+                      <Tooltip content={({ active, payload, label }: any) => {
+                        if (!active || !payload?.length) return null;
+                        const d = payload[0]?.payload;
+                        return (
+                          <div style={{ background: "#1e293b", border: "1px solid #334155", borderRadius: 8, padding: "6px 10px", fontSize: 11 }}>
+                            <p style={{ color: "#94a3b8", marginBottom: 4 }}>{label}</p>
+                            <p style={{ color: "#10b981" }}>Sí: {d?.Sí?.toFixed(1)}%</p>
+                            <p style={{ color: "#f43f5e" }}>No: {d?.No?.toFixed(1)}%</p>
+                          </div>
+                        );
+                      }} />
+                      <Line type="monotone" dataKey={siDominant ? "Sí" : "No"} stroke={siDominant ? "#10b981" : "#f43f5e"} strokeWidth={2} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                );
+              })()}
             </div>
           )}
           <div className="border-t border-slate-100 dark:border-slate-800 px-5 py-3 flex items-center justify-between flex-wrap gap-3 bg-slate-50 dark:bg-slate-800/50">
@@ -781,16 +797,32 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
             {history.length > 1 && (
               <div className="border-t border-slate-100 dark:border-slate-800 p-5 sm:p-6 pt-4">
                 <p className="text-[9px] text-slate-400 uppercase tracking-widest mb-3">Evolución de probabilidad</p>
-                <ResponsiveContainer width="100%" height={160}>
-                  <LineChart data={history.map((h) => ({ time: new Date(h.created_at + "Z").toLocaleTimeString("es-EC", { timeZone: "America/Guayaquil", hour: "2-digit", minute: "2-digit" }), Sí: parseFloat(h.yes_pct), No: parseFloat(h.no_pct) }))}>
-                    <CartesianGrid strokeDasharray="2 4" stroke="#94a3b820" vertical={false} />
-                    <XAxis dataKey="time" tick={{ fill: "#94a3b8", fontSize: 9 }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fill: "#94a3b8", fontSize: 9 }} axisLine={false} tickLine={false} width={28} domain={[0, 100]} />
-                    <Tooltip contentStyle={{ backgroundColor: "#1e293b", border: "1px solid #334155", borderRadius: "8px", fontSize: "11px" }} labelStyle={{ color: "#94a3b8" }} />
-                    <Line type="monotone" dataKey="Sí" stroke="#10b981" strokeWidth={2} dot={false} />
-                    <Line type="monotone" dataKey="No" stroke="#f43f5e" strokeWidth={2} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
+                {(() => {
+                  const last = history[history.length - 1];
+                  const siDominant = !last || parseFloat(last.yes_pct) >= 50;
+                  const chartData = history.map((h) => ({ time: new Date(h.created_at + "Z").toLocaleTimeString("es-EC", { timeZone: "America/Guayaquil", hour: "2-digit", minute: "2-digit" }), Sí: parseFloat(h.yes_pct), No: parseFloat(h.no_pct) }));
+                  return (
+                    <ResponsiveContainer width="100%" height={160}>
+                      <LineChart data={chartData}>
+                        <CartesianGrid strokeDasharray="2 4" stroke="#94a3b820" vertical={false} />
+                        <XAxis dataKey="time" tick={{ fill: "#94a3b8", fontSize: 9 }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fill: "#94a3b8", fontSize: 9 }} axisLine={false} tickLine={false} width={28} domain={[0, 100]} />
+                        <Tooltip content={({ active, payload, label }: any) => {
+                          if (!active || !payload?.length) return null;
+                          const d = payload[0]?.payload;
+                          return (
+                            <div style={{ background: "#1e293b", border: "1px solid #334155", borderRadius: 8, padding: "6px 10px", fontSize: 11 }}>
+                              <p style={{ color: "#94a3b8", marginBottom: 4 }}>{label}</p>
+                              <p style={{ color: "#10b981" }}>Sí: {d?.Sí?.toFixed(1)}%</p>
+                              <p style={{ color: "#f43f5e" }}>No: {d?.No?.toFixed(1)}%</p>
+                            </div>
+                          );
+                        }} />
+                        <Line type="monotone" dataKey={siDominant ? "Sí" : "No"} stroke={siDominant ? "#10b981" : "#f43f5e"} strokeWidth={2} dot={false} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  );
+                })()}
               </div>
             )}
             <div className="border-t border-slate-100 dark:border-slate-800 px-5 sm:px-6 py-3 flex items-center justify-between flex-wrap gap-3 bg-slate-50 dark:bg-slate-800/50">

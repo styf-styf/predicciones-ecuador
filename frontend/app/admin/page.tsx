@@ -2213,8 +2213,8 @@ export default function AdminPage() {
                 )}
 
                 {/* Intervalo y acciones */}
-                <div className="flex items-center justify-between gap-3 pt-1 border-t border-slate-100 dark:border-white/[0.04]">
-                  <div className="flex items-center gap-2 text-[12px] text-slate-400 dark:text-white/30">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-1 border-t border-slate-100 dark:border-white/[0.04]">
+                  <div className="flex items-center gap-2 text-[12px] text-slate-400 dark:text-white/30 flex-wrap">
                     <span>🕐 Revisión cada</span>
                     <select
                       value={botInterval}
@@ -2255,7 +2255,7 @@ export default function AdminPage() {
                       fetchBotSuggestions(); fetchBotStatus();
                       showToast(`Bot ejecutado · ${data.processed || 0} preguntas generadas`, "info");
                     }}
-                    className="bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-white/50 px-3 py-1.5 rounded-lg text-[12px] transition disabled:opacity-40 shrink-0"
+                    className="w-full sm:w-auto bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-white/50 px-3 py-2 sm:py-1.5 rounded-lg text-[12px] transition disabled:opacity-40"
                   >
                     {botRunning ? "⏳ Ejecutando..." : "▶ Ejecutar ahora"}
                   </button>
@@ -2282,37 +2282,37 @@ export default function AdminPage() {
                       : "border-slate-100 dark:border-white/[0.04] opacity-30"
                     }`}>
                       {/* Cabecera noticia */}
-                      <div className="flex items-start justify-between gap-3 mb-3">
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[13px] font-semibold text-slate-900 dark:text-white leading-snug">{s.title}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            {s.url && (
-                              <a href={s.url} target="_blank" rel="noopener noreferrer"
-                                className="text-[11px] text-slate-400 dark:text-white/30 hover:text-blue-500 transition truncate max-w-[200px]">
-                                🔗 {(() => { try { return new URL(s.url).hostname.replace("www.", ""); } catch { return s.url; } })()}
-                              </a>
+                      <div className="mb-3">
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <p className="text-[13px] font-semibold text-slate-900 dark:text-white leading-snug flex-1 min-w-0">{s.title}</p>
+                          <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                            {s.impact && (
+                              <span className={`text-[10px] px-2 py-0.5 rounded-md uppercase tracking-wider font-bold ${
+                                s.impact === "alto" ? "bg-rose-50 dark:bg-rose-500/15 text-rose-600 dark:text-rose-400"
+                                : s.impact === "medio" ? "bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                                : "bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-white/30"
+                              }`}>
+                                {s.impact === "alto" ? "● Alto" : s.impact === "medio" ? "▶ Medio" : "○ Bajo"}
+                              </span>
                             )}
-                            <span className="text-[11px] text-slate-300 dark:text-white/20">
-                              {new Date(s.created_at + "Z").toLocaleString("es-EC", { timeZone: "America/Guayaquil", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                            <span className={`text-[10px] px-2 py-0.5 rounded-md uppercase tracking-wider ${
+                              s.status === "pending" ? "bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                              : s.status === "approved" ? "bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                              : "bg-slate-100 dark:bg-white/[0.06] text-slate-400 dark:text-white/30"
+                            }`}>
+                              {s.status === "pending" ? "Pendiente" : s.status === "approved" ? "Aprobado" : "Rechazado"}
                             </span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          {s.impact && (
-                            <span className={`text-[10px] px-2 py-0.5 rounded-md uppercase tracking-wider font-bold ${
-                              s.impact === "alto" ? "bg-rose-50 dark:bg-rose-500/15 text-rose-600 dark:text-rose-400"
-                              : s.impact === "medio" ? "bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400"
-                              : "bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-white/30"
-                            }`}>
-                              {s.impact === "alto" ? "● Alto impacto" : s.impact === "medio" ? "▶ Medio" : "○ Bajo"}
-                            </span>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {s.url && (
+                            <a href={s.url} target="_blank" rel="noopener noreferrer"
+                              className="text-[11px] text-slate-400 dark:text-white/30 hover:text-blue-500 transition truncate max-w-[180px] sm:max-w-[260px]">
+                              🔗 {(() => { try { return new URL(s.url).hostname.replace("www.", ""); } catch { return s.url; } })()}
+                            </a>
                           )}
-                          <span className={`text-[10px] px-2 py-0.5 rounded-md uppercase tracking-wider ${
-                            s.status === "pending" ? "bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400"
-                            : s.status === "approved" ? "bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                            : "bg-slate-100 dark:bg-white/[0.06] text-slate-400 dark:text-white/30"
-                          }`}>
-                            {s.status === "pending" ? "Pendiente" : s.status === "approved" ? "Aprobado" : "Rechazado"}
+                          <span className="text-[11px] text-slate-300 dark:text-white/20">
+                            {new Date(s.created_at + "Z").toLocaleString("es-EC", { timeZone: "America/Guayaquil", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                           </span>
                         </div>
                       </div>
@@ -2368,22 +2368,22 @@ export default function AdminPage() {
                           )}
 
                           {/* Fecha de cierre y categoría */}
-                          <div className="flex flex-wrap items-center gap-3">
-                            <div className="flex items-center gap-2">
-                              <label className="text-[11px] text-slate-400 dark:text-white/30 shrink-0">📅 Fecha de cierre:</label>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[11px] text-slate-400 dark:text-white/30">📅 Fecha de cierre</label>
                               <input
                                 type="datetime-local"
                                 value={closeDates[s.id] || ""}
                                 onChange={(e) => setCloseDates(prev => ({ ...prev, [s.id]: e.target.value }))}
-                                className="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-2 py-1 text-[12px] outline-none text-slate-900 dark:text-white focus:border-emerald-500/40 transition"
+                                className="w-full bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-2 py-1.5 text-[12px] outline-none text-slate-900 dark:text-white focus:border-emerald-500/40 transition"
                               />
                             </div>
-                            <div className="flex items-center gap-2">
-                              <label className="text-[11px] text-slate-400 dark:text-white/30 shrink-0">🏷 Categoría:</label>
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[11px] text-slate-400 dark:text-white/30">🏷 Categoría</label>
                               <select
                                 value={selectedCategories[s.id] || "general"}
                                 onChange={(e) => setSelectedCategories(prev => ({ ...prev, [s.id]: e.target.value }))}
-                                className="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-2 py-1 text-[12px] outline-none text-slate-900 dark:text-white focus:border-emerald-500/40 transition"
+                                className="w-full bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-2 py-1.5 text-[12px] outline-none text-slate-900 dark:text-white focus:border-emerald-500/40 transition"
                               >
                                 <option value="deporte">Deporte</option>
                                 <option value="farandula">Farándula</option>
@@ -2417,7 +2417,7 @@ export default function AdminPage() {
                         </div>
                       )}
                       {s.status === "pending" && (
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                           {s.new_market_question && (
                             <button
                               onClick={async () => {
@@ -2431,39 +2431,41 @@ export default function AdminPage() {
                                 if (res.ok) { showToast("Mercado creado ✅", "success"); fetchBotSuggestions(); fetchMarkets(); }
                                 else showToast(data.message || "Error", "error");
                               }}
-                              className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg py-2 text-[12px] transition"
+                              className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg py-2.5 sm:py-2 text-[12px] transition"
                             >
                               ✓ Crear mercado
                             </button>
                           )}
-                          <button
-                            onClick={async () => {
-                              const token = localStorage.getItem("token");
-                              await fetch(`https://predicciones-ecuador.onrender.com/admin/news-suggestions/${s.id}`, {
-                                method: "PUT",
-                                headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
-                                body: JSON.stringify({ action: "reject" }),
-                              });
-                              fetchBotSuggestions();
-                            }}
-                            className="px-4 py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] text-[12px] text-slate-500 dark:text-white/40 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-500 hover:border-rose-200 dark:hover:border-rose-500/20 transition"
-                          >
-                            ✕ Rechazar
-                          </button>
-                          <button
-                            onClick={async () => {
-                              const token = localStorage.getItem("token");
-                              await fetch(`https://predicciones-ecuador.onrender.com/admin/news-suggestions/${s.id}`, {
-                                method: "DELETE",
-                                headers: { authorization: `Bearer ${token}` },
-                              });
-                              fetchBotSuggestions();
-                              showToast("Eliminado", "info");
-                            }}
-                            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] text-[12px] text-slate-400 dark:text-white/25 hover:text-rose-500 transition"
-                          >
-                            🗑️
-                          </button>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={async () => {
+                                const token = localStorage.getItem("token");
+                                await fetch(`https://predicciones-ecuador.onrender.com/admin/news-suggestions/${s.id}`, {
+                                  method: "PUT",
+                                  headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+                                  body: JSON.stringify({ action: "reject" }),
+                                });
+                                fetchBotSuggestions();
+                              }}
+                              className="flex-1 sm:flex-none px-4 py-2.5 sm:py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] text-[12px] text-slate-500 dark:text-white/40 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-500 hover:border-rose-200 dark:hover:border-rose-500/20 transition"
+                            >
+                              ✕ Rechazar
+                            </button>
+                            <button
+                              onClick={async () => {
+                                const token = localStorage.getItem("token");
+                                await fetch(`https://predicciones-ecuador.onrender.com/admin/news-suggestions/${s.id}`, {
+                                  method: "DELETE",
+                                  headers: { authorization: `Bearer ${token}` },
+                                });
+                                fetchBotSuggestions();
+                                showToast("Eliminado", "info");
+                              }}
+                              className="px-3 py-2.5 sm:py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] text-[12px] text-slate-400 dark:text-white/25 hover:text-rose-500 transition"
+                            >
+                              🗑️
+                            </button>
+                          </div>
                         </div>
                       )}
                     </div>
