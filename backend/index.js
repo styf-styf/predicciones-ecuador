@@ -806,23 +806,29 @@ app.post("/bet", auth, async (req, res) => {
   }).eq("id", marketId);
 
   // ✅ Insertar o actualizar la apuesta (una sola fila por usuario por mercado)
+  let betOpError = null;
   if (existingBet) {
-    await supabase.from("bets")
-      .update({
-        type,
-        amount: betAmount,
-        changes: (existingBet.changes ?? 0) + 1,
-        updated_at: new Date().toISOString(),
-      })
+    const { error } = await supabase.from("bets")
+      .update({ type, amount: betAmount, changes: (existingBet.changes ?? 0) + 1 })
       .eq("id", existingBet.id);
+    betOpError = error;
   } else {
-    await supabase.from("bets").insert([{
+    const { error } = await supabase.from("bets").insert([{
       user_id: user.id,
       market_id: marketId,
       type,
       amount: betAmount,
       changes: 0,
     }]);
+    betOpError = error;
+  }
+
+  if (betOpError) {
+    // Revertir puntos y pools del mercado
+    await supabase.from("users").update({ points: user.points }).eq("id", user.id);
+    await supabase.from("markets").update({ yes: market.yes, no: market.no }).eq("id", marketId);
+    console.error("[bet] Error guardando apuesta:", betOpError.message);
+    return res.status(500).json({ message: "Error al registrar apuesta. Saldo revertido." });
   }
 
  const { data: updatedMarket } = await supabase
@@ -956,6 +962,68 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
   res.json({
     message: `Mercado resuelto. Comisión total plataforma: ${totalCommission.toFixed(2)} pts`
   });
+});
+
+// =======================
+// 🔧 ADMIN - REPARAR PAGOS DE MERCADO
+// =======================
+app.post("/admin/markets/:id/fix-payouts", auth, async (req, res) => {
+  const { data: admin } = await supabase.from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const marketId = Number(req.params.id);
+  const { data: market } = await supabase.from("markets").select("*").eq("id", marketId).single();
+  if (!market) return res.status(404).json({ message: "Mercado no encontrado" });
+  if (!market.resolved) return res.status(400).json({ message: "El mercado no está resuelto aún" });
+
+  const { data: config } = await supabase.from("config").select("commission").eq("id", 1).single();
+  const COMMISSION = (config?.commission ?? 3) / 100;
+
+  const { data: allBets } = await supabase.from("bets").select("*").eq("market_id", marketId);
+  if (!allBets || allBets.length === 0) return res.json({ message: "No hay apuestas", fixed: 0 });
+
+  const winningBets = allBets.filter(b => b.type === market.winner);
+  const losingBets = allBets.filter(b => b.type !== market.winner);
+  const losingPool = losingBets.reduce((s, b) => s + Number(b.amount), 0);
+  const winningPool = winningBets.reduce((s, b) => s + Number(b.amount), 0);
+
+  // Solo procesar apuestas ganadoras cuyo payout sea null (nunca procesadas)
+  const unpaid = winningBets.filter(b => b.payout === null || b.payout === undefined);
+  if (unpaid.length === 0) return res.json({ message: "No hay pagos pendientes", fixed: 0 });
+
+  let fixed = 0;
+  for (const bet of unpaid) {
+    const amount = Number(bet.amount);
+    const share = winningPool > 0 ? amount / winningPool : 0;
+    const grossProfit = losingPool * share;
+    const commission = grossProfit * COMMISSION;
+    const payout = parseFloat((amount + grossProfit - commission).toFixed(2));
+
+    const { data: betUser, error: userErr } = await supabase
+      .from("users").select("points").eq("id", bet.user_id).single();
+    if (userErr || !betUser) {
+      console.error(`[fix-payouts] No se encontró usuario ${bet.user_id}`);
+      continue;
+    }
+
+    const newPoints = parseFloat((Number(betUser.points) + payout).toFixed(2));
+    await supabase.from("users").update({ points: newPoints }).eq("id", bet.user_id);
+    await supabase.from("bets").update({
+      payout,
+      commission_paid: parseFloat((grossProfit * COMMISSION).toFixed(2)),
+    }).eq("id", bet.id);
+    await supabase.from("notifications").insert([{
+      user_id: bet.user_id,
+      title: "🎉 Pago de predicción procesado",
+      message: `Pago corregido: apostaste ${amount.toFixed(2)} $ a "${market.question}" · Total recibido: ${payout.toFixed(2)} $`,
+      read: false,
+    }]);
+    fixed++;
+  }
+
+  broadcast("markets", {});
+  broadcast("notifications", {});
+  res.json({ message: `${fixed} pago(s) procesados correctamente`, fixed });
 });
 
 // =======================
