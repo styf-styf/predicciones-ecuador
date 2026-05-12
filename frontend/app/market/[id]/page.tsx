@@ -66,7 +66,7 @@ function BetPanel({
         <span className="text-2xl font-bold text-slate-900 dark:text-white">{amount ? `${amount} $` : "0 $"}</span>
       </div>
       <div className="flex gap-2 flex-wrap">
-        {[1, 5, 10, 50, 100].map((val) => (
+        {[1, 5, 10, 50].map((val) => (
           <button key={val} onClick={() => { const cur = parseFloat(amount) || 0; const max = points !== null ? points : Infinity; setAmount(String(Math.min(cur + val, max))); }}
             className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700">+{val}</button>
         ))}
