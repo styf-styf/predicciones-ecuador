@@ -1046,22 +1046,6 @@ export default function AdminPage() {
   <button
     onClick={async () => {
       const token = localStorage.getItem("token");
-      const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/markets/${m.id}/fix-payouts`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (res.ok) showToast(data.message, data.fixed > 0 ? "success" : "info");
-      else showToast(data.message || "Error", "error");
-    }}
-    className="text-[10px] bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-500/20 border border-amber-200 dark:border-amber-500/20 px-2.5 py-1 rounded-md transition"
-    title="Re-procesar pagos pendientes de este mercado"
-  >
-    🔧
-  </button>
-  <button
-    onClick={async () => {
-      const token = localStorage.getItem("token");
       const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/markets/${m.id}/archive`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
