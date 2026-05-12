@@ -1280,12 +1280,15 @@ app.post("/payphone/prepare", auth, async (req, res) => {
     return res.status(400).json({ message: "Datos inválidos" });
   }
 
+  const { data: userBalance } = await supabase.from("users").select("points").eq("id", req.userId).single();
+
   const { data, error } = await supabase.from("transactions").insert([{
     user_id: req.userId,
     type: "recarga",
     amount: parseFloat(amount),
     status: "pendiente",
     reference: clientTransactionId,
+    balance_before: userBalance ? Number(userBalance.points) : null,
   }]);
 
   if (error) return res.status(500).json({ message: error.message });
@@ -1863,6 +1866,8 @@ app.post("/withdrawal", auth, async (req, res) => {
     status: "pendiente",
     payment_method: method || "transferencia",
     transfer_code: null,
+    balance_before: Number(user.points),
+    balance_after: newPoints,
   });
 
   if (txError) {
@@ -2183,6 +2188,8 @@ app.post("/transfer", auth, async (req, res) => {
     return res.status(400).json({ message: "El código de transferencia es obligatorio" });
   }
 
+  const { data: userBalance } = await supabase.from("users").select("points").eq("id", req.userId).single();
+
   const { error } = await supabase.from("transactions").insert({
     user_id: req.userId,
     type: "recarga",
@@ -2190,6 +2197,7 @@ app.post("/transfer", auth, async (req, res) => {
     status: "pendiente",
     payment_method: "transferencia",
     transfer_code: transfer_code.trim(),
+    balance_before: userBalance ? Number(userBalance.points) : null,
   });
 
   if (error) return res.status(500).json({ message: error.message });

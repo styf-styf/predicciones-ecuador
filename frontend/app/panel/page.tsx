@@ -225,15 +225,26 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
       estado,
     };
   }),
-  ...transactions.map((tx) => ({
-    id: tx.id,
-    tipo: tx.type,
-    descripcion: tx.type === "recarga" ? "Recarga de saldo" : "Retiro de saldo",
-    subtipo: tx.payment_method === "transferencia" ? "Transferencia" : "Tarjeta",
-    monto: tx.type === "recarga" ? Number(tx.amount) : -Number(tx.amount),
-    fecha: tx.created_at,
-    estado: tx.status,
-  })),
+  ...transactions.map((tx) => {
+    const bb = tx.balance_before != null ? Number(tx.balance_before) : null;
+    const amt = Number(tx.amount);
+    let ba: number | null = null;
+    if (bb != null) {
+      if (tx.type === "retiro") ba = bb - amt;
+      else if (tx.type === "recarga" && tx.status === "aprobado") ba = bb + amt;
+    }
+    return {
+      id: tx.id,
+      tipo: tx.type,
+      descripcion: tx.type === "recarga" ? "Recarga de saldo" : "Retiro de saldo",
+      subtipo: tx.payment_method === "transferencia" ? "Transferencia" : "Tarjeta",
+      monto: tx.type === "recarga" ? amt : -amt,
+      fecha: tx.created_at,
+      estado: tx.status,
+      balance_before: bb,
+      balance_after: ba,
+    };
+  }),
  ].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
 
   const MOV_PAGE_SIZE = 10;
@@ -430,7 +441,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
               <>
                 <div className="space-y-2">
                   {movPaginated.map((mov) => (
-                    <MovimientoRow key={mov.id} mov={mov} full />
+                    <MovimientoRow key={mov.id} mov={mov} />
                   ))}
                 </div>
                 {movTotalPages > 1 && (
@@ -989,59 +1000,96 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
   );
 }
 
-function MovimientoRow({ mov, full }: { mov: any; full?: boolean }) {
+function MovimientoRow({ mov }: { mov: any }) {
   const icons: Record<string, React.ReactElement> = {
-  ganada: <CheckCircle size={14} className="text-emerald-500" />,
-  perdida: <XCircle size={14} className="text-rose-500" />,
-  pendiente: <Clock size={14} className="text-amber-500" />,
-  aprobado: <CheckCircle size={14} className="text-emerald-500" />,
-  completado: <CheckCircle size={14} className="text-emerald-500" />,
-  rechazado: <XCircle size={14} className="text-rose-500" />,
-  procesando: <Clock size={14} className="text-amber-500" />,
-  recarga: <ArrowDownLeft size={14} className="text-blue-500" />,
-  retiro: <ArrowUpLeft size={14} className="text-rose-500" />,
-};
-const badges: Record<string, string> = {
-  ganada: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800",
-  perdida: "bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800",
-  pendiente: "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800",
-  aprobado: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800",
-  completado: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800",
-  rechazado: "bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800",
-  procesando: "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800",
-};
+    ganada: <CheckCircle size={14} className="text-emerald-500" />,
+    perdida: <XCircle size={14} className="text-rose-500" />,
+    pendiente: <Clock size={14} className="text-amber-500" />,
+    aprobado: <CheckCircle size={14} className="text-emerald-500" />,
+    completado: <CheckCircle size={14} className="text-emerald-500" />,
+    rechazado: <XCircle size={14} className="text-rose-500" />,
+    procesando: <Clock size={14} className="text-amber-500" />,
+    recarga: <ArrowDownLeft size={14} className="text-blue-500" />,
+    retiro: <ArrowUpLeft size={14} className="text-rose-500" />,
+  };
+  const badges: Record<string, string> = {
+    ganada: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800",
+    perdida: "bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800",
+    pendiente: "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800",
+    aprobado: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800",
+    completado: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800",
+    rechazado: "bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800",
+    procesando: "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800",
+  };
+
+  const amountColor = mov.estado === "ganada" || (mov.tipo !== "prediccion" && mov.monto > 0)
+    ? "text-emerald-500"
+    : mov.estado === "perdida" || mov.monto < 0
+    ? "text-rose-500"
+    : "text-slate-400";
+
+  const amountLabel = mov.estado === "ganada"
+    ? `+${mov.monto.toFixed(2)} $`
+    : mov.tipo === "prediccion"
+    ? `-${Math.abs(mov.monto).toFixed(2)} $`
+    : `${mov.monto > 0 ? "+" : ""}${mov.monto.toFixed(2)} $`;
+
+  const fecha = new Date(mov.fecha + "Z").toLocaleString("es-EC", {
+    timeZone: "America/Guayaquil",
+    day: "numeric", month: "short", year: "numeric",
+    hour: "2-digit", minute: "2-digit",
+  });
+
+  const showBalances = mov.balance_before != null;
 
   return (
-    <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-xl">
-      <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 grid place-items-center shrink-0">
-        {icons[mov.estado] || icons.pendiente}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{mov.descripcion}</p>
-        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-          <span className={`text-[10px] px-1.5 py-0.5 rounded-md border ${badges[mov.estado] || badges.pendiente}`}>
-            {mov.estado} · {mov.subtipo}
-          </span>
-          {mov.estado === "ganada" && mov.commission_paid != null && (
-            <span className="text-[10px] text-slate-400">comisión: -{mov.commission_paid.toFixed(2)} $</span>
-          )}
-          {mov.estado === "ganada" && mov.payout != null && (
-            <span className="text-[10px] text-slate-400">predicción: {mov.apuesta.toFixed(2)} $</span>
-          )}
-          {full && <span className="text-[10px] text-slate-400">{new Date(mov.fecha + "Z").toLocaleDateString("es-EC", { timeZone: "America/Guayaquil", day: "numeric", month: "short" })}</span>}
+    <div className="p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-xl">
+      <div className="flex items-start gap-3">
+        <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 grid place-items-center shrink-0 mt-0.5">
+          {icons[mov.estado] || icons.pendiente}
         </div>
-      </div>
-      <div className="text-right shrink-0">
-        <span className={`text-sm font-bold block ${mov.estado === "ganada" ? "text-emerald-500" : mov.estado === "perdida" ? "text-rose-500" : "text-slate-400"}`}>
-          {mov.estado === "ganada" ? `+${mov.monto.toFixed(2)} $` : mov.tipo === "prediccion" ? `-${Math.abs(mov.monto).toFixed(2)} $` : `${mov.monto > 0 ? "+" : ""}${mov.monto.toFixed(2)} $`}
-        </span>
-        {mov.estado === "ganada" && mov.payout != null && (
-          <span className="text-[10px] text-slate-400">neto: +{(mov.payout - mov.apuesta).toFixed(2)} $</span>
-        )}
+        <div className="flex-1 min-w-0">
+          {/* Fecha */}
+          <p className="text-[10px] text-slate-400 mb-0.5">{fecha}</p>
+
+          {/* Descripción y monto */}
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-medium truncate">{mov.descripcion}</p>
+            <span className={`text-sm font-bold shrink-0 ${amountColor}`}>{amountLabel}</span>
+          </div>
+
+          {/* Badge de estado */}
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            <span className={`text-[10px] px-1.5 py-0.5 rounded-md border ${badges[mov.estado] || badges.pendiente}`}>
+              {mov.estado} · {mov.subtipo}
+            </span>
+            {mov.estado === "ganada" && mov.commission_paid != null && (
+              <span className="text-[10px] text-slate-400">comisión: -{mov.commission_paid.toFixed(2)} $</span>
+            )}
+            {mov.estado === "ganada" && mov.payout != null && (
+              <span className="text-[10px] text-slate-400">apostado: {mov.apuesta.toFixed(2)} $</span>
+            )}
+          </div>
+
+          {/* Saldo anterior → actual */}
+          {showBalances && (
+            <div className="flex items-center gap-1.5 mt-1.5 text-[11px]">
+              <span className="text-slate-400">Saldo:</span>
+              <span className="font-medium text-slate-600 dark:text-slate-300">{(mov.balance_before as number).toFixed(2)} $</span>
+              <span className="text-slate-400">→</span>
+              {mov.balance_after != null ? (
+                <span className={`font-semibold ${(mov.balance_after as number) >= (mov.balance_before as number) ? "text-emerald-500" : "text-rose-500"}`}>
+                  {(mov.balance_after as number).toFixed(2)} $
+                </span>
+              ) : (
+                <span className="text-amber-500 font-medium">pendiente</span>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
-
 }
 
 export default function PanelPage() {
