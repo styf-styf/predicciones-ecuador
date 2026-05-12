@@ -101,21 +101,21 @@ export default function Header() {
       `}</style>
     
     <header className="sticky top-0 z-50 border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-3">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-1.5 sm:py-3 flex items-center justify-between gap-3">
 
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <div className="h-9 w-9 sm:h-10 sm:w-10 shrink-0 rounded-2xl bg-emerald-500 grid place-items-center font-bold text-slate-950 text-sm sm:text-base">P</div>
+          <div className="h-9 w-9 sm:h-9 sm:w-9 shrink-0 rounded-2xl bg-emerald-500 grid place-items-center font-bold text-slate-950 text-sm sm:text-base">P</div>
           <div className="min-w-0 hidden sm:block">
-            <h1 className="text-base sm:text-xl font-bold leading-tight truncate">Predicciones Ecuador</h1>
+            <h1 className="text-base sm:text-lg font-bold leading-tight truncate">Predicciones Ecuador</h1>
             <p className="text-[10px] sm:text-xs text-slate-400 hidden sm:block">Mercados predictivos en tiempo real</p>
           </div>
         </Link>
 
         {/* Search desktop */}
-        <div className="relative hidden md:block" ref={searchRef}>
-          <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-900 px-4 py-3 rounded-2xl w-96 lg:w-[480px]">
-            <Search size={18} className="text-slate-400 shrink-0" />
+        <div className="relative hidden md:block flex-1 max-w-2xl" ref={searchRef}>
+          <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 px-3 py-2 rounded-xl w-full">
+            <Search size={15} className="text-slate-400 shrink-0" />
             <input
               placeholder="Buscar mercados..."
               value={searchQuery}
@@ -222,7 +222,7 @@ export default function Header() {
                   {points !== null && (
                     <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{points} $</span>
                   )}
-                  <div className="h-6 w-6 rounded-full bg-emerald-500 text-white text-xs font-bold grid place-items-center shrink-0">
+                  <div className="h-7 w-7 rounded-xl bg-emerald-500 text-slate-950 text-xs font-bold grid place-items-center shrink-0">
                     {userName?.charAt(0).toUpperCase() || "U"}
                   </div>
                 </button>
