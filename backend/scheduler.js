@@ -191,6 +191,7 @@ Responde SOLO en JSON sin markdown:
   "probability_reasoning": "explicación breve en 1 oración basada en el contenido del artículo",
   "suggested_close_date": "fecha YYYY-MM-DD entre ${today} y ${in5Days}",
   "impact": "alto o medio o bajo",
+  "category": "una de estas opciones exactas: deporte, farandula, politica, elecciones, pais, general",
   "summary": "resumen del artículo en 1-2 oraciones con los datos más relevantes"
 }
 
@@ -198,7 +199,8 @@ Reglas:
 - Usa el contenido del artículo para hacer la pregunta lo más específica posible (nombres, cifras, fechas)
 - Solo genera pregunta si la noticia es relevante (economía, política, deporte, farándula, finanzas)
 - La pregunta no debe duplicar mercados activos
-- Si la noticia es trivial, devuelve null en new_market_question`;
+- Si la noticia es trivial, devuelve null en new_market_question
+- category debe ser una de las 6 opciones exactas, elige según el tema principal de la noticia`;
 
     const aiRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -222,6 +224,9 @@ Reglas:
 
     if (!parsed.new_market_question) return false;
 
+    const VALID_CATEGORIES = ["deporte", "farandula", "politica", "elecciones", "pais", "general"];
+    const category = VALID_CATEGORIES.includes(parsed.category) ? parsed.category : "general";
+
     await supabase.from("news_suggestions").insert({
       title: headline.title,
       url: headline.url,
@@ -232,6 +237,7 @@ Reglas:
       probability_reasoning: parsed.probability_reasoning || null,
       suggested_close_date: parsed.suggested_close_date || null,
       impact: parsed.impact || null,
+      category,
       resolves_market_id: null,
       resolves_as: null,
       source: "bot",

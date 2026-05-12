@@ -132,6 +132,7 @@ export default function AdminPage() {
   const [botRunning, setBotRunning] = useState(false);
   const [botSuggestions, setBotSuggestions] = useState<any[]>([]);
   const [closeDates, setCloseDates] = useState<Record<number, string>>({});
+  const [selectedCategories, setSelectedCategories] = useState<Record<number, string>>({});
 
   // ── Nuevos estados ──
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
@@ -324,7 +325,17 @@ export default function AdminPage() {
       setCloseDates(prev => {
         const init: Record<number, string> = { ...prev };
         filtered.forEach((s: any) => {
-          if (!init[s.id] && s.suggested_close_date) init[s.id] = s.suggested_close_date;
+          if (!init[s.id] && s.suggested_close_date) {
+            const d = s.suggested_close_date;
+            init[s.id] = d.includes("T") ? d.slice(0, 16) : `${d}T23:59`;
+          }
+        });
+        return init;
+      });
+      setSelectedCategories(prev => {
+        const init: Record<number, string> = { ...prev };
+        filtered.forEach((s: any) => {
+          if (!init[s.id]) init[s.id] = s.category || "general";
         });
         return init;
       });
@@ -2353,15 +2364,32 @@ export default function AdminPage() {
                             </div>
                           )}
 
-                          {/* Fecha de cierre */}
-                          <div className="flex items-center gap-2">
-                            <label className="text-[11px] text-slate-400 dark:text-white/30 shrink-0">📅 Fecha de cierre:</label>
-                            <input
-                              type="date"
-                              value={closeDates[s.id] || ""}
-                              onChange={(e) => setCloseDates(prev => ({ ...prev, [s.id]: e.target.value }))}
-                              className="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-2 py-1 text-[12px] outline-none text-slate-900 dark:text-white focus:border-emerald-500/40 transition"
-                            />
+                          {/* Fecha de cierre y categoría */}
+                          <div className="flex flex-wrap items-center gap-3">
+                            <div className="flex items-center gap-2">
+                              <label className="text-[11px] text-slate-400 dark:text-white/30 shrink-0">📅 Fecha de cierre:</label>
+                              <input
+                                type="datetime-local"
+                                value={closeDates[s.id] || ""}
+                                onChange={(e) => setCloseDates(prev => ({ ...prev, [s.id]: e.target.value }))}
+                                className="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-2 py-1 text-[12px] outline-none text-slate-900 dark:text-white focus:border-emerald-500/40 transition"
+                              />
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <label className="text-[11px] text-slate-400 dark:text-white/30 shrink-0">🏷 Categoría:</label>
+                              <select
+                                value={selectedCategories[s.id] || "general"}
+                                onChange={(e) => setSelectedCategories(prev => ({ ...prev, [s.id]: e.target.value }))}
+                                className="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-2 py-1 text-[12px] outline-none text-slate-900 dark:text-white focus:border-emerald-500/40 transition"
+                              >
+                                <option value="deporte">Deporte</option>
+                                <option value="farandula">Farándula</option>
+                                <option value="politica">Política</option>
+                                <option value="elecciones">Elecciones</option>
+                                <option value="pais">País</option>
+                                <option value="general">General</option>
+                              </select>
+                            </div>
                           </div>
                         </div>
                       )}
@@ -2394,7 +2422,7 @@ export default function AdminPage() {
                                 const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/news-suggestions/${s.id}`, {
                                   method: "PUT",
                                   headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
-                                  body: JSON.stringify({ action: "approve_market", closes_at: closeDates[s.id] || null }),
+                                  body: JSON.stringify({ action: "approve_market", closes_at: closeDates[s.id] || null, category: selectedCategories[s.id] || "general" }),
                                 });
                                 const data = await res.json();
                                 if (res.ok) { showToast("Mercado creado ✅", "success"); fetchBotSuggestions(); fetchMarkets(); }

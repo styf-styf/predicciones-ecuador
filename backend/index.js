@@ -1677,9 +1677,10 @@ app.put("/admin/news-suggestions/:id", async (req, res) => {
   if (action === "approve_market" && suggestion.new_market_question) {
   console.log("Sugerencia completa:", JSON.stringify(suggestion, null, 2));
 
-  const { closes_at } = req.body;
+  const { closes_at, category } = req.body;
   const marketData = {
     question: suggestion.new_market_question,
+    category: category || suggestion.category || "general",
     news_title: suggestion.title || null,
     news_url: suggestion.url || null,
     news_summary: suggestion.summary || null,
