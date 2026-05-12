@@ -84,7 +84,11 @@ export default function Header() {
   }, []);
 
   useEffect(() => {
-    const es = new EventSource("https://predicciones-ecuador.onrender.com/events");
+    const token = localStorage.getItem("token");
+    const url = token
+      ? `https://predicciones-ecuador.onrender.com/events?token=${token}`
+      : "https://predicciones-ecuador.onrender.com/events";
+    const es = new EventSource(url);
     es.addEventListener("notifications", () => loadNotifications());
     es.addEventListener("bets", () => loadMe());
     es.addEventListener("transactions", () => { loadMe(); loadNotifications(); });

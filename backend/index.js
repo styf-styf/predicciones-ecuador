@@ -25,21 +25,24 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Rate limiter en memoria para login
-const loginAttempts = new Map();
-const RATE_WINDOW_MS = 15 * 60 * 1000;
-const MAX_LOGIN_ATTEMPTS = 10;
-function loginRateLimit(req, res, next) {
-  const ip = req.ip || req.socket.remoteAddress;
-  const now = Date.now();
-  const attempts = (loginAttempts.get(ip) || []).filter(t => now - t < RATE_WINDOW_MS);
-  if (attempts.length >= MAX_LOGIN_ATTEMPTS) {
-    return res.status(429).json({ message: "Demasiados intentos. Espera 15 minutos." });
-  }
-  attempts.push(now);
-  loginAttempts.set(ip, attempts);
-  next();
+// Rate limiters en memoria
+function makeRateLimiter(maxAttempts, windowMs, message) {
+  const store = new Map();
+  return (req, res, next) => {
+    const ip = req.ip || req.socket.remoteAddress;
+    const now = Date.now();
+    const recent = (store.get(ip) || []).filter(t => now - t < windowMs);
+    if (recent.length >= maxAttempts) return res.status(429).json({ message });
+    recent.push(now);
+    store.set(ip, recent);
+    next();
+  };
 }
+const loginRateLimit    = makeRateLimiter(10, 15 * 60 * 1000, "Demasiados intentos. Espera 15 minutos.");
+const registerRateLimit = makeRateLimiter(5,  60 * 60 * 1000, "Demasiados registros desde esta IP. Espera 1 hora.");
+const betRateLimit      = makeRateLimiter(60,      60 * 1000, "Demasiadas apuestas seguidas. Espera un momento.");
+const withdrawalRateLimit = makeRateLimiter(5, 60 * 60 * 1000, "Demasiadas solicitudes de retiro. Espera 1 hora.");
+const transferRateLimit   = makeRateLimiter(10, 60 * 60 * 1000, "Demasiadas transferencias. Espera 1 hora.");
 
 const SECRET = process.env.JWT_SECRET;
 if (!SECRET) throw new Error("JWT_SECRET no está definido en .env");
@@ -58,11 +61,14 @@ function broadcast(event, data) {
 // =======================
 // 🔐 Middleware auth
 // =======================
-const auth = (req, res, next) => {
+const auth = async (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) return res.status(401).json({ message: "No autorizado" });
   try {
     const decoded = jwt.verify(token, SECRET);
+    const { data: u } = await supabase
+      .from("users").select("suspended").eq("id", decoded.id).single();
+    if (u?.suspended) return res.status(403).json({ message: "Tu cuenta está suspendida. Contacta al soporte." });
     req.userId = decoded.id;
     next();
   } catch {
@@ -73,11 +79,18 @@ const auth = (req, res, next) => {
 // =======================
 // 👤 REGISTRO
 // =======================
-app.post("/register", async (req, res) => {
+app.post("/register", registerRateLimit, async (req, res) => {
   const { email, password, nombre, apellido, cedula, celular, ciudad, direccion, pais } = req.body;
 
   if (!email?.trim() || !password?.trim()) {
     return res.status(400).json({ message: "Email y contraseña son obligatorios" });
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email.trim())) {
+    return res.status(400).json({ message: "Formato de email inválido" });
+  }
+  if (password.length < 8) {
+    return res.status(400).json({ message: "La contraseña debe tener al menos 8 caracteres" });
   }
 
   const { data: existing, error: checkError } = await supabase
@@ -123,7 +136,7 @@ app.post("/login", loginRateLimit, async (req, res) => {
   if (!validPassword) return res.status(400).json({ message: "Contraseña incorrecta" });
 
   const token = jwt.sign(
-    { id: data.id, role: data.role, points: data.points },
+    { id: data.id, role: data.role },
     SECRET, { expiresIn: "7d" }
   );
 
@@ -189,7 +202,7 @@ app.post("/auth/google", async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, role: user.role, points: user.points },
+      { id: user.id, role: user.role },
       SECRET, { expiresIn: "7d" }
     );
 
@@ -712,7 +725,8 @@ app.get("/notifications", auth, async (req, res) => {
   const { data, error } = await supabase
     .from("notifications").select("*")
     .eq("user_id", req.userId)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(50);
 
   if (error) return res.status(400).json({ message: error.message });
   res.json(data);
@@ -730,7 +744,7 @@ app.put("/notifications/:id/read", auth, async (req, res) => {
 // =======================
 // 💰 APOSTAR
 // =======================
-app.post("/bet", auth, async (req, res) => {
+app.post("/bet", auth, betRateLimit, async (req, res) => {
   const { marketId, type, amount } = req.body;
   if (type !== "yes" && type !== "no") {
     return res.status(400).json({ message: "Tipo de apuesta inválido" });
@@ -785,12 +799,17 @@ app.post("/bet", auth, async (req, res) => {
     return res.status(400).json({ message: "Saldo insuficiente" });
   }
 
-  // ✅ Actualizar puntos del usuario (solo la diferencia)
+  // ✅ Actualizar puntos de forma atómica — si el saldo cambió entre el read y el write, rechazar
   const newPoints = Number(user.points) - pointsDiff;
-  const { error: balanceError } = await supabase.from("users").update({ points: newPoints }).eq("id", user.id);
-  if (balanceError) {
-    console.error("[bet] Error descontando puntos:", balanceError.message);
-    return res.status(500).json({ message: "Error al procesar el saldo. Intenta de nuevo." });
+  const { data: updatedUser, error: balanceError } = await supabase
+    .from("users")
+    .update({ points: newPoints })
+    .eq("id", user.id)
+    .eq("points", user.points)  // Solo actualiza si el saldo no cambió desde que lo leímos
+    .select("id");
+
+  if (balanceError || !updatedUser || updatedUser.length === 0) {
+    return res.status(409).json({ message: "Tu saldo fue modificado, intenta de nuevo." });
   }
 
   // ✅ Revertir apuesta anterior del mercado y aplicar la nueva
@@ -850,8 +869,6 @@ await supabase.from("market_history").insert([{
   total: total,
 }]);
 
-console.log("Snapshot guardado:", { marketId, yes_pct: ((Number(updatedMarket.yes) / total) * 100).toFixed(1), no_pct: ((Number(updatedMarket.no) / total) * 100).toFixed(1) });
-
 broadcast("bets", { market_id: marketId });
 broadcast("market_history", { market_id: marketId });
 res.json({ message: "Predicción realizada", points: newPoints, market: updatedMarket });
@@ -889,21 +906,15 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
   const { data: allBets, error: allBetsError } = await supabase
     .from("bets").select("*").eq("market_id", marketId);
 
-  console.log(`[resolve] Mercado ${marketId} | winner=${winner} | bets=${allBets?.length ?? 0} | error=${allBetsError?.message ?? "none"}`);
-
   if (!allBets || allBets.length === 0) {
     await supabase.from("markets").update({ resolved: true, winner }).eq("id", marketId);
     return res.json({ message: "Mercado resuelto, no hubo apuestas" });
   }
 
-  // Normalizar tipo para evitar problemas de espacios o mayúsculas
   const winningBets = allBets.filter((b) => b.type?.trim().toLowerCase() === winner);
   const losingBets = allBets.filter((b) => b.type?.trim().toLowerCase() !== winner);
   const losingPool = losingBets.reduce((sum, b) => sum + Number(b.amount), 0);
   const winningPool = winningBets.reduce((sum, b) => sum + Number(b.amount), 0);
-
-  console.log(`[resolve] winningBets=${winningBets.length} | losingBets=${losingBets.length} | winningPool=${winningPool} | losingPool=${losingPool} | COMMISSION=${COMMISSION}`);
-  console.log(`[resolve] Tipos encontrados en bets:`, allBets.map(b => `id=${b.id} type="${b.type}" amount=${b.amount} user_id=${b.user_id}`));
 
   if (winningBets.length === 0) {
     await supabase.from("markets").update({ resolved: true, winner }).eq("id", marketId);
@@ -914,10 +925,9 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
 
   for (const bet of winningBets) {
     const amount = Number(bet.amount);
-    console.log(`[resolve] → Procesando bet ganador id=${bet.id} | user_id=${bet.user_id} | amount=${amount} | type=${bet.type}`);
 
     if (!amount || isNaN(amount) || amount <= 0) {
-      console.error(`[resolve] ✗ SKIP bet ${bet.id}: amount inválido (${bet.amount})`);
+      console.error(`[resolve] SKIP bet ${bet.id}: amount inválido`);
       continue;
     }
     const participation = winningPool > 0 ? amount / winningPool : 0;
@@ -927,46 +937,36 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
     const netProfit = grossProfit - commission;
     const payout = parseFloat((amount + netProfit).toFixed(2));
 
-    console.log(`[resolve] Cálculo bet ${bet.id}: participation=${participation.toFixed(4)} | grossProfit=${grossProfit.toFixed(2)} | commission=${commission.toFixed(2)} | payout=${payout}`);
-
     if (isNaN(payout) || payout <= 0) {
-      console.error(`[resolve] ✗ SKIP bet ${bet.id}: payout inválido (${payout})`);
+      console.error(`[resolve] SKIP bet ${bet.id}: payout inválido`);
       continue;
     }
 
     const { data: user, error: userError } = await supabase
       .from("users").select("points").eq("id", bet.user_id).single();
 
-    console.log(`[resolve] User fetch para ${bet.user_id}: data=${JSON.stringify(user)} | error=${userError?.message ?? "none"} | code=${userError?.code ?? "none"}`);
-
     if (userError || !user) {
-      console.error(`[resolve] ✗ SKIP bet ${bet.id}: usuario no encontrado (user_id=${bet.user_id})`);
+      console.error(`[resolve] SKIP bet ${bet.id}: usuario no encontrado`);
       continue;
     }
 
     const newPoints = parseFloat((Number(user.points) + payout).toFixed(2));
-    console.log(`[resolve] Actualizando saldo: ${user.points} + ${payout} = ${newPoints}`);
 
     const { error: updateError } = await supabase.from("users")
       .update({ points: newPoints })
       .eq("id", bet.user_id);
 
-    console.log(`[resolve] Users update: error=${updateError?.message ?? "none"}`);
-
     if (updateError) {
-      console.error(`[resolve] ✗ SKIP bet ${bet.id}: error actualizando puntos de ${bet.user_id}: ${updateError.message}`);
+      console.error(`[resolve] Error actualizando puntos bet ${bet.id}: ${updateError.message}`);
       continue;
     }
 
-    // Guardar payout primero (campo crítico para el UI)
     const { error: payoutError } = await supabase.from("bets")
       .update({ payout })
       .eq("id", bet.id);
 
-    console.log(`[resolve] Bets payout update id=${bet.id}: payout=${payout} | error=${payoutError?.message ?? "none"}`);
-
     if (payoutError) {
-      console.error(`[resolve] ✗ Error guardando payout en bet ${bet.id}:`, payoutError.message);
+      console.error(`[resolve] Error guardando payout bet ${bet.id}: ${payoutError.message}`);
     }
 
     // Guardar commission_paid por separado (informativo, no crítico)
@@ -1494,6 +1494,16 @@ app.post("/payphone/callback", async (req, res) => {
 });
 
 // =======================
+// 💳 PAYPHONE - CONFIG WIDGET (token nunca expuesto en el frontend)
+// =======================
+app.get("/payphone/widget-config", auth, (req, res) => {
+  const token = process.env.PAYPHONE_TOKEN_API || process.env.PAYPHONE_TOKEN;
+  const storeId = process.env.PAYPHONE_STORE_ID;
+  if (!token) return res.status(500).json({ message: "Payphone no configurado" });
+  res.json({ token, storeId });
+});
+
+// =======================
 // 💳 PAYPHONE - ESTADO PAGO
 // =======================
 app.get("/payphone/status", auth, async (req, res) => {
@@ -1599,9 +1609,7 @@ Reglas para generar buenas preguntas:
 });
 
 const aiData = await aiRes.json();
-console.log("Respuesta Groq completa:", JSON.stringify(aiData, null, 2));
 const rawText = aiData.choices?.[0]?.message?.content || "{}";
-console.log("Respuesta IA raw:", rawText);
 const clean = rawText.replace(/```json|```/g, "").trim();
 let parsed;
 try {
@@ -1680,7 +1688,6 @@ app.put("/admin/news-suggestions/:id", async (req, res) => {
   broadcast("suggestions", {});
 
   if (action === "approve_market" && suggestion.new_market_question) {
-  console.log("Sugerencia completa:", JSON.stringify(suggestion, null, 2));
 
   const { closes_at, category } = req.body;
   const marketData = {
@@ -1696,8 +1703,7 @@ app.put("/admin/news-suggestions/:id", async (req, res) => {
 
   const { data: newMarket, error: marketError } = await supabase.from("markets").insert([marketData]).select().single();
 
-  console.log("Mercado creado:", JSON.stringify(newMarket, null, 2));
-  console.log("Error mercado:", JSON.stringify(marketError, null, 2));
+  if (marketError) console.error("[approve_market] Error:", marketError.message);
 
   await supabase.from("news_suggestions").update({ status: "approved" }).eq("id", suggestionId);
   return res.json({ message: "Mercado creado ✅" });
@@ -1836,12 +1842,15 @@ app.put("/admin/markets/:id", auth, async (req, res) => {
 // =======================
 // 💸 SOLICITAR RETIRO
 // =======================
-app.post("/withdrawal", auth, async (req, res) => {
+app.post("/withdrawal", auth, withdrawalRateLimit, async (req, res) => {
   const { amount, method } = req.body;
   const withdrawAmount = parseFloat(amount);
 
   if (!withdrawAmount || withdrawAmount < 10) {
     return res.status(400).json({ message: "Monto mínimo de retiro: 10 $" });
+  }
+  if (withdrawAmount > 1000) {
+    return res.status(400).json({ message: "Monto máximo de retiro: 1000 $ por solicitud" });
   }
 
   const { data: user } = await supabase
@@ -2019,6 +2028,88 @@ app.get("/my-transactions", auth, async (req, res) => {
 });
 
 // =======================
+// 📊 MIS MOVIMIENTOS (combinado + balance reconstruido)
+// =======================
+app.get("/my-movements", auth, async (req, res) => {
+  const [betsResult, txResult, userResult] = await Promise.all([
+    supabase.from("bets")
+      .select(`id, type, amount, payout, commission_paid, created_at, markets(id, question, resolved, winner)`)
+      .eq("user_id", req.userId),
+    supabase.from("transactions")
+      .select("id, type, amount, status, payment_method, created_at, updated_at, balance_before, balance_after")
+      .eq("user_id", req.userId)
+      .or("payment_method.eq.transferencia,payment_method.eq.tarjeta,payment_method.is.null"),
+    supabase.from("users").select("points").eq("id", req.userId).single(),
+  ]);
+
+  const bets = betsResult.data || [];
+  const transactions = txResult.data || [];
+  const currentPoints = parseFloat(userResult.data?.points ?? 0);
+
+  const all = [
+    ...bets.map(bet => {
+      const estado = bet.markets?.resolved
+        ? (bet.markets.winner === bet.type ? "ganada" : "perdida")
+        : "pendiente";
+      return {
+        id: `bet-${bet.id}`,
+        tipo: "prediccion",
+        descripcion: bet.markets?.question || "Mercado",
+        subtipo: bet.type === "yes" ? "Sí" : "No",
+        monto: estado === "ganada" ? Number(bet.payout ?? bet.amount) : -Number(bet.amount),
+        apuesta: Number(bet.amount),
+        payout: bet.payout != null ? Number(bet.payout) : null,
+        commission_paid: bet.commission_paid != null ? Number(bet.commission_paid) : null,
+        fecha: bet.created_at,
+        sort_fecha: bet.created_at,
+        estado,
+        market_id: bet.markets?.id || null,
+        balance_before: null,
+        balance_after: null,
+      };
+    }),
+    ...transactions.map(tx => {
+      const amt = Number(tx.amount);
+      return {
+        id: `tx-${tx.id}`,
+        tipo: tx.type,
+        descripcion: tx.type === "recarga" ? "Recarga de saldo" : "Retiro de saldo",
+        subtipo: tx.payment_method === "transferencia" ? "Transferencia" : "Tarjeta",
+        monto: tx.type === "recarga" ? amt : -amt,
+        fecha: tx.created_at,
+        sort_fecha: tx.updated_at || tx.created_at,
+        estado: tx.status,
+        balance_before: tx.balance_before != null ? Number(tx.balance_before) : null,
+        balance_after: tx.balance_after != null ? Number(tx.balance_after) : null,
+        apuesta: null,
+        payout: null,
+        commission_paid: null,
+        market_id: null,
+      };
+    }),
+  ].sort((a, b) => new Date(b.sort_fecha).getTime() - new Date(a.sort_fecha).getTime());
+
+  // Reconstruir balance anterior/actual desde el saldo actual hacia atrás
+  let running = currentPoints;
+  const movements = all.map(mov => {
+    const balanceAfter = running;
+    let effect = 0;
+    if (mov.tipo === "prediccion") effect = mov.monto;
+    else if (mov.tipo === "recarga" && mov.estado === "aprobado") effect = mov.monto;
+    else if (mov.tipo === "retiro" && (mov.estado === "aprobado" || mov.estado === "completado")) effect = mov.monto;
+    const balanceBefore = balanceAfter - effect;
+    running = balanceBefore;
+    return {
+      ...mov,
+      balance_before: mov.balance_before != null ? mov.balance_before : parseFloat(balanceBefore.toFixed(2)),
+      balance_after: mov.balance_after != null ? mov.balance_after : parseFloat(balanceAfter.toFixed(2)),
+    };
+  });
+
+  res.json(movements);
+});
+
+// =======================
 // 💳 ADMIN - LISTAR TRANSACCIONES
 // =======================
 app.get("/admin/transactions", auth, async (req, res) => {
@@ -2091,10 +2182,19 @@ app.put("/admin/transactions/:id/status", auth, async (req, res) => {
     .from("users").select("role").eq("id", req.userId).single();
   if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
 
-  const { status, userId, amount, type } = req.body;
+  const { status } = req.body;
   if (!["aprobado", "rechazado"].includes(status)) {
     return res.status(400).json({ message: "Estado inválido" });
   }
+
+  // Leer la transacción desde la BD — nunca confiar en userId/amount/type del cliente
+  const { data: transaction } = await supabase
+    .from("transactions").select("*").eq("id", req.params.id).single();
+  if (!transaction) return res.status(404).json({ message: "Transacción no encontrada" });
+  if (!["pendiente", "procesando"].includes(transaction.status)) {
+    return res.status(400).json({ message: "Esta transacción ya fue procesada" });
+  }
+  const { user_id: userId, amount, type } = transaction;
 
   const { error } = await supabase.from("transactions").update({ status, updated_at: new Date().toISOString() }).eq("id", req.params.id);
   if (error) return res.status(500).json({ message: error.message });
@@ -2179,7 +2279,7 @@ app.put("/admin/contactos/:id/leido", auth, async (req, res) => {
 // =======================
 // 💸 RECARGA POR TRANSFERENCIA BANCARIA
 // =======================
-app.post("/transfer", auth, async (req, res) => {
+app.post("/transfer", auth, transferRateLimit, async (req, res) => {
   const { amount, transfer_code } = req.body;
   const transferAmount = parseFloat(amount);
 
@@ -2210,7 +2310,15 @@ app.post("/transfer", auth, async (req, res) => {
 // =======================
 // 📡 SSE - ENDPOINT
 // =======================
-app.get("/events", (req, res) => {
+const sseConnectionLimit = makeRateLimiter(10, 60 * 1000, "Demasiadas conexiones SSE.");
+app.get("/events", sseConnectionLimit, (req, res) => {
+  // Validar token si se envía (no obligatorio — los eventos son públicos)
+  const rawToken = req.query.token;
+  if (rawToken) {
+    try { jwt.verify(rawToken, SECRET); }
+    catch { return res.status(401).json({ message: "Token inválido" }); }
+  }
+
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
@@ -2219,7 +2327,6 @@ app.get("/events", (req, res) => {
 
   const heartbeat = setInterval(() => res.write(": heartbeat\n\n"), 25000);
   sseClients.add(res);
-  console.log(`SSE cliente conectado. Total: ${sseClients.size}`);
 
   req.on("close", () => {
     clearInterval(heartbeat);

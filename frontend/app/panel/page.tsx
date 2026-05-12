@@ -22,7 +22,7 @@ function PanelContent() {
   const [tabVisible, setTabVisible] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [bets, setBets] = useState<any[]>([]);
-  const [transactions, setTransactions] = useState<any[]>([]);
+  const [movements, setMovements] = useState<any[]>([]);
   const [ranking, setRanking] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -62,23 +62,23 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
     if (!token) { router.push("/login"); return; }
     const headers = { authorization: `Bearer ${token}` };
     try {
-      const [meRes, betsRes, rankRes, txRes, configRes] = await Promise.all([
+      const [meRes, betsRes, rankRes, movRes, configRes] = await Promise.all([
         fetch("https://predicciones-ecuador.onrender.com/me", { headers }),
         fetch("https://predicciones-ecuador.onrender.com/my-bets", { headers }),
         fetch("https://predicciones-ecuador.onrender.com/ranking"),
-        fetch("https://predicciones-ecuador.onrender.com/my-transactions", { headers }),
+        fetch("https://predicciones-ecuador.onrender.com/my-movements", { headers }),
         fetch("https://predicciones-ecuador.onrender.com/config", { headers }),
       ]);
       const meData = await meRes.json();
       const betsData = await betsRes.json();
       const rankData = await rankRes.json();
-      const txData = await txRes.json();
+      const movData = await movRes.json();
       const configData = await configRes.json();
 
       setUser(meData);
       setBets(betsData || []);
       setRanking(rankData || []);
-      setTransactions(txData || []);
+      setMovements(Array.isArray(movData) ? movData : []);
       setProfileForm({
         nombre: meData.nombre || "",
         apellido: meData.apellido || "",
@@ -208,71 +208,9 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
   const isGoogleUser = user?.provider === "google";
   const hasPaymentInfo = user?.cedula && user?.celular && user?.nombre;
 
-  let movimientos = [
-  ...bets.map((bet) => {
-    const estado = bet.markets?.resolved
-      ? bet.markets?.winner === bet.type ? "ganada" : "perdida"
-      : "pendiente";
-    return {
-      id: bet.id,
-      tipo: "prediccion",
-      descripcion: bet.markets?.question || "Mercado",
-      subtipo: bet.type === "yes" ? "Sí" : "No",
-      monto: estado === "ganada" ? Number(bet.payout ?? bet.amount) : -Number(bet.amount),
-      apuesta: Number(bet.amount),
-      payout: bet.payout != null ? Number(bet.payout) : null,
-      commission_paid: bet.commission_paid != null ? Number(bet.commission_paid) : null,
-      fecha: bet.created_at,
-      sort_fecha: bet.created_at,
-      estado,
-      balance_before: null as number | null,
-      balance_after: null as number | null,
-    };
-  }),
-  ...transactions.map((tx) => {
-    const amt = Number(tx.amount);
-    return {
-      id: tx.id,
-      tipo: tx.type,
-      descripcion: tx.type === "recarga" ? "Recarga de saldo" : "Retiro de saldo",
-      subtipo: tx.payment_method === "transferencia" ? "Transferencia" : "Tarjeta",
-      monto: tx.type === "recarga" ? amt : -amt,
-      fecha: tx.created_at,
-      sort_fecha: tx.updated_at || tx.created_at,
-      estado: tx.status,
-      balance_before: tx.balance_before != null ? Number(tx.balance_before) : null,
-      balance_after: tx.balance_after != null ? Number(tx.balance_after) : null,
-      apuesta: null as number | null,
-      payout: null as number | null,
-      commission_paid: null as number | null,
-    };
-  }),
- ].sort((a, b) => new Date(b.sort_fecha).getTime() - new Date(a.sort_fecha).getTime());
-
-  // Reconstruir saldo anterior/actual para cada movimiento usando el saldo actual como punto de partida
-  let _running = Number(user.points);
-  movimientos = movimientos.map((mov) => {
-    const balanceAfter = _running;
-    let effect = 0;
-    if (mov.tipo === "prediccion") {
-      effect = mov.monto; // ganada: +payout, perdida/pendiente: -amount
-    } else if (mov.tipo === "recarga" && mov.estado === "aprobado") {
-      effect = mov.monto;
-    } else if (mov.tipo === "retiro") {
-      effect = mov.monto; // negativo, se descuenta al crear
-    }
-    const balanceBefore = balanceAfter - effect;
-    _running = balanceBefore;
-    return {
-      ...mov,
-      balance_before: mov.balance_before != null ? mov.balance_before : balanceBefore,
-      balance_after: mov.balance_after != null ? mov.balance_after : balanceAfter,
-    };
-  });
-
   const MOV_PAGE_SIZE = 10;
-  const movTotalPages = Math.ceil(movimientos.length / MOV_PAGE_SIZE);
-  const movPaginated = movimientos.slice((movPage - 1) * MOV_PAGE_SIZE, movPage * MOV_PAGE_SIZE);
+  const movTotalPages = Math.ceil(movements.length / MOV_PAGE_SIZE);
+  const movPaginated = movements.slice((movPage - 1) * MOV_PAGE_SIZE, movPage * MOV_PAGE_SIZE);
 
   const tabs = [
     { id: "inicio", label: "Inicio", icon: <Home size={15} /> },
@@ -440,7 +378,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
                   Ver todos <ChevronRight size={12} />
                 </button>
               </div>
-              {movimientos.length === 0 ? (
+              {movements.length === 0 ? (
                 <div className="py-6 text-center space-y-3">
                   <p className="text-2xl">🎯</p>
                   <p className="text-sm font-medium text-slate-600 dark:text-slate-300">¡Haz tu primera predicción!</p>
@@ -451,7 +389,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {movimientos.slice(0, 5).map((mov) => (
+                  {movements.slice(0, 5).map((mov) => (
                     <MovimientoRow key={mov.id} mov={mov} />
                   ))}
                 </div>
@@ -508,10 +446,10 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
             <div className="flex items-center justify-between mb-1">
               <h2 className="font-bold">Historial de movimientos</h2>
-              <span className="text-xs text-slate-400">{movimientos.length} registros</span>
+              <span className="text-xs text-slate-400">{movements.length} registros</span>
             </div>
             <p className="text-xs text-slate-400 mb-5">Predicciones, recargas y retiros</p>
-            {movimientos.length === 0 ? (
+            {movements.length === 0 ? (
               <p className="text-sm text-slate-400 py-8 text-center">Sin movimientos aún</p>
             ) : (
               <>
@@ -1022,40 +960,49 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
  function PayphoneBox({ amount, userId, clientTransactionId, onClose }: { amount: number; userId: string; clientTransactionId: string; onClose: () => void }) {
 
   useEffect(() => {
-    // Cargar CSS de Payphone
     const link = document.createElement("link");
     link.rel = "stylesheet";
     link.href = "https://cdn.payphonetodoesposible.com/box/v1.1/payphone-payment-box.css";
     document.head.appendChild(link);
 
-    // Cargar JS de Payphone
     const script = document.createElement("script");
     script.type = "module";
     script.src = "https://cdn.payphonetodoesposible.com/box/v1.1/payphone-payment-box.js";
-    script.onload = () => {
-      setTimeout(() => {
-        try {
-          // @ts-ignore
-          const ppb = new window.PPaymentButtonBox({
-            token: "ouTRhGNFATo6jNYHkr-NNnRwhRL6Lif2y1pb0-73PKUVZOO5GmckAHoaCewMQ9sT-OpYL2lxOmJgpJQSW3nDJOq-ymeTEX376GqGZnmXSvlE81zjMjiDOhuWGS2MI9pIiBhUFvcv3e3xuBD8KaF6oNF-cSVFRr52smC_0VLzmUbg_JBKmVLaIVSbWDi4nFYmbkn5cIhVsaICDOUfd3Hj6UXmJ_pqP9mXRJ1p272kV5EUD67JIiXYus23ZPm6dRuQaW1IzVPMRW6BfN4dUzw_fFOQtD25NvVPprvO4ltJ9Tmdidne5SiiG-G7xZBteLJPRrxZZnqgLfKQuoExYHfy-zIvELg",
-            amount,
-            amountWithoutTax: amount,
-            amountWithTax: 0,
-            tax: 0,
-            service: 0,
-            tip: 0,
-            currency: "USD",
-            clientTransactionId,
-            reference: "Recarga - Ecuapred",
-            storeId: "a4682baf-b1d9-4df4-8ab4-71bc7ba44700",
-            lang: "es",
-            defaultMethod: "card",
-            timeZone: -5,
-          }).render("pp-button");
-        } catch (e) {
-          console.error("Payphone init error:", e);
-        }
-      }, 500);
+    script.onload = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const cfgRes = await fetch("https://predicciones-ecuador.onrender.com/payphone/widget-config", {
+          headers: { authorization: `Bearer ${token}` },
+        });
+        if (!cfgRes.ok) throw new Error("No se pudo obtener config de pago");
+        const { token: ppToken, storeId } = await cfgRes.json();
+
+        setTimeout(() => {
+          try {
+            // @ts-ignore
+            new window.PPaymentButtonBox({
+              token: ppToken,
+              amount,
+              amountWithoutTax: amount,
+              amountWithTax: 0,
+              tax: 0,
+              service: 0,
+              tip: 0,
+              currency: "USD",
+              clientTransactionId,
+              reference: "Recarga - Ecuapred",
+              storeId,
+              lang: "es",
+              defaultMethod: "card",
+              timeZone: -5,
+            }).render("pp-button");
+          } catch (e) {
+            console.error("Payphone init error:", e);
+          }
+        }, 300);
+      } catch (e) {
+        console.error("Payphone config error:", e);
+      }
     };
     document.head.appendChild(script);
 
