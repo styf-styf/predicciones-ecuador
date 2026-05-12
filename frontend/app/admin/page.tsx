@@ -145,6 +145,11 @@ export default function AdminPage() {
   const [txFilter, setTxFilter] = useState<"transferencia" | "tarjeta" | "retiro">("transferencia");
   const [botFilter, setBotFilter] = useState<"pending" | "approved" | "rejected">("pending");
   const [botPage, setBotPage] = useState(1);
+  const [chatOpen, setChatOpen] = useState<Record<number, boolean>>({});
+  const [chatMessages, setChatMessages] = useState<Record<number, {role: string; content: string}[]>>({});
+  const [chatInput, setChatInput] = useState<Record<number, string>>({});
+  const [chatSending, setChatSending] = useState<Record<number, boolean>>({});
+  const [chatPending, setChatPending] = useState<Record<number, string | null>>({});
 
   const showToast = (message: string, type: "success" | "error" | "info" = "success") => setToast({ message, type });
   const openModal = (opts: typeof modal) => setModal(opts);
@@ -217,6 +222,46 @@ export default function AdminPage() {
     if (res.ok) { fetchSuggestions(); setRefinPrompts((prev) => ({ ...prev, [id]: "" })); }
     else showToast(data.message, "error");
     setRefining((prev) => ({ ...prev, [id]: false }));
+  };
+
+  const handleChat = async (id: number, suggestion: any) => {
+    const input = chatInput[id]?.trim();
+    if (!input) return;
+    const userMsg = { role: "user", content: input };
+    const history = [...(chatMessages[id] || []), userMsg];
+    setChatMessages(prev => ({ ...prev, [id]: history }));
+    setChatInput(prev => ({ ...prev, [id]: "" }));
+    setChatSending(prev => ({ ...prev, [id]: true }));
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/news-suggestions/${id}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+        body: JSON.stringify({ messages: history, suggestion }),
+      });
+      const data = await res.json();
+      const assistantMsg = { role: "assistant", content: data.reply || "Error al responder" };
+      setChatMessages(prev => ({ ...prev, [id]: [...history, assistantMsg] }));
+      if (data.new_question) setChatPending(prev => ({ ...prev, [id]: data.new_question }));
+    } catch {
+      setChatMessages(prev => ({ ...prev, [id]: [...history, { role: "assistant", content: "Error de conexión" }] }));
+    } finally {
+      setChatSending(prev => ({ ...prev, [id]: false }));
+    }
+  };
+
+  const applyNewQuestion = async (id: number, newQuestion: string) => {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/news-suggestions/${id}/question`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+      body: JSON.stringify({ new_question: newQuestion }),
+    });
+    if (res.ok) {
+      fetchBotSuggestions();
+      setChatPending(prev => ({ ...prev, [id]: null }));
+      showToast("Pregunta actualizada ✅", "success");
+    }
   };
 
   const handleSuggestion = async (id: number, action: string) => {
@@ -2376,6 +2421,97 @@ export default function AdminPage() {
                               >
                                 {refining[s.id] ? "⏳" : "✨ Refinar"}
                               </button>
+                            </div>
+                          )}
+
+                          {/* Chat IA */}
+                          {s.status === "pending" && (
+                            <div className="border-t border-slate-200 dark:border-white/[0.06] pt-2">
+                              <button
+                                onClick={() => setChatOpen(prev => ({ ...prev, [s.id]: !prev[s.id] }))}
+                                className="flex items-center gap-1.5 text-[11px] text-slate-400 dark:text-white/30 hover:text-slate-600 dark:hover:text-white/60 transition"
+                              >
+                                <MessageCircle size={12} />
+                                {chatOpen[s.id] ? "Cerrar chat" : "Chat con IA"}
+                                {(chatMessages[s.id]?.length || 0) > 0 && (
+                                  <span className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[9px] px-1.5 py-0.5 rounded-full">
+                                    {Math.floor((chatMessages[s.id]?.length || 0) / 2)} msgs
+                                  </span>
+                                )}
+                              </button>
+
+                              {chatOpen[s.id] && (
+                                <div className="mt-2 space-y-2">
+                                  {/* Historial */}
+                                  {(chatMessages[s.id] || []).length > 0 && (
+                                    <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                                      {(chatMessages[s.id] || []).map((msg, i) => (
+                                        <div key={i} className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                                          {msg.role === "assistant" && (
+                                            <div className="h-5 w-5 rounded-full bg-emerald-500/20 grid place-items-center shrink-0 mt-0.5 text-[10px]">🤖</div>
+                                          )}
+                                          <div className={`max-w-[85%] px-3 py-2 rounded-xl text-[12px] leading-snug ${
+                                            msg.role === "user"
+                                              ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900"
+                                              : "bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-white/70"
+                                          }`}>
+                                            {msg.content}
+                                          </div>
+                                        </div>
+                                      ))}
+                                      {chatSending[s.id] && (
+                                        <div className="flex gap-2 justify-start">
+                                          <div className="h-5 w-5 rounded-full bg-emerald-500/20 grid place-items-center shrink-0 text-[10px]">🤖</div>
+                                          <div className="bg-slate-100 dark:bg-white/[0.06] px-3 py-2 rounded-xl text-[12px] text-slate-400 dark:text-white/30">
+                                            Escribiendo...
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {/* Pregunta sugerida por la IA */}
+                                  {chatPending[s.id] && (
+                                    <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 rounded-xl p-3 space-y-2">
+                                      <p className="text-[10px] text-emerald-600 dark:text-emerald-400 uppercase tracking-widest font-bold">✦ Nueva pregunta sugerida</p>
+                                      <p className="text-[12px] text-slate-900 dark:text-white font-medium">{chatPending[s.id]}</p>
+                                      <div className="flex gap-2">
+                                        <button
+                                          onClick={() => applyNewQuestion(s.id, chatPending[s.id]!)}
+                                          className="bg-emerald-500 hover:bg-emerald-400 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition"
+                                        >
+                                          ✓ Aplicar
+                                        </button>
+                                        <button
+                                          onClick={() => setChatPending(prev => ({ ...prev, [s.id]: null }))}
+                                          className="text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-white/60 px-2 py-1.5 transition"
+                                        >
+                                          Ignorar
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Input */}
+                                  <div className="flex gap-2">
+                                    <input
+                                      placeholder="Ej: ¿Cuándo es exactamente el evento? Cambia el plazo a noviembre..."
+                                      value={chatInput[s.id] || ""}
+                                      onChange={(e) => setChatInput(prev => ({ ...prev, [s.id]: e.target.value }))}
+                                      onKeyDown={(e) => { if (e.key === "Enter" && !chatSending[s.id]) handleChat(s.id, { title: s.title, summary: s.summary, current_question: s.new_market_question, suggested_close_date: s.suggested_close_date }); }}
+                                      disabled={chatSending[s.id]}
+                                      className="flex-1 bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-[12px] outline-none text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:border-emerald-500/40 transition disabled:opacity-50"
+                                    />
+                                    <button
+                                      onClick={() => handleChat(s.id, { title: s.title, summary: s.summary, current_question: s.new_market_question, suggested_close_date: s.suggested_close_date })}
+                                      disabled={chatSending[s.id] || !chatInput[s.id]?.trim()}
+                                      className="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-white px-3 py-2 rounded-lg text-[12px] font-bold transition shrink-0"
+                                    >
+                                      {chatSending[s.id] ? "⏳" : "↑"}
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           )}
 

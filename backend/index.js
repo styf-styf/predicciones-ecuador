@@ -1819,6 +1819,97 @@ Responde SOLO en JSON sin markdown:
 });
 
 // =======================
+// ✏️ BOTNEWS — EDITAR PREGUNTA DIRECTA
+// =======================
+app.patch("/admin/news-suggestions/:id/question", async (req, res) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ message: "No autorizado" });
+  try {
+    const decoded = jwt.verify(token, SECRET);
+    const { data: admin } = await supabase
+      .from("users").select("role").eq("id", decoded.id).single();
+    if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+  } catch { return res.status(401).json({ message: "Token inválido" }); }
+
+  const { new_question } = req.body;
+  if (!new_question?.trim()) return res.status(400).json({ message: "Pregunta vacía" });
+
+  const { error } = await supabase
+    .from("news_suggestions")
+    .update({ new_market_question: new_question.trim() })
+    .eq("id", req.params.id);
+
+  if (error) return res.status(500).json({ message: error.message });
+  res.json({ message: "Pregunta actualizada ✅" });
+});
+
+// =======================
+// 💬 BOTNEWS — CHAT IA
+// =======================
+app.post("/admin/news-suggestions/:id/chat", async (req, res) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ message: "No autorizado" });
+  try {
+    const decoded = jwt.verify(token, SECRET);
+    const { data: admin } = await supabase
+      .from("users").select("role").eq("id", decoded.id).single();
+    if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+  } catch { return res.status(401).json({ message: "Token inválido" }); }
+
+  const { messages, suggestion } = req.body;
+  if (!messages || !suggestion) return res.status(400).json({ message: "Faltan datos" });
+
+  const systemPrompt = `Eres un asistente experto en mercados de predicción para Ecuador. Ayudas al administrador a verificar y refinar preguntas generadas automáticamente.
+
+Contexto de la noticia:
+- Título: ${suggestion.title || "N/A"}
+- Resumen: ${suggestion.summary || "N/A"}
+- Pregunta actual: "${suggestion.current_question || "N/A"}"
+- Fecha de cierre sugerida: ${suggestion.suggested_close_date || "N/A"}
+
+Tu rol:
+1. Responder preguntas sobre fechas, datos o contexto de la noticia
+2. Si el admin pide modificar la pregunta, propón una versión mejorada
+3. Ser conciso y directo
+
+IMPORTANTE: Responde SIEMPRE en JSON sin markdown:
+{
+  "reply": "tu respuesta conversacional aquí",
+  "new_question": "nueva pregunta si se pidió modificarla, si no null"
+}`;
+
+  try {
+    const aiRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        temperature: 0.4,
+        messages: [
+          { role: "system", content: systemPrompt },
+          ...messages,
+        ],
+      }),
+    });
+
+    const aiData = await aiRes.json();
+    const rawText = aiData.choices?.[0]?.message?.content || "{}";
+    const clean = rawText.replace(/```json|```/g, "").trim();
+    let parsed;
+    try { parsed = JSON.parse(clean); }
+    catch { parsed = { reply: clean, new_question: null }; }
+
+    res.json({ reply: parsed.reply || "Sin respuesta", new_question: parsed.new_question || null });
+  } catch (err) {
+    console.error("Error en chat IA:", err);
+    res.status(500).json({ message: "Error al contactar la IA" });
+  }
+});
+
+// =======================
 // ✏️ EDITAR MERCADO
 // =======================
 app.put("/admin/markets/:id", auth, async (req, res) => {
