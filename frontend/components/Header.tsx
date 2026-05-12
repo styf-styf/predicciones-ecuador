@@ -193,7 +193,7 @@ export default function Header() {
                 ) : (
                   <div className="space-y-2">
                     {notifications.map((n: any) => {
-                      const base = `p-3 rounded-xl border ${n.read ? "bg-slate-100 dark:bg-slate-950 border-slate-200 dark:border-slate-800" : "bg-emerald-500/10 border-emerald-500/30"}`;
+                      const base = `p-3 rounded-xl border ${n.read ? "border-slate-200 dark:border-slate-800" : "border-emerald-500/30"}`;
                       const inner = (
                         <>
                           <p className="font-semibold text-sm">{n.title}</p>
