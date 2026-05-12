@@ -143,6 +143,8 @@ export default function AdminPage() {
   const [marketFilter, setMarketFilter] = useState<"activos" | "todos" | "resueltos">("activos");
   const [marketCategoryFilter, setMarketCategoryFilter] = useState<string>("todas");
   const [txFilter, setTxFilter] = useState<"transferencia" | "tarjeta" | "retiro">("transferencia");
+  const [botFilter, setBotFilter] = useState<"pending" | "approved" | "rejected">("pending");
+  const [botPage, setBotPage] = useState(1);
 
   const showToast = (message: string, type: "success" | "error" | "info" = "success") => setToast({ message, type });
   const openModal = (opts: typeof modal) => setModal(opts);
@@ -2266,16 +2268,43 @@ export default function AdminPage() {
               <div>
                 <p className="text-[11px] text-slate-400 dark:text-white/30 uppercase tracking-widest mb-3">Noticias detectadas</p>
 
-                {botSuggestions.length === 0 && (
-                  <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-10 text-center">
-                    <p className="text-[12px] text-slate-400 dark:text-white/20">
-                      El bot aún no ha detectado noticias. Agrega URLs y ejecuta el bot.
-                    </p>
-                  </div>
-                )}
+                {/* Filtros */}
+                <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl px-4 py-3 mb-3 flex items-center gap-1">
+                  {([
+                    { id: "pending", label: "Pendientes" },
+                    { id: "approved", label: "Aprobados" },
+                    { id: "rejected", label: "Rechazados" },
+                  ] as const).map((f) => {
+                    const count = botSuggestions.filter(s => s.status === f.id).length;
+                    return (
+                      <button key={f.id} onClick={() => { setBotFilter(f.id); setBotPage(1); }}
+                        className={`relative px-3 py-1.5 rounded-md text-[11px] font-medium transition ${botFilter === f.id ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/70"}`}>
+                        {f.label}
+                        {count > 0 && f.id === "pending" && (
+                          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center">{count}</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {(() => {
+                  const filtered = botSuggestions.filter(s => s.status === botFilter);
+                  const BOT_PAGE_SIZE = 10;
+                  const totalPages = Math.max(1, Math.ceil(filtered.length / BOT_PAGE_SIZE));
+                  const paginated = filtered.slice((botPage - 1) * BOT_PAGE_SIZE, botPage * BOT_PAGE_SIZE);
+                  return (
+                    <>
+                      {filtered.length === 0 && (
+                        <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-10 text-center">
+                          <p className="text-[12px] text-slate-400 dark:text-white/20">
+                            {botSuggestions.length === 0 ? "El bot aún no ha detectado noticias. Agrega URLs y ejecuta el bot." : "No hay noticias en esta categoría."}
+                          </p>
+                        </div>
+                      )}
 
                 <div className="space-y-3">
-                  {botSuggestions.map((s) => (
+                  {paginated.map((s) => (
                     <div key={s.id} className={`bg-white dark:bg-[#111111] border rounded-xl p-5 transition ${
                       s.status === "pending" ? "border-slate-200 dark:border-white/[0.08]"
                       : s.status === "approved" ? "border-emerald-200 dark:border-emerald-500/20 opacity-50"
@@ -2471,6 +2500,24 @@ export default function AdminPage() {
                     </div>
                   ))}
                 </div>
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-between mt-4 px-1">
+                        <button
+                          onClick={() => setBotPage(p => Math.max(1, p - 1))}
+                          disabled={botPage === 1}
+                          className="px-3 py-1.5 rounded-md text-[11px] font-medium transition text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/70 disabled:opacity-30"
+                        >← Anterior</button>
+                        <span className="text-[11px] text-slate-400 dark:text-white/30">Página {botPage} de {totalPages}</span>
+                        <button
+                          onClick={() => setBotPage(p => Math.min(totalPages, p + 1))}
+                          disabled={botPage === totalPages}
+                          className="px-3 py-1.5 rounded-md text-[11px] font-medium transition text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/70 disabled:opacity-30"
+                        >Siguiente →</button>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
               </div>
             </>
           )}
