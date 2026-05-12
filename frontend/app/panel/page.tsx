@@ -18,6 +18,7 @@ function PanelContent() {
   const searchParams = useSearchParams();
   const [tab, setTab] = useState<Tab>("inicio");
   const [movPage, setMovPage] = useState(1);
+  const [showBetsDetail, setShowBetsDetail] = useState(false);
   const [tabVisible, setTabVisible] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [bets, setBets] = useState<any[]>([]);
@@ -339,22 +340,75 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
         {tab === "inicio" && (
           <div className="space-y-6">
             {/* Stats */}
-            <div className="grid grid-cols-4 gap-2">
-  {[
-    { label: "Saldo", value: `${Number(user.points).toFixed(2)} $`, icon: <Wallet size={12} />, color: "text-emerald-500" },
-    { label: "Predicciones", value: totalBets, icon: <BarChart3 size={12} />, color: "text-blue-500" },
-    { label: "Apostado", value: `${totalBet.toFixed(0)}$`, icon: <ArrowUpRight size={12} />, color: "text-amber-500" },
-    { label: "Ranking", value: userRankIndex !== -1 ? `#${userRankIndex + 1}` : "—", icon: <Trophy size={12} />, color: "text-rose-500" },
-  ].map((stat) => (
-    <div key={stat.label} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3">
-  <div className={`flex items-center gap-1.5 ${stat.color}`}>
-    {stat.icon}
-    <p className="text-base font-bold text-slate-900 dark:text-white">{stat.value}</p>
-  </div>
-  <p className="text-[10px] text-slate-400 mt-1">{stat.label}</p>
-</div>
-  ))}
- </div>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                onClick={() => setShowBetsDetail(!showBetsDetail)}
+                className={`text-left bg-white dark:bg-slate-900 border rounded-xl p-3 transition-all ${showBetsDetail ? "border-blue-400 dark:border-blue-500 ring-1 ring-blue-400/30" : "border-slate-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-700"}`}
+              >
+                <div className="flex items-center gap-1.5 text-blue-500">
+                  <BarChart3 size={12} />
+                  <p className="text-base font-bold text-slate-900 dark:text-white">{totalBets}</p>
+                </div>
+                <p className="text-[10px] text-slate-400 mt-1">Predicciones</p>
+              </button>
+              {[
+                { label: "Invertido", value: `${totalBet.toFixed(0)}$`, icon: <ArrowUpRight size={12} />, color: "text-amber-500" },
+                { label: "Ranking", value: userRankIndex !== -1 ? `#${userRankIndex + 1}` : "—", icon: <Trophy size={12} />, color: "text-rose-500" },
+              ].map((stat) => (
+                <div key={stat.label} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3">
+                  <div className={`flex items-center gap-1.5 ${stat.color}`}>
+                    {stat.icon}
+                    <p className="text-base font-bold text-slate-900 dark:text-white">{stat.value}</p>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1">{stat.label}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Tarjetas de predicciones */}
+            {showBetsDetail && (
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-bold">Mis predicciones</h2>
+                  <button onClick={() => setShowBetsDetail(false)} className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">Cerrar</button>
+                </div>
+                {bets.length === 0 ? (
+                  <p className="text-sm text-slate-400 text-center py-6">Aún no tienes predicciones</p>
+                ) : (
+                  <div className="space-y-3">
+                    {bets.map((bet) => {
+                      const estado = bet.markets?.resolved
+                        ? bet.markets?.winner === bet.type ? "ganada" : "perdida"
+                        : "pendiente";
+                      return (
+                        <Link key={bet.id} href={`/market/${bet.markets?.id}`}
+                          className="block p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-xl hover:border-emerald-500/40 transition">
+                          <p className="text-sm font-medium text-slate-900 dark:text-white mb-2 leading-snug">{bet.markets?.question || "Mercado"}</p>
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${bet.type === "yes" ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400" : "bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400"}`}>
+                                {bet.type === "yes" ? "Sí" : "No"}
+                              </span>
+                              <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+                                estado === "ganada" ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400"
+                                : estado === "perdida" ? "bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400"
+                                : "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400"
+                              }`}>{estado}</span>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <p className="text-xs font-bold text-slate-900 dark:text-white">{Number(bet.amount).toFixed(2)} $</p>
+                              {estado === "ganada" && bet.payout && (
+                                <p className="text-[10px] text-emerald-500">+{Number(bet.payout).toFixed(2)} $</p>
+                              )}
+                            </div>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Últimos movimientos */}
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
