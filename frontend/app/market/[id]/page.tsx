@@ -59,33 +59,18 @@ function BetPanel({
     </div>
   );
 
-  // Al cambiar apuesta, el máximo disponible es el balance + la apuesta actual (se "devuelve")
-  const maxAvailable = points !== null ? points + (userBet ? userBet.amount : 0) : Infinity;
-
   const amountButtons = (
     <div>
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-sm text-slate-500 dark:text-slate-400">
-          {userBet ? "Nueva apuesta total" : "Monto"}
-        </span>
-        <span className="text-2xl font-bold text-slate-900 dark:text-white">
-          {amount ? `${amount} $` : userBet ? `${userBet.amount} $` : "0 $"}
-        </span>
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-sm text-slate-500 dark:text-slate-400">Monto</span>
+        <span className="text-2xl font-bold text-slate-900 dark:text-white">{amount ? `${amount} $` : "0 $"}</span>
       </div>
-      {userBet && (
-        <p className="text-[11px] text-amber-600 dark:text-amber-400 mb-3">
-          ⚠️ Este monto reemplaza tu apuesta actual de {userBet.amount} $ al {userBet.type === "yes" ? "SÍ" : "NO"}
-        </p>
-      )}
       <div className="flex gap-2 flex-wrap">
         {[1, 5, 10, 50, 100].map((val) => (
-          <button key={val} onClick={() => {
-            const cur = parseFloat(amount) || (userBet ? userBet.amount : 0);
-            setAmount(String(Math.min(cur + val, maxAvailable)));
-          }}
+          <button key={val} onClick={() => { const cur = parseFloat(amount) || 0; const max = points !== null ? points : Infinity; setAmount(String(Math.min(cur + val, max))); }}
             className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700">+{val}</button>
         ))}
-        <button onClick={() => setAmount(String(maxAvailable !== Infinity ? maxAvailable : 0))} className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700">Máx.</button>
+        <button onClick={() => setAmount(String(points !== null ? points : 0))} className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700">Máx.</button>
         {amount && <button onClick={() => setAmount("")} className="px-3 py-1.5 rounded-full text-sm font-medium bg-rose-100 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 hover:bg-rose-200 dark:hover:bg-rose-900/40 transition-colors border border-rose-200 dark:border-rose-800">Limpiar</button>}
       </div>
     </div>
