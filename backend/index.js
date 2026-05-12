@@ -897,17 +897,29 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
     const commission = grossProfit * COMMISSION;
     totalCommission += commission;
     const netProfit = grossProfit - commission;
-    const payout = amount + netProfit;
+    const payout = parseFloat((amount + netProfit).toFixed(2));
 
-    const { data: user } = await supabase
+    const { data: user, error: userError } = await supabase
       .from("users").select("points").eq("id", bet.user_id).single();
 
-    await supabase.from("users")
-      .update({ points: Number(user.points) + payout })
+    if (userError || !user) {
+      console.error(`[resolve] Error obteniendo usuario ${bet.user_id}:`, userError?.message);
+      continue;
+    }
+
+    const newPoints = parseFloat((Number(user.points) + payout).toFixed(2));
+
+    const { error: updateError } = await supabase.from("users")
+      .update({ points: newPoints })
       .eq("id", bet.user_id);
 
+    if (updateError) {
+      console.error(`[resolve] Error actualizando puntos de ${bet.user_id}:`, updateError.message);
+      continue;
+    }
+
     await supabase.from("bets")
-      .update({ payout: parseFloat(payout.toFixed(2)), commission_paid: parseFloat(commission.toFixed(2)) })
+      .update({ payout, commission_paid: parseFloat(commission.toFixed(2)) })
       .eq("id", bet.id);
 
     await supabase.from("notifications").insert([{
@@ -921,7 +933,7 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
       user_id: bet.user_id,
       market_id: marketId,
       prediction: winner,
-      reward: parseFloat(payout.toFixed(2)),
+      reward: payout,
     }]);
   }
 

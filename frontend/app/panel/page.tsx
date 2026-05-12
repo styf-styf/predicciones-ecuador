@@ -292,7 +292,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
               )}
               <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-3 py-1.5 rounded-xl">
                 <Wallet size={14} className="text-emerald-500" />
-                <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{user.points} $</span>
+                <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{Number(user.points).toFixed(2)} $</span>
               </div>
             </div>
           </div>
@@ -330,7 +330,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
             {/* Stats */}
             <div className="grid grid-cols-4 gap-2">
   {[
-    { label: "Saldo", value: `${user.points}`, icon: <Wallet size={12} />, color: "text-emerald-500" },
+    { label: "Saldo", value: `${Number(user.points).toFixed(2)} $`, icon: <Wallet size={12} />, color: "text-emerald-500" },
     { label: "Predicciones", value: totalBets, icon: <BarChart3 size={12} />, color: "text-blue-500" },
     { label: "Apostado", value: `${totalBet.toFixed(0)}$`, icon: <ArrowUpRight size={12} />, color: "text-amber-500" },
     { label: "Ranking", value: userRankIndex !== -1 ? `#${userRankIndex + 1}` : "—", icon: <Trophy size={12} />, color: "text-rose-500" },
@@ -478,7 +478,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
             {/* Balance */}
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 text-center">
               <p className="text-sm text-slate-400 mb-1">Balance disponible</p>
-              <p className="text-4xl font-bold text-emerald-500">{user.points}</p>
+              <p className="text-4xl font-bold text-emerald-500">{Number(user.points).toFixed(2)}</p>
               <p className="text-sm text-slate-400 mt-1">$</p>
             </div>
 
