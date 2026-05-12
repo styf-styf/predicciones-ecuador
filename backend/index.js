@@ -979,6 +979,7 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
       title: "🎉 ¡Ganaste una predicción!",
       message: `Apostaste ${amount.toFixed(2)} $ a "${market.question}" · Comisión (${config?.commission ?? 3}%): -${commission.toFixed(2)} $ · Total recibido: ${payout.toFixed(2)} $`,
       read: false,
+      market_id: marketId,
     }]);
 
     await supabase.from("winners").insert([{
@@ -998,6 +999,7 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
       title: "❌ Perdiste una predicción",
       message: `Apostaste ${amount.toFixed(2)} $ a "${market.question}" y no fue el resultado ganador. Saldo descontado: -${amount.toFixed(2)} $`,
       read: false,
+      market_id: marketId,
     }]);
   }
 

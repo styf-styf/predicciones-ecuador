@@ -192,13 +192,25 @@ export default function Header() {
                   <p className="text-sm text-slate-400 py-6 text-center">No tienes notificaciones</p>
                 ) : (
                   <div className="space-y-2">
-                    {notifications.map((n: any) => (
-                      <div key={n.id} className={`p-3 rounded-xl border ${n.read ? "bg-slate-100 dark:bg-slate-950 border-slate-200 dark:border-slate-800" : "bg-emerald-500/10 border-emerald-500/30"}`}>
-                        <p className="font-semibold text-sm">{n.title}</p>
-                        <p className="text-xs text-slate-300 mt-1">{n.message}</p>
-                        <p className="text-[10px] text-slate-500 mt-2">{new Date(n.created_at).toLocaleString()}</p>
-                      </div>
-                    ))}
+                    {notifications.map((n: any) => {
+                      const base = `p-3 rounded-xl border ${n.read ? "bg-slate-100 dark:bg-slate-950 border-slate-200 dark:border-slate-800" : "bg-emerald-500/10 border-emerald-500/30"}`;
+                      const inner = (
+                        <>
+                          <p className="font-semibold text-sm">{n.title}</p>
+                          <p className="text-xs text-slate-300 mt-1">{n.message}</p>
+                          <p className="text-[10px] text-slate-500 mt-2">{new Date(n.created_at).toLocaleString()}</p>
+                        </>
+                      );
+                      return n.market_id ? (
+                        <Link key={n.id} href={`/market/${n.market_id}`}
+                          onClick={() => setShowNotifications(false)}
+                          className={`${base} block hover:brightness-95 transition cursor-pointer`}>
+                          {inner}
+                        </Link>
+                      ) : (
+                        <div key={n.id} className={base}>{inner}</div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
