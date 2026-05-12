@@ -317,7 +317,7 @@ export default function AdminPage() {
       headers: { authorization: `Bearer ${token}` },
     });
     const data = await res.json();
-    if (res.ok) setBotSuggestions(data.filter((s: any) => s.source === "bot" || s.source === "bot_close"));
+    if (res.ok) setBotSuggestions(data.filter((s: any) => s.source === "bot"));
   };
 
   const fetchFinance = async () => {
@@ -1641,17 +1641,27 @@ export default function AdminPage() {
                 )}
                 {marketNews.map((n) => (
                   <div key={n.id} className={`bg-white dark:bg-[#111111] border rounded-xl p-5 space-y-3 ${
-                    n.status === "pending" ? "border-amber-200 dark:border-amber-500/20"
+                    n.status === "pending" ? (n.source === "bot_close" ? "border-violet-200 dark:border-violet-500/20" : "border-amber-200 dark:border-amber-500/20")
                     : n.status === "approved" ? "border-emerald-200 dark:border-emerald-500/20 opacity-70"
                     : "border-slate-200 dark:border-white/[0.06] opacity-40"
                   }`}>
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          {n.source === "bot_close" && (
+                            <span className="text-[10px] bg-violet-50 dark:bg-violet-500/15 text-violet-600 dark:text-violet-400 px-2 py-0.5 rounded-md uppercase tracking-wider font-bold">Cierre IA</span>
+                          )}
+                          {n.source === "bot_close" && n.resolves_as && (
+                            <span className={`text-[10px] px-2 py-0.5 rounded-md uppercase tracking-wider font-bold ${n.resolves_as === "yes" ? "bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-rose-50 dark:bg-rose-500/15 text-rose-600 dark:text-rose-400"}`}>
+                              Ganó: {n.resolves_as === "yes" ? "SÍ" : "NO"}
+                            </span>
+                          )}
+                        </div>
                         <p className="text-[13px] font-semibold text-slate-900 dark:text-white leading-snug">{n.title}</p>
                         {n.url && (
                           <a href={n.url} target="_blank" rel="noopener noreferrer"
                             className="text-[11px] text-blue-500 dark:text-blue-400 hover:underline mt-0.5 block truncate">
-                            {n.source || n.url}
+                            {n.source === "bot_close" ? "Ver fuente" : (n.source || n.url)}
                           </a>
                         )}
                       </div>
@@ -1665,14 +1675,14 @@ export default function AdminPage() {
                     </div>
 
                     {n.content && (
-                      <p className="text-[12px] text-slate-500 dark:text-white/40 leading-relaxed border-l-2 border-slate-200 dark:border-white/10 pl-3 line-clamp-3">
+                      <p className={`text-[12px] text-slate-500 dark:text-white/40 leading-relaxed border-l-2 border-slate-200 dark:border-white/10 pl-3 ${n.source === "bot_close" ? "whitespace-pre-line" : "line-clamp-3"}`}>
                         {n.content}
                       </p>
                     )}
 
                     {n.market_id && (
                       <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-white/40">
-                        <span>🔗 Vinculada al mercado</span>
+                        <span>🔗 Mercado</span>
                         <span className="font-bold text-slate-700 dark:text-white/60">#{n.market_id}</span>
                         <span className="text-slate-400 dark:text-white/25 truncate">
                           — {markets.find(m => m.id === n.market_id)?.question || ""}
@@ -1680,7 +1690,69 @@ export default function AdminPage() {
                       </div>
                     )}
 
-                    {n.status === "pending" && (
+                    {n.status === "pending" && n.source === "bot_close" && (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={async () => {
+                            const token = localStorage.getItem("token");
+                            const [r1, r2] = await Promise.all([
+                              fetch(`https://predicciones-ecuador.onrender.com/admin/market-news/${n.id}`, {
+                                method: "PUT",
+                                headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+                                body: JSON.stringify({ market_id: n.market_id, status: "approved" }),
+                              }),
+                              fetch(`https://predicciones-ecuador.onrender.com/admin/resolve/${n.market_id}`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+                                body: JSON.stringify({ winner: n.resolves_as }),
+                              }),
+                            ]);
+                            if (r1.ok && r2.ok) { showToast(`Mercado resuelto → ${n.resolves_as === "yes" ? "SÍ" : "NO"} ✅`, "success"); fetchMarketNews(); fetchMarkets(); }
+                            else showToast("Error al aprobar", "error");
+                          }}
+                          className={`flex-1 font-bold rounded-lg py-2 text-[12px] transition ${n.resolves_as === "yes" ? "bg-emerald-500 hover:bg-emerald-400 text-black" : "bg-rose-500 hover:bg-rose-400 text-white"}`}
+                        >
+                          ✓ Aprobar y resolver → {n.resolves_as === "yes" ? "SÍ" : "NO"}
+                        </button>
+                        <button
+                          onClick={async () => {
+                            const token = localStorage.getItem("token");
+                            const inverted = n.resolves_as === "yes" ? "no" : "yes";
+                            const [r1, r2] = await Promise.all([
+                              fetch(`https://predicciones-ecuador.onrender.com/admin/market-news/${n.id}`, {
+                                method: "PUT",
+                                headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+                                body: JSON.stringify({ market_id: n.market_id, status: "approved", resolves_as: inverted }),
+                              }),
+                              fetch(`https://predicciones-ecuador.onrender.com/admin/resolve/${n.market_id}`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+                                body: JSON.stringify({ winner: inverted }),
+                              }),
+                            ]);
+                            if (r1.ok && r2.ok) { showToast(`Mercado resuelto → ${inverted === "yes" ? "SÍ" : "NO"} ✅`, "success"); fetchMarketNews(); fetchMarkets(); }
+                            else showToast("Error al aprobar", "error");
+                          }}
+                          className="px-4 py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] text-[12px] text-slate-500 dark:text-white/40 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition"
+                        >
+                          ↔ Invertir
+                        </button>
+                        <button
+                          onClick={async () => {
+                            const token = localStorage.getItem("token");
+                            await fetch(`https://predicciones-ecuador.onrender.com/admin/market-news/${n.id}`, {
+                              method: "PUT",
+                              headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+                              body: JSON.stringify({ market_id: null, status: "rejected" }),
+                            });
+                            showToast("Noticia rechazada", "info"); fetchMarketNews();
+                          }}
+                          className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] text-[12px] text-slate-400 dark:text-white/25 hover:text-rose-500 transition"
+                        >✕</button>
+                      </div>
+                    )}
+
+                    {n.status === "pending" && n.source !== "bot_close" && (
                       <div className="flex items-center gap-2 flex-wrap">
                         <input
                           type="number"
@@ -2164,137 +2236,6 @@ export default function AdminPage() {
                   </button>
                 </div>
               </div>
-
-              {/* Cierres de mercados */}
-              {botSuggestions.filter(s => s.source === "bot_close").length > 0 && (
-                <div>
-                  <p className="text-[11px] text-slate-400 dark:text-white/30 uppercase tracking-widest mb-3">Cierres de mercados</p>
-                  <div className="space-y-3">
-                    {botSuggestions.filter(s => s.source === "bot_close").map((s) => (
-                      <div key={s.id} className={`bg-white dark:bg-[#111111] border rounded-xl p-5 transition ${
-                        s.status === "pending" ? "border-violet-200 dark:border-violet-500/20"
-                        : s.status === "approved" ? "border-emerald-200 dark:border-emerald-500/20 opacity-50"
-                        : "border-slate-100 dark:border-white/[0.04] opacity-30"
-                      }`}>
-                        {/* Cabecera */}
-                        <div className="flex items-start justify-between gap-3 mb-3">
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-[10px] bg-violet-50 dark:bg-violet-500/15 text-violet-600 dark:text-violet-400 px-2 py-0.5 rounded-md uppercase tracking-wider font-bold">Cierre IA</span>
-                              {s.impact === "bajo" && (
-                                <span className="text-[10px] bg-amber-50 dark:bg-amber-500/10 text-amber-500 px-2 py-0.5 rounded-md uppercase tracking-wider">Sin evidencia</span>
-                              )}
-                            </div>
-                            <p className="text-[13px] font-bold text-slate-900 dark:text-white leading-snug">{s.title}</p>
-                          </div>
-                          <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-md uppercase tracking-wider ${
-                            s.status === "pending" ? "bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400"
-                            : s.status === "approved" ? "bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                            : "bg-slate-100 dark:bg-white/[0.06] text-slate-400 dark:text-white/30"
-                          }`}>
-                            {s.status === "pending" ? "Pendiente" : s.status === "approved" ? "Aprobado" : "Rechazado"}
-                          </span>
-                        </div>
-
-                        {/* Resultado sugerido */}
-                        <div className={`flex items-center gap-3 mb-4 px-4 py-3 rounded-xl border ${
-                          s.resolves_as === "yes"
-                            ? "bg-emerald-50 dark:bg-emerald-500/[0.08] border-emerald-200 dark:border-emerald-500/20"
-                            : "bg-rose-50 dark:bg-rose-500/[0.08] border-rose-200 dark:border-rose-500/20"
-                        }`}>
-                          <span className={`text-2xl font-black ${s.resolves_as === "yes" ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
-                            {s.resolves_as === "yes" ? "SÍ" : "NO"}
-                          </span>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[11px] text-slate-400 dark:text-white/30 uppercase tracking-wider">Ganador sugerido</p>
-                            {s.probability_reasoning && (
-                              <p className="text-[12px] text-slate-600 dark:text-white/50 mt-0.5 leading-snug">{s.probability_reasoning}</p>
-                            )}
-                          </div>
-                          <div className="text-right shrink-0">
-                            <p className="text-[11px] text-slate-400 dark:text-white/30">Confianza</p>
-                            <p className={`text-lg font-bold tabular-nums ${s.resolves_as === "yes" ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
-                              {s.resolves_as === "yes" ? s.probability_yes : s.probability_no}%
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Artículo de cierre */}
-                        {s.summary && (
-                          <div className="bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.06] rounded-xl px-4 py-3 mb-4">
-                            <p className="text-[10px] text-slate-400 dark:text-white/25 uppercase tracking-widest mb-2">📰 Artículo de cierre generado</p>
-                            <p className="text-[12px] text-slate-600 dark:text-white/50 leading-relaxed whitespace-pre-line">{s.summary}</p>
-                          </div>
-                        )}
-
-                        {/* Acciones */}
-                        {s.status === "pending" && (
-                          <div className="flex gap-2">
-                            <button
-                              onClick={async () => {
-                                const token = localStorage.getItem("token");
-                                const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/news-suggestions/${s.id}`, {
-                                  method: "PUT",
-                                  headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
-                                  body: JSON.stringify({ action: "approve_resolve" }),
-                                });
-                                const data = await res.json();
-                                if (res.ok) { showToast(`Mercado resuelto → ${s.resolves_as?.toUpperCase()} ✅`, "success"); fetchBotSuggestions(); }
-                                else showToast(data.message || "Error", "error");
-                              }}
-                              className={`flex-1 font-bold rounded-lg py-2 text-[12px] transition ${
-                                s.resolves_as === "yes"
-                                  ? "bg-emerald-500 hover:bg-emerald-400 text-black"
-                                  : "bg-rose-500 hover:bg-rose-400 text-white"
-                              }`}
-                            >
-                              ✓ Aprobar cierre → {s.resolves_as === "yes" ? "SÍ" : "NO"}
-                            </button>
-                            <button
-                              onClick={async () => {
-                                const token = localStorage.getItem("token");
-                                const inverted = s.resolves_as === "yes" ? "no" : "yes";
-                                // Actualizar resolves_as en la DB y luego aprobar
-                                await fetch(`https://predicciones-ecuador.onrender.com/admin/news-suggestions/${s.id}/resolves-as`, {
-                                  method: "PUT",
-                                  headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
-                                  body: JSON.stringify({ resolves_as: inverted }),
-                                });
-                                const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/news-suggestions/${s.id}`, {
-                                  method: "PUT",
-                                  headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
-                                  body: JSON.stringify({ action: "approve_resolve" }),
-                                });
-                                const data = await res.json();
-                                if (res.ok) { showToast(`Mercado resuelto → ${inverted.toUpperCase()} ✅`, "success"); fetchBotSuggestions(); }
-                                else showToast(data.message || "Error", "error");
-                              }}
-                              className="px-4 py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] text-[12px] text-slate-500 dark:text-white/40 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition"
-                              title="Invertir resultado y aprobar"
-                            >
-                              ↔ Invertir
-                            </button>
-                            <button
-                              onClick={async () => {
-                                const token = localStorage.getItem("token");
-                                await fetch(`https://predicciones-ecuador.onrender.com/admin/news-suggestions/${s.id}`, {
-                                  method: "PUT",
-                                  headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
-                                  body: JSON.stringify({ action: "reject" }),
-                                });
-                                fetchBotSuggestions();
-                              }}
-                              className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] text-[12px] text-slate-400 dark:text-white/25 hover:text-rose-500 transition"
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               {/* Feed de noticias */}
               <div>

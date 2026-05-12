@@ -374,22 +374,17 @@ Responde SOLO en JSON sin markdown:
     let parsed;
     try { parsed = JSON.parse(clean); } catch { return; }
 
-    await supabase.from("news_suggestions").insert({
+    await supabase.from("market_news").insert({
       title: parsed.close_headline || `Cierre: ${market.question}`,
-      summary: parsed.close_content || "No se encontraron resultados públicos verificables.",
-      new_market_question: null,
-      resolves_market_id: market.id,
-      resolves_as: parsed.winner,
+      content: parsed.close_content || "No se encontraron resultados públicos verificables para esta pregunta. El resultado más probable es NO.",
+      url: sourceUrls[0] || null,
       source: "bot_close",
       status: "pending",
-      probability_yes: parsed.winner === "yes" ? parsed.confidence : (100 - parsed.confidence),
-      probability_no: parsed.winner === "no" ? parsed.confidence : (100 - parsed.confidence),
-      probability_reasoning: parsed.reasoning || null,
-      url: sourceUrls[0] || null,
-      impact: parsed.has_evidence ? "alto" : "bajo",
+      market_id: market.id,
+      resolves_as: parsed.winner,
     });
 
-    if (broadcast) broadcast("suggestions", {});
+    if (broadcast) broadcast("news", {});
     console.log(`[bot] ✅ Cierre: "${market.question}" → ${parsed.winner.toUpperCase()} (${parsed.confidence}% confianza)`);
   } catch (err) {
     console.error("[bot] Error analizando cierre:", market.question, "-", err.message);
