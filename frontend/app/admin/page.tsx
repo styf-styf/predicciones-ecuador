@@ -457,13 +457,16 @@ export default function AdminPage() {
     }
   };
 
+  // Convierte valor de datetime-local (sin zona) a UTC-5 Ecuador
+  const toEcuadorTz = (dt: string) => dt && dt.length <= 16 ? dt + ":00-05:00" : dt;
+
   const handleEditMarket = async () => {
     if (!editingMarket || !editingMarket.question.trim()) return;
     const token = localStorage.getItem("token");
     const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/markets/${editingMarket.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` || "" },
-      body: JSON.stringify({ question: editingMarket.question, closes_at: editingMarket.closes_at ?? "" }),
+      body: JSON.stringify({ question: editingMarket.question, closes_at: toEcuadorTz(editingMarket.closes_at ?? "") }),
     });
     const data = await res.json();
     if (res.ok) { setEditingMarket(null); fetchMarkets(); showToast("Mercado actualizado", "success"); }
@@ -476,7 +479,7 @@ export default function AdminPage() {
     const res = await fetch("https://predicciones-ecuador.onrender.com/admin/markets", {
       method: "POST",
       headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` || "" },
-      body: JSON.stringify({ question: newQuestion, category: newCategory, closes_at: newClosesAt || undefined }),
+      body: JSON.stringify({ question: newQuestion, category: newCategory, closes_at: newClosesAt ? toEcuadorTz(newClosesAt) : undefined }),
     });
     const data = await res.json();
     if (res.ok) { setNewQuestion(""); fetchMarkets(); fetchStats(); showToast("Mercado creado ✅", "success"); }
@@ -1836,7 +1839,7 @@ export default function AdminPage() {
                       </div>
                     )}
 
-                    <p className="text-[10px] text-slate-300 dark:text-white/15">{new Date(n.created_at).toLocaleString("es-EC", { timeZone: "America/Guayaquil" })}</p>
+                    <p className="text-[10px] text-slate-300 dark:text-white/15">{new Date(n.created_at + "Z").toLocaleString("es-EC", { timeZone: "America/Guayaquil", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
                     {n.status !== "pending" && (
                       <button
                         onClick={async () => {
@@ -2422,7 +2425,7 @@ export default function AdminPage() {
                                 const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/news-suggestions/${s.id}`, {
                                   method: "PUT",
                                   headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
-                                  body: JSON.stringify({ action: "approve_market", closes_at: closeDates[s.id] || null, category: selectedCategories[s.id] || "general" }),
+                                  body: JSON.stringify({ action: "approve_market", closes_at: closeDates[s.id] ? toEcuadorTz(closeDates[s.id]) : null, category: selectedCategories[s.id] || "general" }),
                                 });
                                 const data = await res.json();
                                 if (res.ok) { showToast("Mercado creado ✅", "success"); fetchBotSuggestions(); fetchMarkets(); }
