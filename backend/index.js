@@ -924,8 +924,17 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
       continue;
     }
 
+    // Guardar payout primero (campo crítico para el UI)
+    const { error: payoutError } = await supabase.from("bets")
+      .update({ payout })
+      .eq("id", bet.id);
+    if (payoutError) {
+      console.error(`[resolve] Error guardando payout en bet ${bet.id}:`, payoutError.message);
+    }
+
+    // Guardar commission_paid por separado (informativo, no crítico)
     await supabase.from("bets")
-      .update({ payout, commission_paid: parseFloat(commission.toFixed(2)) })
+      .update({ commission_paid: parseFloat(commission.toFixed(2)) })
       .eq("id", bet.id);
 
     await supabase.from("notifications").insert([{
@@ -1007,11 +1016,13 @@ app.post("/admin/markets/:id/fix-payouts", auth, async (req, res) => {
     }
 
     const newPoints = parseFloat((Number(betUser.points) + payout).toFixed(2));
-    await supabase.from("users").update({ points: newPoints }).eq("id", bet.user_id);
-    await supabase.from("bets").update({
-      payout,
-      commission_paid: parseFloat((grossProfit * COMMISSION).toFixed(2)),
-    }).eq("id", bet.id);
+    const { error: userUpdateErr } = await supabase.from("users").update({ points: newPoints }).eq("id", bet.user_id);
+    if (userUpdateErr) {
+      console.error(`[fix-payouts] Error actualizando puntos de ${bet.user_id}:`, userUpdateErr.message);
+      continue;
+    }
+    await supabase.from("bets").update({ payout }).eq("id", bet.id);
+    await supabase.from("bets").update({ commission_paid: parseFloat((grossProfit * COMMISSION).toFixed(2)) }).eq("id", bet.id);
     await supabase.from("notifications").insert([{
       user_id: bet.user_id,
       title: "🎉 Pago de predicción procesado",

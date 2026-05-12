@@ -271,6 +271,8 @@ export default function MarketPage() {
       setUserBet({ type: data.bet.type, amount: data.bet.amount, payout: data.bet.payout ?? undefined, commission_paid: data.bet.commission_paid ?? undefined });
       setChangeCount(data.bet.changes ?? 0);
       setBetType(data.bet.type);
+    } else {
+      setUserBet(null);
     }
   }
 };
