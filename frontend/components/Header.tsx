@@ -222,8 +222,8 @@ export default function Header() {
                   {points !== null && (
                     <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{points} $</span>
                   )}
-                  <div className="h-7 w-7 rounded-xl bg-emerald-500 text-slate-950 text-xs font-bold grid place-items-center shrink-0">
-                    {userName?.charAt(0).toUpperCase() || "U"}
+                  <div className="h-7 w-7 rounded-full bg-emerald-500/20 border border-emerald-500/30 grid place-items-center shrink-0">
+                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">{userName?.charAt(0).toUpperCase() || "U"}</span>
                   </div>
                 </button>
 
