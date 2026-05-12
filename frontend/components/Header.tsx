@@ -18,6 +18,7 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const notifRef = useRef<any>(null);
   const searchRef = useRef<any>(null);
 
@@ -67,7 +68,7 @@ export default function Header() {
   };
 
   useEffect(() => {
-    loadMe();
+    loadMe().then(() => setMounted(true));
     loadNotifications();
     const syncAuth = () => loadMe();
     window.addEventListener("auth-change", syncAuth);
@@ -203,12 +204,13 @@ export default function Header() {
 
           {/* Auth desktop */}
           <div className="hidden sm:flex items-center gap-4">
-            {!isLogged && (
+            {!mounted ? (
+              <div className="w-20 h-8 bg-slate-100 dark:bg-slate-900 rounded-xl animate-pulse" />
+            ) : !isLogged ? (
               <Link href="/login" className="text-sm font-semibold text-emerald-500 hover:text-emerald-400 transition-colors flex items-center gap-1.5">
                 <LogIn size={15} /> Login
               </Link>
-            )}
-            {isLogged && (
+            ) : (
               <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
