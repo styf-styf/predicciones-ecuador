@@ -1913,51 +1913,38 @@ app.post("/admin/news-suggestions/:id/chat", async (req, res) => {
     }
   }
 
-  const systemPrompt = isNewsMode
-    ? `Eres un asistente que ayuda al administrador a analizar y reformular noticias de mercados para Ecuador.
-
-NOTICIA:
-- Título: ${suggestion.title || "N/A"}
-- URL: ${suggestion.url || "N/A"}
-- Contenido: ${suggestion.summary || "N/A"}
-
-${articleContent ? `CONTENIDO COMPLETO DEL ARTÍCULO:\n${articleContent}\n` : ""}
-${tavilyContext ? `BÚSQUEDA EN INTERNET:\n${tavilyContext}\n` : ""}
-
-Tu rol:
-1. Responder preguntas sobre la noticia usando el artículo y la búsqueda
-2. Si el admin pide reformular o mejorar el título/contenido, propón una versión mejorada en el campo "new_text"
-3. Indicar de dónde sacas la información
-4. Ser conciso y directo
-
-IMPORTANTE: Responde SIEMPRE en JSON sin markdown:
-{
-  "reply": "tu respuesta aquí",
-  "new_text": "título o texto reformulado si se pidió, si no null"
-}`
-    : `Eres un asistente experto en mercados de predicción para Ecuador. Ayudas al administrador a verificar y refinar preguntas generadas automáticamente.
-
-NOTICIA ORIGINAL:
-- Título: ${suggestion.title || "N/A"}
-- URL: ${suggestion.url || "N/A"}
-- Resumen: ${suggestion.summary || "N/A"}
-- Pregunta actual: "${suggestion.current_question || "N/A"}"
-- Fecha de cierre sugerida: ${suggestion.suggested_close_date || "N/A"}
-
-${articleContent ? `CONTENIDO COMPLETO DEL ARTÍCULO:\n${articleContent}\n` : ""}
-${tavilyContext ? `BÚSQUEDA EN INTERNET:\n${tavilyContext}\n` : ""}
-
-Tu rol:
-1. Responder usando primero el contenido del artículo, luego los resultados de búsqueda
-2. Si el admin pide modificar la pregunta, propón una versión mejorada basándote en los datos reales
-3. Indicar la fuente de donde sacas la información
-4. Ser conciso y directo
-
-IMPORTANTE: Responde SIEMPRE en JSON sin markdown:
-{
-  "reply": "tu respuesta aquí, indicando de dónde sacas los datos",
-  "new_question": "nueva pregunta si se pidió modificarla, si no null"
-}`;
+  let systemPrompt;
+  if (isNewsMode) {
+    systemPrompt = "Eres un asistente que ayuda al administrador a analizar y reformular noticias de mercados para Ecuador.\n\n"
+      + "NOTICIA:\n"
+      + "- Título: " + (suggestion.title || "N/A") + "\n"
+      + "- URL: " + (suggestion.url || "N/A") + "\n"
+      + "- Contenido: " + (suggestion.summary || "N/A") + "\n\n"
+      + (articleContent ? "CONTENIDO DEL ARTÍCULO:\n" + articleContent + "\n\n" : "")
+      + (tavilyContext ? "BÚSQUEDA EN INTERNET:\n" + tavilyContext + "\n\n" : "")
+      + "Tu rol:\n"
+      + "1. Responder preguntas sobre la noticia usando el artículo y la búsqueda\n"
+      + "2. Si el admin pide reformular o mejorar el título/contenido, propón una versión mejorada en el campo new_text\n"
+      + "3. Indicar de dónde sacas la información\n"
+      + "4. Ser conciso y directo\n\n"
+      + 'IMPORTANTE: Responde SIEMPRE en JSON puro sin markdown, con la forma: {"reply":"tu respuesta","new_text":"texto reformulado o null"}';
+  } else {
+    systemPrompt = "Eres un asistente experto en mercados de predicción para Ecuador. Ayudas al administrador a verificar y refinar preguntas generadas automáticamente.\n\n"
+      + "NOTICIA ORIGINAL:\n"
+      + "- Título: " + (suggestion.title || "N/A") + "\n"
+      + "- URL: " + (suggestion.url || "N/A") + "\n"
+      + "- Resumen: " + (suggestion.summary || "N/A") + "\n"
+      + "- Pregunta actual: " + (suggestion.current_question || "N/A") + "\n"
+      + "- Fecha de cierre sugerida: " + (suggestion.suggested_close_date || "N/A") + "\n\n"
+      + (articleContent ? "CONTENIDO DEL ARTÍCULO:\n" + articleContent + "\n\n" : "")
+      + (tavilyContext ? "BÚSQUEDA EN INTERNET:\n" + tavilyContext + "\n\n" : "")
+      + "Tu rol:\n"
+      + "1. Responder usando primero el contenido del artículo, luego los resultados de búsqueda\n"
+      + "2. Si el admin pide modificar la pregunta, propón una versión mejorada basándote en los datos reales\n"
+      + "3. Indicar la fuente de donde sacas la información\n"
+      + "4. Ser conciso y directo\n\n"
+      + 'IMPORTANTE: Responde SIEMPRE en JSON puro sin markdown, con la forma: {"reply":"tu respuesta","new_question":"nueva pregunta o null"}';
+  }
 
   try {
     const aiRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -1977,14 +1964,28 @@ IMPORTANTE: Responde SIEMPRE en JSON sin markdown:
     });
 
     const aiData = await aiRes.json();
-    const rawText = aiData.choices?.[0]?.message?.content || "{}";
-    const clean = rawText.replace(/```json|```/g, "").trim();
+    const rawText = aiData.choices?.[0]?.message?.content || "";
+
+    if (!rawText) {
+      const groqErr = aiData.error?.message || aiData.error?.code || JSON.stringify(aiData).slice(0, 200);
+      console.error("[chat] Groq sin contenido:", groqErr);
+      return res.json({ reply: `Error de IA: ${groqErr}`, new_question: null, new_text: null });
+    }
+
+    const clean = rawText.replace(/```json[\s\S]*?```|```[\s\S]*?```/g, s => {
+      const inner = s.replace(/^```json\n?|^```\n?|```$/g, "").trim();
+      return inner;
+    }).trim();
+
     let parsed;
-    try { parsed = JSON.parse(clean); }
-    catch { parsed = { reply: clean, new_question: null, new_text: null }; }
+    try {
+      parsed = JSON.parse(clean);
+    } catch {
+      parsed = { reply: rawText, new_question: null, new_text: null };
+    }
 
     res.json({
-      reply: parsed.reply || "Sin respuesta",
+      reply: parsed.reply || rawText || "Sin respuesta",
       new_question: isNewsMode ? null : (parsed.new_question || null),
       new_text: isNewsMode ? (parsed.new_text || null) : null,
     });
