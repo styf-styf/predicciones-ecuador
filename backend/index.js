@@ -1677,14 +1677,18 @@ app.put("/admin/news-suggestions/:id", async (req, res) => {
   if (action === "approve_market" && suggestion.new_market_question) {
   console.log("Sugerencia completa:", JSON.stringify(suggestion, null, 2));
 
-  const { data: newMarket, error: marketError } = await supabase.from("markets").insert([{
+  const { closes_at } = req.body;
+  const marketData = {
     question: suggestion.new_market_question,
     news_title: suggestion.title || null,
     news_url: suggestion.url || null,
     news_summary: suggestion.summary || null,
     news_source: suggestion.url ? new URL(suggestion.url).hostname.replace("www.", "") : null,
     news_date: new Date().toISOString().split("T")[0],
-  }]).select().single();
+  };
+  if (closes_at) marketData.closes_at = closes_at;
+
+  const { data: newMarket, error: marketError } = await supabase.from("markets").insert([marketData]).select().single();
 
   console.log("Mercado creado:", JSON.stringify(newMarket, null, 2));
   console.log("Error mercado:", JSON.stringify(marketError, null, 2));

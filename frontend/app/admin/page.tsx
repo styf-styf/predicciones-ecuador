@@ -131,6 +131,7 @@ export default function AdminPage() {
   const [botInterval, setBotInterval] = useState(15);
   const [botRunning, setBotRunning] = useState(false);
   const [botSuggestions, setBotSuggestions] = useState<any[]>([]);
+  const [closeDates, setCloseDates] = useState<Record<number, string>>({});
 
   // ── Nuevos estados ──
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
@@ -317,7 +318,17 @@ export default function AdminPage() {
       headers: { authorization: `Bearer ${token}` },
     });
     const data = await res.json();
-    if (res.ok) setBotSuggestions(data.filter((s: any) => s.source === "bot"));
+    if (res.ok) {
+      const filtered = data.filter((s: any) => s.source === "bot");
+      setBotSuggestions(filtered);
+      setCloseDates(prev => {
+        const init: Record<number, string> = { ...prev };
+        filtered.forEach((s: any) => {
+          if (!init[s.id] && s.suggested_close_date) init[s.id] = s.suggested_close_date;
+        });
+        return init;
+      });
+    }
   };
 
   const fetchFinance = async () => {
@@ -2268,7 +2279,7 @@ export default function AdminPage() {
                               </a>
                             )}
                             <span className="text-[11px] text-slate-300 dark:text-white/20">
-                              {new Date(s.created_at).toLocaleString("es-EC", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                              {new Date(s.created_at + "Z").toLocaleString("es-EC", { timeZone: "America/Guayaquil", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                             </span>
                           </div>
                         </div>
@@ -2342,16 +2353,38 @@ export default function AdminPage() {
                             </div>
                           )}
 
-                          {/* Fecha sugerida */}
-                          {s.suggested_close_date && (
-                            <p className="text-[11px] text-slate-400 dark:text-white/30">
-                              📅 Cierre sugerido: <span className="font-semibold">{s.suggested_close_date}</span>
-                            </p>
-                          )}
+                          {/* Fecha de cierre */}
+                          <div className="flex items-center gap-2">
+                            <label className="text-[11px] text-slate-400 dark:text-white/30 shrink-0">📅 Fecha de cierre:</label>
+                            <input
+                              type="date"
+                              value={closeDates[s.id] || ""}
+                              onChange={(e) => setCloseDates(prev => ({ ...prev, [s.id]: e.target.value }))}
+                              className="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-2 py-1 text-[12px] outline-none text-slate-900 dark:text-white focus:border-emerald-500/40 transition"
+                            />
+                          </div>
                         </div>
                       )}
 
                       {/* Acciones */}
+                      {s.status === "approved" && (
+                        <div className="flex justify-end mt-1">
+                          <button
+                            onClick={async () => {
+                              const token = localStorage.getItem("token");
+                              await fetch(`https://predicciones-ecuador.onrender.com/admin/news-suggestions/${s.id}`, {
+                                method: "DELETE",
+                                headers: { authorization: `Bearer ${token}` },
+                              });
+                              fetchBotSuggestions();
+                              showToast("Eliminado", "info");
+                            }}
+                            className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/[0.08] text-[12px] text-slate-400 dark:text-white/25 hover:text-rose-500 hover:border-rose-200 dark:hover:border-rose-500/20 transition"
+                          >
+                            🗑️ Eliminar
+                          </button>
+                        </div>
+                      )}
                       {s.status === "pending" && (
                         <div className="flex gap-2">
                           {s.new_market_question && (
@@ -2361,7 +2394,7 @@ export default function AdminPage() {
                                 const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/news-suggestions/${s.id}`, {
                                   method: "PUT",
                                   headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
-                                  body: JSON.stringify({ action: "approve_market" }),
+                                  body: JSON.stringify({ action: "approve_market", closes_at: closeDates[s.id] || null }),
                                 });
                                 const data = await res.json();
                                 if (res.ok) { showToast("Mercado creado ✅", "success"); fetchBotSuggestions(); fetchMarkets(); }
