@@ -282,9 +282,9 @@ async function checkClosingMarkets() {
     for (const market of closingMarkets) {
       // Evitar procesar el mismo mercado dos veces
       const { data: existing } = await supabase
-        .from("news_suggestions")
+        .from("market_news")
         .select("id")
-        .eq("resolves_market_id", market.id)
+        .eq("market_id", market.id)
         .eq("source", "bot_close")
         .maybeSingle();
 
