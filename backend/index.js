@@ -2123,9 +2123,11 @@ app.put("/admin/market-news/:id", auth, async (req, res) => {
     .from("users").select("role").eq("id", req.userId).single();
   if (!user || user.role !== "admin") return res.status(403).json({ message: "Solo admin" });
 
-  const { market_id, status, resolves_as } = req.body;
+  const { market_id, status, resolves_as, title, content } = req.body;
   const updateData = { market_id, status };
   if (resolves_as !== undefined) updateData.resolves_as = resolves_as;
+  if (title !== undefined) updateData.title = title;
+  if (content !== undefined) updateData.content = content;
   const { error } = await supabase
     .from("market_news").update(updateData).eq("id", req.params.id);
   if (error) return res.status(500).json({ message: error.message });

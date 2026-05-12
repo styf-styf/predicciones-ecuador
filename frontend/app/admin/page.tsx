@@ -1823,10 +1823,28 @@ export default function AdminPage() {
                           <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 rounded-xl p-3 space-y-2">
                             <p className="text-[10px] text-emerald-600 dark:text-emerald-400 uppercase tracking-widest font-bold">✦ Texto reformulado</p>
                             <p className="text-[12px] text-slate-900 dark:text-white font-medium">{chatPending[`n-${n.id}`]}</p>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 flex-wrap">
+                              <button
+                                onClick={async () => {
+                                  const token = localStorage.getItem("token");
+                                  const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/market-news/${n.id}`, {
+                                    method: "PUT",
+                                    headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+                                    body: JSON.stringify({ market_id: n.market_id, status: n.status, title: chatPending[`n-${n.id}`] }),
+                                  });
+                                  if (res.ok) {
+                                    setChatPending(prev => ({ ...prev, [`n-${n.id}`]: null }));
+                                    fetchMarketNews();
+                                    showToast("Título actualizado ✅", "success");
+                                  } else {
+                                    showToast("Error al actualizar", "error");
+                                  }
+                                }}
+                                className="bg-emerald-500 hover:bg-emerald-400 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition"
+                              >✓ Aplicar como título</button>
                               <button
                                 onClick={() => { navigator.clipboard.writeText(chatPending[`n-${n.id}`]!); showToast("Copiado al portapapeles", "info"); }}
-                                className="bg-emerald-500 hover:bg-emerald-400 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition"
+                                className="bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-white/60 text-[11px] font-bold px-3 py-1.5 rounded-lg transition hover:bg-slate-200 dark:hover:bg-white/[0.1]"
                               >📋 Copiar</button>
                               <button
                                 onClick={() => setChatPending(prev => ({ ...prev, [`n-${n.id}`]: null }))}
