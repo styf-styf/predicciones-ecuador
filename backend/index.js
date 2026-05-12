@@ -1922,12 +1922,12 @@ app.post("/admin/news-suggestions/:id/chat", async (req, res) => {
       + "- Contenido: " + (suggestion.summary || "N/A") + "\n\n"
       + (articleContent ? "CONTENIDO DEL ARTÍCULO:\n" + articleContent + "\n\n" : "")
       + (tavilyContext ? "BÚSQUEDA EN INTERNET:\n" + tavilyContext + "\n\n" : "")
-      + "Tu rol:\n"
-      + "1. Responder preguntas sobre la noticia usando el artículo y la búsqueda\n"
-      + "2. Si el admin pide reformular o mejorar el título/contenido, propón una versión mejorada en el campo new_text\n"
-      + "3. Indicar de dónde sacas la información\n"
-      + "4. Ser conciso y directo\n\n"
-      + 'IMPORTANTE: Responde SIEMPRE en JSON puro sin markdown, con la forma: {"reply":"tu respuesta","new_text":"texto reformulado o null"}';
+      + "INSTRUCCIONES:\n"
+      + "1. Responde preguntas sobre la noticia usando el artículo y la búsqueda en internet.\n"
+      + "2. Si el admin pide reformular, mejorar o cambiar el título o contenido, escribe la versión nueva en new_text.\n"
+      + "3. Si NO se pide modificar nada, pon new_text como null.\n"
+      + "4. Sé conciso y cita la fuente.\n\n"
+      + 'FORMATO DE RESPUESTA (JSON puro, sin texto extra antes ni después, sin markdown):\n{"reply":"tu respuesta aquí","new_text":"nuevo título o texto, o null si no se pidió cambio"}';
   } else {
     systemPrompt = "Eres un asistente experto en mercados de predicción para Ecuador. Ayudas al administrador a verificar y refinar preguntas generadas automáticamente.\n\n"
       + "NOTICIA ORIGINAL:\n"
@@ -1938,12 +1938,12 @@ app.post("/admin/news-suggestions/:id/chat", async (req, res) => {
       + "- Fecha de cierre sugerida: " + (suggestion.suggested_close_date || "N/A") + "\n\n"
       + (articleContent ? "CONTENIDO DEL ARTÍCULO:\n" + articleContent + "\n\n" : "")
       + (tavilyContext ? "BÚSQUEDA EN INTERNET:\n" + tavilyContext + "\n\n" : "")
-      + "Tu rol:\n"
-      + "1. Responder usando primero el contenido del artículo, luego los resultados de búsqueda\n"
-      + "2. Si el admin pide modificar la pregunta, propón una versión mejorada basándote en los datos reales\n"
-      + "3. Indicar la fuente de donde sacas la información\n"
-      + "4. Ser conciso y directo\n\n"
-      + 'IMPORTANTE: Responde SIEMPRE en JSON puro sin markdown, con la forma: {"reply":"tu respuesta","new_question":"nueva pregunta o null"}';
+      + "INSTRUCCIONES:\n"
+      + "1. Responde usando primero el contenido del artículo, luego los resultados de búsqueda en internet.\n"
+      + "2. Si el admin pide modificar, cambiar o mejorar la pregunta de predicción, escribe la versión nueva en new_question.\n"
+      + "3. Si NO se pide modificar la pregunta, pon new_question como null.\n"
+      + "4. Sé conciso y cita la fuente.\n\n"
+      + 'FORMATO DE RESPUESTA (JSON puro, sin texto extra antes ni después, sin markdown):\n{"reply":"tu respuesta aquí","new_question":"pregunta modificada, o null si no se pidió cambio"}';
   }
 
   try {
@@ -1972,22 +1972,30 @@ app.post("/admin/news-suggestions/:id/chat", async (req, res) => {
       return res.json({ reply: `Error de IA: ${groqErr}`, new_question: null, new_text: null });
     }
 
-    const clean = rawText.replace(/```json[\s\S]*?```|```[\s\S]*?```/g, s => {
-      const inner = s.replace(/^```json\n?|^```\n?|```$/g, "").trim();
-      return inner;
-    }).trim();
-
-    let parsed;
-    try {
-      parsed = JSON.parse(clean);
-    } catch {
+    // Extraer JSON aunque el modelo ponga texto extra alrededor
+    let parsed = null;
+    const jsonMatch = rawText.match(/\{[\s\S]*?\}/);
+    if (jsonMatch) {
+      try { parsed = JSON.parse(jsonMatch[0]); } catch { /* intento siguiente */ }
+    }
+    if (!parsed) {
+      // Intentar con el objeto más grande posible
+      const bigMatch = rawText.match(/\{[\s\S]*\}/);
+      if (bigMatch) {
+        try { parsed = JSON.parse(bigMatch[0]); } catch { /* fallo */ }
+      }
+    }
+    if (!parsed) {
       parsed = { reply: rawText, new_question: null, new_text: null };
     }
 
+    // Manejar "null" como string que devuelven algunos modelos
+    const nullify = (v) => (!v || v === "null" || v === "ninguna" || v === "N/A") ? null : v;
+
     res.json({
       reply: parsed.reply || rawText || "Sin respuesta",
-      new_question: isNewsMode ? null : (parsed.new_question || null),
-      new_text: isNewsMode ? (parsed.new_text || null) : null,
+      new_question: isNewsMode ? null : nullify(parsed.new_question),
+      new_text: isNewsMode ? nullify(parsed.new_text) : null,
     });
   } catch (err) {
     console.error("Error en chat IA:", err);
