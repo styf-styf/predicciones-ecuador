@@ -223,7 +223,7 @@ Reglas:
         "Authorization": `Bearer ${groqApiKey}`,
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        model: "llama-3.1-8b-instant",
         temperature: 0.3,
         messages: [{ role: "user", content: prompt }],
       }),
@@ -384,7 +384,7 @@ Responde SOLO en JSON sin markdown:
         "Authorization": `Bearer ${groqApiKey}`,
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        model: "llama-3.1-8b-instant",
         temperature: 0.2,
         messages: [{ role: "user", content: prompt }],
       }),
