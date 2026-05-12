@@ -105,7 +105,7 @@ function BetPanel({
               <button onClick={handleBet} disabled={bettingLoading || !amount} className={`w-full py-3 rounded-xl font-bold text-sm transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${betType === "yes" ? "bg-emerald-500 text-slate-950" : "bg-rose-500 text-white"}`}>
                 {bettingLoading ? "Procesando..." : `Cambiar predicción — ${betType === "yes" ? "Sí" : "No"}`}
               </button>
-              <p className="text-xs text-slate-400 text-center pt-0.5">Cambios restantes: <span className="font-bold text-slate-900 dark:text-white">{MAX_CHANGES - changeCount}</span> de {MAX_CHANGES}</p>
+              <p className="text-xs text-slate-400 text-center pt-px">Cambios restantes: <span className="font-bold text-slate-900 dark:text-white">{MAX_CHANGES - changeCount}</span> de {MAX_CHANGES}</p>
             </div>
           ) : (
             <p className="text-center text-sm text-slate-400 bg-slate-200 dark:bg-slate-800 rounded-xl py-3">🔒 Alcanzaste el límite de <span className="text-white font-bold">{MAX_CHANGES} cambios</span></p>
