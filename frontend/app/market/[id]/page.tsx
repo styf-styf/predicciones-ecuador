@@ -524,7 +524,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
       <div className="lg:hidden space-y-2">
 
         {/* 1. Sticky: pregunta */}
-        <div className="sticky top-[112px] z-10 -mx-4 -mt-6 px-4 py-3 bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800">
+        <div className="sticky top-[49px] z-10 -mx-4 -mt-6 px-4 py-3 bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
               {market.category && (
@@ -663,7 +663,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
               </div>
             ))}
           </div>
-          <div className="border-t border-slate-100 dark:border-slate-800 p-5">
+          <div className="px-4 py-2">
             <div className="flex items-start justify-between gap-3 mb-2">
               <div className="flex items-baseline gap-1.5">
                 <span className="text-3xl font-black text-emerald-500">{yesPct}%</span>
