@@ -2426,9 +2426,8 @@ export default function AdminPage() {
                 <p className="text-[11px] text-slate-400 dark:text-white/30 uppercase tracking-widest mb-3">Noticias detectadas</p>
 
                 {/* Filtros */}
-                <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl px-4 py-3 mb-3 space-y-2">
-                  {/* Estado */}
-                  <div className="flex items-center gap-1">
+                <div className="flex flex-col gap-2 items-start mb-3">
+                  <div className="flex items-center gap-1 bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-lg p-1">
                     {([
                       { id: "pending", label: "Pendientes" },
                       { id: "approved", label: "Aprobados" },
@@ -2446,12 +2445,11 @@ export default function AdminPage() {
                       );
                     })}
                   </div>
-                  {/* Categoría */}
-                  <div className="flex items-center gap-1 flex-wrap border-t border-slate-100 dark:border-white/[0.04] pt-2">
-                    {["todas", ...Array.from(new Set(botSuggestions.map(s => s.category).filter(Boolean)))].map((cat) => (
+                  <div className="flex items-center gap-1 bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-lg p-1 overflow-x-auto max-w-[calc(100vw-2rem)] scrollbar-none">
+                    {(["todas", "deporte", "farandula", "politica", "elecciones", "pais", "general"] as const).map((cat) => (
                       <button key={cat} onClick={() => { setBotCategoryFilter(cat); setBotPage(1); }}
-                        className={`px-3 py-1 rounded-md text-[10px] font-medium transition capitalize ${botCategoryFilter === cat ? "bg-emerald-500 text-white" : "text-slate-400 dark:text-white/30 hover:text-slate-600 dark:hover:text-white/60"}`}>
-                        {cat === "todas" ? "Todas" : cat}
+                        className={`shrink-0 px-3 py-1.5 rounded-md text-[11px] font-medium transition capitalize ${botCategoryFilter === cat ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/70"}`}>
+                        {cat === "todas" ? "Todas" : cat === "farandula" ? "Farándula" : cat === "politica" ? "Política" : cat.charAt(0).toUpperCase() + cat.slice(1)}
                       </button>
                     ))}
                   </div>
