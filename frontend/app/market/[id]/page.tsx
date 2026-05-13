@@ -524,7 +524,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
       <div className="lg:hidden space-y-2">
 
         {/* 1. Sticky: pregunta */}
-        <div className="sticky top-[57px] z-10 -mx-4 -mt-6 px-4 py-3 bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800">
+        <div className="sticky top-[112px] z-10 -mx-4 -mt-6 px-4 py-3 bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
               {market.category && (
@@ -620,7 +620,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
         {/* 3. Card: gráfica + stats + probabilidad */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
           {history.length > 1 && (
-            <div className="p-5 pt-4">
+            <div className="px-4 py-2">
               <p className="text-[9px] text-slate-400 uppercase tracking-widest mb-3">Evolución de probabilidad</p>
               {(() => {
                 const last = history[history.length - 1];
@@ -650,7 +650,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
               })()}
             </div>
           )}
-          <div className={`${history.length > 1 ? "border-t border-slate-100 dark:border-slate-800" : ""} p-3 flex flex-wrap gap-2`}>
+          <div className="p-3 flex flex-wrap gap-2">
             {[
               { emoji: "📊", label: "Total apostado", value: `$${(Number(market.yes) + Number(market.no)).toFixed(1)}`, colorClass: "text-slate-900 dark:text-white" },
               { emoji: "👥", label: "Participantes", value: String(uniqueBettors), colorClass: "text-slate-900 dark:text-white" },
@@ -829,7 +829,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
 
             {/* Gráfica */}
             {history.length > 1 && (
-              <div className="border-t border-slate-100 dark:border-slate-800 p-5">
+              <div className="px-5 py-2">
                 <p className="text-[9px] text-slate-400 uppercase tracking-widest mb-3">Evolución de probabilidad</p>
                 {(() => {
                   const last = history[history.length - 1];
@@ -861,7 +861,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
             )}
 
             {/* Stats grid */}
-            <div className="border-t border-slate-100 dark:border-slate-800 p-3 flex flex-wrap gap-2">
+            <div className="p-3 flex flex-wrap gap-2">
               {[
                 { emoji: "📊", label: "Total apostado", value: `$${(Number(market.yes) + Number(market.no)).toFixed(1)}`, colorClass: "text-slate-900 dark:text-white" },
                 { emoji: "👥", label: "Participantes", value: String(uniqueBettors), colorClass: "text-slate-900 dark:text-white" },
