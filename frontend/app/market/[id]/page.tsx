@@ -524,7 +524,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
       <div className="lg:hidden space-y-2">
 
         {/* 1. Sticky: pregunta */}
-        <div className="sticky top-[57px] z-10 -mx-4 px-4 py-3 bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800">
+        <div className="sticky top-[57px] z-10 -mx-4 -mt-6 px-4 py-3 bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
               {market.category && (
@@ -650,14 +650,14 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
               })()}
             </div>
           )}
-          <div className={`${history.length > 1 ? "border-t border-slate-100 dark:border-slate-800" : ""} grid grid-cols-2 sm:grid-cols-4`}>
+          <div className={`${history.length > 1 ? "border-t border-slate-100 dark:border-slate-800" : ""} p-3 flex flex-wrap gap-2`}>
             {[
               { emoji: "📊", label: "Total apostado", value: `$${(Number(market.yes) + Number(market.no)).toFixed(1)}`, colorClass: "text-slate-900 dark:text-white" },
               { emoji: "👥", label: "Participantes", value: String(uniqueBettors), colorClass: "text-slate-900 dark:text-white" },
               { emoji: "📅", label: "Creado", value: new Date(market.created_at + "Z").toLocaleDateString("es-EC", { timeZone: "America/Guayaquil", day: "numeric", month: "short", year: "numeric" }), colorClass: "text-slate-900 dark:text-white" },
               { emoji: "✦", label: "Estado", value: statusLabel, colorClass: statusColor },
-            ].map((stat, i) => (
-              <div key={stat.label} className={`px-4 py-3 ${i > 0 ? "border-l border-slate-100 dark:border-slate-800" : ""}`}>
+            ].map((stat) => (
+              <div key={stat.label} className="flex-1 min-w-[calc(50%-4px)] px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60">
                 <p className="text-[9px] text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-0.5">{stat.emoji} {stat.label}</p>
                 <p className={`text-[12px] font-bold ${stat.colorClass}`}>{stat.value}</p>
               </div>
@@ -861,14 +861,14 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
             )}
 
             {/* Stats grid */}
-            <div className="border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 sm:grid-cols-4">
+            <div className="border-t border-slate-100 dark:border-slate-800 p-3 flex flex-wrap gap-2">
               {[
                 { emoji: "📊", label: "Total apostado", value: `$${(Number(market.yes) + Number(market.no)).toFixed(1)}`, colorClass: "text-slate-900 dark:text-white" },
                 { emoji: "👥", label: "Participantes", value: String(uniqueBettors), colorClass: "text-slate-900 dark:text-white" },
                 { emoji: "📅", label: "Creado", value: new Date(market.created_at + "Z").toLocaleDateString("es-EC", { timeZone: "America/Guayaquil", day: "numeric", month: "short", year: "numeric" }), colorClass: "text-slate-900 dark:text-white" },
                 { emoji: "✦", label: "Estado", value: statusLabel, colorClass: statusColor },
-              ].map((stat, i) => (
-                <div key={stat.label} className={`px-5 py-3 ${i > 0 ? "border-l border-slate-100 dark:border-slate-800" : ""}`}>
+              ].map((stat) => (
+                <div key={stat.label} className="flex-1 min-w-[calc(50%-4px)] px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60">
                   <p className="text-[9px] text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-0.5">{stat.emoji} {stat.label}</p>
                   <p className={`text-[12px] font-bold ${stat.colorClass}`}>{stat.value}</p>
                 </div>
