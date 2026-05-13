@@ -524,110 +524,42 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
       {/* ===== MÓVIL ONLY ===== */}
       <div className="lg:hidden space-y-2">
 
-        {/* 1. Card principal: pregunta + gráfica + stats + probabilidad */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
-          {/* Pregunta */}
-          <div className="p-5">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                {market.category && (
-                  <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1 block">
-                    {categoryIcon} {market.category}
-                  </span>
-                )}
-                <h1 className="text-[15px] font-bold leading-snug">{market.question}</h1>
-                {market.closes_at && !market.resolved && !isInResolution && (
-                  <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 text-[11px] font-semibold">
-                    ⏱ {formatCountdown(market.closes_at)}
-                  </span>
-                )}
-              </div>
-              <div className="relative shrink-0">
-                <button onClick={handleShare} className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
-                  <Share2 size={14} />
-                </button>
-                {showShare && (
-                  <div className="absolute right-0 top-8 z-50 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl py-1 w-44">
-                    <button onClick={handleCopyLink} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                      <Link2 size={13} /> Copiar enlace
-                    </button>
-                    <a href={`https://wa.me/?text=${encodeURIComponent(`${market.question}\n${typeof window !== "undefined" ? window.location.href : ""}`)}`} target="_blank" rel="noopener noreferrer" onClick={() => setShowShare(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                      <span className="text-sm">📱</span> WhatsApp
-                    </a>
-                  </div>
-                )}
-              </div>
+        {/* 1. Sticky: pregunta */}
+        <div className="sticky top-[57px] z-10 -mx-4 px-4 py-3 bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              {market.category && (
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1 block">
+                  {categoryIcon} {market.category}
+                </span>
+              )}
+              <h1 className="text-[15px] font-bold leading-snug">{market.question}</h1>
+              {market.closes_at && !market.resolved && !isInResolution && (
+                <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 text-[11px] font-semibold">
+                  ⏱ {formatCountdown(market.closes_at)}
+                </span>
+              )}
             </div>
-            {resolvedBanner && <div className="mt-3">{resolvedBanner}</div>}
-          </div>
-
-          {/* Gráfica */}
-          {history.length > 1 && (
-            <div className="border-t border-slate-100 dark:border-slate-800 p-5 pt-4">
-              <p className="text-[9px] text-slate-400 uppercase tracking-widest mb-3">Evolución de probabilidad</p>
-              {(() => {
-                const last = history[history.length - 1];
-                const siDominant = !last || parseFloat(last.yes_pct) >= 50;
-                const chartData = history.map((h) => ({ time: new Date(h.created_at + "Z").toLocaleTimeString("es-EC", { timeZone: "America/Guayaquil", hour: "2-digit", minute: "2-digit" }), Sí: parseFloat(h.yes_pct), No: parseFloat(h.no_pct) }));
-                return (
-                  <ResponsiveContainer width="100%" height={160}>
-                    <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="2 4" stroke="#94a3b820" vertical={false} />
-                      <XAxis dataKey="time" tick={{ fill: "#94a3b8", fontSize: 9 }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fill: "#94a3b8", fontSize: 9 }} axisLine={false} tickLine={false} width={28} domain={[0, 100]} />
-                      <Tooltip content={({ active, payload, label }: any) => {
-                        if (!active || !payload?.length) return null;
-                        const d = payload[0]?.payload;
-                        return (
-                          <div style={{ background: "#1e293b", border: "1px solid #334155", borderRadius: 8, padding: "6px 10px", fontSize: 11 }}>
-                            <p style={{ color: "#94a3b8", marginBottom: 4 }}>{label}</p>
-                            <p style={{ color: "#10b981" }}>Sí: {d?.Sí?.toFixed(1)}%</p>
-                            <p style={{ color: "#f43f5e" }}>No: {d?.No?.toFixed(1)}%</p>
-                          </div>
-                        );
-                      }} />
-                      <Line type="monotone" dataKey={siDominant ? "Sí" : "No"} stroke={siDominant ? "#10b981" : "#f43f5e"} strokeWidth={2} dot={false} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                );
-              })()}
-            </div>
-          )}
-
-          {/* Stats grid */}
-          <div className="border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 sm:grid-cols-4">
-            {[
-              { emoji: "📊", label: "Total apostado", value: `$${(Number(market.yes) + Number(market.no)).toFixed(1)}`, colorClass: "text-slate-900 dark:text-white" },
-              { emoji: "👥", label: "Participantes", value: String(uniqueBettors), colorClass: "text-slate-900 dark:text-white" },
-              { emoji: "📅", label: "Creado", value: new Date(market.created_at + "Z").toLocaleDateString("es-EC", { timeZone: "America/Guayaquil", day: "numeric", month: "short", year: "numeric" }), colorClass: "text-slate-900 dark:text-white" },
-              { emoji: "✦", label: "Estado", value: statusLabel, colorClass: statusColor },
-            ].map((stat, i) => (
-              <div key={stat.label} className={`px-4 py-3 ${i > 0 ? "border-l border-slate-100 dark:border-slate-800" : ""}`}>
-                <p className="text-[9px] text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-0.5">{stat.emoji} {stat.label}</p>
-                <p className={`text-[12px] font-bold ${stat.colorClass}`}>{stat.value}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Probabilidad */}
-          <div className="border-t border-slate-100 dark:border-slate-800 p-5">
-            <div className="flex items-start justify-between gap-3 mb-2">
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-3xl font-black text-emerald-500">{yesPct}%</span>
-                <span className="text-xl font-black text-slate-400">{noPct}%</span>
-              </div>
-              <div className="text-right">
-                <p className="text-[12px] text-slate-600 dark:text-slate-300 font-medium">{yesPct}% de probabilidad de que ocurra</p>
-                {lastUpdateText && <p className="text-[11px] text-slate-400 mt-0.5">{lastUpdateText}</p>}
-              </div>
-            </div>
-            <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-              <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${yesPct}%` }} />
+            <div className="relative shrink-0">
+              <button onClick={handleShare} className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
+                <Share2 size={14} />
+              </button>
+              {showShare && (
+                <div className="absolute right-0 top-8 z-50 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl py-1 w-44">
+                  <button onClick={handleCopyLink} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                    <Link2 size={13} /> Copiar enlace
+                  </button>
+                  <a href={`https://wa.me/?text=${encodeURIComponent(`${market.question}\n${typeof window !== "undefined" ? window.location.href : ""}`)}`} target="_blank" rel="noopener noreferrer" onClick={() => setShowShare(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                    <span className="text-sm">📱</span> WhatsApp
+                  </a>
+                </div>
+              )}
             </div>
           </div>
+          {resolvedBanner && <div className="mt-3">{resolvedBanner}</div>}
         </div>
 
-        {/* 2. Banner en resolución / panel de predicción */}
+        {/* 2. BetPanel / resolución / resultado */}
         {resolutionBanner}
         {resolutionUserPanel}
 
@@ -685,6 +617,69 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
             />
           </div>
         )}
+
+        {/* 3. Card: gráfica + stats + probabilidad */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
+          {history.length > 1 && (
+            <div className="p-5 pt-4">
+              <p className="text-[9px] text-slate-400 uppercase tracking-widest mb-3">Evolución de probabilidad</p>
+              {(() => {
+                const last = history[history.length - 1];
+                const siDominant = !last || parseFloat(last.yes_pct) >= 50;
+                const chartData = history.map((h) => ({ time: new Date(h.created_at + "Z").toLocaleTimeString("es-EC", { timeZone: "America/Guayaquil", hour: "2-digit", minute: "2-digit" }), Sí: parseFloat(h.yes_pct), No: parseFloat(h.no_pct) }));
+                return (
+                  <ResponsiveContainer width="100%" height={160}>
+                    <LineChart data={chartData}>
+                      <CartesianGrid strokeDasharray="2 4" stroke="#94a3b820" vertical={false} />
+                      <XAxis dataKey="time" tick={{ fill: "#94a3b8", fontSize: 9 }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fill: "#94a3b8", fontSize: 9 }} axisLine={false} tickLine={false} width={28} domain={[0, 100]} />
+                      <Tooltip content={({ active, payload, label }: any) => {
+                        if (!active || !payload?.length) return null;
+                        const d = payload[0]?.payload;
+                        return (
+                          <div style={{ background: "#1e293b", border: "1px solid #334155", borderRadius: 8, padding: "6px 10px", fontSize: 11 }}>
+                            <p style={{ color: "#94a3b8", marginBottom: 4 }}>{label}</p>
+                            <p style={{ color: "#10b981" }}>Sí: {d?.Sí?.toFixed(1)}%</p>
+                            <p style={{ color: "#f43f5e" }}>No: {d?.No?.toFixed(1)}%</p>
+                          </div>
+                        );
+                      }} />
+                      <Line type="monotone" dataKey={siDominant ? "Sí" : "No"} stroke={siDominant ? "#10b981" : "#f43f5e"} strokeWidth={2} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                );
+              })()}
+            </div>
+          )}
+          <div className={`${history.length > 1 ? "border-t border-slate-100 dark:border-slate-800" : ""} grid grid-cols-2 sm:grid-cols-4`}>
+            {[
+              { emoji: "📊", label: "Total apostado", value: `$${(Number(market.yes) + Number(market.no)).toFixed(1)}`, colorClass: "text-slate-900 dark:text-white" },
+              { emoji: "👥", label: "Participantes", value: String(uniqueBettors), colorClass: "text-slate-900 dark:text-white" },
+              { emoji: "📅", label: "Creado", value: new Date(market.created_at + "Z").toLocaleDateString("es-EC", { timeZone: "America/Guayaquil", day: "numeric", month: "short", year: "numeric" }), colorClass: "text-slate-900 dark:text-white" },
+              { emoji: "✦", label: "Estado", value: statusLabel, colorClass: statusColor },
+            ].map((stat, i) => (
+              <div key={stat.label} className={`px-4 py-3 ${i > 0 ? "border-l border-slate-100 dark:border-slate-800" : ""}`}>
+                <p className="text-[9px] text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-0.5">{stat.emoji} {stat.label}</p>
+                <p className={`text-[12px] font-bold ${stat.colorClass}`}>{stat.value}</p>
+              </div>
+            ))}
+          </div>
+          <div className="border-t border-slate-100 dark:border-slate-800 p-5">
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-3xl font-black text-emerald-500">{yesPct}%</span>
+                <span className="text-xl font-black text-slate-400">{noPct}%</span>
+              </div>
+              <div className="text-right">
+                <p className="text-[12px] text-slate-600 dark:text-slate-300 font-medium">{yesPct}% de probabilidad de que ocurra</p>
+                {lastUpdateText && <p className="text-[11px] text-slate-400 mt-0.5">{lastUpdateText}</p>}
+              </div>
+            </div>
+            <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+              <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${yesPct}%` }} />
+            </div>
+          </div>
+        </div>
 
         {/* 4. Top Predictores */}
         {topHolders.length > 0 && (
