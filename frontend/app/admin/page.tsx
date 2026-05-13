@@ -142,6 +142,7 @@ export default function AdminPage() {
   const [marketCategoryFilter, setMarketCategoryFilter] = useState<string>("todas");
   const [txFilter, setTxFilter] = useState<"transferencia" | "tarjeta" | "retiro">("transferencia");
   const [botFilter, setBotFilter] = useState<"pending" | "approved" | "rejected">("pending");
+  const [botCategoryFilter, setBotCategoryFilter] = useState("todas");
   const [botPage, setBotPage] = useState(1);
   const [chatMessages, setChatMessages] = useState<Record<string, {role: string; content: string}[]>>({});
   const [chatInput, setChatInput] = useState<Record<string, string>>({});
@@ -2425,27 +2426,42 @@ export default function AdminPage() {
                 <p className="text-[11px] text-slate-400 dark:text-white/30 uppercase tracking-widest mb-3">Noticias detectadas</p>
 
                 {/* Filtros */}
-                <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl px-4 py-3 mb-3 flex items-center gap-1">
-                  {([
-                    { id: "pending", label: "Pendientes" },
-                    { id: "approved", label: "Aprobados" },
-                    { id: "rejected", label: "Rechazados" },
-                  ] as const).map((f) => {
-                    const count = botSuggestions.filter(s => s.status === f.id).length;
-                    return (
-                      <button key={f.id} onClick={() => { setBotFilter(f.id); setBotPage(1); }}
-                        className={`relative px-3 py-1.5 rounded-md text-[11px] font-medium transition ${botFilter === f.id ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/70"}`}>
-                        {f.label}
-                        {count > 0 && f.id === "pending" && (
-                          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center">{count}</span>
-                        )}
+                <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl px-4 py-3 mb-3 space-y-2">
+                  {/* Estado */}
+                  <div className="flex items-center gap-1">
+                    {([
+                      { id: "pending", label: "Pendientes" },
+                      { id: "approved", label: "Aprobados" },
+                      { id: "rejected", label: "Rechazados" },
+                    ] as const).map((f) => {
+                      const count = botSuggestions.filter(s => s.status === f.id).length;
+                      return (
+                        <button key={f.id} onClick={() => { setBotFilter(f.id); setBotPage(1); }}
+                          className={`relative px-3 py-1.5 rounded-md text-[11px] font-medium transition ${botFilter === f.id ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/70"}`}>
+                          {f.label}
+                          {count > 0 && f.id === "pending" && (
+                            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center">{count}</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {/* Categoría */}
+                  <div className="flex items-center gap-1 flex-wrap border-t border-slate-100 dark:border-white/[0.04] pt-2">
+                    {["todas", ...Array.from(new Set(botSuggestions.map(s => s.category).filter(Boolean)))].map((cat) => (
+                      <button key={cat} onClick={() => { setBotCategoryFilter(cat); setBotPage(1); }}
+                        className={`px-3 py-1 rounded-md text-[10px] font-medium transition capitalize ${botCategoryFilter === cat ? "bg-emerald-500 text-white" : "text-slate-400 dark:text-white/30 hover:text-slate-600 dark:hover:text-white/60"}`}>
+                        {cat === "todas" ? "Todas" : cat}
                       </button>
-                    );
-                  })}
+                    ))}
+                  </div>
                 </div>
 
                 {(() => {
-                  const filtered = botSuggestions.filter(s => s.status === botFilter);
+                  const filtered = botSuggestions.filter(s =>
+                    s.status === botFilter &&
+                    (botCategoryFilter === "todas" || s.category === botCategoryFilter)
+                  );
                   const BOT_PAGE_SIZE = 10;
                   const totalPages = Math.max(1, Math.ceil(filtered.length / BOT_PAGE_SIZE));
                   const paginated = filtered.slice((botPage - 1) * BOT_PAGE_SIZE, botPage * BOT_PAGE_SIZE);
