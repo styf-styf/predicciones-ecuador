@@ -5,7 +5,9 @@
       "Bash(node -e \"require\\('./scheduler'\\); require\\('./scraper'\\); console.log\\('OK'\\)\")",
       "Bash(node -e \"require\\('./scheduler'\\); console.log\\('OK'\\)\")",
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\Styf\\\\Desktop\\\\predicciones-ecuador\\\\backend\" -Exclude node_modules -Recurse -Include \"*.js\",\"*.ts\",\"*.tsx\")",
-      "Bash(Select-Object -ExpandProperty FullName)"
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(npx tsc *)",
+      "PowerShell(git add \"frontend/app/market/[id]/page.tsx\")"
     ]
   }
 }

@@ -146,7 +146,6 @@ function formatCountdown(closesAt: string): string {
 export default function MarketPage() {
   const { id } = useParams();
   const searchParams = useSearchParams();
-
   const [market, setMarket] = useState<any>(null);
   const [betType, setBetType] = useState<"yes" | "no">(
     (searchParams.get("bet") as "yes" | "no") || "yes");
