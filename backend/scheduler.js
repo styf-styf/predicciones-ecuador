@@ -71,6 +71,7 @@ function isRelevant(headline, sourceUrl) {
 let supabase, groqApiKey, broadcast;
 let isRunning = false;
 let shouldStop = false;
+let schedulerEnabled = true;
 let lastRun = null;
 let lastStats = { processed: 0, found: 0, urls: 0, errors: 0 };
 
@@ -81,12 +82,19 @@ function init(deps) {
 }
 
 function stopBot() {
-  if (!isRunning) return { message: "El bot no está ejecutándose" };
+  schedulerEnabled = false;
   shouldStop = true;
-  return { message: "Detención solicitada" };
+  return { message: "Bot detenido" };
+}
+
+function enableBot() {
+  schedulerEnabled = true;
+  shouldStop = false;
+  return { message: "Bot activado" };
 }
 
 async function runBot() {
+  if (!schedulerEnabled) return { message: "Bot desactivado" };
   if (isRunning) return { message: "Bot ya está corriendo" };
   isRunning = true;
   shouldStop = false;
@@ -428,6 +436,7 @@ Responde SOLO en JSON sin markdown:
 
 function startScheduler() {
   cron.schedule("* * * * *", async () => {
+    if (!schedulerEnabled) return;
     await runBot();
     await checkClosingMarkets();
   });
@@ -435,7 +444,7 @@ function startScheduler() {
 }
 
 function getStatus() {
-  return { isRunning, lastRun, ...lastStats };
+  return { isRunning, schedulerEnabled, lastRun, ...lastStats };
 }
 
-module.exports = { init, runBot, stopBot, startScheduler, getStatus };
+module.exports = { init, runBot, stopBot, enableBot, startScheduler, getStatus };

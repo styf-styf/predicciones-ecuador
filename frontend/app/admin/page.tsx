@@ -133,7 +133,6 @@ export default function AdminPage() {
   const [botUrlInput, setBotUrlInput] = useState("");
   const [botInterval, setBotInterval] = useState(15);
   const [botRunning, setBotRunning] = useState(false);
-  const [botStopped, setBotStopped] = useState(false);
   const [botSuggestions, setBotSuggestions] = useState<any[]>([]);
   const [closeDates, setCloseDates] = useState<Record<number, string>>({});
   const [selectedCategories, setSelectedCategories] = useState<Record<number, string>>({});
@@ -2284,7 +2283,7 @@ export default function AdminPage() {
                       <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
                       Procesando...
                     </span>
-                  ) : botStopped ? (
+                  ) : botStatus?.schedulerEnabled === false ? (
                     <span className="flex items-center gap-1.5 text-[11px] text-rose-600 dark:text-rose-400">
                       <span className="h-2 w-2 rounded-full bg-rose-500" />
                       No monitoreando
@@ -2428,8 +2427,11 @@ export default function AdminPage() {
                       disabled={botRunning || botUrls.filter(u => u.active).length === 0}
                       onClick={async () => {
                         setBotRunning(true);
-                        setBotStopped(false);
                         const token = localStorage.getItem("token");
+                        await fetch("https://predicciones-ecuador.onrender.com/admin/bot/enable", {
+                          method: "POST",
+                          headers: { authorization: `Bearer ${token}` },
+                        });
                         const res = await fetch("https://predicciones-ecuador.onrender.com/admin/bot/run", {
                           method: "POST",
                           headers: { authorization: `Bearer ${token}` },
@@ -2444,14 +2446,14 @@ export default function AdminPage() {
                       {botRunning ? "⏳ Ejecutando..." : "▶ Ejecutar ahora"}
                     </button>
                     <button
-                      disabled={!botRunning}
+                      disabled={botStatus?.schedulerEnabled === false}
                       onClick={async () => {
                         const token = localStorage.getItem("token");
                         await fetch("https://predicciones-ecuador.onrender.com/admin/bot/stop", {
                           method: "POST",
                           headers: { authorization: `Bearer ${token}` },
                         });
-                        setBotStopped(true);
+                        fetchBotStatus();
                         showToast("Ejecución detenida · El bot dejará de generar noticias", "error");
                       }}
                       className="bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 px-3 py-2 sm:py-1.5 rounded-lg text-[12px] transition disabled:opacity-40"

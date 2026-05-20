@@ -2696,6 +2696,14 @@ app.post("/admin/bot/stop", auth, async (req, res) => {
   res.json(result);
 });
 
+app.post("/admin/bot/enable", auth, async (req, res) => {
+  const { data: admin } = await supabase.from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const result = scheduler.enableBot();
+  res.json(result);
+});
+
 // Inicializar y arrancar el scheduler
 scheduler.init({
   supabase,
