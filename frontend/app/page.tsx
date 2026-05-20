@@ -615,9 +615,16 @@ export default function Home() {
         showToast("Debes iniciar sesión para guardar favoritos", "error");
         return;
       }
-      await toggleFavorite(e, marketId);
+      const wasFavorite = favorites.includes(marketId);
+      const ok = await toggleFavorite(e, marketId);
+      if (ok) {
+        showToast(
+          wasFavorite ? "Eliminado de favoritos" : "Añadido a favoritos",
+          wasFavorite ? "info" : "success"
+        );
+      }
     },
-    [getToken, toggleFavorite, showToast]
+    [getToken, toggleFavorite, showToast, favorites]
   );
 
   useEffect(() => {

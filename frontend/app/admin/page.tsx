@@ -1407,8 +1407,9 @@ export default function AdminPage() {
                           </div>
                           <p className="col-span-2 text-center text-[12px] text-emerald-600 dark:text-emerald-400 font-bold tabular-nums">${tx.amount}</p>
                           {method === "transferencia" && (
-                            <div className="col-span-2 flex justify-center">
+                            <div className="col-span-2 flex flex-col items-center gap-0.5">
                               <span className="text-[11px] bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-white/50 px-2 py-0.5 rounded-md font-mono">{tx.transfer_code || "—"}</span>
+                              <span className="text-[10px] text-slate-400 dark:text-white/30 truncate max-w-full">{tx.users?.banco || "—"}</span>
                             </div>
                           )}
                           {method === "retiro" && (
@@ -1464,7 +1465,10 @@ export default function AdminPage() {
                           </div>
                           <div className="flex items-center justify-between gap-2">
                             {method === "transferencia" && (
-                              <span className="text-[11px] bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-white/50 px-2 py-0.5 rounded-md font-mono">{tx.transfer_code || "—"}</span>
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-[11px] bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-white/50 px-2 py-0.5 rounded-md font-mono">{tx.transfer_code || "—"}</span>
+                                <span className="text-[10px] text-slate-400 dark:text-white/30 truncate">{tx.users?.banco || "—"}</span>
+                              </div>
                             )}
                             {method === "retiro" && (
                               <span className="text-[11px] text-slate-500 dark:text-white/40">{tx.users?.banco || "—"} · {tx.users?.numero_cuenta || "—"}</span>

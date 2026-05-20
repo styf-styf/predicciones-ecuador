@@ -679,7 +679,31 @@ app.put("/admin/users/:id/points", auth, async (req, res) => {
     .from("users").update({ points: newPoints }).eq("id", req.params.id);
 
   if (error) return res.status(500).json({ message: error.message });
+
+  const amount = Number(points);
+  const isCredit = amount >= 0;
+
+  await supabase.from("transactions").insert([{
+    user_id: req.params.id,
+    type: isCredit ? "recarga" : "retiro",
+    amount: Math.abs(amount),
+    status: "completado",
+    payment_method: "admin",
+    balance_before: Number(user.points),
+    balance_after: newPoints,
+  }]);
+
+  await supabase.from("notifications").insert([{
+    user_id: req.params.id,
+    title: isCredit ? "Saldo acreditado" : "Ajuste de saldo",
+    message: isCredit
+      ? `Solicitud de corrección de saldo aprobada. Se acreditaron $${amount.toFixed(2)} a tu cuenta. Nuevo saldo: $${newPoints.toFixed(2)}.`
+      : `Solicitud de corrección de saldo aprobada. Se debitaron $${Math.abs(amount).toFixed(2)} de tu cuenta. Nuevo saldo: $${newPoints.toFixed(2)}.`,
+    read: false,
+  }]);
+
   broadcast("users", {});
+  broadcast("transactions", {});
   res.json({ message: "Saldo actualizado", newPoints });
 });
 

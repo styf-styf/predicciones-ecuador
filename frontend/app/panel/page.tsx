@@ -128,7 +128,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
   };
 
   const handleSolicitarRetiro = async () => {
-  if (!walletAmount || parseFloat(walletAmount) < 10) return;
+  if (!walletAmount || parseFloat(walletAmount) < 10 || parseFloat(walletAmount) > Number(user.points)) return;
   setSendingRetiro(true);
   try {
     const token = localStorage.getItem("token");
@@ -734,7 +734,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
                 <div>
                   <label className="text-xs text-slate-400 uppercase tracking-widest block mb-2">Monto a retirar</label>
                   <div className="flex gap-2 flex-wrap mb-3">
-                    {[5, 10, 20, 50, 100].map((v) => (
+                    {[10, 20, 50, 100].filter((v) => v <= Number(user.points)).map((v) => (
                       <button key={v} onClick={() => setWalletAmount(String(v))}
                         className={`px-3 py-1.5 rounded-full text-sm border transition-all ${walletAmount === String(v) ? "bg-rose-500 text-white border-rose-500" : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"}`}>
                         ${v}
@@ -742,6 +742,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
                     ))}
                   </div>
                   <input type="number" placeholder="Otro monto..." value={walletAmount}
+                    min={10} max={Number(user.points)}
                     onChange={(e) => setWalletAmount(e.target.value)}
                     className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-rose-500 transition" />
                 </div>
