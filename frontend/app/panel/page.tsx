@@ -27,6 +27,7 @@ function PanelContent() {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [bankConfig, setBankConfig] = useState<any>(null);
+  const [bankAccounts, setBankAccounts] = useState<any[]>([]);
 
   // Wallet state (maqueta)
   const [walletAction, setWalletAction] = useState<"recarga" | "retiro">("recarga");
@@ -62,12 +63,13 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
     if (!token) { router.push("/login"); return; }
     const headers = { authorization: `Bearer ${token}` };
     try {
-      const [meRes, betsRes, rankRes, movRes, configRes] = await Promise.all([
+      const [meRes, betsRes, rankRes, movRes, configRes, banksRes] = await Promise.all([
         fetch("https://predicciones-ecuador.onrender.com/me", { headers }),
         fetch("https://predicciones-ecuador.onrender.com/my-bets", { headers }),
         fetch("https://predicciones-ecuador.onrender.com/ranking"),
         fetch("https://predicciones-ecuador.onrender.com/my-movements", { headers }),
         fetch("https://predicciones-ecuador.onrender.com/config", { headers }),
+        fetch("https://predicciones-ecuador.onrender.com/bank-accounts"),
       ]);
       if (!meRes.ok) { router.push("/login"); return; }
       const meData = await meRes.json();
@@ -75,6 +77,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
       const rankData = rankRes.ok ? await rankRes.json() : [];
       const movData = movRes.ok ? await movRes.json() : [];
       const configData = configRes.ok ? await configRes.json() : null;
+      const banksData = banksRes.ok ? await banksRes.json() : [];
 
       setUser(meData);
       setBets(betsData || []);
@@ -94,6 +97,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
         provincia: meData.provincia || "",
       });
       setBankConfig(configData);
+      setBankAccounts(Array.isArray(banksData) ? banksData : []);
       setLoading(false);
     } catch (error) {
       router.push("/login");
@@ -573,20 +577,39 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
   <>
 
   {/* Datos de pago */}
-                <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4 space-y-3">
+                <div className="space-y-3">
                   <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest">Datos de transferencia</p>
-                  {[
-  { label: "Banco", value: bankConfig?.banco_nombre || "—" },
-  { label: "Tipo de cuenta", value: bankConfig?.banco_tipo || "—" },
-  { label: "Número de cuenta", value: bankConfig?.banco_cuenta || "—" },
-  { label: "Titular", value: bankConfig?.banco_titular || "—" },
-  { label: "Cédula", value: bankConfig?.banco_cedula || "—" },
-].map((item) => (
-  <div key={item.label} className="flex justify-between items-center text-sm">
-    <span className="text-slate-500 dark:text-slate-400">{item.label}</span>
-    <span className="font-medium">{item.value}</span>
-  </div>
-))}
+                  {bankAccounts.length > 0 ? bankAccounts.map((bank) => (
+                    <div key={bank.id} className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4 space-y-2">
+                      <p className="text-sm font-bold text-emerald-800 dark:text-emerald-300">{bank.nombre}</p>
+                      {[
+                        { label: "Tipo de cuenta", value: bank.tipo },
+                        { label: "Número de cuenta", value: bank.cuenta },
+                        { label: "Titular", value: bank.titular },
+                        { label: "Cédula", value: bank.cedula },
+                      ].map((item) => (
+                        <div key={item.label} className="flex justify-between items-center text-sm">
+                          <span className="text-slate-500 dark:text-slate-400">{item.label}</span>
+                          <span className="font-medium">{item.value || "—"}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )) : (
+                    <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4 space-y-2">
+                      {[
+                        { label: "Banco", value: bankConfig?.banco_nombre },
+                        { label: "Tipo de cuenta", value: bankConfig?.banco_tipo },
+                        { label: "Número de cuenta", value: bankConfig?.banco_cuenta },
+                        { label: "Titular", value: bankConfig?.banco_titular },
+                        { label: "Cédula", value: bankConfig?.banco_cedula },
+                      ].map((item) => (
+                        <div key={item.label} className="flex justify-between items-center text-sm">
+                          <span className="text-slate-500 dark:text-slate-400">{item.label}</span>
+                          <span className="font-medium">{item.value || "—"}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
 

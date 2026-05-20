@@ -2547,6 +2547,72 @@ app.get("/events", sseConnectionLimit, (req, res) => {
 });
 
 // =======================
+// 🏦 CUENTAS BANCARIAS
+// =======================
+app.get("/bank-accounts", async (req, res) => {
+  const { data, error } = await supabase
+    .from("bank_accounts").select("*").eq("activo", true).order("created_at", { ascending: true });
+  if (error) return res.status(500).json({ message: error.message });
+  res.json(data);
+});
+
+app.get("/admin/bank-accounts", auth, async (req, res) => {
+  const { data: admin } = await supabase.from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const { data, error } = await supabase
+    .from("bank_accounts").select("*").order("created_at", { ascending: true });
+  if (error) return res.status(500).json({ message: error.message });
+  res.json(data);
+});
+
+app.post("/admin/bank-accounts", auth, async (req, res) => {
+  const { data: admin } = await supabase.from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const { nombre, titular, cuenta, tipo, cedula } = req.body;
+  if (!nombre?.trim() || !cuenta?.trim()) return res.status(400).json({ message: "Nombre y número de cuenta son requeridos" });
+
+  const { data, error } = await supabase.from("bank_accounts").insert([{
+    nombre: nombre.trim(),
+    titular: titular?.trim() || "",
+    cuenta: cuenta.trim(),
+    tipo: tipo || "ahorros",
+    cedula: cedula?.trim() || "",
+    activo: true,
+  }]).select().single();
+
+  if (error) return res.status(500).json({ message: error.message });
+  res.json({ message: "Banco agregado", bank: data });
+});
+
+app.put("/admin/bank-accounts/:id", auth, async (req, res) => {
+  const { data: admin } = await supabase.from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const { nombre, titular, cuenta, tipo, cedula, activo } = req.body;
+  const update = {};
+  if (nombre !== undefined) update.nombre = nombre;
+  if (titular !== undefined) update.titular = titular;
+  if (cuenta !== undefined) update.cuenta = cuenta;
+  if (tipo !== undefined) update.tipo = tipo;
+  if (cedula !== undefined) update.cedula = cedula;
+  if (activo !== undefined) update.activo = activo;
+
+  const { error } = await supabase.from("bank_accounts").update(update).eq("id", req.params.id);
+  if (error) return res.status(500).json({ message: error.message });
+  res.json({ message: "Banco actualizado" });
+});
+
+app.delete("/admin/bank-accounts/:id", auth, async (req, res) => {
+  const { data: admin } = await supabase.from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const { error } = await supabase.from("bank_accounts").delete().eq("id", req.params.id);
+  if (error) return res.status(500).json({ message: error.message });
+  res.json({ message: "Banco eliminado" });
+});
+
 // 🤖 BOT NEWS — URLs
 // =======================
 app.get("/admin/bot/urls", auth, async (req, res) => {
@@ -2620,6 +2686,14 @@ app.post("/admin/bot/run", auth, async (req, res) => {
 
   const result = await scheduler.runBot();
   res.json({ message: "Bot ejecutado", ...result });
+});
+
+app.post("/admin/bot/stop", auth, async (req, res) => {
+  const { data: admin } = await supabase.from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const result = scheduler.stopBot();
+  res.json(result);
 });
 
 // Inicializar y arrancar el scheduler

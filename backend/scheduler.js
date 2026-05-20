@@ -70,6 +70,7 @@ function isRelevant(headline, sourceUrl) {
 
 let supabase, groqApiKey, broadcast;
 let isRunning = false;
+let shouldStop = false;
 let lastRun = null;
 let lastStats = { processed: 0, found: 0, urls: 0, errors: 0 };
 
@@ -79,9 +80,16 @@ function init(deps) {
   broadcast = deps.broadcast;
 }
 
+function stopBot() {
+  if (!isRunning) return { message: "El bot no está ejecutándose" };
+  shouldStop = true;
+  return { message: "Detención solicitada" };
+}
+
 async function runBot() {
   if (isRunning) return { message: "Bot ya está corriendo" };
   isRunning = true;
+  shouldStop = false;
   const stats = { processed: 0, found: 0, urls: 0, errors: 0 };
 
   try {
@@ -99,6 +107,8 @@ async function runBot() {
     const now = new Date();
 
     for (const botUrl of botUrls) {
+      if (shouldStop) { console.log("[bot] Detenido por solicitud del admin"); break; }
+
       if (botUrl.last_checked_at) {
         const lastChecked = new Date(botUrl.last_checked_at);
         const minutesSince = (now.getTime() - lastChecked.getTime()) / 60000;
@@ -114,6 +124,8 @@ async function runBot() {
         .eq("id", botUrl.id);
 
       for (const headline of headlines) {
+        if (shouldStop) { console.log("[bot] Detenido por solicitud del admin"); break; }
+
         // Filtro 1: solo artículos recientes (< 48h)
         if (!isRecent(headline.url)) {
           console.log(`[bot] Saltando (antiguo): ${headline.title.slice(0, 60)}`);
@@ -426,4 +438,4 @@ function getStatus() {
   return { isRunning, lastRun, ...lastStats };
 }
 
-module.exports = { init, runBot, startScheduler, getStatus };
+module.exports = { init, runBot, stopBot, startScheduler, getStatus };

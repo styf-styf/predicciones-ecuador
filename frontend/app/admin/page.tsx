@@ -122,6 +122,11 @@ export default function AdminPage() {
   const [commentMarketFilter, setCommentMarketFilter] = useState<string>("all");
   const [finance, setFinance] = useState<any>(null);
 
+  // ── Bancos ──
+  const [bankAccounts, setBankAccounts] = useState<any[]>([]);
+  const [newBank, setNewBank] = useState({ nombre: "", titular: "", cuenta: "", tipo: "ahorros", cedula: "" });
+  const [savingBank, setSavingBank] = useState(false);
+
   // ── BotNews ──
   const [botUrls, setBotUrls] = useState<any[]>([]);
   const [botStatus, setBotStatus] = useState<any>(null);
@@ -425,6 +430,14 @@ export default function AdminPage() {
     fetchTransactions(); fetchUsers(); fetchStats();
   };
 
+  const fetchBankAccounts = async () => {
+    const token = localStorage.getItem("token");
+    const res = await fetch("https://predicciones-ecuador.onrender.com/admin/bank-accounts", {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    if (res.ok) setBankAccounts(await res.json());
+  };
+
   const fetchSettings = async () => {
     const token = localStorage.getItem("token");
     const res = await fetch("https://predicciones-ecuador.onrender.com/admin/settings", {
@@ -481,7 +494,7 @@ export default function AdminPage() {
       const data = await res.json();
       if (data.role !== "admin") { window.location.href = "/"; return; }
       setIsLogged(true); setIsAdmin(true); setPoints(data.points || 0);
-      fetchWinners(); fetchStats(); fetchUsers(); fetchSettings(); fetchCharts(); fetchTransactions(); fetchContactos(); fetchSuggestions(); fetchMarketNews(); fetchExtensionTokens(); fetchAdminComments(); fetchFinance(); fetchBotUrls(); fetchBotStatus(); fetchBotSuggestions();
+      fetchWinners(); fetchStats(); fetchUsers(); fetchSettings(); fetchCharts(); fetchTransactions(); fetchContactos(); fetchSuggestions(); fetchMarketNews(); fetchExtensionTokens(); fetchAdminComments(); fetchFinance(); fetchBotUrls(); fetchBotStatus(); fetchBotSuggestions(); fetchBankAccounts();
     } catch {
       localStorage.removeItem("token");
       window.location.href = "/login";
@@ -2404,24 +2417,40 @@ export default function AdminPage() {
                       </span>
                     )}
                   </div>
-                  <button
-                    disabled={botRunning || botUrls.filter(u => u.active).length === 0}
-                    onClick={async () => {
-                      setBotRunning(true);
-                      const token = localStorage.getItem("token");
-                      const res = await fetch("https://predicciones-ecuador.onrender.com/admin/bot/run", {
-                        method: "POST",
-                        headers: { authorization: `Bearer ${token}` },
-                      });
-                      const data = await res.json();
-                      setBotRunning(false);
-                      fetchBotSuggestions(); fetchBotStatus();
-                      showToast(`Bot ejecutado · ${data.processed || 0} preguntas generadas`, "info");
-                    }}
-                    className="w-full sm:w-auto bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-white/50 px-3 py-2 sm:py-1.5 rounded-lg text-[12px] transition disabled:opacity-40"
-                  >
-                    {botRunning ? "⏳ Ejecutando..." : "▶ Ejecutar ahora"}
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      disabled={botRunning || botUrls.filter(u => u.active).length === 0}
+                      onClick={async () => {
+                        setBotRunning(true);
+                        const token = localStorage.getItem("token");
+                        const res = await fetch("https://predicciones-ecuador.onrender.com/admin/bot/run", {
+                          method: "POST",
+                          headers: { authorization: `Bearer ${token}` },
+                        });
+                        const data = await res.json();
+                        setBotRunning(false);
+                        fetchBotSuggestions(); fetchBotStatus();
+                        showToast(`Bot ejecutado · ${data.processed || 0} preguntas generadas`, "info");
+                      }}
+                      className="bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-white/50 px-3 py-2 sm:py-1.5 rounded-lg text-[12px] transition disabled:opacity-40"
+                    >
+                      {botRunning ? "⏳ Ejecutando..." : "▶ Ejecutar ahora"}
+                    </button>
+                    <button
+                      disabled={!botRunning}
+                      onClick={async () => {
+                        const token = localStorage.getItem("token");
+                        await fetch("https://predicciones-ecuador.onrender.com/admin/bot/stop", {
+                          method: "POST",
+                          headers: { authorization: `Bearer ${token}` },
+                        });
+                        showToast("Detención solicitada, el bot parará tras el artículo actual", "info");
+                      }}
+                      className="bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 px-3 py-2 sm:py-1.5 rounded-lg text-[12px] transition disabled:opacity-40"
+                    >
+                      ⏹ Parar ejecución
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -2788,54 +2817,117 @@ export default function AdminPage() {
               </div>
 
               <div className="border-t border-slate-200 dark:border-white/[0.06] pt-6 mt-2">
-                <p className="text-[11px] text-slate-400 dark:text-white/30 uppercase tracking-widest mb-4">Carruseles</p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {[
-                    { key: "trending_count", label: "Cards tendencias", min: "1", max: "5", step: "1" },
-                    { key: "winners_count", label: "Cards ganadores", min: "1", max: "5", step: "1" },
-                    { key: "autoplay_ms", label: "Autoplay (ms)", min: "1000", max: "30000", step: "500" },
-                  ].map((field) => (
-                    <div key={field.key} className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-4 space-y-2">
-                      <label className="text-[11px] text-slate-400 dark:text-white/30 uppercase tracking-widest block">{field.label}</label>
-                      <input type="number" min={field.min} max={field.max} step={field.step}
-                        value={(settingsForm as any)[field.key] ?? ""}
-                        onChange={(e) => setSettingsForm((prev) => ({ ...prev, [field.key]: Number(e.target.value) }))}
-                        className="w-full bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-4 py-2.5 outline-none text-[14px] text-slate-900 dark:text-white focus:border-emerald-500/60 transition tabular-nums" />
+                <p className="text-[11px] text-slate-400 dark:text-white/30 uppercase tracking-widest mb-4">Datos bancarios para recargas</p>
+
+                {/* Lista de bancos existentes */}
+                <div className="space-y-2 mb-5">
+                  {bankAccounts.length === 0 && (
+                    <p className="text-[12px] text-slate-400 dark:text-white/20 text-center py-3">No hay cuentas bancarias configuradas</p>
+                  )}
+                  {bankAccounts.map((bank) => (
+                    <div key={bank.id} className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-[13px] font-semibold text-slate-800 dark:text-white truncate">{bank.nombre}</p>
+                        <p className="text-[11px] text-slate-400 dark:text-white/30 truncate">{bank.titular} · {bank.tipo} · {bank.cuenta}</p>
+                        {bank.cedula && <p className="text-[11px] text-slate-400 dark:text-white/25">CI: {bank.cedula}</p>}
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={async () => {
+                            const token = localStorage.getItem("token");
+                            await fetch(`https://predicciones-ecuador.onrender.com/admin/bank-accounts/${bank.id}`, {
+                              method: "PUT",
+                              headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+                              body: JSON.stringify({ activo: !bank.activo }),
+                            });
+                            fetchBankAccounts();
+                          }}
+                          className={`text-[10px] px-2 py-0.5 rounded-md border transition ${bank.activo ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20" : "bg-slate-100 dark:bg-white/[0.04] text-slate-400 dark:text-white/30 border-slate-200 dark:border-white/[0.06]"}`}
+                        >
+                          {bank.activo ? "Activo" : "Inactivo"}
+                        </button>
+                        <button
+                          onClick={() => openModal({
+                            title: "Eliminar banco",
+                            description: `¿Eliminar "${bank.nombre}"?`,
+                            confirmLabel: "Eliminar",
+                            danger: true,
+                            onConfirm: async () => {
+                              const token = localStorage.getItem("token");
+                              await fetch(`https://predicciones-ecuador.onrender.com/admin/bank-accounts/${bank.id}`, {
+                                method: "DELETE",
+                                headers: { authorization: `Bearer ${token}` },
+                              });
+                              fetchBankAccounts();
+                              showToast("Banco eliminado", "info");
+                            },
+                          })}
+                          className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 transition"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
-              </div>
 
-              <div className="border-t border-slate-200 dark:border-white/[0.06] pt-6 mt-2">
-                <p className="text-[11px] text-slate-400 dark:text-white/30 uppercase tracking-widest mb-4">Datos bancarios para recargas</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {[
-                    { key: "banco_nombre", label: "Nombre del banco" },
-                    { key: "banco_titular", label: "Titular de la cuenta" },
-                    { key: "banco_cuenta", label: "Número de cuenta" },
-                    { key: "banco_cedula", label: "Cédula del titular" },
-                  ].map((field) => (
-                    <div key={field.key} className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-4 space-y-2">
-                      <label className="text-[11px] text-slate-400 dark:text-white/30 uppercase tracking-widest block">{field.label}</label>
-                      <input
-                        type="text"
-                        value={(settingsForm as any)[field.key]}
-                        onChange={(e) => setSettingsForm((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                        className="w-full bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-4 py-2.5 outline-none text-[14px] text-slate-900 dark:text-white focus:border-emerald-500/60 transition"
-                      />
+                {/* Formulario para agregar banco */}
+                <div className="bg-slate-50 dark:bg-white/[0.02] border border-dashed border-slate-300 dark:border-white/[0.08] rounded-xl p-4 space-y-3">
+                  <p className="text-[11px] text-slate-400 dark:text-white/30 uppercase tracking-widest">Agregar banco</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {[
+                      { key: "nombre", label: "Nombre del banco", placeholder: "Ej: Banco Pichincha" },
+                      { key: "titular", label: "Titular de la cuenta", placeholder: "Ej: Juan Pérez" },
+                      { key: "cuenta", label: "Número de cuenta", placeholder: "Ej: 2200123456" },
+                      { key: "cedula", label: "Cédula del titular", placeholder: "Ej: 1712345678" },
+                    ].map((f) => (
+                      <div key={f.key}>
+                        <label className="text-[10px] text-slate-400 dark:text-white/30 uppercase tracking-widest block mb-1">{f.label}</label>
+                        <input
+                          type="text"
+                          placeholder={f.placeholder}
+                          value={(newBank as any)[f.key]}
+                          onChange={(e) => setNewBank((prev) => ({ ...prev, [f.key]: e.target.value }))}
+                          className="w-full bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 outline-none text-[13px] text-slate-900 dark:text-white focus:border-emerald-500/60 transition"
+                        />
+                      </div>
+                    ))}
+                    <div>
+                      <label className="text-[10px] text-slate-400 dark:text-white/30 uppercase tracking-widest block mb-1">Tipo de cuenta</label>
+                      <select
+                        value={newBank.tipo}
+                        onChange={(e) => setNewBank((prev) => ({ ...prev, tipo: e.target.value }))}
+                        className="w-full bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 outline-none text-[13px] text-slate-900 dark:text-white focus:border-emerald-500/60 transition"
+                      >
+                        <option value="ahorros">Ahorros</option>
+                        <option value="corriente">Corriente</option>
+                      </select>
                     </div>
-                  ))}
-                  <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-4 space-y-2">
-                    <label className="text-[11px] text-slate-400 dark:text-white/30 uppercase tracking-widest block">Tipo de cuenta</label>
-                    <select
-                      value={settingsForm.banco_tipo}
-                      onChange={(e) => setSettingsForm((prev) => ({ ...prev, banco_tipo: e.target.value }))}
-                      className="w-full bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-4 py-2.5 outline-none text-[14px] text-slate-900 dark:text-white focus:border-emerald-500/60 transition"
-                    >
-                      <option value="ahorros">Ahorros</option>
-                      <option value="corriente">Corriente</option>
-                    </select>
                   </div>
+                  <button
+                    disabled={savingBank || !newBank.nombre.trim() || !newBank.cuenta.trim()}
+                    onClick={async () => {
+                      setSavingBank(true);
+                      const token = localStorage.getItem("token");
+                      const res = await fetch("https://predicciones-ecuador.onrender.com/admin/bank-accounts", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+                        body: JSON.stringify(newBank),
+                      });
+                      const data = await res.json();
+                      setSavingBank(false);
+                      if (res.ok) {
+                        setNewBank({ nombre: "", titular: "", cuenta: "", tipo: "ahorros", cedula: "" });
+                        fetchBankAccounts();
+                        showToast("Banco agregado ✅", "success");
+                      } else {
+                        showToast(data.message || "Error al agregar", "error");
+                      }
+                    }}
+                    className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-black font-bold rounded-lg px-5 py-2 text-[12px] transition"
+                  >
+                    {savingBank ? "Guardando..." : "+ Agregar banco"}
+                  </button>
                 </div>
               </div>
 
