@@ -133,6 +133,7 @@ export default function AdminPage() {
   const [botUrlInput, setBotUrlInput] = useState("");
   const [botInterval, setBotInterval] = useState(15);
   const [botRunning, setBotRunning] = useState(false);
+  const [botStopped, setBotStopped] = useState(false);
   const [botSuggestions, setBotSuggestions] = useState<any[]>([]);
   const [closeDates, setCloseDates] = useState<Record<number, string>>({});
   const [selectedCategories, setSelectedCategories] = useState<Record<number, string>>({});
@@ -2283,15 +2284,20 @@ export default function AdminPage() {
                       <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
                       Procesando...
                     </span>
+                  ) : botStopped ? (
+                    <span className="flex items-center gap-1.5 text-[11px] text-rose-600 dark:text-rose-400">
+                      <span className="h-2 w-2 rounded-full bg-rose-500" />
+                      No monitoreando
+                    </span>
                   ) : botUrls.filter(u => u.active).length > 0 ? (
                     <span className="flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400">
                       <span className="h-2 w-2 rounded-full bg-emerald-500" />
                       Monitoreando
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1.5 text-[11px] text-slate-400 dark:text-white/30">
-                      <span className="h-2 w-2 rounded-full bg-slate-300 dark:bg-white/20" />
-                      Sin URLs activas
+                    <span className="flex items-center gap-1.5 text-[11px] text-rose-600 dark:text-rose-400">
+                      <span className="h-2 w-2 rounded-full bg-rose-500" />
+                      No monitoreando
                     </span>
                   )}
                 </div>
@@ -2422,6 +2428,7 @@ export default function AdminPage() {
                       disabled={botRunning || botUrls.filter(u => u.active).length === 0}
                       onClick={async () => {
                         setBotRunning(true);
+                        setBotStopped(false);
                         const token = localStorage.getItem("token");
                         const res = await fetch("https://predicciones-ecuador.onrender.com/admin/bot/run", {
                           method: "POST",
@@ -2430,7 +2437,7 @@ export default function AdminPage() {
                         const data = await res.json();
                         setBotRunning(false);
                         fetchBotSuggestions(); fetchBotStatus();
-                        showToast(`Bot ejecutado · ${data.processed || 0} preguntas generadas`, "info");
+                        showToast(`Bot ejecutado · ${data.processed || 0} preguntas generadas`, "success");
                       }}
                       className="bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-white/50 px-3 py-2 sm:py-1.5 rounded-lg text-[12px] transition disabled:opacity-40"
                     >
@@ -2444,7 +2451,8 @@ export default function AdminPage() {
                           method: "POST",
                           headers: { authorization: `Bearer ${token}` },
                         });
-                        showToast("Detención solicitada, el bot parará tras el artículo actual", "info");
+                        setBotStopped(true);
+                        showToast("Ejecución detenida · El bot dejará de generar noticias", "error");
                       }}
                       className="bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 px-3 py-2 sm:py-1.5 rounded-lg text-[12px] transition disabled:opacity-40"
                     >

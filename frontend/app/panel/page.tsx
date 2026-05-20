@@ -767,7 +767,13 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
                   <input type="number" placeholder="Otro monto..." value={walletAmount}
                     min={10} max={Number(user.points)}
                     onChange={(e) => setWalletAmount(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-rose-500 transition" />
+                    className={`w-full bg-slate-50 dark:bg-slate-800 border rounded-xl px-4 py-3 text-sm outline-none transition ${parseFloat(walletAmount) > Number(user.points) ? "border-rose-400 dark:border-rose-500 focus:border-rose-500" : "border-slate-200 dark:border-slate-700 focus:border-rose-500"}`} />
+                  {parseFloat(walletAmount) > Number(user.points) && (
+                    <p className="text-xs text-rose-500 dark:text-rose-400 mt-1.5 flex items-center gap-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      Saldo insuficiente. Tu saldo disponible es ${Number(user.points).toFixed(2)}.
+                    </p>
+                  )}
                 </div>
 
                 {/* Info de cobro actual */}
