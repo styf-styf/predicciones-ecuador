@@ -1253,7 +1253,7 @@ export default function AdminPage() {
                       <div className="hidden sm:grid grid-cols-12 items-center gap-2">
                         <p className="col-span-3 text-[12px] text-slate-500 dark:text-white/60 truncate">{u.email}</p>
                         <p className="col-span-2 text-[12px] text-slate-500 dark:text-white/50 truncate">{u.nombre} {u.apellido}</p>
-                        <p className="col-span-1 text-center text-[12px] text-amber-500 dark:text-amber-400 font-bold tabular-nums">{u.points}</p>
+                        <p className="col-span-1 text-center text-[12px] text-amber-500 dark:text-amber-400 font-bold tabular-nums">{Number(u.points).toFixed(2)}</p>
                         <div className="col-span-1 flex justify-center">
                           <span className={`text-[10px] px-1.5 py-0.5 rounded-md ${u.role === "admin" ? "bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400" : "bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-white/30"}`}>{u.role}</span>
                         </div>
@@ -1286,7 +1286,7 @@ export default function AdminPage() {
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-amber-500 dark:text-amber-400 font-bold text-[12px]">{u.points} $</span>
+                          <span className="text-amber-500 dark:text-amber-400 font-bold text-[12px]">{Number(u.points).toFixed(2)} $</span>
                           <span className={`text-[10px] px-1.5 py-0.5 rounded-md ${u.role === "admin" ? "bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400" : "bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-white/30"}`}>{u.role}</span>
                         </div>
                         <div className="flex items-center gap-1.5">

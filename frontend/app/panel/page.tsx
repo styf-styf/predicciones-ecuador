@@ -313,7 +313,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
                 <p className="text-[10px] text-slate-400 mt-1">Predicciones</p>
               </button>
               {[
-                { label: "Invertido", value: `${totalBet.toFixed(0)}$`, icon: <ArrowUpRight size={12} />, color: "text-amber-500" },
+                { label: "Invertido", value: `${totalBet.toFixed(2)}$`, icon: <ArrowUpRight size={12} />, color: "text-amber-500" },
                 { label: "Ranking", value: userRankIndex !== -1 ? `#${userRankIndex + 1}` : "—", icon: <Trophy size={12} />, color: "text-rose-500" },
               ].map((stat) => (
                 <div key={stat.label} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3">
@@ -412,7 +412,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
                         </span>
                         <span className="text-sm truncate">{nombre} {isMe && <span className="text-emerald-500 text-xs">(tú)</span>}</span>
                       </div>
-                      <span className="text-sm font-semibold shrink-0">{item.points} $</span>
+                      <span className="text-sm font-semibold shrink-0">{Number(item.points).toFixed(2)} $</span>
                     </div>
                   );
                 })}
