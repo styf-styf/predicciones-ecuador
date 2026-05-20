@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
@@ -28,7 +28,7 @@ interface Market {
 // CONSTANTS
 // ─────────────────────────────────────────────────────────────────────────────
 
-const API = "https://predicciones-ecuador.onrender.com";
+const API = "https://api.ecuapred.com";
 
 const CATEGORIES = [
   { id: "all",        label: "Tendencias", icon: Flame,    color: "text-orange-400",  activeBg: "bg-orange-500"  },
@@ -631,7 +631,7 @@ export default function Home() {
     fetchMarkets();
     fetchFavorites();
 
-    const es = new EventSource("https://predicciones-ecuador.onrender.com/events");
+    const es = new EventSource("https://api.ecuapred.com/events");
     es.addEventListener("markets", () => fetchMarkets());
     return () => es.close();
   }, [fetchMarkets, fetchFavorites]);

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect, useState, useRef, useMemo } from "react";
 import Link from "next/link";
 import {
@@ -204,7 +204,7 @@ export default function AdminPage() {
 
   const fetchSuggestions = async () => {
     const token = localStorage.getItem("token");
-    const res = await fetch("https://predicciones-ecuador.onrender.com/admin/news-suggestions", {
+    const res = await fetch("https://api.ecuapred.com/admin/news-suggestions", {
       headers: { authorization: `Bearer ${token}` || "" },
     });
     const data = await res.json();
@@ -221,7 +221,7 @@ export default function AdminPage() {
     setChatSending(prev => ({ ...prev, [key]: true }));
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/news-suggestions/${dbId}/chat`, {
+      const res = await fetch(`https://api.ecuapred.com/admin/news-suggestions/${dbId}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
         body: JSON.stringify({ messages: history, suggestion }),
@@ -240,7 +240,7 @@ export default function AdminPage() {
 
   const applyNewQuestion = async (key: string, dbId: number, newQuestion: string) => {
     const token = localStorage.getItem("token");
-    const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/news-suggestions/${dbId}/question`, {
+    const res = await fetch(`https://api.ecuapred.com/admin/news-suggestions/${dbId}/question`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
       body: JSON.stringify({ new_question: newQuestion }),
@@ -256,7 +256,7 @@ export default function AdminPage() {
   const handleSuggestion = async (id: number, action: string) => {
     setLoadingAction(`suggestion-${id}-${action}`);
     const token = localStorage.getItem("token");
-    const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/news-suggestions/${id}`, {
+    const res = await fetch(`https://api.ecuapred.com/admin/news-suggestions/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` || "" },
       body: JSON.stringify({ action }),
@@ -270,7 +270,7 @@ export default function AdminPage() {
 
   const fetchMarkets = async () => {
     const token = localStorage.getItem("token");
-    const res = await fetch("https://predicciones-ecuador.onrender.com/markets", {
+    const res = await fetch("https://api.ecuapred.com/markets", {
       headers: { authorization: `Bearer ${token}` },
     });
     const data = await res.json();
@@ -279,7 +279,7 @@ export default function AdminPage() {
 
   const fetchWinners = async () => {
     const token = localStorage.getItem("token");
-    const res = await fetch("https://predicciones-ecuador.onrender.com/admin/winners", {
+    const res = await fetch("https://api.ecuapred.com/admin/winners", {
       headers: { authorization: `Bearer ${token}` || "" },
     });
     const data = await res.json();
@@ -288,7 +288,7 @@ export default function AdminPage() {
 
   const fetchStats = async () => {
     const token = localStorage.getItem("token");
-    const res = await fetch("https://predicciones-ecuador.onrender.com/admin/stats", {
+    const res = await fetch("https://api.ecuapred.com/admin/stats", {
       headers: { authorization: `Bearer ${token}` || "" },
     });
     const data = await res.json();
@@ -297,7 +297,7 @@ export default function AdminPage() {
 
   const fetchCharts = async () => {
     const token = localStorage.getItem("token");
-    const res = await fetch("https://predicciones-ecuador.onrender.com/admin/charts", {
+    const res = await fetch("https://api.ecuapred.com/admin/charts", {
       headers: { authorization: `Bearer ${token}` || "" },
     });
     const data = await res.json();
@@ -306,7 +306,7 @@ export default function AdminPage() {
 
   const fetchUsers = async () => {
     const token = localStorage.getItem("token");
-    const res = await fetch("https://predicciones-ecuador.onrender.com/admin/users", {
+    const res = await fetch("https://api.ecuapred.com/admin/users", {
       headers: { authorization: `Bearer ${token}` || "" },
     });
     const data = await res.json();
@@ -315,7 +315,7 @@ export default function AdminPage() {
 
   const fetchExtensionTokens = async () => {
     const token = localStorage.getItem("token");
-    const res = await fetch("https://predicciones-ecuador.onrender.com/admin/extension-tokens", {
+    const res = await fetch("https://api.ecuapred.com/admin/extension-tokens", {
       headers: { authorization: `Bearer ${token}` },
     });
     const data = await res.json();
@@ -324,7 +324,7 @@ export default function AdminPage() {
 
   const fetchMarketNews = async () => {
     const token = localStorage.getItem("token");
-    const res = await fetch("https://predicciones-ecuador.onrender.com/admin/market-news", {
+    const res = await fetch("https://api.ecuapred.com/admin/market-news", {
       headers: { authorization: `Bearer ${token}` },
     });
     const data = await res.json();
@@ -333,7 +333,7 @@ export default function AdminPage() {
 
   const fetchBotUrls = async () => {
     const token = localStorage.getItem("token");
-    const res = await fetch("https://predicciones-ecuador.onrender.com/admin/bot/urls", {
+    const res = await fetch("https://api.ecuapred.com/admin/bot/urls", {
       headers: { authorization: `Bearer ${token}` },
     });
     const data = await res.json();
@@ -342,7 +342,7 @@ export default function AdminPage() {
 
   const fetchBotStatus = async () => {
     const token = localStorage.getItem("token");
-    const res = await fetch("https://predicciones-ecuador.onrender.com/admin/bot/status", {
+    const res = await fetch("https://api.ecuapred.com/admin/bot/status", {
       headers: { authorization: `Bearer ${token}` },
     });
     const data = await res.json();
@@ -351,7 +351,7 @@ export default function AdminPage() {
 
   const fetchBotSuggestions = async () => {
     const token = localStorage.getItem("token");
-    const res = await fetch("https://predicciones-ecuador.onrender.com/admin/news-suggestions", {
+    const res = await fetch("https://api.ecuapred.com/admin/news-suggestions", {
       headers: { authorization: `Bearer ${token}` },
     });
     const data = await res.json();
@@ -380,7 +380,7 @@ export default function AdminPage() {
 
   const fetchFinance = async () => {
     const token = localStorage.getItem("token");
-    const res = await fetch("https://predicciones-ecuador.onrender.com/admin/finance", {
+    const res = await fetch("https://api.ecuapred.com/admin/finance", {
       headers: { authorization: `Bearer ${token}` },
     });
     const data = await res.json();
@@ -389,7 +389,7 @@ export default function AdminPage() {
 
   const fetchAdminComments = async () => {
     const token = localStorage.getItem("token");
-    const res = await fetch("https://predicciones-ecuador.onrender.com/admin/comments", {
+    const res = await fetch("https://api.ecuapred.com/admin/comments", {
       headers: { authorization: `Bearer ${token}` },
     });
     const data = await res.json();
@@ -398,7 +398,7 @@ export default function AdminPage() {
 
   const fetchContactos = async () => {
     const token = localStorage.getItem("token");
-    const res = await fetch("https://predicciones-ecuador.onrender.com/admin/contactos", {
+    const res = await fetch("https://api.ecuapred.com/admin/contactos", {
       headers: { authorization: `Bearer ${token}` },
     });
     const data = await res.json();
@@ -407,7 +407,7 @@ export default function AdminPage() {
 
   const fetchTransactions = async () => {
     const token = localStorage.getItem("token");
-    const res = await fetch("https://predicciones-ecuador.onrender.com/admin/transactions", {
+    const res = await fetch("https://api.ecuapred.com/admin/transactions", {
       headers: { authorization: `Bearer ${token}` },
     });
     const data = await res.json();
@@ -417,7 +417,7 @@ export default function AdminPage() {
   const handleTransactionStatus = async (id: string, status: "aprobado" | "rechazado", userId: string, amount: number, tx: any) => {
     setLoadingAction(`tx-${id}`);
     const token = localStorage.getItem("token");
-    const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/transactions/${id}/status`, {
+    const res = await fetch(`https://api.ecuapred.com/admin/transactions/${id}/status`, {
       method: "PUT",
       headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
       body: JSON.stringify({ status, userId, amount, type: tx.type }),
@@ -432,7 +432,7 @@ export default function AdminPage() {
 
   const fetchBankAccounts = async () => {
     const token = localStorage.getItem("token");
-    const res = await fetch("https://predicciones-ecuador.onrender.com/admin/bank-accounts", {
+    const res = await fetch("https://api.ecuapred.com/admin/bank-accounts", {
       headers: { authorization: `Bearer ${token}` },
     });
     if (res.ok) setBankAccounts(await res.json());
@@ -440,7 +440,7 @@ export default function AdminPage() {
 
   const fetchSettings = async () => {
     const token = localStorage.getItem("token");
-    const res = await fetch("https://predicciones-ecuador.onrender.com/admin/settings", {
+    const res = await fetch("https://api.ecuapred.com/admin/settings", {
       headers: { authorization: `Bearer ${token}` || "" },
     });
     const data = await res.json();
@@ -462,7 +462,7 @@ export default function AdminPage() {
 
   const handleSaveSettings = async () => {
     const token = localStorage.getItem("token");
-    const res = await fetch("https://predicciones-ecuador.onrender.com/admin/settings", {
+    const res = await fetch("https://api.ecuapred.com/admin/settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` || "" },
       body: JSON.stringify({
@@ -487,7 +487,7 @@ export default function AdminPage() {
     const token = localStorage.getItem("token");
     if (!token) { window.location.href = "/login"; return; }
     try {
-      const res = await fetch("https://predicciones-ecuador.onrender.com/me", {
+      const res = await fetch("https://api.ecuapred.com/me", {
         headers: { authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error();
@@ -507,7 +507,7 @@ export default function AdminPage() {
   const handleEditMarket = async () => {
     if (!editingMarket || !editingMarket.question.trim()) return;
     const token = localStorage.getItem("token");
-    const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/markets/${editingMarket.id}`, {
+    const res = await fetch(`https://api.ecuapred.com/admin/markets/${editingMarket.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` || "" },
       body: JSON.stringify({ question: editingMarket.question, closes_at: toEcuadorTz(editingMarket.closes_at ?? "") }),
@@ -520,7 +520,7 @@ export default function AdminPage() {
   const handleCreateMarket = async () => {
     const token = localStorage.getItem("token");
     if (!newQuestion.trim()) return;
-    const res = await fetch("https://predicciones-ecuador.onrender.com/admin/markets", {
+    const res = await fetch("https://api.ecuapred.com/admin/markets", {
       method: "POST",
       headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` || "" },
       body: JSON.stringify({ question: newQuestion, category: newCategory, closes_at: newClosesAt ? toEcuadorTz(newClosesAt) : undefined }),
@@ -540,7 +540,7 @@ export default function AdminPage() {
       onConfirm: async () => {
         setLoadingAction(`delete-${id}`);
         const token = localStorage.getItem("token");
-        const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/markets/${id}`, {
+        const res = await fetch(`https://api.ecuapred.com/admin/markets/${id}`, {
           method: "DELETE",
           headers: { authorization: `Bearer ${token}` || "" },
         });
@@ -562,7 +562,7 @@ export default function AdminPage() {
       onConfirm: async () => {
         setLoadingAction(`resolve-${id}`);
         const token = localStorage.getItem("token");
-        const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/resolve/${id}`, {
+        const res = await fetch(`https://api.ecuapred.com/admin/resolve/${id}`, {
           method: "POST",
           headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` || "" },
           body: JSON.stringify({ winner }),
@@ -582,7 +582,7 @@ export default function AdminPage() {
       confirmLabel: "Cambiar rol",
       onConfirm: async () => {
         const token = localStorage.getItem("token");
-        const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/users/${userId}/role`, {
+        const res = await fetch(`https://api.ecuapred.com/admin/users/${userId}/role`, {
           method: "PUT",
           headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` || "" },
           body: JSON.stringify({ role: newRole }),
@@ -603,7 +603,7 @@ export default function AdminPage() {
       danger: amount < 0,
       onConfirm: async () => {
         const token = localStorage.getItem("token");
-        const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/users/${userId}/points`, {
+        const res = await fetch(`https://api.ecuapred.com/admin/users/${userId}/points`, {
           method: "PUT",
           headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` || "" },
           body: JSON.stringify({ points: amount }),
@@ -626,7 +626,7 @@ export default function AdminPage() {
       danger: suspended,
       onConfirm: async () => {
         const token = localStorage.getItem("token");
-        const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/users/${userId}/suspend`, {
+        const res = await fetch(`https://api.ecuapred.com/admin/users/${userId}/suspend`, {
           method: "PUT",
           headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` || "" },
           body: JSON.stringify({ suspended }),
@@ -642,7 +642,7 @@ export default function AdminPage() {
     fetchMarkets();
     loadMe();
 
-    const es = new EventSource("https://predicciones-ecuador.onrender.com/events");
+    const es = new EventSource("https://api.ecuapred.com/events");
     es.addEventListener("markets", () => { fetchMarkets(); fetchStats(); });
     es.addEventListener("bets", () => { fetchStats(); fetchFinance(); });
     es.addEventListener("transactions", () => { fetchTransactions(); fetchFinance(); });
@@ -1086,7 +1086,7 @@ export default function AdminPage() {
                             value={m.category || "deporte"}
                             onChange={async (e) => {
                               const token = localStorage.getItem("token");
-                              await fetch(`https://predicciones-ecuador.onrender.com/admin/markets/${m.id}/category`, {
+                              await fetch(`https://api.ecuapred.com/admin/markets/${m.id}/category`, {
                                 method: "PUT",
                                 headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
                                 body: JSON.stringify({ category: e.target.value }),
@@ -1115,7 +1115,7 @@ export default function AdminPage() {
   <button
     onClick={async () => {
       const token = localStorage.getItem("token");
-      const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/markets/${m.id}/archive`, {
+      const res = await fetch(`https://api.ecuapred.com/admin/markets/${m.id}/archive`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
         body: JSON.stringify({ archived: !m.archived }),
@@ -1215,7 +1215,7 @@ export default function AdminPage() {
       <button
         onClick={async () => {
           const token = localStorage.getItem("token");
-          await fetch(`https://predicciones-ecuador.onrender.com/admin/markets/${m.id}/archive`, {
+          await fetch(`https://api.ecuapred.com/admin/markets/${m.id}/archive`, {
             method: "PUT",
             headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
             body: JSON.stringify({ archived: !m.archived }),
@@ -1711,7 +1711,7 @@ export default function AdminPage() {
                         <button
                           onClick={async () => {
                             const token = localStorage.getItem("token");
-                            await fetch(`https://predicciones-ecuador.onrender.com/admin/news-suggestions/${s.id}`, { method: "DELETE", headers: { authorization: `Bearer ${token}` } });
+                            await fetch(`https://api.ecuapred.com/admin/news-suggestions/${s.id}`, { method: "DELETE", headers: { authorization: `Bearer ${token}` } });
                             showToast("Sugerencia eliminada", "info");
                             fetchSuggestions();
                           }}
@@ -1727,7 +1727,7 @@ export default function AdminPage() {
                       <button
                         onClick={async () => {
                           const token = localStorage.getItem("token");
-                          await fetch(`https://predicciones-ecuador.onrender.com/admin/news-suggestions/${s.id}`, { method: "DELETE", headers: { authorization: `Bearer ${token}` } });
+                          await fetch(`https://api.ecuapred.com/admin/news-suggestions/${s.id}`, { method: "DELETE", headers: { authorization: `Bearer ${token}` } });
                           showToast("Sugerencia eliminada", "info");
                           fetchSuggestions();
                         }}
@@ -1845,7 +1845,7 @@ export default function AdminPage() {
                               <button
                                 onClick={async () => {
                                   const token = localStorage.getItem("token");
-                                  const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/market-news/${n.id}`, {
+                                  const res = await fetch(`https://api.ecuapred.com/admin/market-news/${n.id}`, {
                                     method: "PUT",
                                     headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
                                     body: JSON.stringify({ market_id: n.market_id, status: n.status, title: chatPending[`n-${n.id}`] }),
@@ -1897,12 +1897,12 @@ export default function AdminPage() {
                           onClick={async () => {
                             const token = localStorage.getItem("token");
                             const [r1, r2] = await Promise.all([
-                              fetch(`https://predicciones-ecuador.onrender.com/admin/market-news/${n.id}`, {
+                              fetch(`https://api.ecuapred.com/admin/market-news/${n.id}`, {
                                 method: "PUT",
                                 headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
                                 body: JSON.stringify({ market_id: n.market_id, status: "approved" }),
                               }),
-                              fetch(`https://predicciones-ecuador.onrender.com/admin/resolve/${n.market_id}`, {
+                              fetch(`https://api.ecuapred.com/admin/resolve/${n.market_id}`, {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
                                 body: JSON.stringify({ winner: n.resolves_as }),
@@ -1920,12 +1920,12 @@ export default function AdminPage() {
                             const token = localStorage.getItem("token");
                             const inverted = n.resolves_as === "yes" ? "no" : "yes";
                             const [r1, r2] = await Promise.all([
-                              fetch(`https://predicciones-ecuador.onrender.com/admin/market-news/${n.id}`, {
+                              fetch(`https://api.ecuapred.com/admin/market-news/${n.id}`, {
                                 method: "PUT",
                                 headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
                                 body: JSON.stringify({ market_id: n.market_id, status: "approved", resolves_as: inverted }),
                               }),
-                              fetch(`https://predicciones-ecuador.onrender.com/admin/resolve/${n.market_id}`, {
+                              fetch(`https://api.ecuapred.com/admin/resolve/${n.market_id}`, {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
                                 body: JSON.stringify({ winner: inverted }),
@@ -1941,7 +1941,7 @@ export default function AdminPage() {
                         <button
                           onClick={async () => {
                             const token = localStorage.getItem("token");
-                            await fetch(`https://predicciones-ecuador.onrender.com/admin/market-news/${n.id}`, {
+                            await fetch(`https://api.ecuapred.com/admin/market-news/${n.id}`, {
                               method: "PUT",
                               headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
                               body: JSON.stringify({ market_id: null, status: "rejected" }),
@@ -1973,7 +1973,7 @@ export default function AdminPage() {
                               const token = localStorage.getItem("token");
                               const mid = newsMarketInput[n.id];
                               if (!mid) return showToast("Ingresa el ID del mercado", "error");
-                              const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/market-news/${n.id}`, {
+                              const res = await fetch(`https://api.ecuapred.com/admin/market-news/${n.id}`, {
                                 method: "PUT",
                                 headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
                                 body: JSON.stringify({ market_id: Number(mid), status: "approved" }),
@@ -1989,7 +1989,7 @@ export default function AdminPage() {
                           <button
                             onClick={async () => {
                               const token = localStorage.getItem("token");
-                              const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/market-news/${n.id}`, {
+                              const res = await fetch(`https://api.ecuapred.com/admin/market-news/${n.id}`, {
                                 method: "PUT",
                                 headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
                                 body: JSON.stringify({ market_id: null, status: "rejected" }),
@@ -2003,7 +2003,7 @@ export default function AdminPage() {
                           <button
                             onClick={async () => {
                               const token = localStorage.getItem("token");
-                              await fetch(`https://predicciones-ecuador.onrender.com/admin/market-news/${n.id}`, { method: "DELETE", headers: { authorization: `Bearer ${token}` } });
+                              await fetch(`https://api.ecuapred.com/admin/market-news/${n.id}`, { method: "DELETE", headers: { authorization: `Bearer ${token}` } });
                               showToast("Noticia eliminada", "info");
                               fetchMarketNews();
                             }}
@@ -2020,7 +2020,7 @@ export default function AdminPage() {
                       <button
                         onClick={async () => {
                           const token = localStorage.getItem("token");
-                          await fetch(`https://predicciones-ecuador.onrender.com/admin/market-news/${n.id}`, { method: "DELETE", headers: { authorization: `Bearer ${token}` } });
+                          await fetch(`https://api.ecuapred.com/admin/market-news/${n.id}`, { method: "DELETE", headers: { authorization: `Bearer ${token}` } });
                           showToast("Noticia eliminada", "info");
                           fetchMarketNews();
                         }}
@@ -2094,7 +2094,7 @@ export default function AdminPage() {
                             <button
                               onClick={async () => {
                                 const token = localStorage.getItem("token");
-                                const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/comments/${c.id}/hide`, {
+                                const res = await fetch(`https://api.ecuapred.com/admin/comments/${c.id}/hide`, {
                                   method: "PUT",
                                   headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
                                   body: JSON.stringify({ hidden: !c.hidden }),
@@ -2114,7 +2114,7 @@ export default function AdminPage() {
                                 danger: true,
                                 onConfirm: async () => {
                                   const token = localStorage.getItem("token");
-                                  const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/comments/${c.id}`, {
+                                  const res = await fetch(`https://api.ecuapred.com/admin/comments/${c.id}`, {
                                     method: "DELETE",
                                     headers: { authorization: `Bearer ${token}` },
                                   });
@@ -2147,7 +2147,7 @@ export default function AdminPage() {
                             <button
                               onClick={async () => {
                                 const token = localStorage.getItem("token");
-                                const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/comments/${c.id}/hide`, {
+                                const res = await fetch(`https://api.ecuapred.com/admin/comments/${c.id}/hide`, {
                                   method: "PUT",
                                   headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
                                   body: JSON.stringify({ hidden: !c.hidden }),
@@ -2166,7 +2166,7 @@ export default function AdminPage() {
                                 danger: true,
                                 onConfirm: async () => {
                                   const token = localStorage.getItem("token");
-                                  const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/comments/${c.id}`, {
+                                  const res = await fetch(`https://api.ecuapred.com/admin/comments/${c.id}`, {
                                     method: "DELETE",
                                     headers: { authorization: `Bearer ${token}` },
                                   });
@@ -2228,7 +2228,7 @@ export default function AdminPage() {
                         <div className="col-span-1 flex justify-end">
                           {!c.leido && (
                             <button
-                              onClick={async () => { const token = localStorage.getItem("token"); await fetch(`https://predicciones-ecuador.onrender.com/admin/contactos/${c.id}/leido`, { method: "PUT", headers: { authorization: `Bearer ${token}` } }); fetchContactos(); showToast("Marcado como leído", "info"); }}
+                              onClick={async () => { const token = localStorage.getItem("token"); await fetch(`https://api.ecuapred.com/admin/contactos/${c.id}/leido`, { method: "PUT", headers: { authorization: `Bearer ${token}` } }); fetchContactos(); showToast("Marcado como leído", "info"); }}
                               className="text-[10px] bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/20 px-2 py-1 rounded-md transition"
                             >
                               Leído
@@ -2250,7 +2250,7 @@ export default function AdminPage() {
                         <p className="text-[11px] text-slate-400 dark:text-white/30">{c.mensaje}</p>
                         {!c.leido && (
                           <button
-                            onClick={async () => { const token = localStorage.getItem("token"); await fetch(`https://predicciones-ecuador.onrender.com/admin/contactos/${c.id}/leido`, { method: "PUT", headers: { authorization: `Bearer ${token}` } }); fetchContactos(); showToast("Marcado como leído", "info"); }}
+                            onClick={async () => { const token = localStorage.getItem("token"); await fetch(`https://api.ecuapred.com/admin/contactos/${c.id}/leido`, { method: "PUT", headers: { authorization: `Bearer ${token}` } }); fetchContactos(); showToast("Marcado como leído", "info"); }}
                             className="text-[11px] bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 px-3 py-1.5 rounded-lg"
                           >
                             Marcar leído
@@ -2317,7 +2317,7 @@ export default function AdminPage() {
                         const url = botUrlInput.trim();
                         if (!url) return;
                         const token = localStorage.getItem("token");
-                        fetch("https://predicciones-ecuador.onrender.com/admin/bot/urls", {
+                        fetch("https://api.ecuapred.com/admin/bot/urls", {
                           method: "POST",
                           headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
                           body: JSON.stringify({ url, interval_min: botInterval }),
@@ -2334,7 +2334,7 @@ export default function AdminPage() {
                       const url = botUrlInput.trim();
                       if (!url) return;
                       const token = localStorage.getItem("token");
-                      const res = await fetch("https://predicciones-ecuador.onrender.com/admin/bot/urls", {
+                      const res = await fetch("https://api.ecuapred.com/admin/bot/urls", {
                         method: "POST",
                         headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
                         body: JSON.stringify({ url, interval_min: botInterval }),
@@ -2362,7 +2362,7 @@ export default function AdminPage() {
                         <button
                           onClick={async () => {
                             const token = localStorage.getItem("token");
-                            await fetch(`https://predicciones-ecuador.onrender.com/admin/bot/urls/${u.id}`, {
+                            await fetch(`https://api.ecuapred.com/admin/bot/urls/${u.id}`, {
                               method: "PUT",
                               headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
                               body: JSON.stringify({ active: !u.active }),
@@ -2377,7 +2377,7 @@ export default function AdminPage() {
                         <button
                           onClick={async () => {
                             const token = localStorage.getItem("token");
-                            await fetch(`https://predicciones-ecuador.onrender.com/admin/bot/urls/${u.id}`, {
+                            await fetch(`https://api.ecuapred.com/admin/bot/urls/${u.id}`, {
                               method: "DELETE",
                               headers: { authorization: `Bearer ${token}` },
                             });
@@ -2404,7 +2404,7 @@ export default function AdminPage() {
                         setBotInterval(val);
                         const token = localStorage.getItem("token");
                         for (const u of botUrls) {
-                          await fetch(`https://predicciones-ecuador.onrender.com/admin/bot/urls/${u.id}`, {
+                          await fetch(`https://api.ecuapred.com/admin/bot/urls/${u.id}`, {
                             method: "PUT",
                             headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
                             body: JSON.stringify({ interval_min: val }),
@@ -2428,11 +2428,11 @@ export default function AdminPage() {
                       onClick={async () => {
                         setBotRunning(true);
                         const token = localStorage.getItem("token");
-                        await fetch("https://predicciones-ecuador.onrender.com/admin/bot/enable", {
+                        await fetch("https://api.ecuapred.com/admin/bot/enable", {
                           method: "POST",
                           headers: { authorization: `Bearer ${token}` },
                         });
-                        const res = await fetch("https://predicciones-ecuador.onrender.com/admin/bot/run", {
+                        const res = await fetch("https://api.ecuapred.com/admin/bot/run", {
                           method: "POST",
                           headers: { authorization: `Bearer ${token}` },
                         });
@@ -2449,7 +2449,7 @@ export default function AdminPage() {
                       disabled={botStatus?.schedulerEnabled === false}
                       onClick={async () => {
                         const token = localStorage.getItem("token");
-                        await fetch("https://predicciones-ecuador.onrender.com/admin/bot/stop", {
+                        await fetch("https://api.ecuapred.com/admin/bot/stop", {
                           method: "POST",
                           headers: { authorization: `Bearer ${token}` },
                         });
@@ -2699,7 +2699,7 @@ export default function AdminPage() {
                           <button
                             onClick={async () => {
                               const token = localStorage.getItem("token");
-                              await fetch(`https://predicciones-ecuador.onrender.com/admin/news-suggestions/${s.id}`, {
+                              await fetch(`https://api.ecuapred.com/admin/news-suggestions/${s.id}`, {
                                 method: "DELETE",
                                 headers: { authorization: `Bearer ${token}` },
                               });
@@ -2718,7 +2718,7 @@ export default function AdminPage() {
                             <button
                               onClick={async () => {
                                 const token = localStorage.getItem("token");
-                                const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/news-suggestions/${s.id}`, {
+                                const res = await fetch(`https://api.ecuapred.com/admin/news-suggestions/${s.id}`, {
                                   method: "PUT",
                                   headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
                                   body: JSON.stringify({ action: "approve_market", closes_at: closeDates[s.id] ? toEcuadorTz(closeDates[s.id]) : null, category: selectedCategories[s.id] || "general" }),
@@ -2736,7 +2736,7 @@ export default function AdminPage() {
                             <button
                               onClick={async () => {
                                 const token = localStorage.getItem("token");
-                                await fetch(`https://predicciones-ecuador.onrender.com/admin/news-suggestions/${s.id}`, {
+                                await fetch(`https://api.ecuapred.com/admin/news-suggestions/${s.id}`, {
                                   method: "PUT",
                                   headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
                                   body: JSON.stringify({ action: "reject" }),
@@ -2750,7 +2750,7 @@ export default function AdminPage() {
                             <button
                               onClick={async () => {
                                 const token = localStorage.getItem("token");
-                                await fetch(`https://predicciones-ecuador.onrender.com/admin/news-suggestions/${s.id}`, {
+                                await fetch(`https://api.ecuapred.com/admin/news-suggestions/${s.id}`, {
                                   method: "DELETE",
                                   headers: { authorization: `Bearer ${token}` },
                                 });
@@ -2845,7 +2845,7 @@ export default function AdminPage() {
                         <button
                           onClick={async () => {
                             const token = localStorage.getItem("token");
-                            await fetch(`https://predicciones-ecuador.onrender.com/admin/bank-accounts/${bank.id}`, {
+                            await fetch(`https://api.ecuapred.com/admin/bank-accounts/${bank.id}`, {
                               method: "PUT",
                               headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
                               body: JSON.stringify({ activo: !bank.activo }),
@@ -2864,7 +2864,7 @@ export default function AdminPage() {
                             danger: true,
                             onConfirm: async () => {
                               const token = localStorage.getItem("token");
-                              await fetch(`https://predicciones-ecuador.onrender.com/admin/bank-accounts/${bank.id}`, {
+                              await fetch(`https://api.ecuapred.com/admin/bank-accounts/${bank.id}`, {
                                 method: "DELETE",
                                 headers: { authorization: `Bearer ${token}` },
                               });
@@ -2919,7 +2919,7 @@ export default function AdminPage() {
                     onClick={async () => {
                       setSavingBank(true);
                       const token = localStorage.getItem("token");
-                      const res = await fetch("https://predicciones-ecuador.onrender.com/admin/bank-accounts", {
+                      const res = await fetch("https://api.ecuapred.com/admin/bank-accounts", {
                         method: "POST",
                         headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
                         body: JSON.stringify(newBank),
@@ -2955,7 +2955,7 @@ export default function AdminPage() {
                   <button
                     onClick={async () => {
                       const token = localStorage.getItem("token");
-                      const res = await fetch("https://predicciones-ecuador.onrender.com/admin/extension-tokens", {
+                      const res = await fetch("https://api.ecuapred.com/admin/extension-tokens", {
                         method: "POST",
                         headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
                         body: JSON.stringify({ label: newTokenLabel }),
@@ -2997,7 +2997,7 @@ export default function AdminPage() {
                         <button
                           onClick={async () => {
                             const token = localStorage.getItem("token");
-                            const res = await fetch(`https://predicciones-ecuador.onrender.com/admin/extension-tokens/${t.id}`, {
+                            const res = await fetch(`https://api.ecuapred.com/admin/extension-tokens/${t.id}`, {
                               method: "DELETE",
                               headers: { authorization: `Bearer ${token}` },
                             });

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import React, { Suspense } from "react";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -64,12 +64,12 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
     const headers = { authorization: `Bearer ${token}` };
     try {
       const [meRes, betsRes, rankRes, movRes, configRes, banksRes] = await Promise.all([
-        fetch("https://predicciones-ecuador.onrender.com/me", { headers }),
-        fetch("https://predicciones-ecuador.onrender.com/my-bets", { headers }),
-        fetch("https://predicciones-ecuador.onrender.com/ranking"),
-        fetch("https://predicciones-ecuador.onrender.com/my-movements", { headers }),
-        fetch("https://predicciones-ecuador.onrender.com/config", { headers }),
-        fetch("https://predicciones-ecuador.onrender.com/bank-accounts"),
+        fetch("https://api.ecuapred.com/me", { headers }),
+        fetch("https://api.ecuapred.com/my-bets", { headers }),
+        fetch("https://api.ecuapred.com/ranking"),
+        fetch("https://api.ecuapred.com/my-movements", { headers }),
+        fetch("https://api.ecuapred.com/config", { headers }),
+        fetch("https://api.ecuapred.com/bank-accounts"),
       ]);
       if (!meRes.ok) { router.push("/login"); return; }
       const meData = await meRes.json();
@@ -112,7 +112,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
 
   useEffect(() => {
     loadPanel();
-    const es = new EventSource("https://predicciones-ecuador.onrender.com/events");
+    const es = new EventSource("https://api.ecuapred.com/events");
     es.addEventListener("bets", () => loadPanel());
     es.addEventListener("transactions", () => loadPanel());
     return () => es.close();
@@ -122,7 +122,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
     setSavingProfile(true);
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch("https://predicciones-ecuador.onrender.com/me/profile", {
+      const res = await fetch("https://api.ecuapred.com/me/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
         body: JSON.stringify(profileForm),
@@ -136,7 +136,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
   setSendingRetiro(true);
   try {
     const token = localStorage.getItem("token");
-    const res = await fetch("https://predicciones-ecuador.onrender.com/withdrawal", {
+    const res = await fetch("https://api.ecuapred.com/withdrawal", {
       method: "POST",
       headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
       body: JSON.stringify({ amount: parseFloat(walletAmount), method: retiroMethod }),
@@ -158,7 +158,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
   setSendingTransfer(true);
   try {
     const token = localStorage.getItem("token");
-    const res = await fetch("https://predicciones-ecuador.onrender.com/transfer", {
+    const res = await fetch("https://api.ecuapred.com/transfer", {
       method: "POST",
       headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
       body: JSON.stringify({ amount: walletAmount, transfer_code: transferCode.trim() }),
@@ -667,7 +667,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
                           const clientId = `${user.id}-${Date.now()}`;
                           setPayphoneClientId(clientId);
                           const token = localStorage.getItem("token");
-                          const res = await fetch("https://predicciones-ecuador.onrender.com/payphone/prepare", {
+                          const res = await fetch("https://api.ecuapred.com/payphone/prepare", {
                             method: "POST",
                             headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
                             body: JSON.stringify({
@@ -1002,7 +1002,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
     script.onload = async () => {
       try {
         const token = localStorage.getItem("token");
-        const cfgRes = await fetch("https://predicciones-ecuador.onrender.com/payphone/widget-config", {
+        const cfgRes = await fetch("https://api.ecuapred.com/payphone/widget-config", {
           headers: { authorization: `Bearer ${token}` },
         });
         if (!cfgRes.ok) throw new Error("No se pudo obtener config de pago");

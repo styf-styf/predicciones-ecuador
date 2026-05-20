@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import Header from "@/components/Header";
 import { useState, useRef } from "react";
 import { Mail, MessageSquare, Clock, CheckCircle } from "lucide-react";
@@ -18,7 +18,7 @@ export default function ContactoPage() {
     setSending(true);
     setError("");
     try {
-      const res = await fetch("https://predicciones-ecuador.onrender.com/contacto", {
+      const res = await fetch("https://api.ecuapred.com/contacto", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, captchaToken }),

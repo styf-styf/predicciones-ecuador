@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -33,7 +33,7 @@ export default function RegisterPage() {
     const code = params.get("code");
     if (code) {
       setGoogleLoading(true);
-      fetch("https://predicciones-ecuador.onrender.com/auth/google", {
+      fetch("https://api.ecuapred.com/auth/google", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code, redirect_uri: window.location.origin + "/register" }),
@@ -80,7 +80,7 @@ export default function RegisterPage() {
     onSuccess: async (codeResponse) => {
       setGoogleLoading(true);
       try {
-        const res = await fetch("https://predicciones-ecuador.onrender.com/auth/google", {
+        const res = await fetch("https://api.ecuapred.com/auth/google", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ code: codeResponse.code, redirect_uri: window.location.origin + "/register" }),
@@ -127,7 +127,7 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      const res = await fetch("https://predicciones-ecuador.onrender.com/register", {
+      const res = await fetch("https://api.ecuapred.com/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

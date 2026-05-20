@@ -200,7 +200,7 @@ export default function MarketPage() {
   };
 
   const fetchMarket = async () => {
-    const res = await fetch(`https://predicciones-ecuador.onrender.com/markets`);
+    const res = await fetch(`https://api.ecuapred.com/markets`);
     const data = await res.json();
     setAllMarkets(data);
     const found = data.find((m: any) => m.id === Number(id));
@@ -209,47 +209,47 @@ export default function MarketPage() {
 
   const fetchMe = async () => {
     if (!token) return;
-    const res = await fetch("https://predicciones-ecuador.onrender.com/me", {
+    const res = await fetch("https://api.ecuapred.com/me", {
       headers: { authorization: `Bearer ${token}` },
     });
     if (res.ok) { const d = await res.json(); setPoints(d.points); }
   };
 
   const fetchComments = async () => {
-    const res = await fetch(`https://predicciones-ecuador.onrender.com/markets/${id}/comments`);
+    const res = await fetch(`https://api.ecuapred.com/markets/${id}/comments`);
     if (res.ok) setComments(await res.json());
   };
 
   const fetchNews = async () => {
     setLoadingNews(true);
-    const res = await fetch(`https://predicciones-ecuador.onrender.com/markets/${id}/news`);
+    const res = await fetch(`https://api.ecuapred.com/markets/${id}/news`);
     if (res.ok) setNews(await res.json());
     setLoadingNews(false);
   };
 
   const fetchClosingNews = async () => {
-    const res = await fetch(`https://predicciones-ecuador.onrender.com/markets/${id}/news-closing`);
+    const res = await fetch(`https://api.ecuapred.com/markets/${id}/news-closing`);
     if (res.ok) setClosingNews(await res.json());
   };
   
   const fetchHistory = async () => {
-    const res = await fetch(`https://predicciones-ecuador.onrender.com/markets/${id}/history`);
+    const res = await fetch(`https://api.ecuapred.com/markets/${id}/history`);
     if (res.ok) setHistory(await res.json());
   };
 
   const fetchTopHolders = async () => {
-    const res = await fetch(`https://predicciones-ecuador.onrender.com/markets/${id}/top-holders`);
+    const res = await fetch(`https://api.ecuapred.com/markets/${id}/top-holders`);
     if (res.ok) setTopHolders(await res.json());
   };
 
   const fetchUniqueBettors = async () => {
-    const res = await fetch(`https://predicciones-ecuador.onrender.com/markets/${id}/bettors-count`);
+    const res = await fetch(`https://api.ecuapred.com/markets/${id}/bettors-count`);
     if (res.ok) { const d = await res.json(); setUniqueBettors(d.count || 0); }
   };
   
 
   const fetchBetConfig = async () => {
-  const res = await fetch("https://predicciones-ecuador.onrender.com/config");
+  const res = await fetch("https://api.ecuapred.com/config");
   if (res.ok) {
     const data = await res.json();
     setBetConfig({ min_bet: data.min_bet ?? 1, commission: data.commission ?? 3 });
@@ -258,7 +258,7 @@ export default function MarketPage() {
 
   const fetchUserBet = async () => {
   if (!token) return;
-  const res = await fetch(`https://predicciones-ecuador.onrender.com/markets/${id}/my-bet`, {
+  const res = await fetch(`https://api.ecuapred.com/markets/${id}/my-bet`, {
     headers: { authorization: `Bearer ${token}` },
   });
   if (res.ok) {
@@ -295,7 +295,7 @@ export default function MarketPage() {
 
   useEffect(() => {
     if (!id) return;
-    const es = new EventSource("https://predicciones-ecuador.onrender.com/events");
+    const es = new EventSource("https://api.ecuapred.com/events");
     es.addEventListener("bets", (e: MessageEvent) => {
       const d = JSON.parse(e.data);
       if (d.market_id === Number(id)) {
@@ -323,7 +323,7 @@ export default function MarketPage() {
     return;
   }
   setBettingLoading(true);
-  const res = await fetch("https://predicciones-ecuador.onrender.com/bet", {
+  const res = await fetch("https://api.ecuapred.com/bet", {
     method: "POST",
     headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
     body: JSON.stringify({ marketId: Number(id), type: betType, amount: amt }),
@@ -348,7 +348,7 @@ export default function MarketPage() {
   if (!token) return;
   if (!newComment.trim()) return;
   setSubmitting(true);
-  const res = await fetch(`https://predicciones-ecuador.onrender.com/markets/${id}/comments`, {
+  const res = await fetch(`https://api.ecuapred.com/markets/${id}/comments`, {
     method: "POST",
     headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
     body: JSON.stringify({ content: newComment }),
