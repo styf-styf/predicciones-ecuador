@@ -9,17 +9,17 @@ export default function TerminosPage() {
         <div className="border-b border-slate-200 dark:border-slate-800 pb-6">
           <p className="text-xs text-slate-400 uppercase tracking-widest mb-2">Documento legal</p>
           <h1 className="text-3xl font-bold">Términos y Condiciones</h1>
-          <p className="text-sm text-slate-400 mt-2">Última actualización: enero 2025 · Predicciones Ecuador</p>
+          <p className="text-sm text-slate-400 mt-2">Última actualización: enero 2025 · EcuaPred</p>
         </div>
 
         {[
           {
             title: "1. Aceptación de los términos",
-            content: `Al acceder y utilizar la plataforma Predicciones Ecuador, usted acepta estar sujeto a estos Términos y Condiciones. Si no está de acuerdo con alguna parte de estos términos, no podrá acceder al servicio.`
+            content: `Al acceder y utilizar la plataforma EcuaPred, usted acepta estar sujeto a estos Términos y Condiciones. Si no está de acuerdo con alguna parte de estos términos, no podrá acceder al servicio.`
           },
           {
             title: "2. Descripción del servicio",
-            content: `Predicciones Ecuador es una plataforma de predicciones deportivas y de entretenimiento que permite a los usuarios participar en mercados de predicción utilizando puntos virtuales. Los puntos pueden ser adquiridos mediante recargas y canjeados según las condiciones establecidas.`
+            content: `EcuaPred es una plataforma de predicciones deportivas y de entretenimiento que permite a los usuarios participar en mercados de predicción utilizando puntos virtuales. Los puntos pueden ser adquiridos mediante recargas y canjeados según las condiciones establecidas.`
           },
           {
             title: "3. Elegibilidad",
@@ -43,11 +43,11 @@ export default function TerminosPage() {
           },
           {
             title: "8. Limitación de responsabilidad",
-            content: `Predicciones Ecuador no se hace responsable por pérdidas indirectas, incidentales o consecuentes derivadas del uso de la plataforma. Nuestro servicio se proporciona "tal cual" sin garantías de ningún tipo.`
+            content: `EcuaPred no se hace responsable por pérdidas indirectas, incidentales o consecuentes derivadas del uso de la plataforma. Nuestro servicio se proporciona "tal cual" sin garantías de ningún tipo.`
           },
           {
             title: "9. Contacto",
-            content: `Para consultas sobre estos términos puede contactarnos en info@predicciones-ecuador.com`
+            content: `Para consultas sobre estos términos puede contactarnos en info@ecuapred.com`
           },
         ].map((section) => (
           <div key={section.title} className="space-y-3">

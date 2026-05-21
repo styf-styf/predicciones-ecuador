@@ -25,7 +25,7 @@ export default function Header() {
     const token = localStorage.getItem("token");
     if (!token) { setIsLogged(false); setIsAdmin(false); setPoints(null); return; }
     try {
-      const res = await fetch("https://predicciones-ecuador.onrender.com/me", {
+      const res = await fetch("https://api.ecuapred.com/me", {
         headers: { authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error();
@@ -44,7 +44,7 @@ export default function Header() {
     const token = localStorage.getItem("token");
     if (!token) { setNotifications([]); return; }
     try {
-      const res = await fetch("https://predicciones-ecuador.onrender.com/notifications", {
+      const res = await fetch("https://api.ecuapred.com/notifications", {
         headers: { authorization: `Bearer ${token}` },
       });
       if (!res.ok) { setNotifications([]); return; }
@@ -58,7 +58,7 @@ export default function Header() {
     if (q.trim() === "") { setSearchResults([]); setShowResults(false); return; }
     const token = localStorage.getItem("token");
     const res = await fetch(
-      `https://predicciones-ecuador.onrender.com/markets/search?q=${encodeURIComponent(q)}`,
+      `https://api.ecuapred.com/markets/search?q=${encodeURIComponent(q)}`,
       { headers: token ? { authorization: `Bearer ${token}` } : {} }
     );
     const data = await res.json();
@@ -86,8 +86,8 @@ export default function Header() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     const url = token
-      ? `https://predicciones-ecuador.onrender.com/events?token=${token}`
-      : "https://predicciones-ecuador.onrender.com/events";
+      ? `https://api.ecuapred.com/events?token=${token}`
+      : "https://api.ecuapred.com/events";
     const es = new EventSource(url);
     es.addEventListener("notifications", () => loadNotifications());
     es.addEventListener("bets", () => loadMe());
@@ -111,7 +111,7 @@ export default function Header() {
         <Link href="/" className="flex items-center gap-2 sm:gap-3 min-w-0">
           <div className="h-9 w-9 sm:h-9 sm:w-9 shrink-0 rounded-2xl bg-emerald-500 grid place-items-center font-bold text-slate-950 text-sm sm:text-base">P</div>
           <div className="min-w-0 hidden sm:block">
-            <h1 className="text-base sm:text-lg font-bold leading-tight truncate">Predicciones Ecuador</h1>
+            <h1 className="text-base sm:text-lg font-bold leading-tight truncate">EcuaPred</h1>
             <p className="text-[10px] sm:text-xs text-slate-400 hidden sm:block">Mercados predictivos en tiempo real</p>
           </div>
         </Link>
@@ -171,7 +171,7 @@ export default function Header() {
                 if (next) {
                   await loadNotifications();
                   const token = localStorage.getItem("token");
-                  await fetch("https://predicciones-ecuador.onrender.com/notifications/read", {
+                  await fetch("https://api.ecuapred.com/notifications/read", {
                     method: "PUT", headers: { authorization: `Bearer ${token}` || "" },
                   });
                   setNotifications((prev: any) => prev.map((n: any) => ({ ...n, read: true })));

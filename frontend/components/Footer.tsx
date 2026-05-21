@@ -4,7 +4,7 @@ export default function Footer() {
     <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-500 dark:text-slate-400 text-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-2">
         <p className="font-semibold text-slate-700 dark:text-white">
-          Predicciones Ecuador 🇪🇨
+          EcuaPred 🇪🇨
         </p>
         <p className="text-xs">
           © {new Date().getFullYear()} Todos los derechos reservados

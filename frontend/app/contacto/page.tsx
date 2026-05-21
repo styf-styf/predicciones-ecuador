@@ -48,7 +48,7 @@ export default function ContactoPage() {
         {/* Info cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
-            { icon: <Mail size={18} />, title: "Email", desc: "info@predicciones-ecuador.com", color: "text-blue-500" },
+            { icon: <Mail size={18} />, title: "Email", desc: "info@ecuapred.com", color: "text-blue-500" },
             { icon: <MessageSquare size={18} />, title: "Soporte", desc: "Completa el formulario y te respondemos", color: "text-emerald-500" },
             { icon: <Clock size={18} />, title: "Horario", desc: "Lunes a Viernes · 9:00 - 18:00", color: "text-amber-500" },
           ].map((item) => (

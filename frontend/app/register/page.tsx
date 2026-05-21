@@ -155,7 +155,7 @@ export default function RegisterPage() {
       <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800">
         <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <div className="h-8 w-8 rounded-xl bg-emerald-500 grid place-items-center font-bold text-slate-950 text-sm">P</div>
-          <span className="font-bold text-sm sm:text-base">Predicciones Ecuador</span>
+          <span className="font-bold text-sm sm:text-base">EcuaPred</span>
         </Link>
         <ThemeToggle />
       </div>
@@ -166,7 +166,7 @@ export default function RegisterPage() {
         {/* Izquierda — branding */}
         <div className="hidden lg:flex flex-col items-center justify-center bg-emerald-500 px-10 py-8 text-slate-950">
           <div className="h-14 w-14 rounded-2xl bg-slate-950/10 grid place-items-center font-bold text-slate-950 text-3xl mb-4">P</div>
-          <h1 className="text-2xl font-bold text-center">Predicciones Ecuador</h1>
+          <h1 className="text-2xl font-bold text-center">EcuaPred</h1>
           <p className="text-slate-950/70 text-center mt-1 text-sm">Mercados predictivos en tiempo real</p>
           <div className="mt-6 space-y-2 w-full max-w-xs">
             {FEATURES.map((item) => (
@@ -185,7 +185,7 @@ export default function RegisterPage() {
             <div className="text-center mb-4">
               <div className="h-12 w-12 rounded-2xl bg-emerald-500 grid place-items-center font-bold text-slate-950 text-xl mx-auto mb-2 lg:hidden">P</div>
               <h2 className="text-xl font-bold">Crear cuenta</h2>
-              <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">Únete a Predicciones Ecuador</p>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">Únete a EcuaPred</p>
             </div>
 
             <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl">

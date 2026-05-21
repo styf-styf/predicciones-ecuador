@@ -9,7 +9,7 @@ export default function PrivacidadPage() {
         <div className="border-b border-slate-200 dark:border-slate-800 pb-6">
           <p className="text-xs text-slate-400 uppercase tracking-widest mb-2">Documento legal</p>
           <h1 className="text-3xl font-bold">Política de Privacidad</h1>
-          <p className="text-sm text-slate-400 mt-2">Última actualización: enero 2025 · Predicciones Ecuador</p>
+          <p className="text-sm text-slate-400 mt-2">Última actualización: enero 2025 · EcuaPred</p>
         </div>
 
         {[
@@ -39,7 +39,7 @@ export default function PrivacidadPage() {
           },
           {
             title: "7. Sus derechos",
-            content: `Usted tiene derecho a acceder, corregir o eliminar su información personal. Puede actualizar sus datos directamente desde la sección de Perfil en su panel de usuario. Para solicitudes adicionales puede contactarnos en info@predicciones-ecuador.com`
+            content: `Usted tiene derecho a acceder, corregir o eliminar su información personal. Puede actualizar sus datos directamente desde la sección de Perfil en su panel de usuario. Para solicitudes adicionales puede contactarnos en info@ecuapred.com`
           },
           {
             title: "8. Cambios a esta política",
@@ -47,7 +47,7 @@ export default function PrivacidadPage() {
           },
           {
             title: "9. Contacto",
-            content: `Si tiene preguntas sobre esta política de privacidad o sobre el manejo de sus datos personales, contáctenos en info@predicciones-ecuador.com`
+            content: `Si tiene preguntas sobre esta política de privacidad o sobre el manejo de sus datos personales, contáctenos en info@ecuapred.com`
           },
         ].map((section) => (
           <div key={section.title} className="space-y-3">

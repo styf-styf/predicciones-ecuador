@@ -204,6 +204,7 @@ app.post("/auth/google", async (req, res) => {
 
       if (error) return res.status(500).json({ message: error.message });
       user = newUser;
+      emailBienvenida({ nombre: given_name, email });
     }
 
     if (user.provider === "local") {
@@ -1402,7 +1403,7 @@ async function procesarPagoPayphone(clientTransactionId, payphoneId) {
 app.get("/payphone/callback", async (req, res) => {
   const { clientTransactionId, id } = req.query;
   if (!id) {
-    return res.redirect("https://predicciones-ecuador.vercel.app/panel?status=cancelado");
+    return res.redirect("https://ecuapred.com/panel?status=cancelado");
   }
 
   try {
@@ -1452,14 +1453,14 @@ app.get("/payphone/callback", async (req, res) => {
 
     if (!transaction) {
       console.log("No se pudo encontrar ni crear la transacción");
-      return res.redirect("https://predicciones-ecuador.vercel.app/panel?status=exitoso");
+      return res.redirect("https://ecuapred.com/panel?status=exitoso");
     }
 
     await procesarPagoPayphone(transaction.reference, String(id));
-    return res.redirect("https://predicciones-ecuador.vercel.app/panel?status=exitoso");
+    return res.redirect("https://ecuapred.com/panel?status=exitoso");
   } catch (err) {
     console.error("Error procesando pago:", err);
-    return res.redirect("https://predicciones-ecuador.vercel.app/panel?status=exitoso");
+    return res.redirect("https://ecuapred.com/panel?status=exitoso");
   }
 });
 
@@ -1746,7 +1747,7 @@ app.put("/admin/news-suggestions/:id", async (req, res) => {
 
   if (action === "approve_resolve" && suggestion.resolves_market_id) {
     // Reutiliza la lógica de resolución llamando internamente
-    const resolveRes = await fetch(`https://predicciones-ecuador.onrender.com/admin/resolve/${suggestion.resolves_market_id}`, {
+    const resolveRes = await fetch(`https://api.ecuapred.com/admin/resolve/${suggestion.resolves_market_id}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -2727,5 +2728,5 @@ scheduler.init({
 scheduler.startScheduler();
 
 app.listen(4000, () => {
-  console.log("Servidor en https://predicciones-ecuador.onrender.com");
+  console.log("Servidor en https://api.ecuapred.com");
 });
