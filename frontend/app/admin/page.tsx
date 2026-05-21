@@ -26,7 +26,7 @@ function Toast({ message, type, onClose }: { message: string; type: "success" | 
     }`}>
       <span>{type === "success" ? "✅" : type === "error" ? "❌" : "ℹ️"}</span>
       <span>{message}</span>
-      <button onClick={onClose} className="ml-2 opacity-50 hover:opacity-100"><X size={13} /></button>
+      <button onClick={onClose} className="ml-2 opacity-50 hover:opacity-100 cursor-pointer"><X size={13} /></button>
     </div>
   );
 }
@@ -42,10 +42,10 @@ function ConfirmModal({ title, description, confirmLabel = "Confirmar", danger =
         <h3 className="text-[15px] font-bold text-slate-900 dark:text-white mb-1">{title}</h3>
         {description && <p className="text-[13px] text-slate-500 dark:text-white/40 mb-5">{description}</p>}
         <div className="flex gap-2 mt-5">
-          <button onClick={onCancel} className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-white/[0.08] text-[13px] text-slate-600 dark:text-white/50 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition">
+          <button onClick={onCancel} className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-white/[0.08] text-[13px] text-slate-600 dark:text-white/50 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition cursor-pointer">
             Cancelar
           </button>
-          <button onClick={onConfirm} className={`flex-1 py-2.5 rounded-xl text-[13px] font-bold transition ${
+          <button onClick={onConfirm} className={`flex-1 py-2.5 rounded-xl text-[13px] font-bold transition cursor-pointer ${
             danger ? "bg-rose-500 hover:bg-rose-400 text-white" : "bg-emerald-500 hover:bg-emerald-400 text-black"
           }`}>
             {confirmLabel}
@@ -70,12 +70,12 @@ function PaginationBar({ page, totalPages, setPage }: { page: number; totalPages
   return (
     <div className="flex items-center justify-center gap-2 py-3 border-t border-slate-100 dark:border-white/[0.04]">
       <button onClick={() => setPage(page - 1)} disabled={page === 1}
-        className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/[0.08] text-[12px] text-slate-500 dark:text-white/40 disabled:opacity-30 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition">
+        className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/[0.08] text-[12px] text-slate-500 dark:text-white/40 disabled:opacity-30 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition cursor-pointer">
         ← Anterior
       </button>
       <span className="text-[12px] text-slate-400 dark:text-white/30 tabular-nums">{page} / {totalPages}</span>
       <button onClick={() => setPage(page + 1)} disabled={page === totalPages}
-        className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/[0.08] text-[12px] text-slate-500 dark:text-white/40 disabled:opacity-30 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition">
+        className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/[0.08] text-[12px] text-slate-500 dark:text-white/40 disabled:opacity-30 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition cursor-pointer">
         Siguiente →
       </button>
     </div>
@@ -690,7 +690,7 @@ export default function AdminPage() {
 
       {/* SIDEBAR */}
       {sidebarOpen && (
-        <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden cursor-pointer" onClick={() => setSidebarOpen(false)} />
       )}
 
       <aside className={`fixed top-0 left-0 h-screen w-60 bg-white dark:bg-[#111111] border-r border-slate-200 dark:border-white/[0.06] z-50 flex flex-col transition-transform duration-200 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}>
@@ -702,7 +702,7 @@ export default function AdminPage() {
               <p className="text-[9px] text-slate-400 dark:text-white/30 tracking-widest uppercase">Admin Console</p>
             </div>
           </div>
-          <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-slate-400 hover:text-slate-700 dark:text-white/30 dark:hover:text-white">
+          <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-slate-400 hover:text-slate-700 dark:text-white/30 dark:hover:text-white cursor-pointer">
             <X size={14} />
           </button>
         </div>
@@ -712,7 +712,7 @@ export default function AdminPage() {
             <button
               key={item.id}
               onClick={() => { setActiveSection(item.id as Section); setSidebarOpen(false); }}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left transition-all duration-150 ${
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left transition-all duration-150 cursor-pointer ${
                 activeSection === item.id
                   ? "bg-slate-100 dark:bg-white/[0.08] text-slate-900 dark:text-white"
                   : "text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/70 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
@@ -747,7 +747,7 @@ export default function AdminPage() {
 
         {/* Topbar */}
         <header className="sticky top-0 z-30 bg-slate-50/80 dark:bg-[#0a0a0a]/80 backdrop-blur border-b border-slate-200 dark:border-white/[0.06] px-4 sm:px-6 py-3 flex items-center gap-4">
-          <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-slate-400 hover:text-slate-700 dark:text-white/40 dark:hover:text-white">
+          <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-slate-400 hover:text-slate-700 dark:text-white/40 dark:hover:text-white cursor-pointer">
             <LayoutDashboard size={18} />
           </button>
 
@@ -766,13 +766,13 @@ export default function AdminPage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="bg-transparent outline-none w-full text-[12px] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20"
               />
-              {searchQuery && <button onClick={() => setSearchQuery("")}><X size={12} className="text-slate-400 dark:text-white/30" /></button>}
+              {searchQuery && <button onClick={() => setSearchQuery("")} className="cursor-pointer"><X size={12} className="text-slate-400 dark:text-white/30" /></button>}
             </div>
             {globalResults.length > 0 && (
               <div className="absolute top-full mt-1.5 left-0 right-0 bg-white dark:bg-[#1a1a1a] border border-slate-200 dark:border-white/[0.08] rounded-xl shadow-xl z-50 overflow-hidden">
                 {globalResults.map((r, i) => (
                   <button key={i} onClick={() => { setActiveSection(r.section); setSearchQuery(""); }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition text-left">
+                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition text-left cursor-pointer">
                     <span className="text-base shrink-0">{r.icon}</span>
                     <div className="min-w-0">
                       <p className="text-[12px] text-slate-800 dark:text-white/80 truncate font-medium">{r.label}</p>
@@ -909,7 +909,7 @@ export default function AdminPage() {
               <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl">
                 <div className="px-5 py-4 border-b border-slate-100 dark:border-white/[0.06] flex items-center justify-between">
                   <p className="text-[12px] font-semibold text-slate-700 dark:text-white/70">Transacciones pendientes</p>
-                  <button onClick={() => setActiveSection("transacciones")} className="text-[11px] text-slate-400 dark:text-white/25 hover:text-slate-600 dark:hover:text-white/50 transition flex items-center gap-1">
+                  <button onClick={() => setActiveSection("transacciones")} className="text-[11px] text-slate-400 dark:text-white/25 hover:text-slate-600 dark:hover:text-white/50 transition flex items-center gap-1 cursor-pointer">
                     Ver todas <ChevronRight size={11} />
                   </button>
                 </div>
@@ -997,7 +997,7 @@ export default function AdminPage() {
                   <div className="flex items-center gap-1 bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-lg p-1">
                     {(["activos", "todos", "resueltos"] as const).map((f) => (
                       <button key={f} onClick={() => setMarketFilter(f)}
-                        className={`px-3 py-1.5 rounded-md text-[11px] font-medium transition capitalize ${marketFilter === f ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/70"}`}>
+                        className={`px-3 py-1.5 rounded-md text-[11px] font-medium transition capitalize cursor-pointer ${marketFilter === f ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/70"}`}>
                         {f}
                       </button>
                     ))}
@@ -1005,7 +1005,7 @@ export default function AdminPage() {
                   <div className="flex items-center gap-1 bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-lg p-1 overflow-x-auto max-w-[calc(100vw-2rem)] scrollbar-none">
                     {(["todas", "deporte", "farandula", "politica", "elecciones", "pais", "general"] as const).map((c) => (
                       <button key={c} onClick={() => setMarketCategoryFilter(c)}
-                        className={`shrink-0 px-3 py-1.5 rounded-md text-[11px] font-medium transition capitalize ${marketCategoryFilter === c ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/70"}`}>
+                        className={`shrink-0 px-3 py-1.5 rounded-md text-[11px] font-medium transition capitalize cursor-pointer ${marketCategoryFilter === c ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/70"}`}>
                         {c === "farandula" ? "Farándula" : c === "politica" ? "Política" : c.charAt(0).toUpperCase() + c.slice(1)}
                       </button>
                     ))}
@@ -1036,7 +1036,7 @@ export default function AdminPage() {
                         className="w-full bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-4 py-2.5 outline-none text-[13px] text-slate-900 dark:text-white focus:border-emerald-500/60 transition" />
                     </div>
                     <div className="flex items-end">
-                      <button onClick={handleCreateMarket} className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg px-5 py-2.5 text-[13px] transition active:scale-95">Crear</button>
+                      <button onClick={handleCreateMarket} className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg px-5 py-2.5 text-[13px] transition active:scale-95 cursor-pointer">Crear</button>
                     </div>
                   </div>
                 </div>
@@ -1155,11 +1155,11 @@ export default function AdminPage() {
                               </button>
                               {editingMarket?.id === m.id ? (
                                 <>
-                                  <button onClick={handleEditMarket} className="text-[10px] bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 px-2.5 py-1 rounded-md transition">✓</button>
-                                  <button onClick={() => setEditingMarket(null)} className="text-[10px] bg-slate-100 dark:bg-white/[0.04] text-slate-500 dark:text-white/30 border border-slate-200 dark:border-white/[0.08] px-2 py-1 rounded-md transition">✕</button>
+                                  <button onClick={handleEditMarket} className="text-[10px] bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 px-2.5 py-1 rounded-md transition cursor-pointer">✓</button>
+                                  <button onClick={() => setEditingMarket(null)} className="text-[10px] bg-slate-100 dark:bg-white/[0.04] text-slate-500 dark:text-white/30 border border-slate-200 dark:border-white/[0.08] px-2 py-1 rounded-md transition cursor-pointer">✕</button>
                                 </>
                               ) : (
-                                <button onClick={() => setEditingMarket({ id: m.id, question: m.question, closes_at: m.closes_at || "" })} className="text-[10px] bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-500/20 border border-amber-200 dark:border-amber-500/20 px-2.5 py-1 rounded-md transition">✏️</button>
+                                <button onClick={() => setEditingMarket({ id: m.id, question: m.question, closes_at: m.closes_at || "" })} className="text-[10px] bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-500/20 border border-amber-200 dark:border-amber-500/20 px-2.5 py-1 rounded-md transition cursor-pointer">✏️</button>
                               )}
                              
                             </>
@@ -1197,15 +1197,15 @@ export default function AdminPage() {
             className="w-full bg-slate-100 dark:bg-white/[0.06] border border-emerald-500/40 rounded-lg px-2 py-1.5 text-[11px] outline-none text-slate-900 dark:text-white"
           />
           <div className="flex gap-1.5">
-            <button onClick={handleEditMarket} className="flex-1 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-[11px] font-bold">✓ Guardar</button>
-            <button onClick={() => setEditingMarket(null)} className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-white/[0.04] text-slate-500 dark:text-white/30 border border-slate-200 dark:border-white/[0.08] text-[11px]">✕</button>
+            <button onClick={handleEditMarket} className="flex-1 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-[11px] font-bold cursor-pointer">✓ Guardar</button>
+            <button onClick={() => setEditingMarket(null)} className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-white/[0.04] text-slate-500 dark:text-white/30 border border-slate-200 dark:border-white/[0.08] text-[11px] cursor-pointer">✕</button>
           </div>
         </div>
       ) : (
         <div className="flex gap-1.5">
-          <button onClick={() => resolveMarket(m.id, "yes")} className="flex-1 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-[11px] font-bold">Sí gana</button>
-          <button onClick={() => resolveMarket(m.id, "no")} className="flex-1 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 text-[11px] font-bold">No gana</button>
-          <button onClick={() => setEditingMarket({ id: m.id, question: m.question, closes_at: m.closes_at || "" })} className="px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 text-[11px]">✏️</button>
+          <button onClick={() => resolveMarket(m.id, "yes")} className="flex-1 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-[11px] font-bold cursor-pointer">Sí gana</button>
+          <button onClick={() => resolveMarket(m.id, "no")} className="flex-1 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 text-[11px] font-bold cursor-pointer">No gana</button>
+          <button onClick={() => setEditingMarket({ id: m.id, question: m.question, closes_at: m.closes_at || "" })} className="px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 text-[11px] cursor-pointer">✏️</button>
         </div>
       )}
     </>
@@ -1227,7 +1227,7 @@ export default function AdminPage() {
       >
         {m.archived ? "📂 Restaurar" : "🗄️ Archivar"}
       </button>
-      <button onClick={() => handleDeleteMarket(m.id)} className="px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 text-[11px]">🗑️</button>
+      <button onClick={() => handleDeleteMarket(m.id)} className="px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 text-[11px] cursor-pointer">🗑️</button>
     </div>
   )}
 </div>
@@ -1279,12 +1279,12 @@ export default function AdminPage() {
                           <input type="number" placeholder="0" value={pointsInput[u.id] || ""}
                             onChange={(e) => setPointsInput((prev) => ({ ...prev, [u.id]: e.target.value }))}
                             className="w-14 bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-md px-2 py-1 text-[11px] outline-none text-slate-900 dark:text-white text-center" />
-                          <button onClick={() => handlePoints(u.id, parseFloat(pointsInput[u.id] || "0"), u.email)} className="p-1 rounded-md bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-500/30 transition"><Plus size={11} /></button>
-                          <button onClick={() => handlePoints(u.id, -parseFloat(pointsInput[u.id] || "0"), u.email)} className="p-1 rounded-md bg-rose-100 dark:bg-rose-500/20 text-rose-500 dark:text-rose-400 hover:bg-rose-200 dark:hover:bg-rose-500/30 transition"><Minus size={11} /></button>
+                          <button onClick={() => handlePoints(u.id, parseFloat(pointsInput[u.id] || "0"), u.email)} className="p-1 rounded-md bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-500/30 transition cursor-pointer"><Plus size={11} /></button>
+                          <button onClick={() => handlePoints(u.id, -parseFloat(pointsInput[u.id] || "0"), u.email)} className="p-1 rounded-md bg-rose-100 dark:bg-rose-500/20 text-rose-500 dark:text-rose-400 hover:bg-rose-200 dark:hover:bg-rose-500/30 transition cursor-pointer"><Minus size={11} /></button>
                         </div>
                         <div className="col-span-2 flex justify-end gap-1.5">
-                          <button onClick={() => handleChangeRole(u.id, u.role)} className="p-1.5 rounded-md bg-amber-50 dark:bg-amber-500/10 text-amber-500 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition"><ShieldCheck size={12} /></button>
-                          <button onClick={() => handleSuspend(u.id, !u.suspended)} className={`p-1.5 rounded-md transition ${u.suspended ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400"}`}><ShieldOff size={12} /></button>
+                          <button onClick={() => handleChangeRole(u.id, u.role)} className="p-1.5 rounded-md bg-amber-50 dark:bg-amber-500/10 text-amber-500 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition cursor-pointer"><ShieldCheck size={12} /></button>
+                          <button onClick={() => handleSuspend(u.id, !u.suspended)} className={`p-1.5 rounded-md transition cursor-pointer ${u.suspended ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400"}`}><ShieldOff size={12} /></button>
                         </div>
                       </div>
                       {/* Mobile */}
@@ -1306,11 +1306,11 @@ export default function AdminPage() {
                           <input type="number" placeholder="$" value={pointsInput[u.id] || ""}
                             onChange={(e) => setPointsInput((prev) => ({ ...prev, [u.id]: e.target.value }))}
                             className="w-16 bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-md px-2 py-1.5 text-[11px] outline-none text-slate-900 dark:text-white text-center" />
-                          <button onClick={() => handlePoints(u.id, parseFloat(pointsInput[u.id] || "0"), u.email)} className="p-1.5 rounded-md bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"><Plus size={12} /></button>
-                          <button onClick={() => handlePoints(u.id, -parseFloat(pointsInput[u.id] || "0"), u.email)} className="p-1.5 rounded-md bg-rose-100 dark:bg-rose-500/20 text-rose-500 dark:text-rose-400"><Minus size={12} /></button>
+                          <button onClick={() => handlePoints(u.id, parseFloat(pointsInput[u.id] || "0"), u.email)} className="p-1.5 rounded-md bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 cursor-pointer"><Plus size={12} /></button>
+                          <button onClick={() => handlePoints(u.id, -parseFloat(pointsInput[u.id] || "0"), u.email)} className="p-1.5 rounded-md bg-rose-100 dark:bg-rose-500/20 text-rose-500 dark:text-rose-400 cursor-pointer"><Minus size={12} /></button>
                           <div className="ml-auto flex gap-1.5">
-                            <button onClick={() => handleChangeRole(u.id, u.role)} className="p-1.5 rounded-md bg-amber-50 dark:bg-amber-500/10 text-amber-500 dark:text-amber-400"><ShieldCheck size={13} /></button>
-                            <button onClick={() => handleSuspend(u.id, !u.suspended)} className={`p-1.5 rounded-md ${u.suspended ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400"}`}><ShieldOff size={13} /></button>
+                            <button onClick={() => handleChangeRole(u.id, u.role)} className="p-1.5 rounded-md bg-amber-50 dark:bg-amber-500/10 text-amber-500 dark:text-amber-400 cursor-pointer"><ShieldCheck size={13} /></button>
+                            <button onClick={() => handleSuspend(u.id, !u.suspended)} className={`p-1.5 rounded-md cursor-pointer ${u.suspended ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400"}`}><ShieldOff size={13} /></button>
                           </div>
                         </div>
                       </div>
@@ -1345,7 +1345,7 @@ export default function AdminPage() {
                     ).length;
                     return (
                       <button key={t.id} onClick={() => setTxFilter(t.id)}
-                        className={`relative px-3 py-1.5 rounded-md text-[11px] font-medium transition ${txFilter === t.id ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/70"}`}>
+                        className={`relative px-3 py-1.5 rounded-md text-[11px] font-medium transition cursor-pointer ${txFilter === t.id ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/70"}`}>
                         {t.label}
                         {pending > 0 && (
                           <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center">{pending}</span>
@@ -1450,13 +1450,13 @@ export default function AdminPage() {
                                   <button
                                     onClick={() => handleTransactionStatus(tx.id, "aprobado", tx.user_id, tx.amount, tx)}
                                     disabled={loadingAction === `tx-${tx.id}`}
-                                    className="p-1.5 rounded-md bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition text-[10px] font-bold disabled:opacity-40"
+                                    className="p-1.5 rounded-md bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition text-[10px] font-bold disabled:opacity-40 cursor-pointer"
                                     title="Aprobar"
                                   >{loadingAction === `tx-${tx.id}` ? "..." : "✓"}</button>
                                   <button
                                     onClick={() => handleTransactionStatus(tx.id, "rechazado", tx.user_id, tx.amount, tx)}
                                     disabled={loadingAction === `tx-${tx.id}`}
-                                    className="p-1.5 rounded-md bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 transition text-[10px] font-bold disabled:opacity-40"
+                                    className="p-1.5 rounded-md bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 transition text-[10px] font-bold disabled:opacity-40 cursor-pointer"
                                     title="Rechazar"
                                   >{loadingAction === `tx-${tx.id}` ? "..." : "✕"}</button>
                                 </>
@@ -1497,12 +1497,12 @@ export default function AdminPage() {
                               <button
                                 onClick={() => handleTransactionStatus(tx.id, "aprobado", tx.user_id, tx.amount, tx)}
                                 disabled={loadingAction === `tx-${tx.id}`}
-                                className="flex-1 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-[11px] font-bold disabled:opacity-40"
+                                className="flex-1 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-[11px] font-bold disabled:opacity-40 cursor-pointer"
                               >{loadingAction === `tx-${tx.id}` ? "..." : "Aprobar"}</button>
                               <button
                                 onClick={() => handleTransactionStatus(tx.id, "rechazado", tx.user_id, tx.amount, tx)}
                                 disabled={loadingAction === `tx-${tx.id}`}
-                                className="flex-1 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 text-[11px] font-bold disabled:opacity-40"
+                                className="flex-1 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 text-[11px] font-bold disabled:opacity-40 cursor-pointer"
                               >{loadingAction === `tx-${tx.id}` ? "..." : "Rechazar"}</button>
                             </div>
                           )}
@@ -1639,11 +1639,11 @@ export default function AdminPage() {
                             <div className="flex gap-2">
                               <button
                                 onClick={() => applyNewQuestion(`s-${s.id}`, s.id, chatPending[`s-${s.id}`]!)}
-                                className="bg-emerald-500 hover:bg-emerald-400 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition"
+                                className="bg-emerald-500 hover:bg-emerald-400 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition cursor-pointer"
                               >✓ Aplicar</button>
                               <button
                                 onClick={() => setChatPending(prev => ({ ...prev, [`s-${s.id}`]: null }))}
-                                className="text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-white/60 px-2 py-1.5 transition"
+                                className="text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-white/60 px-2 py-1.5 transition cursor-pointer"
                               >Ignorar</button>
                             </div>
                           </div>
@@ -1660,7 +1660,7 @@ export default function AdminPage() {
                           <button
                             onClick={() => handleChat(`s-${s.id}`, s.id, { title: s.title, summary: s.summary, current_question: s.new_market_question, suggested_close_date: s.suggested_close_date, url: s.url })}
                             disabled={chatSending[`s-${s.id}`] || !chatInput[`s-${s.id}`]?.trim()}
-                            className="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-white px-3 py-2 rounded-lg text-[12px] font-bold transition shrink-0"
+                            className="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-white px-3 py-2 rounded-lg text-[12px] font-bold transition shrink-0 cursor-pointer"
                           >
                             {chatSending[`s-${s.id}`] ? "⏳" : "↑"}
                           </button>
@@ -1686,7 +1686,7 @@ export default function AdminPage() {
     <button
       onClick={() => handleSuggestion(s.id, "approve_market")}
       disabled={loadingAction === `suggestion-${s.id}-approve_market`}
-      className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 px-4 py-2 rounded-lg text-[12px] font-bold transition disabled:opacity-40"
+      className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 px-4 py-2 rounded-lg text-[12px] font-bold transition disabled:opacity-40 cursor-pointer"
     >
       {loadingAction === `suggestion-${s.id}-approve_market` ? "Creando..." : "✅ Crear mercado"}
     </button>
@@ -1696,7 +1696,7 @@ export default function AdminPage() {
                           <button
                             onClick={() => handleSuggestion(s.id, "approve_resolve")}
                             disabled={loadingAction === `suggestion-${s.id}-approve_resolve`}
-                            className="bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 hover:bg-blue-100 dark:hover:bg-blue-500/20 px-4 py-2 rounded-lg text-[12px] font-bold transition disabled:opacity-40"
+                            className="bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 hover:bg-blue-100 dark:hover:bg-blue-500/20 px-4 py-2 rounded-lg text-[12px] font-bold transition disabled:opacity-40 cursor-pointer"
                           >
                             {loadingAction === `suggestion-${s.id}-approve_resolve` ? "Resolviendo..." : "🔔 Resolver mercado"}
                           </button>
@@ -1704,7 +1704,7 @@ export default function AdminPage() {
                         <button
                           onClick={() => handleSuggestion(s.id, "reject")}
                           disabled={loadingAction === `suggestion-${s.id}-reject`}
-                          className="bg-slate-100 dark:bg-white/[0.04] text-slate-500 dark:text-white/30 border border-slate-200 dark:border-white/[0.08] hover:bg-slate-200 dark:hover:bg-white/[0.08] px-4 py-2 rounded-lg text-[12px] transition ml-auto disabled:opacity-40"
+                          className="bg-slate-100 dark:bg-white/[0.04] text-slate-500 dark:text-white/30 border border-slate-200 dark:border-white/[0.08] hover:bg-slate-200 dark:hover:bg-white/[0.08] px-4 py-2 rounded-lg text-[12px] transition ml-auto disabled:opacity-40 cursor-pointer"
                         >
                           Rechazar
                         </button>
@@ -1715,7 +1715,7 @@ export default function AdminPage() {
                             showToast("Sugerencia eliminada", "info");
                             fetchSuggestions();
                           }}
-                          className="bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 hover:bg-rose-100 dark:hover:bg-rose-500/20 px-4 py-2 rounded-lg text-[12px] transition"
+                          className="bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 hover:bg-rose-100 dark:hover:bg-rose-500/20 px-4 py-2 rounded-lg text-[12px] transition cursor-pointer"
                         >
                           🗑️ Eliminar
                         </button>
@@ -1731,7 +1731,7 @@ export default function AdminPage() {
                           showToast("Sugerencia eliminada", "info");
                           fetchSuggestions();
                         }}
-                        className="bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 hover:bg-rose-100 dark:hover:bg-rose-500/20 px-3 py-1.5 rounded-lg text-[11px] transition mt-2"
+                        className="bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 hover:bg-rose-100 dark:hover:bg-rose-500/20 px-3 py-1.5 rounded-lg text-[11px] transition mt-2 cursor-pointer"
                       >
                         🗑️ Eliminar
                       </button>
@@ -1858,15 +1858,15 @@ export default function AdminPage() {
                                     showToast("Error al actualizar", "error");
                                   }
                                 }}
-                                className="bg-emerald-500 hover:bg-emerald-400 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition"
+                                className="bg-emerald-500 hover:bg-emerald-400 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition cursor-pointer"
                               >✓ Aplicar como título</button>
                               <button
                                 onClick={() => { navigator.clipboard.writeText(chatPending[`n-${n.id}`]!); showToast("Copiado al portapapeles", "info"); }}
-                                className="bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-white/60 text-[11px] font-bold px-3 py-1.5 rounded-lg transition hover:bg-slate-200 dark:hover:bg-white/[0.1]"
+                                className="bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-white/60 text-[11px] font-bold px-3 py-1.5 rounded-lg transition hover:bg-slate-200 dark:hover:bg-white/[0.1] cursor-pointer"
                               >📋 Copiar</button>
                               <button
                                 onClick={() => setChatPending(prev => ({ ...prev, [`n-${n.id}`]: null }))}
-                                className="text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-white/60 px-2 py-1.5 transition"
+                                className="text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-white/60 px-2 py-1.5 transition cursor-pointer"
                               >Ignorar</button>
                             </div>
                           </div>
@@ -1883,7 +1883,7 @@ export default function AdminPage() {
                           <button
                             onClick={() => handleChat(`n-${n.id}`, n.id, { title: n.title, summary: n.content, current_question: null, url: n.url, mode: "news" })}
                             disabled={chatSending[`n-${n.id}`] || !chatInput[`n-${n.id}`]?.trim()}
-                            className="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-white px-3 py-2 rounded-lg text-[12px] font-bold transition shrink-0"
+                            className="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-white px-3 py-2 rounded-lg text-[12px] font-bold transition shrink-0 cursor-pointer"
                           >
                             {chatSending[`n-${n.id}`] ? "⏳" : "↑"}
                           </button>
@@ -1911,7 +1911,7 @@ export default function AdminPage() {
                             if (r1.ok && r2.ok) { showToast(`Mercado resuelto → ${n.resolves_as === "yes" ? "SÍ" : "NO"} ✅`, "success"); fetchMarketNews(); fetchMarkets(); }
                             else showToast("Error al aprobar", "error");
                           }}
-                          className={`flex-1 font-bold rounded-lg py-2 text-[12px] transition ${n.resolves_as === "yes" ? "bg-emerald-500 hover:bg-emerald-400 text-black" : "bg-rose-500 hover:bg-rose-400 text-white"}`}
+                          className={`flex-1 font-bold rounded-lg py-2 text-[12px] transition cursor-pointer ${n.resolves_as === "yes" ? "bg-emerald-500 hover:bg-emerald-400 text-black" : "bg-rose-500 hover:bg-rose-400 text-white"}`}
                         >
                           ✓ Aprobar y resolver → {n.resolves_as === "yes" ? "SÍ" : "NO"}
                         </button>
@@ -1934,7 +1934,7 @@ export default function AdminPage() {
                             if (r1.ok && r2.ok) { showToast(`Mercado resuelto → ${inverted === "yes" ? "SÍ" : "NO"} ✅`, "success"); fetchMarketNews(); fetchMarkets(); }
                             else showToast("Error al aprobar", "error");
                           }}
-                          className="px-4 py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] text-[12px] text-slate-500 dark:text-white/40 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition"
+                          className="px-4 py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] text-[12px] text-slate-500 dark:text-white/40 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition cursor-pointer"
                         >
                           ↔ Invertir
                         </button>
@@ -1948,7 +1948,7 @@ export default function AdminPage() {
                             });
                             showToast("Noticia rechazada", "info"); fetchMarketNews();
                           }}
-                          className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] text-[12px] text-slate-400 dark:text-white/25 hover:text-rose-500 transition"
+                          className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] text-[12px] text-slate-400 dark:text-white/25 hover:text-rose-500 transition cursor-pointer"
                         >✕</button>
                       </div>
                     )}
@@ -1982,7 +1982,7 @@ export default function AdminPage() {
                               if (res.ok) { showToast("Noticia aprobada ✅", "success"); fetchMarketNews(); }
                               else showToast(data.message, "error");
                             }}
-                            className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 px-4 py-2 rounded-lg text-[12px] font-bold transition"
+                            className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 px-4 py-2 rounded-lg text-[12px] font-bold transition cursor-pointer"
                           >
                             ✅ Aprobar
                           </button>
@@ -1996,7 +1996,7 @@ export default function AdminPage() {
                               });
                               if (res.ok) { showToast("Noticia rechazada", "info"); fetchMarketNews(); }
                             }}
-                            className="bg-slate-100 dark:bg-white/[0.04] text-slate-500 dark:text-white/30 border border-slate-200 dark:border-white/[0.08] hover:bg-slate-200 dark:hover:bg-white/[0.08] px-4 py-2 rounded-lg text-[12px] transition"
+                            className="bg-slate-100 dark:bg-white/[0.04] text-slate-500 dark:text-white/30 border border-slate-200 dark:border-white/[0.08] hover:bg-slate-200 dark:hover:bg-white/[0.08] px-4 py-2 rounded-lg text-[12px] transition cursor-pointer"
                           >
                             Rechazar
                           </button>
@@ -2007,7 +2007,7 @@ export default function AdminPage() {
                               showToast("Noticia eliminada", "info");
                               fetchMarketNews();
                             }}
-                            className="bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 hover:bg-rose-100 dark:hover:bg-rose-500/20 px-4 py-2 rounded-lg text-[12px] transition"
+                            className="bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 hover:bg-rose-100 dark:hover:bg-rose-500/20 px-4 py-2 rounded-lg text-[12px] transition cursor-pointer"
                           >
                             🗑️ Eliminar
                           </button>
@@ -2024,7 +2024,7 @@ export default function AdminPage() {
                           showToast("Noticia eliminada", "info");
                           fetchMarketNews();
                         }}
-                        className="bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 hover:bg-rose-100 dark:hover:bg-rose-500/20 px-3 py-1.5 rounded-lg text-[11px] transition mt-2"
+                        className="bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 hover:bg-rose-100 dark:hover:bg-rose-500/20 px-3 py-1.5 rounded-lg text-[11px] transition mt-2 cursor-pointer"
                       >
                         🗑️ Eliminar
                       </button>
@@ -2102,7 +2102,7 @@ export default function AdminPage() {
                                 if (res.ok) { showToast(c.hidden ? "Comentario visible" : "Comentario ocultado", "info"); fetchAdminComments(); }
                                 else showToast("Error", "error");
                               }}
-                              className="text-[10px] bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 hover:bg-amber-100 dark:hover:bg-amber-500/20 px-2 py-1 rounded-md transition"
+                              className="text-[10px] bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 hover:bg-amber-100 dark:hover:bg-amber-500/20 px-2 py-1 rounded-md transition cursor-pointer"
                             >
                               {c.hidden ? <Eye size={12} /> : <EyeOff size={12} />}
                             </button>
@@ -2122,7 +2122,7 @@ export default function AdminPage() {
                                   else showToast("Error al eliminar", "error");
                                 },
                               })}
-                              className="text-[10px] bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 hover:bg-rose-100 dark:hover:bg-rose-500/20 px-2 py-1 rounded-md transition"
+                              className="text-[10px] bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 hover:bg-rose-100 dark:hover:bg-rose-500/20 px-2 py-1 rounded-md transition cursor-pointer"
                             >
                               🗑️
                             </button>
@@ -2155,7 +2155,7 @@ export default function AdminPage() {
                                 if (res.ok) { showToast(c.hidden ? "Comentario visible" : "Comentario ocultado", "info"); fetchAdminComments(); }
                                 else showToast("Error", "error");
                               }}
-                              className="text-[11px] bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 px-3 py-1.5 rounded-lg"
+                              className="text-[11px] bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 px-3 py-1.5 rounded-lg cursor-pointer"
                             >
                               {c.hidden ? "Mostrar" : "Ocultar"}
                             </button>
@@ -2174,7 +2174,7 @@ export default function AdminPage() {
                                   else showToast("Error al eliminar", "error");
                                 },
                               })}
-                              className="text-[11px] bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 px-3 py-1.5 rounded-lg"
+                              className="text-[11px] bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 px-3 py-1.5 rounded-lg cursor-pointer"
                             >
                               Eliminar
                             </button>
@@ -2229,7 +2229,7 @@ export default function AdminPage() {
                           {!c.leido && (
                             <button
                               onClick={async () => { const token = localStorage.getItem("token"); await fetch(`https://api.ecuapred.com/admin/contactos/${c.id}/leido`, { method: "PUT", headers: { authorization: `Bearer ${token}` } }); fetchContactos(); showToast("Marcado como leído", "info"); }}
-                              className="text-[10px] bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/20 px-2 py-1 rounded-md transition"
+                              className="text-[10px] bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/20 px-2 py-1 rounded-md transition cursor-pointer"
                             >
                               Leído
                             </button>
@@ -2251,7 +2251,7 @@ export default function AdminPage() {
                         {!c.leido && (
                           <button
                             onClick={async () => { const token = localStorage.getItem("token"); await fetch(`https://api.ecuapred.com/admin/contactos/${c.id}/leido`, { method: "PUT", headers: { authorization: `Bearer ${token}` } }); fetchContactos(); showToast("Marcado como leído", "info"); }}
-                            className="text-[11px] bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 px-3 py-1.5 rounded-lg"
+                            className="text-[11px] bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 px-3 py-1.5 rounded-lg cursor-pointer"
                           >
                             Marcar leído
                           </button>
@@ -2343,7 +2343,7 @@ export default function AdminPage() {
                       if (res.ok) { setBotUrlInput(""); fetchBotUrls(); showToast("URL agregada ✅", "success"); }
                       else showToast(data.message || "Error", "error");
                     }}
-                    className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg px-4 py-2.5 text-[12px] transition shrink-0"
+                    className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg px-4 py-2.5 text-[12px] transition shrink-0 cursor-pointer"
                   >
                     + Agregar
                   </button>
@@ -2369,7 +2369,7 @@ export default function AdminPage() {
                             });
                             fetchBotUrls();
                           }}
-                          className="hover:opacity-70 transition"
+                          className="hover:opacity-70 transition cursor-pointer"
                           title={u.active ? "Pausar" : "Activar"}
                         >
                           {u.label || new URL(u.url).hostname.replace("www.", "")}
@@ -2384,7 +2384,7 @@ export default function AdminPage() {
                             fetchBotUrls();
                             showToast("URL eliminada", "info");
                           }}
-                          className="text-slate-400 dark:text-white/30 hover:text-rose-500 transition ml-0.5"
+                          className="text-slate-400 dark:text-white/30 hover:text-rose-500 transition ml-0.5 cursor-pointer"
                         >
                           <X size={11} />
                         </button>
@@ -2441,7 +2441,7 @@ export default function AdminPage() {
                         fetchBotSuggestions(); fetchBotStatus();
                         showToast(`Bot ejecutado · ${data.processed || 0} preguntas generadas`, "success");
                       }}
-                      className="bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-white/50 px-3 py-2 sm:py-1.5 rounded-lg text-[12px] transition disabled:opacity-40"
+                      className="bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-white/50 px-3 py-2 sm:py-1.5 rounded-lg text-[12px] transition disabled:opacity-40 cursor-pointer"
                     >
                       {botRunning ? "⏳ Ejecutando..." : "▶ Ejecutar ahora"}
                     </button>
@@ -2456,7 +2456,7 @@ export default function AdminPage() {
                         fetchBotStatus();
                         showToast("Ejecución detenida · El bot dejará de generar noticias", "error");
                       }}
-                      className="bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 px-3 py-2 sm:py-1.5 rounded-lg text-[12px] transition disabled:opacity-40"
+                      className="bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 px-3 py-2 sm:py-1.5 rounded-lg text-[12px] transition disabled:opacity-40 cursor-pointer"
                     >
                       ⏹ Parar ejecución
                     </button>
@@ -2479,7 +2479,7 @@ export default function AdminPage() {
                       const count = botSuggestions.filter(s => s.status === f.id).length;
                       return (
                         <button key={f.id} onClick={() => { setBotFilter(f.id); setBotPage(1); }}
-                          className={`relative px-3 py-1.5 rounded-md text-[11px] font-medium transition ${botFilter === f.id ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/70"}`}>
+                          className={`relative px-3 py-1.5 rounded-md text-[11px] font-medium transition cursor-pointer ${botFilter === f.id ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/70"}`}>
                           {f.label}
                           {count > 0 && f.id === "pending" && (
                             <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center">{count}</span>
@@ -2491,7 +2491,7 @@ export default function AdminPage() {
                   <div className="flex items-center gap-1 bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-lg p-1 overflow-x-auto max-w-[calc(100vw-2rem)] scrollbar-none">
                     {(["todas", "deporte", "farandula", "politica", "elecciones", "pais", "general"] as const).map((cat) => (
                       <button key={cat} onClick={() => { setBotCategoryFilter(cat); setBotPage(1); }}
-                        className={`shrink-0 px-3 py-1.5 rounded-md text-[11px] font-medium transition capitalize ${botCategoryFilter === cat ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/70"}`}>
+                        className={`shrink-0 px-3 py-1.5 rounded-md text-[11px] font-medium transition capitalize cursor-pointer ${botCategoryFilter === cat ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/70"}`}>
                         {cat === "todas" ? "Todas" : cat === "farandula" ? "Farándula" : cat === "politica" ? "Política" : cat.charAt(0).toUpperCase() + cat.slice(1)}
                       </button>
                     ))}
@@ -2611,13 +2611,13 @@ export default function AdminPage() {
                                   <div className="flex gap-2">
                                     <button
                                       onClick={() => applyNewQuestion(`b-${s.id}`, s.id, chatPending[`b-${s.id}`]!)}
-                                      className="bg-emerald-500 hover:bg-emerald-400 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition"
+                                      className="bg-emerald-500 hover:bg-emerald-400 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition cursor-pointer"
                                     >
                                       ✓ Aplicar
                                     </button>
                                     <button
                                       onClick={() => setChatPending(prev => ({ ...prev, [`b-${s.id}`]: null }))}
-                                      className="text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-white/60 px-2 py-1.5 transition"
+                                      className="text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-white/60 px-2 py-1.5 transition cursor-pointer"
                                     >
                                       Ignorar
                                     </button>
@@ -2638,7 +2638,7 @@ export default function AdminPage() {
                                 <button
                                   onClick={() => handleChat(`b-${s.id}`, s.id, { title: s.title, summary: s.summary, current_question: s.new_market_question, suggested_close_date: s.suggested_close_date, url: s.url })}
                                   disabled={chatSending[`b-${s.id}`] || !chatInput[`b-${s.id}`]?.trim()}
-                                  className="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-white px-3 py-2 rounded-lg text-[12px] font-bold transition shrink-0"
+                                  className="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-white px-3 py-2 rounded-lg text-[12px] font-bold transition shrink-0 cursor-pointer"
                                 >
                                   {chatSending[`b-${s.id}`] ? "⏳" : "↑"}
                                 </button>
@@ -2706,7 +2706,7 @@ export default function AdminPage() {
                               fetchBotSuggestions();
                               showToast("Eliminado", "info");
                             }}
-                            className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/[0.08] text-[12px] text-slate-400 dark:text-white/25 hover:text-rose-500 hover:border-rose-200 dark:hover:border-rose-500/20 transition"
+                            className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/[0.08] text-[12px] text-slate-400 dark:text-white/25 hover:text-rose-500 hover:border-rose-200 dark:hover:border-rose-500/20 transition cursor-pointer"
                           >
                             🗑️ Eliminar
                           </button>
@@ -2727,7 +2727,7 @@ export default function AdminPage() {
                                 if (res.ok) { showToast("Mercado creado ✅", "success"); fetchBotSuggestions(); fetchMarkets(); }
                                 else showToast(data.message || "Error", "error");
                               }}
-                              className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg py-2.5 sm:py-2 text-[12px] transition"
+                              className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg py-2.5 sm:py-2 text-[12px] transition cursor-pointer"
                             >
                               ✓ Crear mercado
                             </button>
@@ -2743,7 +2743,7 @@ export default function AdminPage() {
                                 });
                                 fetchBotSuggestions();
                               }}
-                              className="flex-1 sm:flex-none px-4 py-2.5 sm:py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] text-[12px] text-slate-500 dark:text-white/40 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-500 hover:border-rose-200 dark:hover:border-rose-500/20 transition"
+                              className="flex-1 sm:flex-none px-4 py-2.5 sm:py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] text-[12px] text-slate-500 dark:text-white/40 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-500 hover:border-rose-200 dark:hover:border-rose-500/20 transition cursor-pointer"
                             >
                               ✕ Rechazar
                             </button>
@@ -2757,7 +2757,7 @@ export default function AdminPage() {
                                 fetchBotSuggestions();
                                 showToast("Eliminado", "info");
                               }}
-                              className="px-3 py-2.5 sm:py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] text-[12px] text-slate-400 dark:text-white/25 hover:text-rose-500 transition"
+                              className="px-3 py-2.5 sm:py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] text-[12px] text-slate-400 dark:text-white/25 hover:text-rose-500 transition cursor-pointer"
                             >
                               🗑️
                             </button>
@@ -2772,13 +2772,13 @@ export default function AdminPage() {
                         <button
                           onClick={() => setBotPage(p => Math.max(1, p - 1))}
                           disabled={botPage === 1}
-                          className="px-3 py-1.5 rounded-md text-[11px] font-medium transition text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/70 disabled:opacity-30"
+                          className="px-3 py-1.5 rounded-md text-[11px] font-medium transition text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/70 disabled:opacity-30 cursor-pointer"
                         >← Anterior</button>
                         <span className="text-[11px] text-slate-400 dark:text-white/30">Página {botPage} de {totalPages}</span>
                         <button
                           onClick={() => setBotPage(p => Math.min(totalPages, p + 1))}
                           disabled={botPage === totalPages}
-                          className="px-3 py-1.5 rounded-md text-[11px] font-medium transition text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/70 disabled:opacity-30"
+                          className="px-3 py-1.5 rounded-md text-[11px] font-medium transition text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/70 disabled:opacity-30 cursor-pointer"
                         >Siguiente →</button>
                       </div>
                     )}
@@ -2852,7 +2852,7 @@ export default function AdminPage() {
                             });
                             fetchBankAccounts();
                           }}
-                          className={`text-[10px] px-2 py-0.5 rounded-md border transition ${bank.activo ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20" : "bg-slate-100 dark:bg-white/[0.04] text-slate-400 dark:text-white/30 border-slate-200 dark:border-white/[0.06]"}`}
+                          className={`text-[10px] px-2 py-0.5 rounded-md border transition cursor-pointer ${bank.activo ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20" : "bg-slate-100 dark:bg-white/[0.04] text-slate-400 dark:text-white/30 border-slate-200 dark:border-white/[0.06]"}`}
                         >
                           {bank.activo ? "Activo" : "Inactivo"}
                         </button>
@@ -2872,7 +2872,7 @@ export default function AdminPage() {
                               showToast("Banco eliminado", "info");
                             },
                           })}
-                          className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 transition"
+                          className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 transition cursor-pointer"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
                         </button>
@@ -2934,7 +2934,7 @@ export default function AdminPage() {
                         showToast(data.message || "Error al agregar", "error");
                       }
                     }}
-                    className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-black font-bold rounded-lg px-5 py-2 text-[12px] transition"
+                    className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-black font-bold rounded-lg px-5 py-2 text-[12px] transition cursor-pointer"
                   >
                     {savingBank ? "Guardando..." : "+ Agregar banco"}
                   </button>
@@ -2964,7 +2964,7 @@ export default function AdminPage() {
                       if (res.ok) { showToast("Token creado ✅", "success"); setNewTokenLabel(""); fetchExtensionTokens(); }
                       else showToast(data.message, "error");
                     }}
-                    className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg px-4 py-2 text-[12px] transition"
+                    className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg px-4 py-2 text-[12px] transition cursor-pointer"
                   >
                     Crear
                   </button>
@@ -2990,7 +2990,7 @@ export default function AdminPage() {
                             setCopiedTokenId(t.id);
                             setTimeout(() => setCopiedTokenId(null), 2000);
                           }}
-                          className="shrink-0 bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-white/40 hover:bg-slate-200 dark:hover:bg-white/[0.1] border border-slate-200 dark:border-white/[0.08] px-3 py-1.5 rounded-lg text-[11px] transition"
+                          className="shrink-0 bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-white/40 hover:bg-slate-200 dark:hover:bg-white/[0.1] border border-slate-200 dark:border-white/[0.08] px-3 py-1.5 rounded-lg text-[11px] transition cursor-pointer"
                         >
                           {copiedTokenId === t.id ? "✓ Copiado" : "Copiar"}
                         </button>
@@ -3003,7 +3003,7 @@ export default function AdminPage() {
                             });
                             if (res.ok) { showToast("Token eliminado", "info"); fetchExtensionTokens(); }
                           }}
-                          className="shrink-0 bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 border border-rose-200 dark:border-rose-500/20 px-3 py-1.5 rounded-lg text-[11px] transition"
+                          className="shrink-0 bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 border border-rose-200 dark:border-rose-500/20 px-3 py-1.5 rounded-lg text-[11px] transition cursor-pointer"
                         >
                           🗑️
                         </button>
@@ -3013,7 +3013,7 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              <button onClick={handleSaveSettings} className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl py-3 text-[13px] transition active:scale-[0.99]">
+              <button onClick={handleSaveSettings} className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl py-3 text-[13px] transition active:scale-[0.99] cursor-pointer">
                 Guardar configuración
               </button>
             </>

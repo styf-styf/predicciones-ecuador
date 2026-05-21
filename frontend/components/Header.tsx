@@ -157,7 +157,7 @@ export default function Header() {
         {/* Acciones */}
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Búsqueda móvil */}
-          <button onClick={() => setShowMobileSearch(!showMobileSearch)} className="sm:hidden p-2 rounded-xl bg-slate-200 dark:bg-slate-900 text-slate-900 dark:text-white">
+          <button onClick={() => setShowMobileSearch(!showMobileSearch)} className="sm:hidden p-2 rounded-xl bg-slate-200 dark:bg-slate-900 text-slate-900 dark:text-white cursor-pointer">
             <Search size={18} />
           </button>
           <ThemeToggle />
@@ -177,7 +177,7 @@ export default function Header() {
                   setNotifications((prev: any) => prev.map((n: any) => ({ ...n, read: true })));
                 }
               }}
-              className="p-2 rounded-xl bg-slate-100 dark:bg-slate-900 relative"
+              className="p-2 rounded-xl bg-slate-100 dark:bg-slate-900 relative cursor-pointer"
             >
               <Bell size={18} />
               {notifications.filter((n: any) => !n.read).length > 0 && (
@@ -190,7 +190,7 @@ export default function Header() {
               <div className="fixed sm:absolute left-4 right-4 sm:left-auto sm:right-0 top-20 sm:top-14 sm:w-96 max-h-[70vh] overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-3 z-50">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-bold text-sm">Notificaciones</h3>
-                  <button onClick={() => setShowNotifications(false)} className="text-xs text-slate-400 hover:text-white">Cerrar</button>
+                  <button onClick={() => setShowNotifications(false)} className="text-xs text-slate-400 hover:text-white cursor-pointer">Cerrar</button>
                 </div>
                 {notifications.length === 0 ? (
                   <p className="text-sm text-slate-400 py-6 text-center">No tienes notificaciones</p>

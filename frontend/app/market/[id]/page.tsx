@@ -48,7 +48,7 @@ function BetPanel({
   const radioButtons = (
     <div className="flex gap-6">
       {(["yes", "no"] as const).map((t) => (
-        <button key={t} onClick={() => setBetType(t)} className="flex items-center gap-2.5">
+        <button key={t} onClick={() => setBetType(t)} className="flex items-center gap-2.5 cursor-pointer">
           <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${betType === t ? (t === "yes" ? "border-emerald-500 bg-emerald-500" : "border-rose-500 bg-rose-500") : "border-slate-300 dark:border-slate-600"}`}>
             {betType === t && <div className="w-2 h-2 rounded-full bg-white" />}
           </div>
@@ -69,10 +69,10 @@ function BetPanel({
       <div className="flex gap-2 flex-wrap">
         {[1, 5, 10, 50].map((val) => (
           <button key={val} onClick={() => { const cur = parseFloat(amount) || 0; const max = points !== null ? points : Infinity; setAmount(String(Math.min(cur + val, max))); }}
-            className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700">+{val}</button>
+            className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700 cursor-pointer">+{val}</button>
         ))}
-        <button onClick={() => setAmount(String(points !== null ? points : 0))} className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700">Máx.</button>
-        {amount && <button onClick={() => setAmount("")} className="px-3 py-1.5 rounded-full text-xs font-medium bg-slate-200 dark:bg-slate-800 text-rose-500 dark:text-rose-400 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700">Borrar</button>}
+        <button onClick={() => setAmount(String(points !== null ? points : 0))} className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700 cursor-pointer">Máx.</button>
+        {amount && <button onClick={() => setAmount("")} className="px-3 py-1.5 rounded-full text-xs font-medium bg-slate-200 dark:bg-slate-800 text-rose-500 dark:text-rose-400 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700 cursor-pointer">Borrar</button>}
       </div>
     </div>
   );
@@ -575,12 +575,12 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
               )}
             </div>
             <div className="relative shrink-0">
-              <button onClick={handleShare} className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
+              <button onClick={handleShare} className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer">
                 <Share2 size={14} />
               </button>
               {showShare && (
                 <div className="absolute right-0 top-8 z-50 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl py-1 w-44">
-                  <button onClick={handleCopyLink} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                  <button onClick={handleCopyLink} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer">
                     <Link2 size={13} /> Copiar enlace
                   </button>
                   <a href={`https://wa.me/?text=${encodeURIComponent(`${market.question}\n${typeof window !== "undefined" ? window.location.href : ""}`)}`} target="_blank" rel="noopener noreferrer" onClick={() => setShowShare(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
@@ -796,7 +796,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
           {token ? (
             <div className="flex gap-2 mb-5">
               <input placeholder="Escribe un comentario..." value={newComment} onChange={(e) => setNewComment(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleComment(); }} className="flex-1 bg-slate-200 dark:bg-slate-800 rounded-xl px-4 py-2.5 text-sm outline-none placeholder-slate-500" />
-              <button onClick={handleComment} disabled={submitting} className="bg-purple-500 text-white px-4 rounded-xl disabled:opacity-50 hover:bg-purple-600 transition"><Send size={16} /></button>
+              <button onClick={handleComment} disabled={submitting} className="bg-purple-500 text-white px-4 rounded-xl disabled:opacity-50 hover:bg-purple-600 transition cursor-pointer"><Send size={16} /></button>
             </div>
           ) : (
             <div className="flex items-center justify-between gap-3 mb-5 p-4 bg-slate-200 dark:bg-slate-800 rounded-xl">
@@ -844,12 +844,12 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
                   )}
                 </div>
                 <div className="relative shrink-0 mt-1">
-                  <button onClick={handleShare} className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
+                  <button onClick={handleShare} className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer">
                     <Share2 size={15} />
                   </button>
                   {showShare && (
                     <div className="absolute right-0 top-10 z-50 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl py-1 w-44">
-                      <button onClick={handleCopyLink} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                      <button onClick={handleCopyLink} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer">
                         <Link2 size={13} /> Copiar enlace
                       </button>
                       <a href={`https://wa.me/?text=${encodeURIComponent(`${market.question}\n${typeof window !== "undefined" ? window.location.href : ""}`)}`} target="_blank" rel="noopener noreferrer" onClick={() => setShowShare(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
@@ -982,7 +982,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
             {token ? (
               <div className="flex gap-2 mb-5">
                 <input placeholder="Escribe un comentario..." value={newComment} onChange={(e) => setNewComment(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleComment(); }} className="flex-1 bg-slate-200 dark:bg-slate-800 rounded-xl px-4 py-2.5 text-sm outline-none placeholder-slate-500" />
-                <button onClick={handleComment} disabled={submitting} className="bg-purple-500 text-white px-4 rounded-xl disabled:opacity-50 hover:bg-purple-600 transition"><Send size={16} /></button>
+                <button onClick={handleComment} disabled={submitting} className="bg-purple-500 text-white px-4 rounded-xl disabled:opacity-50 hover:bg-purple-600 transition cursor-pointer"><Send size={16} /></button>
               </div>
             ) : (
               <div className="flex items-center justify-between gap-3 mb-5 p-4 bg-slate-200 dark:bg-slate-800 rounded-xl">

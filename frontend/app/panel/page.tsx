@@ -235,7 +235,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
         }`}>
           <span>{toast.type === "success" ? "✅" : toast.type === "error" ? "❌" : "ℹ️"}</span>
           <span>{toast.message}</span>
-          <button onClick={() => setToast(null)} className="ml-2 opacity-50 hover:opacity-100"><X size={13} /></button>
+          <button onClick={() => setToast(null)} className="ml-2 opacity-50 hover:opacity-100 cursor-pointer"><X size={13} /></button>
         </div>
       )}
 
@@ -335,7 +335,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="font-bold">Mis predicciones</h2>
-                  <button onClick={() => setShowBetsDetail(false)} className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">Cerrar</button>
+                  <button onClick={() => setShowBetsDetail(false)} className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">Cerrar</button>
                 </div>
                 {bets.length === 0 ? (
                   <p className="text-sm text-slate-400 text-center py-6">Aún no tienes predicciones</p>
@@ -379,7 +379,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-bold">Últimos movimientos</h2>
-                <button onClick={() => setTab("movimientos")} className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center gap-1">
+                <button onClick={() => setTab("movimientos")} className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center gap-1 cursor-pointer">
                   Ver todos <ChevronRight size={12} />
                 </button>
               </div>
@@ -746,7 +746,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
                     <div>
                       <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">Completa tu perfil</p>
                       <p className="text-xs text-amber-600 dark:text-amber-500 mt-1">Para retirar necesitas completar tu información personal. Ve a la pestaña Perfil.</p>
-                      <button onClick={() => setTab("perfil")} className="text-xs text-amber-700 dark:text-amber-400 font-semibold underline mt-2">
+                      <button onClick={() => setTab("perfil")} className="text-xs text-amber-700 dark:text-amber-400 font-semibold underline mt-2 cursor-pointer">
                         Ir a Perfil →
                       </button>
                     </div>
@@ -783,7 +783,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
                     <p className="text-sm font-medium">{user.nombre} {user.apellido}</p>
                     <p className="text-sm text-slate-400">Cédula: {user.cedula}</p>
                     <p className="text-sm text-slate-400">Celular: {user.celular}</p>
-                    <button onClick={() => setTab("perfil")} className="text-xs text-slate-400 hover:text-slate-600 underline">Editar información</button>
+                    <button onClick={() => setTab("perfil")} className="text-xs text-slate-400 hover:text-slate-600 underline cursor-pointer">Editar información</button>
                   </div>
                 )}
 
@@ -803,7 +803,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
     <div>
       <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">Completa tus datos bancarios</p>
       <p className="text-xs text-amber-600 dark:text-amber-500 mt-1">Para retirar necesitas agregar tu banco y número de cuenta en tu perfil.</p>
-      <button onClick={() => setTab("perfil")} className="text-xs text-amber-700 dark:text-amber-400 font-semibold underline mt-2">Ir a Perfil →</button>
+      <button onClick={() => setTab("perfil")} className="text-xs text-amber-700 dark:text-amber-400 font-semibold underline mt-2 cursor-pointer">Ir a Perfil →</button>
     </div>
   </div>
 )}
