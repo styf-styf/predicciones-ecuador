@@ -397,56 +397,111 @@ export default function MarketPage() {
   if (!market) return (
     <main className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
       <Header />
-      <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-        {/* Back */}
-        <div className="h-4 w-32 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+      <div className="max-w-4xl mx-auto px-4 py-6 space-y-5">
+        {/* Breadcrumb */}
+        <div className="h-4 w-28 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
 
-        {/* Header mercado */}
-        <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 space-y-4">
-          <div className="flex justify-between gap-3">
-            <div className="flex-1 space-y-2">
-              <div className="h-6 w-3/4 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
-              <div className="h-6 w-1/2 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+        {/* Header del mercado */}
+        <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 space-y-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 space-y-2.5">
+              <div className="h-5 w-16 rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse" />
+              <div className="h-6 w-full bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+              <div className="h-6 w-4/5 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
             </div>
             <div className="h-6 w-16 bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse shrink-0" />
           </div>
-          <div className="h-3 w-full bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse" />
-          <div className="flex justify-between">
-            <div className="h-4 w-16 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <div className="h-4 w-14 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+              <div className="h-4 w-14 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+            </div>
+            <div className="h-3 w-full bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse" />
+          </div>
+          <div className="flex gap-4">
+            <div className="h-4 w-20 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
             <div className="h-4 w-24 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
-            <div className="h-4 w-16 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+            <div className="h-4 w-20 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
           </div>
         </div>
 
-        {/* Apostar */}
-        <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-4">
-          <div className="h-5 w-36 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+        {/* Panel de apuesta */}
+        <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-4">
+          <div className="h-5 w-32 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
           <div className="grid grid-cols-2 gap-2">
             <div className="h-12 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
             <div className="h-12 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
           </div>
+          <div className="flex gap-2">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-8 flex-1 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse" />
+            ))}
+          </div>
           <div className="h-12 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
           <div className="h-12 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
         </div>
 
-        
-      
+        {/* Mejores apostadores */}
+        <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3">
+          <div className="h-5 w-40 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse shrink-0" />
+              <div className="flex-1 h-4 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+              <div className="h-4 w-14 bg-slate-200 dark:bg-slate-800 rounded animate-pulse shrink-0" />
+            </div>
+          ))}
+        </div>
 
         {/* Noticias */}
-        <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3">
-          <div className="h-5 w-44 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-16 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
+        <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3">
+          <div className="h-5 w-40 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="flex gap-3 p-3 rounded-xl bg-slate-100 dark:bg-slate-800/50">
+              <div className="h-14 w-14 rounded-lg bg-slate-200 dark:bg-slate-700 animate-pulse shrink-0" />
+              <div className="flex-1 space-y-2">
+                <div className="h-4 w-full bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                <div className="h-3 w-3/4 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+              </div>
+            </div>
           ))}
         </div>
 
         {/* Comentarios */}
-        <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3">
-          <div className="h-5 w-40 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
-          <div className="h-12 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
-          {[...Array(2)].map((_, i) => (
-            <div key={i} className="h-20 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
+        <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3">
+          <div className="h-5 w-36 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+          <div className="h-12 w-full bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="flex gap-3">
+              <div className="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse shrink-0" />
+              <div className="flex-1 space-y-2">
+                <div className="h-3.5 w-24 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+                <div className="h-4 w-full bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+                <div className="h-4 w-4/5 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+              </div>
+            </div>
           ))}
+        </div>
+
+        {/* Mercados relacionados */}
+        <div className="space-y-3">
+          <div className="h-5 w-44 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-3">
+                <div className="h-5 w-14 rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse" />
+                <div className="space-y-1.5">
+                  <div className="h-4 w-full bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+                  <div className="h-4 w-4/5 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+                </div>
+                <div className="h-2 w-full bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse" />
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="h-9 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
+                  <div className="h-9 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </main>

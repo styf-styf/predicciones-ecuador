@@ -87,6 +87,7 @@ export default function AdminPage() {
   const [points, setPoints] = useState<number | null>(null);
   const [isLogged, setIsLogged] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [loadingAdmin, setLoadingAdmin] = useState(true);
   const [newQuestion, setNewQuestion] = useState("");
   const [newCategory, setNewCategory] = useState("deporte");
   const [newClosesAt, setNewClosesAt] = useState("");
@@ -494,6 +495,7 @@ export default function AdminPage() {
       const data = await res.json();
       if (data.role !== "admin") { window.location.href = "/"; return; }
       setIsLogged(true); setIsAdmin(true); setPoints(data.points || 0);
+      setLoadingAdmin(false);
       fetchWinners(); fetchStats(); fetchUsers(); fetchSettings(); fetchCharts(); fetchTransactions(); fetchContactos(); fetchSuggestions(); fetchMarketNews(); fetchExtensionTokens(); fetchAdminComments(); fetchFinance(); fetchBotUrls(); fetchBotStatus(); fetchBotSuggestions(); fetchBankAccounts();
     } catch {
       localStorage.removeItem("token");
@@ -669,6 +671,55 @@ export default function AdminPage() {
     { id: "contacto", label: "Contacto", icon: <MessageSquare size={15} />, badge: contactos.filter(c => !c.leido).length },
     { id: "settings", label: "Configuración", icon: <Settings size={15} /> },
   ];
+
+  if (loadingAdmin) return (
+    <div className="h-screen bg-slate-50 dark:bg-[#0a0a0a] text-slate-900 dark:text-white flex" style={{ fontFamily: "'DM Mono', 'Fira Code', monospace" }}>
+      {/* Sidebar skeleton */}
+      <aside className="hidden lg:flex flex-col w-60 h-screen bg-white dark:bg-[#111111] border-r border-slate-200 dark:border-white/[0.06] p-4 gap-3 shrink-0">
+        <div className="h-10 w-32 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse mb-2" />
+        {[...Array(8)].map((_, i) => (
+          <div key={i} className="h-9 w-full bg-slate-100 dark:bg-white/[0.04] rounded-lg animate-pulse" />
+        ))}
+      </aside>
+      {/* Main skeleton */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Topbar */}
+        <div className="h-14 border-b border-slate-200 dark:border-white/[0.06] bg-white dark:bg-[#111111] px-6 flex items-center gap-4 shrink-0">
+          <div className="h-8 w-48 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse" />
+          <div className="ml-auto h-8 w-8 bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse" />
+        </div>
+        <main className="flex-1 overflow-y-auto p-6 space-y-5">
+          {/* KPIs */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-4 space-y-2.5">
+                <div className="h-3 w-16 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+                <div className="h-7 w-24 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+                <div className="h-3 w-20 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+              </div>
+            ))}
+          </div>
+          {/* Gráfica */}
+          <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-5 space-y-4">
+            <div className="h-5 w-40 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+            <div className="h-48 w-full bg-slate-100 dark:bg-white/[0.03] rounded-lg animate-pulse" />
+          </div>
+          {/* Tabla */}
+          <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 dark:border-white/[0.04]">
+              <div className="h-5 w-32 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+            </div>
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="px-5 py-4 border-b border-slate-100 dark:border-white/[0.03] last:border-0 flex items-center gap-4">
+                <div className="h-4 w-4/5 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+                <div className="h-5 w-16 bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse shrink-0 ml-auto" />
+              </div>
+            ))}
+          </div>
+        </main>
+      </div>
+    </div>
+  );
 
   return (
     <div className="h-screen overflow-hidden bg-slate-50 dark:bg-[#0a0a0a] text-slate-900 dark:text-white flex" style={{ fontFamily: "'DM Mono', 'Fira Code', monospace" }}>

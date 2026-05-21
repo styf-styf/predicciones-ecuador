@@ -310,26 +310,50 @@ function HomeSkeleton() {
   return (
     <main className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
       <Header />
-      <div className="sticky top-0 z-20 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md py-2.5 px-4">
-        <div className="flex gap-2">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-8 w-24 rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse shrink-0" />
+      {/* Barra de categorías */}
+      <div className="sticky top-0 z-20 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md py-2.5 px-4 border-b border-slate-100 dark:border-slate-900">
+        <div className="flex gap-2 overflow-hidden">
+          {Array.from({ length: 7 }).map((_, i) => (
+            <div key={i} className="h-8 w-24 rounded-full bg-slate-100 dark:bg-slate-800/60 animate-pulse shrink-0" />
           ))}
         </div>
       </div>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        {/* Título de sección */}
+        <div className="flex items-center gap-3 mb-5">
+          <div className="h-5 w-5 rounded bg-slate-200 dark:bg-slate-800 animate-pulse" />
+          <div className="h-6 w-44 rounded-lg bg-slate-200 dark:bg-slate-800 animate-pulse" />
+          <div className="h-4 w-8 rounded bg-slate-200 dark:bg-slate-800 animate-pulse" />
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {Array.from({ length: 9 }).map((_, i) => (
-            <div key={i} className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3.5">
+              {/* Badge de categoría + corazón */}
+              <div className="flex items-center justify-between">
+                <div className="h-5 w-16 rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse" />
+                <div className="h-5 w-5 rounded bg-slate-200 dark:bg-slate-800 animate-pulse" />
+              </div>
+              {/* Texto de la pregunta */}
               <div className="space-y-2">
-                <div className="h-4 w-full bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
-                <div className="h-4 w-3/4 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
-                <div className="h-4 w-1/2 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+                <div className="h-4 w-full rounded bg-slate-200 dark:bg-slate-800 animate-pulse" />
+                <div className="h-4 w-5/6 rounded bg-slate-200 dark:bg-slate-800 animate-pulse" />
+                <div className="h-4 w-2/3 rounded bg-slate-200 dark:bg-slate-800 animate-pulse" />
               </div>
+              {/* Barra de probabilidad */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between">
+                  <div className="h-3.5 w-10 rounded bg-slate-200 dark:bg-slate-800 animate-pulse" />
+                  <div className="h-3.5 w-10 rounded bg-slate-200 dark:bg-slate-800 animate-pulse" />
+                </div>
+                <div className="h-2 w-full rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse" />
+              </div>
+              {/* Botones Sí / No */}
               <div className="grid grid-cols-2 gap-2">
-                <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
-                <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
+                <div className="h-10 rounded-xl bg-slate-200 dark:bg-slate-800 animate-pulse" />
+                <div className="h-10 rounded-xl bg-slate-200 dark:bg-slate-800 animate-pulse" />
               </div>
+              {/* Countdown */}
+              <div className="h-3.5 w-28 rounded bg-slate-200 dark:bg-slate-800 animate-pulse mx-auto" />
             </div>
           ))}
         </div>
