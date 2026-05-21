@@ -6,6 +6,14 @@ const jwt = require("jsonwebtoken");
 const supabase = require("./supabase");
 const { OAuth2Client } = require("google-auth-library");
 const scheduler = require("./scheduler");
+const {
+  emailBienvenida,
+  emailRetiroSolicitado,
+  emailRetiroAprobado,
+  emailRetiroRechazado,
+  emailSaldoAcreditado,
+  emailMercadoGanado,
+} = require("./email");
 
 const googleClient = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -15,7 +23,7 @@ const googleClient = new OAuth2Client(
 const app = express();
 app.use(cors({
   origin: (origin, callback) => {
-    const allowed = ["https://predicciones-ecuador.vercel.app", "http://localhost:3000"];
+    const allowed = ["https://predicciones-ecuador.vercel.app", "https://ecuapred.com", "https://www.ecuapred.com", "http://localhost:3000"];
     if (!origin || allowed.includes(origin) || origin.startsWith("chrome-extension://") || origin.startsWith("moz-extension://")) {
       callback(null, true);
     } else {
@@ -109,6 +117,7 @@ app.post("/register", registerRateLimit, async (req, res) => {
 
   if (error) return res.status(400).json({ message: error.message });
 
+  emailBienvenida({ nombre, email });
   broadcast("users", {});
   res.json({ message: "Usuario registrado correctamente" });
 });
@@ -666,7 +675,7 @@ app.put("/admin/users/:id/points", auth, async (req, res) => {
   if (isNaN(points)) return res.status(400).json({ message: "Valor inválido" });
 
   const { data: user } = await supabase
-    .from("users").select("points").eq("id", req.params.id).single();
+    .from("users").select("points,email,nombre").eq("id", req.params.id).single();
 
   if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
 
@@ -702,6 +711,7 @@ app.put("/admin/users/:id/points", auth, async (req, res) => {
     read: false,
   }]);
 
+  if (isCredit) emailSaldoAcreditado({ nombre: user.nombre, email: user.email, amount, newBalance: newPoints });
   broadcast("users", {});
   broadcast("transactions", {});
   res.json({ message: "Saldo actualizado", newPoints });
@@ -967,7 +977,7 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
     }
 
     const { data: user, error: userError } = await supabase
-      .from("users").select("points").eq("id", bet.user_id).single();
+      .from("users").select("points,email,nombre").eq("id", bet.user_id).single();
 
     if (userError || !user) {
       console.error(`[resolve] SKIP bet ${bet.id}: usuario no encontrado`);
@@ -1005,6 +1015,7 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
       read: false,
       market_id: marketId,
     }]);
+    emailMercadoGanado({ nombre: user.nombre, email: user.email, question: market.question, reward: payout });
 
     await supabase.from("winners").insert([{
       user_id: bet.user_id,
@@ -2103,6 +2114,7 @@ app.post("/withdrawal", auth, withdrawalRateLimit, async (req, res) => {
     read: false,
   }]);
 
+  emailRetiroSolicitado({ nombre: user.nombre, email: user.email, amount: withdrawAmount });
   broadcast("transactions", {});
   res.json({ message: "Solicitud enviada", newPoints });
 });
@@ -2410,7 +2422,7 @@ app.put("/admin/transactions/:id/status", auth, async (req, res) => {
   const { error } = await supabase.from("transactions").update({ status, updated_at: new Date().toISOString() }).eq("id", req.params.id);
   if (error) return res.status(500).json({ message: error.message });
 
-  const { data: user } = await supabase.from("users").select("points").eq("id", userId).single();
+  const { data: user } = await supabase.from("users").select("points,email,nombre").eq("id", userId).single();
   if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
 
   if (status === "aprobado") {
@@ -2425,6 +2437,7 @@ app.put("/admin/transactions/:id/status", auth, async (req, res) => {
         user_id: userId, title: "✅ Retiro aprobado",
         message: `Tu retiro de $${amount} fue aprobado y será transferido a tu cuenta bancaria.`, read: false,
       }]);
+      emailRetiroAprobado({ nombre: user.nombre, email: user.email, amount });
     }
   } else if (status === "rechazado") {
     if (type === "retiro") {
@@ -2433,6 +2446,7 @@ app.put("/admin/transactions/:id/status", auth, async (req, res) => {
         user_id: userId, title: "❌ Retiro rechazado",
         message: `Tu solicitud de retiro por $${amount} fue rechazada. El saldo fue devuelto a tu cuenta.`, read: false,
       }]);
+      emailRetiroRechazado({ nombre: user.nombre, email: user.email, amount });
     } else {
       await supabase.from("notifications").insert([{
         user_id: userId, title: "❌ Recarga rechazada",
