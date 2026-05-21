@@ -75,21 +75,46 @@ let schedulerEnabled = true;
 let lastRun = null;
 let lastStats = { processed: 0, found: 0, urls: 0, errors: 0 };
 
-function init(deps) {
+async function persistEnabled(value) {
+  try {
+    await supabase.from("config").update({ bot_enabled: value }).eq("id", 1);
+  } catch (err) {
+    console.error("[bot] Error al persistir bot_enabled:", err.message);
+  }
+}
+
+async function init(deps) {
   supabase = deps.supabase;
   groqApiKey = deps.groqApiKey;
   broadcast = deps.broadcast;
+
+  // Leer estado persistido al arrancar
+  try {
+    const { data } = await supabase.from("config").select("bot_enabled").eq("id", 1).single();
+    if (data && data.bot_enabled === false) {
+      schedulerEnabled = false;
+      console.log("[bot] Estado restaurado: desactivado (bot_enabled = false en DB)");
+    } else {
+      schedulerEnabled = true;
+      console.log("[bot] Estado restaurado: activo");
+    }
+  } catch (err) {
+    console.error("[bot] No se pudo leer bot_enabled, se asume activo:", err.message);
+    schedulerEnabled = true;
+  }
 }
 
 function stopBot() {
   schedulerEnabled = false;
   shouldStop = true;
+  persistEnabled(false);
   return { message: "Bot detenido" };
 }
 
 function enableBot() {
   schedulerEnabled = true;
   shouldStop = false;
+  persistEnabled(true);
   return { message: "Bot activado" };
 }
 

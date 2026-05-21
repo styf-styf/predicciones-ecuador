@@ -2719,13 +2719,12 @@ app.post("/admin/bot/enable", auth, async (req, res) => {
   res.json(result);
 });
 
-// Inicializar y arrancar el scheduler
+// Inicializar y arrancar el scheduler (init es async: lee bot_enabled de DB)
 scheduler.init({
   supabase,
   groqApiKey: process.env.GROQ_API_KEY,
   broadcast,
-});
-scheduler.startScheduler();
+}).then(() => scheduler.startScheduler());
 
 app.listen(4000, () => {
   console.log("Servidor en https://api.ecuapred.com");
