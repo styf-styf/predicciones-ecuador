@@ -170,6 +170,9 @@ export default function MarketPage() {
   const [closingNews, setClosingNews] = useState<any[]>([]);
   const [toast, setToast] = useState<{ text: string; type: "error" | "success" } | null>(null);
   const [showShare, setShowShare] = useState(false);
+  const [favorites, setFavorites] = useState<number[]>([]);
+  const [togglingFavId, setTogglingFavId] = useState<number | null>(null);
+
   useEffect(() => {
     setToken(localStorage.getItem("token"));
   }, []);
@@ -287,10 +290,41 @@ export default function MarketPage() {
   }
  }, [id]);
 
+  const fetchFavorites = async (tok: string) => {
+    const res = await fetch("https://api.ecuapred.com/favorites", {
+      headers: { authorization: `Bearer ${tok}` },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setFavorites(data.map((id: unknown) => Number(id)));
+    }
+  };
+
+  const handleToggleFavorite = async (e: React.MouseEvent, marketId: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!token) { setToast({ text: "Debes iniciar sesión para guardar favoritos", type: "error" }); return; }
+    setTogglingFavId(marketId);
+    const wasFav = favorites.includes(marketId);
+    try {
+      const res = await fetch(`https://api.ecuapred.com/favorites/${marketId}`, {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        await fetchFavorites(token);
+        setToast({ text: wasFav ? "Eliminado de favoritos" : "Añadido a favoritos", type: "success" });
+      }
+    } finally {
+      setTogglingFavId(null);
+    }
+  };
+
   useEffect(() => {
     if (token) {
         fetchMe();
         fetchUserBet();
+        fetchFavorites(token);
     }
  }, [token]);
 
@@ -1065,7 +1099,13 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
           <h2 className="font-bold text-xl mb-4">Más de {market.category}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {relatedMarkets.map((m) => (
-              <MarketCard key={m.id} market={m} />
+              <MarketCard
+                key={m.id}
+                market={m}
+                isFavorite={favorites.includes(m.id)}
+                isTogglingFavorite={togglingFavId === m.id}
+                onToggleFavorite={handleToggleFavorite}
+              />
             ))}
           </div>
         </div>
