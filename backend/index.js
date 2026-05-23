@@ -1751,7 +1751,19 @@ app.put("/admin/news-suggestions/:id", async (req, res) => {
     news_source: suggestion.url ? new URL(suggestion.url).hostname.replace("www.", "") : null,
     news_date: new Date().toISOString().split("T")[0],
   };
-  if (closes_at) marketData.closes_at = closes_at;
+
+  // Cadena de fallback para closes_at:
+  // 1) Lo que envió el admin, 2) La fecha del bot en DB, 3) Hoy + 3 días
+  let closesAt = closes_at || null;
+  if (!closesAt && suggestion.suggested_close_date) {
+    const d = String(suggestion.suggested_close_date).slice(0, 10);
+    closesAt = `${d}T23:59:00-05:00`;
+  }
+  if (!closesAt) {
+    const fallback = new Date(Date.now() + 3 * 86400000);
+    closesAt = `${fallback.toISOString().split("T")[0]}T23:59:00-05:00`;
+  }
+  marketData.closes_at = closesAt;
 
   const { data: newMarket, error: marketError } = await supabase.from("markets").insert([marketData]).select().single();
 

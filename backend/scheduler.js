@@ -215,13 +215,21 @@ async function processWithAI(headline) {
     console.log(`[bot] Leyendo artículo: ${headline.url}`);
     const articleContent = await scrapeArticleContent(headline.url);
 
-    const { data: activeMarkets } = await supabase
-      .from("markets")
-      .select("id, question")
-      .eq("resolved", false)
-      .limit(30);
+    const [
+      { data: activeMarkets },
+      { data: recentSuggestions },
+    ] = await Promise.all([
+      supabase.from("markets").select("id, question").eq("resolved", false).limit(30),
+      supabase.from("news_suggestions")
+        .select("new_market_question")
+        .in("status", ["pending", "approved"])
+        .gte("created_at", new Date(Date.now() - 14 * 86400000).toISOString())
+        .not("new_market_question", "is", null)
+        .limit(50),
+    ]);
 
-    const marketsText = activeMarkets?.map(m => `ID ${m.id}: ${m.question}`).join("\n") || "Ninguno";
+    const marketsText = activeMarkets?.map(m => `- ${m.question}`).join("\n") || "Ninguno";
+    const pendingText = recentSuggestions?.map(s => `- ${s.new_market_question}`).join("\n") || "Ninguna";
     const today = new Date().toISOString().split("T")[0];
     const in5Days = new Date(Date.now() + 5 * 86400000).toISOString().split("T")[0];
 
@@ -238,8 +246,11 @@ Fuente: ${headline.source}
 Fecha de hoy: ${today}
 ${contentSection}
 
-Mercados activos (para evitar duplicados):
+Mercados activos en la plataforma (NO duplicar):
 ${marketsText}
+
+Sugerencias pendientes de los últimos 14 días (NO duplicar ni parafrasear):
+${pendingText}
 
 Responde SOLO en JSON sin markdown:
 {
@@ -255,9 +266,9 @@ Responde SOLO en JSON sin markdown:
 
 Reglas:
 - CRÍTICO: Solo genera pregunta si el evento ocurre EN Ecuador o afecta DIRECTAMENTE a Ecuador o a ecuatorianos. Si la noticia es sobre otro país (España, Colombia, EE.UU., etc.) y Ecuador no es el actor principal, devuelve null en new_market_question
-- Usa el contenido del artículo para hacer la pregunta lo más específica posible (nombres, cifras, fechas)
+- Usa el contenido del artículo para hacer la pregunta lo más específica posible (nombres, cifras, fechas concretas)
 - Solo genera pregunta si la noticia es relevante (economía, política, deporte, farándula, finanzas)
-- La pregunta no debe duplicar mercados activos
+- Si ya existe una pregunta similar en mercados activos o sugerencias pendientes sobre el mismo tema, devuelve null
 - Si la noticia es trivial o no involucra a Ecuador, devuelve null en new_market_question
 - category debe ser una de las 6 opciones exactas, elige según el tema principal de la noticia`;
 
@@ -283,8 +294,60 @@ Reglas:
 
     if (!parsed.new_market_question) return false;
 
+    // ── Dedup por keywords (red de seguridad independiente de la IA) ──────────
+    // Palabras vacías en español que no aportan semántica
+    const STOPWORDS = new Set([
+      "el","la","los","las","un","una","unos","unas","de","del","al","a","en",
+      "por","para","con","sin","sobre","entre","ante","que","se","lo","le","su",
+      "sus","es","son","fue","fue","ha","han","hay","va","van","si","no","más",
+      "ya","o","y","e","u","ni","pero","sino","como","cuando","donde","quien",
+      "cual","cuales","este","esta","estos","estas","ese","esa","esos","esas",
+      "aquel","aquella","aquellos","aquellas","mi","tu","ét","su","nos","vos",
+    ]);
+    const extractKeywords = (text) =>
+      text.toLowerCase()
+        .replace(/[¿?¡!,.:;()"'«»]/g, "")
+        .split(/\s+/)
+        .filter(w => w.length > 4 && !STOPWORDS.has(w));
+
+    const newKws = new Set(extractKeywords(parsed.new_market_question));
+
+    // Comparar contra mercados activos + sugerencias recientes (ya cargados antes)
+    const allExisting = [
+      ...(activeMarkets || []).map(m => m.question),
+      ...(recentSuggestions || []).map(s => s.new_market_question).filter(Boolean),
+    ];
+    for (const existing of allExisting) {
+      const existKws = extractKeywords(existing);
+      const shared = existKws.filter(w => newKws.has(w)).length;
+      const similarity = newKws.size > 0 ? shared / newKws.size : 0;
+      if (similarity >= 0.6) {
+        console.log(`[bot] Duplicado semántico (${Math.round(similarity * 100)}%): "${parsed.new_market_question}" ≈ "${existing}"`);
+        return false;
+      }
+    }
+    // ────────────────────────────────────────────────────────────────────────────
+
     const VALID_CATEGORIES = ["deporte", "farandula", "politica", "elecciones", "pais", "general"];
     const category = VALID_CATEGORIES.includes(parsed.category) ? parsed.category : "general";
+
+    // Validar y normalizar la fecha sugerida por el bot
+    const todayStr = new Date().toISOString().split("T")[0];
+    const maxStr = new Date(Date.now() + 5 * 86400000).toISOString().split("T")[0];
+    let closeDate = null;
+    if (parsed.suggested_close_date) {
+      const raw = String(parsed.suggested_close_date).slice(0, 10);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+        // Clampear al rango [hoy, hoy+5 días]
+        if (raw < todayStr) closeDate = todayStr;
+        else if (raw > maxStr) closeDate = maxStr;
+        else closeDate = raw;
+      }
+    }
+    if (!closeDate) {
+      // Fallback: hoy + 3 días
+      closeDate = new Date(Date.now() + 3 * 86400000).toISOString().split("T")[0];
+    }
 
     await supabase.from("news_suggestions").insert({
       title: headline.title,
@@ -294,7 +357,7 @@ Reglas:
       probability_yes: parsed.probability_yes ?? null,
       probability_no: parsed.probability_no ?? null,
       probability_reasoning: parsed.probability_reasoning || null,
-      suggested_close_date: parsed.suggested_close_date || null,
+      suggested_close_date: closeDate,
       impact: parsed.impact || null,
       category,
       resolves_market_id: null,

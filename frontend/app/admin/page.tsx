@@ -364,9 +364,16 @@ export default function AdminPage() {
       setCloseDates(prev => {
         const init: Record<number, string> = { ...prev };
         filtered.forEach((s: any) => {
-          if (!init[s.id] && s.suggested_close_date) {
-            const d = s.suggested_close_date;
-            init[s.id] = d.includes("T") ? d.slice(0, 16) : `${d}T23:59`;
+          if (!init[s.id]) {
+            if (s.suggested_close_date) {
+              // Tomar solo la parte YYYY-MM-DD por si el bot devolvió datetime completo
+              const d = String(s.suggested_close_date).slice(0, 10);
+              init[s.id] = `${d}T23:59`;
+            } else {
+              // Fallback: hoy + 3 días si el bot no dio fecha
+              const fallback = new Date(Date.now() + 3 * 86400000);
+              init[s.id] = fallback.toISOString().slice(0, 10) + "T23:59";
+            }
           }
         });
         return init;
