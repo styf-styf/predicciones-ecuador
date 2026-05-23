@@ -2573,7 +2573,7 @@ app.put("/admin/contactos/:id/leido", auth, async (req, res) => {
 // =======================
 // 📷 UPLOAD COMPROBANTE
 // =======================
-const uploadMiddleware = multer({
+const _multerInstance = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB máx (el front ya comprime a ~200KB)
   fileFilter: (_, file, cb) => {
@@ -2582,13 +2582,31 @@ const uploadMiddleware = multer({
   },
 });
 
-app.post("/upload/comprobante", auth, uploadMiddleware.single("file"), async (req, res) => {
+// Wrapper promise para usar multer con Express 5 (async routes)
+const parseUpload = (req, res) =>
+  new Promise((resolve, reject) => {
+    _multerInstance.single("file")(req, res, (err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+
+app.post("/upload/comprobante", auth, async (req, res) => {
+  try {
+    await parseUpload(req, res);
+  } catch (err) {
+    console.error("[upload] Error multer:", err.message);
+    return res.status(400).json({ message: err.message || "Error procesando imagen" });
+  }
+
   if (!req.file) return res.status(400).json({ message: "No se recibió imagen" });
 
   const ext = req.file.mimetype === "image/png" ? "png" : "jpg";
   const filename = `${req.userId}_${Date.now()}.${ext}`;
 
-  const { error } = await supabase.storage
+  console.log(`[upload] Subiendo ${filename} (${req.file.size} bytes) a Supabase Storage...`);
+
+  const { data: uploadData, error } = await supabase.storage
     .from("comprobantes")
     .upload(filename, req.file.buffer, {
       contentType: req.file.mimetype,
@@ -2596,11 +2614,12 @@ app.post("/upload/comprobante", auth, uploadMiddleware.single("file"), async (re
     });
 
   if (error) {
-    console.error("[upload] Error Supabase Storage:", error.message);
-    return res.status(500).json({ message: "Error al subir la imagen. Intenta de nuevo." });
+    console.error("[upload] Error Supabase Storage:", JSON.stringify(error));
+    return res.status(500).json({ message: `Error al subir imagen: ${error.message}` });
   }
 
   const { data: urlData } = supabase.storage.from("comprobantes").getPublicUrl(filename);
+  console.log(`[upload] ✅ Subida exitosa: ${urlData.publicUrl}`);
   res.json({ url: urlData.publicUrl });
 });
 

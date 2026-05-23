@@ -222,7 +222,9 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
           const uploadData = await uploadRes.json();
           comprobanteUrl = uploadData.url;
         } else {
-          showToast("Error al subir la foto. Intenta de nuevo.", "error");
+          let errMsg = "Error al subir la foto. Intenta de nuevo.";
+          try { const d = await uploadRes.json(); if (d?.message) errMsg = d.message; } catch {}
+          showToast(errMsg, "error");
           return;
         }
       } finally {
