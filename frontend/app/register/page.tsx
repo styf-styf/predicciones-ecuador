@@ -13,6 +13,18 @@ const FEATURES = [
   { icon: "⚡", text: "Resultados en tiempo real" },
 ];
 
+// Redirige al mercado pendiente si existe, si no va al home
+function redirectAfterAuth(router: ReturnType<typeof useRouter>) {
+  try {
+    const pending = localStorage.getItem("pendingBet");
+    if (pending) {
+      const { marketId } = JSON.parse(pending);
+      if (marketId) { router.push(`/market/${marketId}`); return; }
+    }
+  } catch {}
+  router.push("/");
+}
+
 export default function RegisterPage() {
   const router = useRouter();
 
@@ -45,7 +57,7 @@ export default function RegisterPage() {
             localStorage.setItem("role", data.user.role || "user");
             localStorage.setItem("points", String(data.user.points || 0));
             window.dispatchEvent(new Event("auth-change"));
-            router.push("/");
+            redirectAfterAuth(router);
           } else {
             setError(data.message || "Error con Google");
             setGoogleLoading(false);

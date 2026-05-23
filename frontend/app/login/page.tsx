@@ -13,6 +13,18 @@ const FEATURES = [
   { icon: "⚡", text: "Resultados en tiempo real" },
 ];
 
+// Redirige al mercado pendiente si existe, si no va al home
+function redirectAfterAuth(router: ReturnType<typeof useRouter>) {
+  try {
+    const pending = localStorage.getItem("pendingBet");
+    if (pending) {
+      const { marketId } = JSON.parse(pending);
+      if (marketId) { router.push(`/market/${marketId}`); return; }
+    }
+  } catch {}
+  router.push("/");
+}
+
 export default function Login() {
   const router = useRouter();
 
@@ -46,7 +58,7 @@ export default function Login() {
             localStorage.setItem("role", data.user.role || "user");
             localStorage.setItem("points", String(data.user.points || 0));
             window.dispatchEvent(new Event("auth-change"));
-            router.push("/");
+            redirectAfterAuth(router);
           } else {
             setIsError(true);
             setMessage(data.message || "Error con Google");
@@ -79,7 +91,7 @@ export default function Login() {
           localStorage.setItem("role", data.user.role || "user");
           localStorage.setItem("points", String(data.user.points || 0));
           window.dispatchEvent(new Event("auth-change"));
-          router.push("/");
+          redirectAfterAuth(router);
         } else {
           setIsError(true);
           setMessage(data.message || "Error con Google");
@@ -120,7 +132,7 @@ export default function Login() {
         window.dispatchEvent(new Event("auth-change"));
         setIsError(false);
         setMessage("✅ Sesión iniciada, redirigiendo...");
-        router.push("/");
+        redirectAfterAuth(router);
       } else {
         setIsError(true);
         setMessage(data.message || "Error al iniciar sesión");

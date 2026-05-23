@@ -13,7 +13,7 @@ const MAX_CHANGES = 3;
 
 function BetPanel({
   betType, setBetType, amount, setAmount, points, userBet, changeCount,
-  yesPct, noPct, betConfig, marketYes, marketNo, token, bettingLoading, betSuccess, handleBet,
+  yesPct, noPct, betConfig, marketYes, marketNo, marketId, token, bettingLoading, betSuccess, handleBet,
 }: {
   betType: "yes" | "no";
   setBetType: (t: "yes" | "no") => void;
@@ -27,6 +27,7 @@ function BetPanel({
   betConfig: { min_bet: number; commission: number };
   marketYes: number;
   marketNo: number;
+  marketId: number;
   token: string | null;
   bettingLoading: boolean;
   betSuccess: boolean;
@@ -118,9 +119,24 @@ function BetPanel({
           {amountButtons}
           {estimatedCard}
           {!token ? (
-            <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between gap-3">
-              <p className="text-sm text-slate-700 dark:text-slate-200">Inicia sesión para comenzar</p>
-              <Link href="/login" className="shrink-0 bg-emerald-500 text-slate-950 font-bold text-sm px-4 py-2 rounded-xl">Iniciar sesión</Link>
+            <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl space-y-3">
+              <p className="text-sm text-slate-700 dark:text-slate-200 text-center font-medium">Regístrate para realizar tu predicción</p>
+              <div className="flex gap-2">
+                <Link
+                  href="/register"
+                  onClick={() => { try { localStorage.setItem("pendingBet", JSON.stringify({ marketId, amount: parseFloat(amount) || undefined, type: betType })); } catch {} }}
+                  className="flex-1 bg-emerald-500 text-slate-950 font-bold text-sm px-3 py-2.5 rounded-xl text-center"
+                >
+                  Crear cuenta
+                </Link>
+                <Link
+                  href="/login"
+                  onClick={() => { try { localStorage.setItem("pendingBet", JSON.stringify({ marketId, amount: parseFloat(amount) || undefined, type: betType })); } catch {} }}
+                  className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-bold text-sm px-3 py-2.5 rounded-xl text-center"
+                >
+                  Iniciar sesión
+                </Link>
+              </div>
             </div>
           ) : (
             <button onClick={handleBet} disabled={bettingLoading || !amount} className={`w-full py-3 rounded-xl font-bold text-sm transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${betType === "yes" ? "bg-emerald-500 text-slate-950" : "bg-rose-500 text-white"}`}>
@@ -329,6 +345,21 @@ export default function MarketPage() {
         fetchFavorites(token);
     }
  }, [token]);
+
+  // Aplica pendingBet cuando el usuario llega autenticado desde registro/login
+  useEffect(() => {
+    if (!token || !market) return;
+    try {
+      const pending = localStorage.getItem("pendingBet");
+      if (!pending) return;
+      const { marketId: pendingMarketId, amount: pendingAmount, type: pendingType } = JSON.parse(pending);
+      if (pendingMarketId === market.id) {
+        if (pendingAmount) setAmount(String(pendingAmount));
+        if (pendingType === "yes" || pendingType === "no") setBetType(pendingType);
+        localStorage.removeItem("pendingBet");
+      }
+    } catch {}
+  }, [token, market]);
 
   useEffect(() => {
     if (!id) return;
@@ -726,6 +757,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
               points={points} userBet={userBet} changeCount={changeCount}
               yesPct={yesPct} noPct={noPct} betConfig={betConfig}
               marketYes={Number(market.yes)} marketNo={Number(market.no)}
+              marketId={Number(id)}
               token={token} bettingLoading={bettingLoading}
               betSuccess={betSuccess} handleBet={handleBet}
             />
@@ -1103,6 +1135,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
                 points={points} userBet={userBet} changeCount={changeCount}
                 yesPct={yesPct} noPct={noPct} betConfig={betConfig}
                 marketYes={Number(market.yes)} marketNo={Number(market.no)}
+                marketId={Number(id)}
                 token={token} bettingLoading={bettingLoading}
                 betSuccess={betSuccess} handleBet={handleBet}
               />
