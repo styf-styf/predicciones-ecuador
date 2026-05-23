@@ -127,6 +127,8 @@ export default function AdminPage() {
   const [bankAccounts, setBankAccounts] = useState<any[]>([]);
   const [newBank, setNewBank] = useState({ nombre: "", titular: "", cuenta: "", tipo: "ahorros", cedula: "" });
   const [savingBank, setSavingBank] = useState(false);
+  const [editingBank, setEditingBank] = useState<null | { id: string; nombre: string; titular: string; cuenta: string; tipo: string; cedula: string }>(null);
+  const [savingEditBank, setSavingEditBank] = useState(false);
 
   // ── BotNews ──
   const [botUrls, setBotUrls] = useState<any[]>([]);
@@ -2885,51 +2887,140 @@ export default function AdminPage() {
                   {bankAccounts.length === 0 && (
                     <p className="text-[12px] text-slate-400 dark:text-white/20 text-center py-3">No hay cuentas bancarias configuradas</p>
                   )}
-                  {bankAccounts.map((bank) => (
-                    <div key={bank.id} className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl px-4 py-3 flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-[13px] font-semibold text-slate-800 dark:text-white truncate">{bank.nombre}</p>
-                        <p className="text-[11px] text-slate-400 dark:text-white/30 truncate">{bank.titular} · {bank.tipo} · {bank.cuenta}</p>
-                        {bank.cedula && <p className="text-[11px] text-slate-400 dark:text-white/25">CI: {bank.cedula}</p>}
+                  {bankAccounts.map((bank) => {
+                    const isEditing = editingBank?.id === bank.id;
+                    return (
+                      <div key={bank.id} className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl px-4 py-3">
+                        {isEditing ? (
+                          /* ── Modo edición inline ── */
+                          <div className="space-y-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              {([
+                                { key: "nombre", label: "Nombre del banco", placeholder: "Ej: Banco Pichincha" },
+                                { key: "titular", label: "Titular", placeholder: "Ej: Juan Pérez" },
+                                { key: "cuenta", label: "Número de cuenta", placeholder: "Ej: 2200123456" },
+                                { key: "cedula", label: "Cédula del titular", placeholder: "Ej: 1712345678" },
+                              ] as { key: keyof typeof editingBank; label: string; placeholder: string }[]).map((f) => (
+                                <div key={f.key}>
+                                  <label className="text-[10px] text-slate-400 dark:text-white/30 uppercase tracking-widest block mb-1">{f.label}</label>
+                                  <input
+                                    type="text"
+                                    placeholder={f.placeholder}
+                                    value={(editingBank as any)[f.key]}
+                                    onChange={(e) => setEditingBank((prev) => prev ? { ...prev, [f.key]: e.target.value } : prev)}
+                                    className="w-full bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-1.5 outline-none text-[12px] text-slate-900 dark:text-white focus:border-emerald-500/60 transition"
+                                  />
+                                </div>
+                              ))}
+                              <div>
+                                <label className="text-[10px] text-slate-400 dark:text-white/30 uppercase tracking-widest block mb-1">Tipo de cuenta</label>
+                                <select
+                                  value={editingBank!.tipo}
+                                  onChange={(e) => setEditingBank((prev) => prev ? { ...prev, tipo: e.target.value } : prev)}
+                                  className="w-full bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-1.5 outline-none text-[12px] text-slate-900 dark:text-white focus:border-emerald-500/60 transition"
+                                >
+                                  <option value="ahorros">Ahorros</option>
+                                  <option value="corriente">Corriente</option>
+                                </select>
+                              </div>
+                            </div>
+                            <div className="flex gap-2 justify-end">
+                              <button
+                                onClick={() => setEditingBank(null)}
+                                className="px-3 py-1.5 rounded-lg text-[11px] text-slate-500 dark:text-white/40 bg-slate-100 dark:bg-white/[0.04] hover:bg-slate-200 dark:hover:bg-white/[0.08] transition cursor-pointer"
+                              >
+                                Cancelar
+                              </button>
+                              <button
+                                disabled={savingEditBank || !editingBank!.nombre.trim() || !editingBank!.cuenta.trim()}
+                                onClick={async () => {
+                                  setSavingEditBank(true);
+                                  const token = localStorage.getItem("token");
+                                  const res = await fetch(`https://api.ecuapred.com/admin/bank-accounts/${bank.id}`, {
+                                    method: "PUT",
+                                    headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+                                    body: JSON.stringify({
+                                      nombre: editingBank!.nombre.trim(),
+                                      titular: editingBank!.titular.trim(),
+                                      cuenta: editingBank!.cuenta.trim(),
+                                      tipo: editingBank!.tipo,
+                                      cedula: editingBank!.cedula.trim(),
+                                    }),
+                                  });
+                                  setSavingEditBank(false);
+                                  if (res.ok) {
+                                    setEditingBank(null);
+                                    fetchBankAccounts();
+                                    showToast("Banco actualizado ✅", "success");
+                                  } else {
+                                    const d = await res.json();
+                                    showToast(d.message || "Error al guardar", "error");
+                                  }
+                                }}
+                                className="px-4 py-1.5 rounded-lg text-[11px] font-bold bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-black transition cursor-pointer"
+                              >
+                                {savingEditBank ? "Guardando..." : "Guardar cambios"}
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          /* ── Vista normal ── */
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-[13px] font-semibold text-slate-800 dark:text-white truncate">{bank.nombre}</p>
+                              <p className="text-[11px] text-slate-400 dark:text-white/30 truncate">{bank.titular} · {bank.tipo} · {bank.cuenta}</p>
+                              {bank.cedula && <p className="text-[11px] text-slate-400 dark:text-white/25">CI: {bank.cedula}</p>}
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <button
+                                onClick={async () => {
+                                  const token = localStorage.getItem("token");
+                                  await fetch(`https://api.ecuapred.com/admin/bank-accounts/${bank.id}`, {
+                                    method: "PUT",
+                                    headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+                                    body: JSON.stringify({ activo: !bank.activo }),
+                                  });
+                                  fetchBankAccounts();
+                                }}
+                                className={`text-[10px] px-2 py-0.5 rounded-md border transition cursor-pointer ${bank.activo ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20" : "bg-slate-100 dark:bg-white/[0.04] text-slate-400 dark:text-white/30 border-slate-200 dark:border-white/[0.06]"}`}
+                              >
+                                {bank.activo ? "Activo" : "Inactivo"}
+                              </button>
+                              {/* Botón editar */}
+                              <button
+                                onClick={() => setEditingBank({ id: bank.id, nombre: bank.nombre, titular: bank.titular || "", cuenta: bank.cuenta, tipo: bank.tipo || "ahorros", cedula: bank.cedula || "" })}
+                                className="p-1.5 rounded-lg bg-sky-50 dark:bg-sky-500/10 text-sky-500 dark:text-sky-400 hover:bg-sky-100 dark:hover:bg-sky-500/20 transition cursor-pointer"
+                                title="Editar banco"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                              </button>
+                              {/* Botón eliminar */}
+                              <button
+                                onClick={() => openModal({
+                                  title: "Eliminar banco",
+                                  description: `¿Eliminar "${bank.nombre}"?`,
+                                  confirmLabel: "Eliminar",
+                                  danger: true,
+                                  onConfirm: async () => {
+                                    const token = localStorage.getItem("token");
+                                    await fetch(`https://api.ecuapred.com/admin/bank-accounts/${bank.id}`, {
+                                      method: "DELETE",
+                                      headers: { authorization: `Bearer ${token}` },
+                                    });
+                                    fetchBankAccounts();
+                                    showToast("Banco eliminado", "info");
+                                  },
+                                })}
+                                className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 transition cursor-pointer"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          onClick={async () => {
-                            const token = localStorage.getItem("token");
-                            await fetch(`https://api.ecuapred.com/admin/bank-accounts/${bank.id}`, {
-                              method: "PUT",
-                              headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
-                              body: JSON.stringify({ activo: !bank.activo }),
-                            });
-                            fetchBankAccounts();
-                          }}
-                          className={`text-[10px] px-2 py-0.5 rounded-md border transition cursor-pointer ${bank.activo ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20" : "bg-slate-100 dark:bg-white/[0.04] text-slate-400 dark:text-white/30 border-slate-200 dark:border-white/[0.06]"}`}
-                        >
-                          {bank.activo ? "Activo" : "Inactivo"}
-                        </button>
-                        <button
-                          onClick={() => openModal({
-                            title: "Eliminar banco",
-                            description: `¿Eliminar "${bank.nombre}"?`,
-                            confirmLabel: "Eliminar",
-                            danger: true,
-                            onConfirm: async () => {
-                              const token = localStorage.getItem("token");
-                              await fetch(`https://api.ecuapred.com/admin/bank-accounts/${bank.id}`, {
-                                method: "DELETE",
-                                headers: { authorization: `Bearer ${token}` },
-                              });
-                              fetchBankAccounts();
-                              showToast("Banco eliminado", "info");
-                            },
-                          })}
-                          className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 transition cursor-pointer"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {/* Formulario para agregar banco */}

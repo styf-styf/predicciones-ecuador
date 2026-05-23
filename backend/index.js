@@ -1046,6 +1046,7 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
   broadcast("markets", {});
   broadcast("winners", {});
   broadcast("notifications", {});
+  broadcast("bets", {}); // actualiza saldo en header para los ganadores
   res.json({
     message: `Mercado resuelto. Comisión total plataforma: ${totalCommission.toFixed(2)} pts`
   });
@@ -1391,6 +1392,10 @@ async function procesarPagoPayphone(clientTransactionId, payphoneId) {
       message: `Se acreditaron ${transaction.amount} $ a tu cuenta.`,
       read: false,
     }]);
+
+    // Notificar al header del usuario para que actualice el saldo en tiempo real
+    broadcast("transactions", {});
+    broadcast("notifications", {});
 
     if (user.email) {
       emailRecargaTarjeta({
@@ -2312,7 +2317,9 @@ app.get("/my-movements", auth, async (req, res) => {
         subtipo: tx.payment_method === "transferencia" ? "Transferencia" : "Tarjeta",
         monto: tx.type === "recarga" ? amt : -amt,
         fecha: tx.created_at,
-        sort_fecha: tx.updated_at || tx.created_at,
+        // Retiro: el saldo cambia al crearlo (created_at), no al aprobarse
+        // Recarga: el saldo cambia al aprobarse (updated_at)
+        sort_fecha: tx.type === "retiro" ? tx.created_at : (tx.updated_at || tx.created_at),
         estado: tx.status,
         balance_before: tx.balance_before != null ? Number(tx.balance_before) : null,
         balance_after: tx.balance_after != null ? Number(tx.balance_after) : null,
@@ -2329,16 +2336,46 @@ app.get("/my-movements", auth, async (req, res) => {
   const movements = all.map(mov => {
     const balanceAfter = running;
     let effect = 0;
-    if (mov.tipo === "prediccion") effect = mov.monto;
-    else if (mov.tipo === "recarga" && mov.estado === "aprobado") effect = mov.monto;
-    else if (mov.tipo === "retiro" && (mov.estado === "aprobado" || mov.estado === "completado")) effect = mov.monto;
-    const balanceBefore = balanceAfter - effect;
-    running = balanceBefore;
-    return {
-      ...mov,
-      balance_before: mov.balance_before != null ? mov.balance_before : parseFloat(balanceBefore.toFixed(2)),
-      balance_after: mov.balance_after != null ? mov.balance_after : parseFloat(balanceAfter.toFixed(2)),
-    };
+
+    if (mov.tipo === "prediccion") {
+      if (mov.estado === "ganada" && mov.payout != null) {
+        // Efecto neto: payout acreditado − apuesta descontada al apostar
+        effect = mov.payout - mov.apuesta;
+      } else {
+        // pendiente o perdida: solo se descontó la apuesta al apostar
+        effect = mov.monto; // = −apuesta
+      }
+    } else if (mov.tipo === "recarga" && mov.estado === "aprobado") {
+      effect = mov.monto; // = +amount
+    } else if (mov.tipo === "retiro" && mov.estado !== "rechazado") {
+      // pendiente + aprobado: el saldo se descuenta INMEDIATAMENTE al crear el retiro
+      effect = mov.monto; // = −amount
+    }
+    // retiro rechazado → net 0 (descuento + devolución)
+    // recarga pendiente/rechazada → net 0 (nunca se acreditó)
+
+    const balanceBefore = parseFloat((balanceAfter - effect).toFixed(2));
+
+    // balance_after: preferir guardado; si no hay, calcular con balance_before + effect
+    let finalAfter;
+    if (mov.balance_after != null) {
+      finalAfter = mov.balance_after;
+    } else if (mov.balance_before != null && effect !== 0) {
+      finalAfter = parseFloat((mov.balance_before + effect).toFixed(2));
+    } else {
+      finalAfter = parseFloat(balanceAfter.toFixed(2));
+    }
+
+    const finalBefore = mov.balance_before != null ? mov.balance_before : balanceBefore;
+
+    // Retiro rechazado: mostrar el descuento real (Ant $100 → Act $70)
+    // El label "rechazado" ya indica que el saldo fue devuelto.
+    // No ocultamos el movimiento como "sin cambio" porque sería confuso para el usuario.
+
+    // Calibrar running con balance_before guardado (más fiable que el reconstructido)
+    running = mov.balance_before != null ? mov.balance_before : balanceBefore;
+
+    return { ...mov, balance_before: finalBefore, balance_after: finalAfter };
   });
 
   res.json(movements);
@@ -2439,7 +2476,10 @@ app.put("/admin/transactions/:id/status", auth, async (req, res) => {
 
   if (status === "aprobado") {
     if (type === "recarga") {
-      await supabase.from("users").update({ points: Number(user.points) + Number(amount) }).eq("id", userId);
+      const newBalance = parseFloat((Number(user.points) + Number(amount)).toFixed(2));
+      await supabase.from("users").update({ points: newBalance }).eq("id", userId);
+      // Guardar balance_after ahora que sabemos el saldo resultante
+      await supabase.from("transactions").update({ balance_after: newBalance }).eq("id", req.params.id);
       await supabase.from("notifications").insert([{
         user_id: userId, title: "✅ Recarga exitosa",
         message: `Se acreditaron ${amount} $ a tu cuenta por transferencia bancaria.`, read: false,
@@ -2453,7 +2493,11 @@ app.put("/admin/transactions/:id/status", auth, async (req, res) => {
     }
   } else if (status === "rechazado") {
     if (type === "retiro") {
-      await supabase.from("users").update({ points: Number(user.points) + Number(amount) }).eq("id", userId);
+      const restoredBalance = parseFloat((Number(user.points) + Number(amount)).toFixed(2));
+      await supabase.from("users").update({ points: restoredBalance }).eq("id", userId);
+      // El balance_after del retiro fue el saldo después del descuento;
+      // ahora que se rechazó y devolvió, el saldo es el restaurado (igual al balance_before original)
+      // Lo dejamos como está — la lógica de reconstrucción ya maneja rechazado correctamente
       await supabase.from("notifications").insert([{
         user_id: userId, title: "❌ Retiro rechazado",
         message: `Tu solicitud de retiro por $${amount} fue rechazada. El saldo fue devuelto a tu cuenta.`, read: false,

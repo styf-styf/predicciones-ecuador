@@ -901,12 +901,23 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-4">
   <div className="flex items-center justify-between">
     <h3 className="font-bold">Información personal</h3>
-    <button
-      onClick={() => setEditingProfile((prev) => !prev)}
-      className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg transition flex items-center gap-1.5"
-    >
-      <Settings size={12} /> {editingProfile ? "Cancelar" : "Editar información"}
-    </button>
+    {editingProfile ? (
+      <button
+        onClick={() => setEditingProfile(false)}
+        className="text-xs font-semibold text-white bg-rose-500 hover:bg-rose-400 border border-rose-500 px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 cursor-pointer"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        Cancelar
+      </button>
+    ) : (
+      <button
+        onClick={() => setEditingProfile(true)}
+        className="text-xs font-semibold text-white bg-sky-500 hover:bg-sky-400 border border-sky-500 px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 cursor-pointer"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Editar información
+      </button>
+    )}
   </div>
 
   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1111,13 +1122,19 @@ function MovimientoRow({ mov }: { mov: any }) {
     procesando: "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800",
   };
 
-  const amountColor = mov.estado === "ganada" || (mov.tipo !== "prediccion" && mov.monto > 0)
+  const isRechazado = mov.estado === "rechazado";
+
+  const amountColor = isRechazado
+    ? "text-slate-400 dark:text-slate-500 line-through"
+    : mov.estado === "ganada" || (mov.tipo !== "prediccion" && mov.monto > 0)
     ? "text-emerald-500"
     : mov.estado === "perdida" || mov.monto < 0
     ? "text-rose-500"
     : "text-slate-400";
 
-  const amountLabel = mov.estado === "ganada"
+  const amountLabel = isRechazado
+    ? `${mov.monto > 0 ? "+" : ""}${mov.monto.toFixed(2)} $`
+    : mov.estado === "ganada"
     ? `+${mov.monto.toFixed(2)} $`
     : mov.tipo === "prediccion"
     ? `-${Math.abs(mov.monto).toFixed(2)} $`
@@ -1131,7 +1148,9 @@ function MovimientoRow({ mov }: { mov: any }) {
 
   const bb = mov.balance_before as number;
   const ba = mov.balance_after as number;
-  const balanceColor = ba > bb ? "text-emerald-500" : ba < bb ? "text-rose-500" : "text-slate-500 dark:text-slate-400";
+  const balanceColor = isRechazado
+    ? "text-slate-400 dark:text-slate-500 line-through"
+    : ba > bb ? "text-emerald-500" : ba < bb ? "text-rose-500" : "text-slate-500 dark:text-slate-400";
 
   return (
     <div className="p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-xl">

@@ -172,6 +172,7 @@ export default function MarketPage() {
   const [showShare, setShowShare] = useState(false);
   const [favorites, setFavorites] = useState<number[]>([]);
   const [togglingFavId, setTogglingFavId] = useState<number | null>(null);
+  const [marketLoaded, setMarketLoaded] = useState(false);
 
   useEffect(() => {
     setToken(localStorage.getItem("token"));
@@ -209,6 +210,7 @@ export default function MarketPage() {
     setAllMarkets(data);
     const found = data.find((m: any) => m.id === Number(id));
     setMarket(found || null);
+    setMarketLoaded(true);
   };
 
   const fetchMe = async () => {
@@ -393,6 +395,29 @@ export default function MarketPage() {
   else setToast({ text: data.message || "Error al enviar el comentario", type: "error" });
   setSubmitting(false);
  };
+
+  if (!market && marketLoaded) return (
+    <main className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
+      <Header />
+      <div className="max-w-4xl mx-auto px-4 py-20 flex flex-col items-center text-center gap-5">
+        <div className="w-20 h-20 rounded-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center text-4xl">
+          🔒
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Mercado no disponible</h1>
+          <p className="text-slate-500 dark:text-slate-400 max-w-sm">
+            Este mercado fue cerrado o eliminado. Si tenías una predicción activa, tu saldo ya fue ajustado.
+          </p>
+        </div>
+        <Link
+          href="/"
+          className="mt-2 inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-black font-bold px-6 py-3 rounded-xl transition text-sm"
+        >
+          Ver mercados activos →
+        </Link>
+      </div>
+    </main>
+  );
 
   if (!market) return (
     <main className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
