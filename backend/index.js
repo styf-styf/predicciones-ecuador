@@ -2633,8 +2633,8 @@ app.post("/transfer", auth, transferRateLimit, async (req, res) => {
   if (!transferAmount || transferAmount < 1) {
     return res.status(400).json({ message: "Monto mínimo de recarga: 1 punto" });
   }
-  if (!transfer_code?.trim() && !comprobante_url) {
-    return res.status(400).json({ message: "Debes ingresar el número de comprobante o adjuntar una foto" });
+  if (!comprobante_url) {
+    return res.status(400).json({ message: "La foto del comprobante es obligatoria" });
   }
 
   // Validar URL del comprobante si viene

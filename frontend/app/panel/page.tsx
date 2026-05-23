@@ -45,6 +45,7 @@ function PanelContent() {
   const [comprobanteFile, setComprobanteFile] = useState<File | null>(null);
   const [comprobantePreview, setComprobantePreview] = useState<string | null>(null);
   const [uploadingImg, setUploadingImg] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
   // Perfil state
   const [profileForm, setProfileForm] = useState({
   nombre: "", apellido: "", cedula: "", celular: "", pais: "Ecuador", ciudad: "", direccion: "",
@@ -197,8 +198,8 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
 
   const handleSendTransfer = async () => {
   if (!walletAmount || parseFloat(walletAmount) < 1) return;
-  if (!transferCode.trim() && !comprobanteFile) {
-    showToast("Ingresa el número de comprobante o adjunta una foto", "error");
+  if (!comprobanteFile) {
+    showToast("Debes adjuntar una foto del comprobante", "error");
     return;
   }
   setSendingTransfer(true);
@@ -668,6 +669,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
                   </div>
                   <input type="number" placeholder="Otro monto..." value={walletAmount}
                     onChange={(e) => setWalletAmount(e.target.value)}
+                    onWheel={(e) => e.currentTarget.blur()}
                     className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500 transition" />
                 </div>
 
@@ -748,7 +750,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
 
     {/* Input número de comprobante */}
     <div>
-      <label className="text-xs text-slate-400 uppercase tracking-widest block mb-2">Número de comprobante <span className="normal-case text-slate-300 dark:text-slate-600">(opcional si adjuntas foto)</span></label>
+      <label className="text-xs text-slate-400 uppercase tracking-widest block mb-2">Número de comprobante <span className="normal-case text-slate-300 dark:text-slate-600">(opcional)</span></label>
       <input
         type="text"
         placeholder="Ej: 0034521789"
@@ -758,33 +760,56 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
       />
     </div>
 
-    {/* Foto del comprobante */}
+    {/* Foto del comprobante — OBLIGATORIA */}
     <div>
       <label className="text-xs text-slate-400 uppercase tracking-widest block mb-2">
-        Foto del comprobante <span className="normal-case text-slate-300 dark:text-slate-600">(opcional si ingresaste el número)</span>
+        Foto del comprobante <span className="text-rose-400 font-bold">*</span>
       </label>
       {comprobantePreview ? (
-        <div className="relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700">
-          <img src={comprobantePreview} alt="Comprobante" className="w-full max-h-48 object-contain bg-slate-50 dark:bg-slate-900" />
+        <div className="relative rounded-xl overflow-hidden border border-emerald-300 dark:border-emerald-700">
+          <img src={comprobantePreview} alt="Comprobante" className="w-full max-h-56 object-contain bg-slate-50 dark:bg-slate-900" />
           <button
             onClick={() => { setComprobanteFile(null); setComprobantePreview(null); }}
-            className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-full p-1 cursor-pointer transition"
+            className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-full p-1.5 cursor-pointer transition"
           >
             <X size={13} />
           </button>
-          <div className="absolute bottom-0 inset-x-0 bg-emerald-500/90 py-1 text-center text-xs font-semibold text-white">
-            ✓ Imagen lista — se comprimirá al enviar
+          <div className="absolute bottom-0 inset-x-0 bg-emerald-500/90 py-1.5 text-center text-xs font-semibold text-white flex items-center justify-center gap-1.5">
+            <Check size={12} /> Imagen lista · se comprimirá al enviar
           </div>
         </div>
       ) : (
-        <label className="flex flex-col items-center justify-center gap-2 w-full border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-emerald-400 dark:hover:border-emerald-500 rounded-xl py-6 px-4 cursor-pointer transition group">
-          <span className="text-2xl">📷</span>
-          <span className="text-sm text-slate-500 dark:text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition font-medium">Adjuntar foto del comprobante</span>
-          <span className="text-xs text-slate-400 dark:text-slate-500">JPG, PNG · máx 10 MB · se comprime automáticamente</span>
+        <label
+          className={`flex flex-col items-center justify-center gap-2.5 w-full border-2 border-dashed rounded-xl py-8 px-4 cursor-pointer transition-all select-none ${
+            dragOver
+              ? "border-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 scale-[1.01]"
+              : "border-slate-200 dark:border-slate-700 hover:border-emerald-400 dark:hover:border-emerald-600 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+          }`}
+          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+          onDragEnter={(e) => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragOver(false);
+            const file = e.dataTransfer.files?.[0];
+            if (file) handleComprobanteChange({ target: { files: [file] } } as any);
+          }}
+        >
+          <span className="text-3xl">{dragOver ? "⬇️" : "📎"}</span>
+          <div className="text-center">
+            <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+              {dragOver ? "Suelta la imagen aquí" : "Adjuntar foto del comprobante"}
+            </p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+              Arrastra aquí · o toca para elegir desde galería o archivos
+            </p>
+          </div>
+          <span className="text-[11px] text-slate-400 dark:text-slate-600 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-full">
+            JPG, PNG · máx 10 MB · se comprime automáticamente
+          </span>
           <input
             type="file"
             accept="image/*"
-            capture="environment"
             className="hidden"
             onChange={handleComprobanteChange}
           />
@@ -799,7 +824,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
     ) : (
       <button
         onClick={handleSendTransfer}
-        disabled={sendingTransfer || uploadingImg || !walletAmount || parseFloat(walletAmount) < 1 || (!transferCode.trim() && !comprobanteFile)}
+        disabled={sendingTransfer || uploadingImg || !walletAmount || parseFloat(walletAmount) < 1 || !comprobanteFile}
         className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl text-sm transition active:scale-[0.99] flex items-center justify-center gap-2"
       >
         {uploadingImg ? "Subiendo foto..." : sendingTransfer ? "Enviando..." : "Enviar comprobante"}
@@ -918,6 +943,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
                   <input type="number" placeholder="Otro monto..." value={walletAmount}
                     min={10} max={Number(user.points)}
                     onChange={(e) => setWalletAmount(e.target.value)}
+                    onWheel={(e) => e.currentTarget.blur()}
                     className={`w-full bg-slate-50 dark:bg-slate-800 border rounded-xl px-4 py-3 text-sm outline-none transition ${parseFloat(walletAmount) > Number(user.points) ? "border-rose-400 dark:border-rose-500 focus:border-rose-500" : "border-slate-200 dark:border-slate-700 focus:border-rose-500"}`} />
                   {parseFloat(walletAmount) > Number(user.points) && (
                     <p className="text-xs text-rose-500 dark:text-rose-400 mt-1.5 flex items-center gap-1">
