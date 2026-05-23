@@ -522,12 +522,56 @@ Responde SOLO en JSON sin markdown:
   }
 }
 
+// Limpia comprobantes de Supabase Storage con más de 30 días
+async function cleanOldComprobantes() {
+  try {
+    const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    const { data: txs, error } = await supabase
+      .from("transactions")
+      .select("id, comprobante_url")
+      .lt("created_at", cutoff)
+      .not("comprobante_url", "is", null);
+
+    if (error || !txs || txs.length === 0) return;
+
+    console.log(`[cleanup] Limpiando ${txs.length} comprobantes de +30 días...`);
+
+    const filenames = txs
+      .map(tx => {
+        try { return tx.comprobante_url.split("/comprobantes/")[1]; } catch { return null; }
+      })
+      .filter(Boolean);
+
+    if (filenames.length > 0) {
+      const { error: removeError } = await supabase.storage
+        .from("comprobantes")
+        .remove(filenames);
+      if (removeError) console.error("[cleanup] Error borrando archivos:", removeError.message);
+    }
+
+    // Limpiar URL en DB para no reintentar en el próximo ciclo
+    const ids = txs.map(tx => tx.id);
+    await supabase.from("transactions").update({ comprobante_url: null }).in("id", ids);
+
+    console.log(`[cleanup] ✅ ${filenames.length} comprobantes eliminados`);
+  } catch (err) {
+    console.error("[cleanup] Error en limpieza de comprobantes:", err.message);
+  }
+}
+
 function startScheduler() {
   cron.schedule("* * * * *", async () => {
     if (!schedulerEnabled) return;
     await runBot();
     await checkClosingMarkets();
   });
+
+  // Limpieza de comprobantes: corre una vez al día a las 03:00 hora Ecuador (08:00 UTC)
+  cron.schedule("0 8 * * *", async () => {
+    await cleanOldComprobantes();
+  });
+
   console.log("[bot] Scheduler iniciado — revisando cada minuto");
 }
 
