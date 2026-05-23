@@ -42,6 +42,9 @@ function PanelContent() {
   const [sendingTransfer, setSendingTransfer] = useState(false);
   const [transferSent, setTransferSent] = useState(false);
   const [payphoneClientId, setPayphoneClientId] = useState("");
+  const [comprobanteFile, setComprobanteFile] = useState<File | null>(null);
+  const [comprobantePreview, setComprobantePreview] = useState<string | null>(null);
+  const [uploadingImg, setUploadingImg] = useState(false);
   // Perfil state
   const [profileForm, setProfileForm] = useState({
   nombre: "", apellido: "", cedula: "", celular: "", pais: "Ecuador", ciudad: "", direccion: "",
@@ -153,20 +156,96 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
   }
 };
 
+  // Comprime imagen con canvas nativo (sin librerías externas)
+  const compressImage = (file: File): Promise<Blob> =>
+    new Promise((resolve, reject) => {
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        const MAX = 1200;
+        let { width, height } = img;
+        if (width > MAX || height > MAX) {
+          if (width >= height) { height = Math.round(height * MAX / width); width = MAX; }
+          else { width = Math.round(width * MAX / height); height = MAX; }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d")!.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          blob => blob ? resolve(blob) : reject(new Error("Error al comprimir")),
+          "image/jpeg", 0.80
+        );
+      };
+      img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error("Error al leer imagen")); };
+      img.src = objectUrl;
+    });
+
+  const handleComprobanteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      showToast("La imagen no puede superar 10 MB", "error");
+      return;
+    }
+    setComprobanteFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setComprobantePreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
   const handleSendTransfer = async () => {
-  if (!transferCode.trim() || !walletAmount || parseFloat(walletAmount) < 1) return;
+  if (!walletAmount || parseFloat(walletAmount) < 1) return;
+  if (!transferCode.trim() && !comprobanteFile) {
+    showToast("Ingresa el número de comprobante o adjunta una foto", "error");
+    return;
+  }
   setSendingTransfer(true);
   try {
     const token = localStorage.getItem("token");
+    let comprobanteUrl: string | null = null;
+
+    // 1. Si hay foto, comprimir y subir primero
+    if (comprobanteFile) {
+      setUploadingImg(true);
+      try {
+        const compressed = await compressImage(comprobanteFile);
+        const formData = new FormData();
+        formData.append("file", compressed, "comprobante.jpg");
+        const uploadRes = await fetch("https://api.ecuapred.com/upload/comprobante", {
+          method: "POST",
+          headers: { authorization: `Bearer ${token}` },
+          body: formData,
+        });
+        if (uploadRes.ok) {
+          const uploadData = await uploadRes.json();
+          comprobanteUrl = uploadData.url;
+        } else {
+          showToast("Error al subir la foto. Intenta de nuevo.", "error");
+          return;
+        }
+      } finally {
+        setUploadingImg(false);
+      }
+    }
+
+    // 2. Enviar la solicitud de recarga con la URL (o solo el código)
     const res = await fetch("https://api.ecuapred.com/transfer", {
       method: "POST",
       headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
-      body: JSON.stringify({ amount: walletAmount, transfer_code: transferCode.trim() }),
+      body: JSON.stringify({
+        amount: walletAmount,
+        transfer_code: transferCode.trim() || null,
+        comprobante_url: comprobanteUrl,
+      }),
     });
     if (res.ok) {
       setTransferSent(true);
       setTransferCode("");
       setWalletAmount("");
+      setComprobanteFile(null);
+      setComprobantePreview(null);
       setTimeout(() => setTransferSent(false), 4000);
       showToast("Comprobante enviado, será procesado en menos de 24 horas", "info");
       loadPanel();
@@ -176,6 +255,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
     }
   } finally {
     setSendingTransfer(false);
+    setUploadingImg(false);
   }
 };
 
@@ -666,7 +746,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
 
     {/* Input número de comprobante */}
     <div>
-      <label className="text-xs text-slate-400 uppercase tracking-widest block mb-2">Número de comprobante</label>
+      <label className="text-xs text-slate-400 uppercase tracking-widest block mb-2">Número de comprobante <span className="normal-case text-slate-300 dark:text-slate-600">(opcional si adjuntas foto)</span></label>
       <input
         type="text"
         placeholder="Ej: 0034521789"
@@ -676,6 +756,40 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
       />
     </div>
 
+    {/* Foto del comprobante */}
+    <div>
+      <label className="text-xs text-slate-400 uppercase tracking-widest block mb-2">
+        Foto del comprobante <span className="normal-case text-slate-300 dark:text-slate-600">(opcional si ingresaste el número)</span>
+      </label>
+      {comprobantePreview ? (
+        <div className="relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700">
+          <img src={comprobantePreview} alt="Comprobante" className="w-full max-h-48 object-contain bg-slate-50 dark:bg-slate-900" />
+          <button
+            onClick={() => { setComprobanteFile(null); setComprobantePreview(null); }}
+            className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-full p-1 cursor-pointer transition"
+          >
+            <X size={13} />
+          </button>
+          <div className="absolute bottom-0 inset-x-0 bg-emerald-500/90 py-1 text-center text-xs font-semibold text-white">
+            ✓ Imagen lista — se comprimirá al enviar
+          </div>
+        </div>
+      ) : (
+        <label className="flex flex-col items-center justify-center gap-2 w-full border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-emerald-400 dark:hover:border-emerald-500 rounded-xl py-6 px-4 cursor-pointer transition group">
+          <span className="text-2xl">📷</span>
+          <span className="text-sm text-slate-500 dark:text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition font-medium">Adjuntar foto del comprobante</span>
+          <span className="text-xs text-slate-400 dark:text-slate-500">JPG, PNG · máx 10 MB · se comprime automáticamente</span>
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={handleComprobanteChange}
+          />
+        </label>
+      )}
+    </div>
+
     {transferSent ? (
       <div className="w-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl py-3 text-center text-sm font-semibold text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-2">
         <Check size={15} /> Comprobante enviado — aparecerá como pendiente en tus movimientos
@@ -683,10 +797,10 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
     ) : (
       <button
         onClick={handleSendTransfer}
-        disabled={sendingTransfer || !transferCode.trim() || !walletAmount || parseFloat(walletAmount) < 1}
-        className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl text-sm transition active:scale-[0.99]"
+        disabled={sendingTransfer || uploadingImg || !walletAmount || parseFloat(walletAmount) < 1 || (!transferCode.trim() && !comprobanteFile)}
+        className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl text-sm transition active:scale-[0.99] flex items-center justify-center gap-2"
       >
-        {sendingTransfer ? "Enviando..." : "Enviar comprobante"}
+        {uploadingImg ? "Subiendo foto..." : sendingTransfer ? "Enviando..." : "Enviar comprobante"}
       </button>
     )}
     <p className="text-xs text-slate-400 text-center">Tu recarga será procesada en menos de 24 horas hábiles</p>

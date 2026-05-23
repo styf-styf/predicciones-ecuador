@@ -130,6 +130,9 @@ export default function AdminPage() {
   const [editingBank, setEditingBank] = useState<null | { id: string; nombre: string; titular: string; cuenta: string; tipo: string; cedula: string }>(null);
   const [savingEditBank, setSavingEditBank] = useState(false);
 
+  // ── Modal comprobante ──
+  const [viewComprobante, setViewComprobante] = useState<string | null>(null);
+
   // ── BotNews ──
   const [botUrls, setBotUrls] = useState<any[]>([]);
   const [botStatus, setBotStatus] = useState<any>(null);
@@ -746,6 +749,47 @@ export default function AdminPage() {
           onConfirm={() => { modal.onConfirm(); setModal(null); }}
           onCancel={() => setModal(null)}
         />
+      )}
+
+      {/* Modal comprobante de pago */}
+      {viewComprobante && (
+        <div
+          className="fixed inset-0 z-[95] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+          onClick={() => setViewComprobante(null)}
+        >
+          <div className="relative max-w-lg w-full" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={() => setViewComprobante(null)}
+              className="absolute -top-3 -right-3 z-10 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-full p-1.5 text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer shadow-lg transition"
+            >
+              <X size={14} />
+            </button>
+            <div className="bg-white dark:bg-[#1a1a1a] border border-slate-200 dark:border-white/[0.08] rounded-2xl overflow-hidden shadow-2xl">
+              <div className="px-4 py-3 border-b border-slate-100 dark:border-white/[0.06] flex items-center gap-2">
+                <span className="text-base">🧾</span>
+                <p className="text-[13px] font-semibold text-slate-700 dark:text-white/70">Comprobante de transferencia</p>
+              </div>
+              <div className="p-3 bg-slate-50 dark:bg-black/20">
+                <img
+                  src={viewComprobante}
+                  alt="Comprobante"
+                  className="w-full max-h-[70vh] object-contain rounded-lg"
+                />
+              </div>
+              <div className="px-4 py-3 flex justify-between items-center">
+                <p className="text-[11px] text-slate-400 dark:text-white/30">Click fuera para cerrar</p>
+                <a
+                  href={viewComprobante}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[11px] text-sky-500 hover:text-sky-400 font-medium flex items-center gap-1 cursor-pointer"
+                >
+                  Abrir en nueva pestaña ↗
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* SIDEBAR */}
@@ -1483,6 +1527,15 @@ export default function AdminPage() {
                             <div className="col-span-2 flex flex-col items-center gap-0.5">
                               <span className="text-[11px] bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-white/50 px-2 py-0.5 rounded-md font-mono">{tx.transfer_code || "—"}</span>
                               <span className="text-[10px] text-slate-400 dark:text-white/30 truncate max-w-full">{tx.users?.banco || "—"}</span>
+                              {tx.comprobante_url && (
+                                <button
+                                  onClick={() => setViewComprobante(tx.comprobante_url)}
+                                  className="mt-0.5 flex items-center gap-1 text-[10px] text-sky-500 hover:text-sky-400 font-medium cursor-pointer transition"
+                                  title="Ver foto del comprobante"
+                                >
+                                  🧾 Ver foto
+                                </button>
+                              )}
                             </div>
                           )}
                           {method === "retiro" && (
@@ -1541,6 +1594,14 @@ export default function AdminPage() {
                               <div className="flex flex-col gap-0.5">
                                 <span className="text-[11px] bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-white/50 px-2 py-0.5 rounded-md font-mono">{tx.transfer_code || "—"}</span>
                                 <span className="text-[10px] text-slate-400 dark:text-white/30 truncate">{tx.users?.banco || "—"}</span>
+                                {tx.comprobante_url && (
+                                  <button
+                                    onClick={() => setViewComprobante(tx.comprobante_url)}
+                                    className="mt-0.5 text-left text-[10px] text-sky-500 hover:text-sky-400 font-medium cursor-pointer"
+                                  >
+                                    🧾 Ver foto
+                                  </button>
+                                )}
                               </div>
                             )}
                             {method === "retiro" && (

@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const multer = require("multer");
 const supabase = require("./supabase");
 const { OAuth2Client } = require("google-auth-library");
 const scheduler = require("./scheduler");
@@ -2570,17 +2571,56 @@ app.put("/admin/contactos/:id/leido", auth, async (req, res) => {
 });
 
 // =======================
+// 📷 UPLOAD COMPROBANTE
+// =======================
+const uploadMiddleware = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB máx (el front ya comprime a ~200KB)
+  fileFilter: (_, file, cb) => {
+    if (file.mimetype.startsWith("image/")) cb(null, true);
+    else cb(new Error("Solo se permiten imágenes"));
+  },
+});
+
+app.post("/upload/comprobante", auth, uploadMiddleware.single("file"), async (req, res) => {
+  if (!req.file) return res.status(400).json({ message: "No se recibió imagen" });
+
+  const ext = req.file.mimetype === "image/png" ? "png" : "jpg";
+  const filename = `${req.userId}_${Date.now()}.${ext}`;
+
+  const { error } = await supabase.storage
+    .from("comprobantes")
+    .upload(filename, req.file.buffer, {
+      contentType: req.file.mimetype,
+      upsert: false,
+    });
+
+  if (error) {
+    console.error("[upload] Error Supabase Storage:", error.message);
+    return res.status(500).json({ message: "Error al subir la imagen. Intenta de nuevo." });
+  }
+
+  const { data: urlData } = supabase.storage.from("comprobantes").getPublicUrl(filename);
+  res.json({ url: urlData.publicUrl });
+});
+
+// =======================
 // 💸 RECARGA POR TRANSFERENCIA BANCARIA
 // =======================
 app.post("/transfer", auth, transferRateLimit, async (req, res) => {
-  const { amount, transfer_code } = req.body;
+  const { amount, transfer_code, comprobante_url } = req.body;
   const transferAmount = parseFloat(amount);
 
   if (!transferAmount || transferAmount < 1) {
     return res.status(400).json({ message: "Monto mínimo de recarga: 1 punto" });
   }
-  if (!transfer_code?.trim()) {
-    return res.status(400).json({ message: "El código de transferencia es obligatorio" });
+  if (!transfer_code?.trim() && !comprobante_url) {
+    return res.status(400).json({ message: "Debes ingresar el número de comprobante o adjuntar una foto" });
+  }
+
+  // Validar URL del comprobante si viene
+  if (comprobante_url && typeof comprobante_url !== "string") {
+    return res.status(400).json({ message: "URL de comprobante inválida" });
   }
 
   const { data: userBalance } = await supabase.from("users").select("points, nombre, email").eq("id", req.userId).single();
@@ -2591,7 +2631,8 @@ app.post("/transfer", auth, transferRateLimit, async (req, res) => {
     amount: transferAmount,
     status: "pendiente",
     payment_method: "transferencia",
-    transfer_code: transfer_code.trim(),
+    transfer_code: transfer_code?.trim() || null,
+    comprobante_url: comprobante_url || null,
     balance_before: userBalance ? Number(userBalance.points) : null,
   });
 
