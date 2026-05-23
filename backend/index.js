@@ -13,6 +13,8 @@ const {
   emailRetiroRechazado,
   emailSaldoAcreditado,
   emailMercadoGanado,
+  emailRecargaTarjeta,
+  emailRecargaTransferencia,
 } = require("./email");
 
 const googleClient = new OAuth2Client(
@@ -1371,7 +1373,7 @@ async function procesarPagoPayphone(clientTransactionId, payphoneId) {
     }
 
     const { data: user } = await supabase
-      .from("users").select("points").eq("id", transaction.user_id).single();
+      .from("users").select("points, nombre, email").eq("id", transaction.user_id).single();
 
     const newPoints = Number(user.points) + Number(transaction.amount);
 
@@ -1389,6 +1391,15 @@ async function procesarPagoPayphone(clientTransactionId, payphoneId) {
       message: `Se acreditaron ${transaction.amount} $ a tu cuenta.`,
       read: false,
     }]);
+
+    if (user.email) {
+      emailRecargaTarjeta({
+        nombre: user.nombre,
+        email: user.email,
+        amount: transaction.amount,
+        newBalance: newPoints,
+      });
+    }
   } catch (err) {
     console.error("Error procesando pago:", err);
   }
@@ -2516,7 +2527,7 @@ app.post("/transfer", auth, transferRateLimit, async (req, res) => {
     return res.status(400).json({ message: "El código de transferencia es obligatorio" });
   }
 
-  const { data: userBalance } = await supabase.from("users").select("points").eq("id", req.userId).single();
+  const { data: userBalance } = await supabase.from("users").select("points, nombre, email").eq("id", req.userId).single();
 
   const { error } = await supabase.from("transactions").insert({
     user_id: req.userId,
@@ -2531,6 +2542,15 @@ app.post("/transfer", auth, transferRateLimit, async (req, res) => {
   if (error) return res.status(500).json({ message: error.message });
   broadcast("transactions", {});
   res.json({ message: "Comprobante enviado, será procesado en menos de 24 horas" });
+
+  if (userBalance?.email) {
+    emailRecargaTransferencia({
+      nombre: userBalance.nombre,
+      email: userBalance.email,
+      amount: transferAmount,
+      transferCode: transfer_code.trim(),
+    });
+  }
 });
 
 // =======================

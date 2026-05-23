@@ -114,6 +114,68 @@ function emailSaldoAcreditado({ nombre, email, amount, newBalance }) {
   });
 }
 
+// ── Recarga por tarjeta exitosa ──────────────────────────────────────────────
+function emailRecargaTarjeta({ nombre, email, amount, newBalance }) {
+  return sendEmail({
+    to: email,
+    subject: "✅ Recarga exitosa con tarjeta",
+    html: baseTemplate(`
+      <h2 style="color:#10b981;margin-top:0">¡Recarga exitosa!</h2>
+      <p>Hola ${nombre || "usuario"}, tu pago con tarjeta fue procesado correctamente.</p>
+      <p style="font-size:28px;font-weight:bold;color:#10b981;margin:16px 0">+$${Number(amount).toFixed(2)}</p>
+      <table style="width:100%;border-collapse:collapse;margin:16px 0">
+        <tr style="border-bottom:1px solid #1e293b">
+          <td style="padding:10px 0;color:#94a3b8;font-size:13px">Método de pago</td>
+          <td style="padding:10px 0;text-align:right;font-size:13px">Tarjeta de crédito / débito</td>
+        </tr>
+        <tr style="border-bottom:1px solid #1e293b">
+          <td style="padding:10px 0;color:#94a3b8;font-size:13px">Monto acreditado</td>
+          <td style="padding:10px 0;text-align:right;font-size:13px;color:#10b981;font-weight:bold">+$${Number(amount).toFixed(2)}</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 0;color:#94a3b8;font-size:13px">Nuevo saldo</td>
+          <td style="padding:10px 0;text-align:right;font-size:13px;font-weight:bold">$${Number(newBalance).toFixed(2)}</td>
+        </tr>
+      </table>
+      <a href="https://ecuapred.com/panel" style="display:inline-block;margin-top:16px;padding:12px 24px;background:#10b981;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold">
+        Ver mi cuenta
+      </a>
+    `),
+  });
+}
+
+// ── Recarga por transferencia solicitada ─────────────────────────────────────
+function emailRecargaTransferencia({ nombre, email, amount, transferCode }) {
+  return sendEmail({
+    to: email,
+    subject: "📤 Solicitud de recarga enviada",
+    html: baseTemplate(`
+      <h2 style="color:#f59e0b;margin-top:0">Solicitud de recarga recibida</h2>
+      <p>Hola ${nombre || "usuario"}, recibimos tu comprobante de transferencia bancaria.</p>
+      <table style="width:100%;border-collapse:collapse;margin:16px 0">
+        <tr style="border-bottom:1px solid #1e293b">
+          <td style="padding:10px 0;color:#94a3b8;font-size:13px">Monto solicitado</td>
+          <td style="padding:10px 0;text-align:right;font-size:13px;color:#10b981;font-weight:bold">$${Number(amount).toFixed(2)}</td>
+        </tr>
+        <tr style="border-bottom:1px solid #1e293b">
+          <td style="padding:10px 0;color:#94a3b8;font-size:13px">Código de transferencia</td>
+          <td style="padding:10px 0;text-align:right;font-size:13px;font-family:monospace">${transferCode || "—"}</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 0;color:#94a3b8;font-size:13px">Estado</td>
+          <td style="padding:10px 0;text-align:right">
+            <span style="background:#f59e0b22;color:#f59e0b;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:bold">Pendiente de revisión</span>
+          </td>
+        </tr>
+      </table>
+      <p style="color:#94a3b8;font-size:13px">Un administrador revisará tu transferencia en <strong style="color:#f1f5f9">menos de 24 horas</strong>. Recibirás otro correo cuando sea aprobada.</p>
+      <a href="https://ecuapred.com/panel" style="display:inline-block;margin-top:16px;padding:12px 24px;background:#10b981;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold">
+        Ver mi cuenta
+      </a>
+    `),
+  });
+}
+
 // ── Mercado ganado ───────────────────────────────────────────────────────────
 function emailMercadoGanado({ nombre, email, question, reward }) {
   return sendEmail({
@@ -140,4 +202,6 @@ module.exports = {
   emailRetiroRechazado,
   emailSaldoAcreditado,
   emailMercadoGanado,
+  emailRecargaTarjeta,
+  emailRecargaTransferencia,
 };
