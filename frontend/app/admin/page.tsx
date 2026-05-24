@@ -1092,10 +1092,13 @@ export default function AdminPage() {
           {/* MERCADOS */}
           {activeSection === "markets" && (
             <>
+              {/* Cabecera */}
               <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div>
                   <h1 className="text-lg font-bold">Mercados</h1>
-                  <p className="text-[12px] text-slate-400 dark:text-white/30 mt-0.5">{markets.filter(m => !m.resolved).length} activos · {markets.filter(m => m.resolved).length} cerrados</p>
+                  <p className="text-[12px] text-slate-400 dark:text-white/30 mt-0.5">
+                    {markets.filter(m => !m.resolved).length} activos · {markets.filter(m => m.resolved).length} cerrados
+                  </p>
                 </div>
                 <div className="flex flex-col gap-2 items-end">
                   <div className="flex items-center gap-1 bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-lg p-1">
@@ -1117,6 +1120,7 @@ export default function AdminPage() {
                 </div>
               </div>
 
+              {/* Formulario nuevo mercado */}
               <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-4">
                 <p className="text-[11px] text-slate-400 dark:text-white/30 uppercase tracking-widest mb-3">Nuevo mercado</p>
                 <div className="flex flex-col gap-2">
@@ -1131,6 +1135,7 @@ export default function AdminPage() {
                       <option value="politica">Política</option>
                       <option value="elecciones">Elecciones</option>
                       <option value="pais">País</option>
+                      <option value="general">General</option>
                     </select>
                   </div>
                   <div className="flex gap-2">
@@ -1146,201 +1151,193 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl overflow-hidden">
-                <div className="px-5 py-3 border-b border-slate-100 dark:border-white/[0.06] hidden sm:block">
-                  <div className="grid grid-cols-12 text-[10px] text-slate-400 dark:text-white/25 uppercase tracking-widest">
-                    <span className="col-span-1">#</span>
-                    <span className="col-span-4">Pregunta</span>
-                    <span className="col-span-2 text-center">Categoría</span>
-                    <span className="col-span-2 text-center">Sí / No</span>
-                    <span className="col-span-1 text-center">Total</span>
-                    <span className="col-span-2 text-right">Acciones</span>
-                  </div>
-                </div>
-                <div className="divide-y divide-slate-100 dark:divide-white/[0.03]">
-                  {paginatedMarkets.map((m) => (
-                    <div key={m.id} className="px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition">
-                      {/* Desktop */}
-                      <div className="hidden sm:grid grid-cols-12 items-center gap-2">
-                        <span className="col-span-1 text-[11px] text-slate-300 dark:text-white/20 tabular-nums">{m.id}</span>
-                        <div className="col-span-4 flex items-center gap-2 min-w-0">
-                          <Circle size={6} className={m.resolved ? "text-slate-300 dark:text-white/20 shrink-0" : "text-emerald-500 dark:text-emerald-400 shrink-0"} fill="currentColor" />
-                          {editingMarket?.id === m.id ? (
-                            <div className="flex-1 flex flex-col gap-1">
-                              <input
-                                value={editingMarket?.question ?? ""}
-                                onChange={(e) => setEditingMarket((prev) => prev ? { ...prev, question: e.target.value } : null)}
-                                onKeyDown={(e) => { if (e.key === "Enter") handleEditMarket(); if (e.key === "Escape") setEditingMarket(null); }}
-                                className="w-full bg-slate-100 dark:bg-white/[0.06] border border-emerald-500/40 rounded-lg px-2 py-1 text-[12px] outline-none text-slate-900 dark:text-white"
-                                autoFocus
-                              />
+              {/* Grid de tarjetas */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                {paginatedMarkets.map((m) => {
+                  const total = (Number(m.yes) + Number(m.no)) || 1;
+                  const isZero = m.yes === 0 && m.no === 0;
+                  const yesPct = isZero ? 50 : Math.round((Number(m.yes) / total) * 100);
+                  const noPct = isZero ? 50 : 100 - yesPct;
+                  const diff = m.closes_at ? new Date(m.closes_at).getTime() - Date.now() : null;
+                  const countdown = diff && diff > 0
+                    ? diff < 3600000
+                      ? `${Math.floor(diff / 60000)}m`
+                      : diff < 86400000
+                        ? `${Math.floor(diff / 3600000)}h ${Math.floor((diff % 3600000) / 60000)}m`
+                        : `${Math.floor(diff / 86400000)}d ${Math.floor((diff % 86400000) / 3600000)}h`
+                    : null;
+                  const catEmoji: Record<string, string> = { deporte: "⚽", farandula: "🎭", politica: "🏛️", elecciones: "🗳️", pais: "📊", general: "🌐" };
+                  const isEditing = editingMarket?.id === m.id;
+
+                  return (
+                    <div key={m.id} className={`bg-white dark:bg-[#111111] border rounded-2xl flex flex-col overflow-hidden transition-shadow hover:shadow-md ${
+                      m.resolved ? "border-slate-200 dark:border-white/[0.06]" : "border-emerald-200/60 dark:border-emerald-500/20"
+                    }`}>
+
+                      {/* Cabecera tarjeta */}
+                      <div className="px-4 pt-4 pb-3 flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            m.resolved
+                              ? "bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-white/30"
+                              : "bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                          }`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${m.resolved ? "bg-slate-400" : "bg-emerald-500"}`} />
+                            {m.resolved ? (m.winner === "yes" ? "Ganó Sí ✓" : "Ganó No ✗") : "En vivo"}
+                          </span>
+                          <span className="text-[10px] text-slate-300 dark:text-white/20 tabular-nums">#{m.id}</span>
+                        </div>
+                        <select
+                          value={m.category || "general"}
+                          onChange={async (e) => {
+                            const token = localStorage.getItem("token");
+                            await fetch(`https://api.ecuapred.com/admin/markets/${m.id}/category`, {
+                              method: "PUT",
+                              headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+                              body: JSON.stringify({ category: e.target.value }),
+                            });
+                            fetchMarkets();
+                          }}
+                          className="text-[10px] bg-slate-100 dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.08] rounded-md px-2 py-1 text-slate-600 dark:text-white/50 outline-none focus:border-emerald-500/50 transition cursor-pointer"
+                        >
+                          {[["deporte","⚽ Deporte"],["farandula","🎭 Farándula"],["politica","🏛️ Política"],["elecciones","🗳️ Elecciones"],["pais","📊 País"],["general","🌐 General"]].map(([val, label]) => (
+                            <option key={val} value={val}>{label}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Pregunta */}
+                      <div className="px-4 pb-3 flex-1">
+                        {isEditing ? (
+                          <div className="space-y-2">
+                            <textarea
+                              value={editingMarket?.question ?? ""}
+                              onChange={(e) => setEditingMarket((prev) => prev ? { ...prev, question: e.target.value } : null)}
+                              onKeyDown={(e) => { if (e.key === "Enter" && e.ctrlKey) handleEditMarket(); if (e.key === "Escape") setEditingMarket(null); }}
+                              rows={3}
+                              className="w-full bg-slate-50 dark:bg-white/[0.06] border border-emerald-500/40 rounded-xl px-3 py-2 text-[13px] outline-none text-slate-900 dark:text-white resize-none"
+                              autoFocus
+                            />
+                            <div>
+                              <label className="text-[10px] text-slate-400 dark:text-white/30 uppercase tracking-widest block mb-1">Fecha de cierre</label>
                               <input
                                 type="datetime-local"
                                 value={editingMarket?.closes_at ?? ""}
                                 onChange={(e) => setEditingMarket((prev) => prev ? { ...prev, closes_at: e.target.value } : null)}
-                                className="w-full bg-slate-100 dark:bg-white/[0.06] border border-emerald-500/40 rounded-lg px-2 py-1 text-[11px] outline-none text-slate-900 dark:text-white"
+                                className="w-full bg-slate-50 dark:bg-white/[0.06] border border-emerald-500/40 rounded-xl px-3 py-2 text-[11px] outline-none text-slate-900 dark:text-white"
                               />
                             </div>
-                          ) : (
-                            <p className="text-[12px] text-slate-600 dark:text-white/70 truncate">{m.question}</p>
-                          )}
-                        </div>
-                        <div className="col-span-2 flex justify-center">
-                          <select
-                            value={m.category || "deporte"}
-                            onChange={async (e) => {
-                              const token = localStorage.getItem("token");
-                              await fetch(`https://api.ecuapred.com/admin/markets/${m.id}/category`, {
-                                method: "PUT",
-                                headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
-                                body: JSON.stringify({ category: e.target.value }),
-                              });
-                              fetchMarkets();
-                            }}
-                            className="bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-md px-2 py-1 text-[11px] text-slate-700 dark:text-white/60 outline-none focus:border-emerald-500/60 transition w-full"
-                          >
-                            <option value="deporte">Deporte</option>
-                            <option value="farandula">Farándula</option>
-                            <option value="politica">Política</option>
-                            <option value="elecciones">Elecciones</option>
-                            <option value="pais">País</option>
-                          </select>
-                        </div>
-                        <div className="col-span-2 flex justify-center gap-1 text-[11px] tabular-nums">
-                          <span className="text-emerald-600 dark:text-emerald-400">{m.yes}</span>
-                          <span className="text-slate-300 dark:text-white/20">/</span>
-                          <span className="text-rose-500 dark:text-rose-400">{m.no}</span>
-                        </div>
-                        <span className="col-span-1 text-center text-[11px] text-amber-500 dark:text-amber-400 tabular-nums font-bold">{(Number(m.yes) + Number(m.no)).toFixed(1)}</span>
-                        <div className="col-span-2 flex justify-end gap-1.5 flex-wrap">
-                          {m.resolved ? (
-                            <div className="flex items-center gap-1.5 flex-wrap">
-  <span className="text-[10px] text-slate-400 dark:text-white/25 bg-slate-100 dark:bg-white/[0.04] px-2 py-1 rounded-md">Ganó {m.winner === "yes" ? "Sí ✓" : "No ✗"}</span>
-  <button
-    onClick={async () => {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`https://api.ecuapred.com/admin/markets/${m.id}/archive`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
-        body: JSON.stringify({ archived: !m.archived }),
-      });
-      const data = await res.json();
-      console.log("Archive response:", res.status, data);
-      fetchMarkets();
-      showToast(m.archived ? "Mercado restaurado" : "Mercado archivado", "info");
-    }}
-    className={`text-[10px] px-2.5 py-1 rounded-md border transition ${m.archived ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20" : "bg-slate-100 dark:bg-white/[0.04] text-slate-500 dark:text-white/30 border-slate-200 dark:border-white/[0.08]"}`}
-  >
-    {m.archived ? "📂 Restaurar" : "🗄️ Archivar"}
-  </button>
-  <button
-    onClick={() => handleDeleteMarket(m.id)}
-    disabled={loadingAction === `delete-${m.id}`}
-    className="text-[10px] bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 border border-rose-200 dark:border-rose-500/20 px-2.5 py-1 rounded-md transition disabled:opacity-40"
-  >
-    {loadingAction === `delete-${m.id}` ? "..." : "🗑️"}
-  </button>
- </div>
-                          ) : (
-                            <>
-                              <button
-                                onClick={() => resolveMarket(m.id, "yes")}
-                                disabled={!!loadingAction}
-                                className="text-[10px] bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/20 px-2.5 py-1 rounded-md transition disabled:opacity-40"
-                              >
-                                {loadingAction === `resolve-${m.id}` ? "..." : "Sí gana"}
-                              </button>
-                              <button
-                                onClick={() => resolveMarket(m.id, "no")}
-                                disabled={!!loadingAction}
-                                className="text-[10px] bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/20 border border-blue-200 dark:border-blue-500/20 px-2.5 py-1 rounded-md transition disabled:opacity-40"
-                              >
-                                {loadingAction === `resolve-${m.id}` ? "..." : "No gana"}
-                              </button>
-                              {editingMarket?.id === m.id ? (
-                                <>
-                                  <button onClick={handleEditMarket} className="text-[10px] bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 px-2.5 py-1 rounded-md transition cursor-pointer">✓</button>
-                                  <button onClick={() => setEditingMarket(null)} className="text-[10px] bg-slate-100 dark:bg-white/[0.04] text-slate-500 dark:text-white/30 border border-slate-200 dark:border-white/[0.08] px-2 py-1 rounded-md transition cursor-pointer">✕</button>
-                                </>
-                              ) : (
-                                <button onClick={() => setEditingMarket({ id: m.id, question: m.question, closes_at: m.closes_at || "" })} className="text-[10px] bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-500/20 border border-amber-200 dark:border-amber-500/20 px-2.5 py-1 rounded-md transition cursor-pointer">✏️</button>
-                              )}
-                             
-                            </>
-                          )}
-                        </div>
+                          </div>
+                        ) : (
+                          <p className="text-[13px] text-slate-700 dark:text-white/80 leading-snug font-medium">{m.question}</p>
+                        )}
                       </div>
-                      {/* Mobile */}
-                      <div className="sm:hidden space-y-2">
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="text-[12px] text-slate-700 dark:text-white/70 leading-snug flex-1">{m.question}</p>
-                          <span className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded-md ${m.resolved ? "bg-slate-100 dark:bg-white/[0.06] text-slate-400 dark:text-white/30" : "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"}`}>
-                            {m.resolved ? "Cerrado" : "En vivo"}
-                          </span>
+
+                      {/* Barra Sí/No */}
+                      <div className="px-4 pb-3 space-y-2">
+                        <div className="flex justify-between text-[11px] font-semibold">
+                          <span className="text-emerald-600 dark:text-emerald-400">✅ Sí {yesPct}%</span>
+                          <span className="text-rose-500 dark:text-rose-400">{noPct}% No ❌</span>
                         </div>
-                        <div className="flex gap-3 text-[11px]">
-                          <span className="text-emerald-600 dark:text-emerald-400">Sí: {m.yes}</span>
-                          <span className="text-rose-500 dark:text-rose-400">No: {m.no}</span>
-                          <span className="text-amber-500 dark:text-amber-400 font-bold">Total: {(Number(m.yes) + Number(m.no)).toFixed(1)}</span>
+                        <div className="h-2 bg-slate-100 dark:bg-white/[0.06] rounded-full overflow-hidden">
+                          <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${yesPct}%` }} />
                         </div>
-<div className="space-y-2">
-  {!m.resolved && (
-    <>
-      {editingMarket?.id === m.id ? (
-        <div className="space-y-1.5">
-          <input
-            value={editingMarket?.question ?? ""}
-            onChange={(e) => setEditingMarket((prev) => prev ? { ...prev, question: e.target.value } : null)}
-            className="w-full bg-slate-100 dark:bg-white/[0.06] border border-emerald-500/40 rounded-lg px-2 py-1.5 text-[12px] outline-none text-slate-900 dark:text-white"
-            autoFocus
-          />
-          <input
-            type="datetime-local"
-            value={editingMarket?.closes_at ?? ""}
-            onChange={(e) => setEditingMarket((prev) => prev ? { ...prev, closes_at: e.target.value } : null)}
-            className="w-full bg-slate-100 dark:bg-white/[0.06] border border-emerald-500/40 rounded-lg px-2 py-1.5 text-[11px] outline-none text-slate-900 dark:text-white"
-          />
-          <div className="flex gap-1.5">
-            <button onClick={handleEditMarket} className="flex-1 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-[11px] font-bold cursor-pointer">✓ Guardar</button>
-            <button onClick={() => setEditingMarket(null)} className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-white/[0.04] text-slate-500 dark:text-white/30 border border-slate-200 dark:border-white/[0.08] text-[11px] cursor-pointer">✕</button>
-          </div>
-        </div>
-      ) : (
-        <div className="flex gap-1.5">
-          <button onClick={() => resolveMarket(m.id, "yes")} className="flex-1 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-[11px] font-bold cursor-pointer">Sí gana</button>
-          <button onClick={() => resolveMarket(m.id, "no")} className="flex-1 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 text-[11px] font-bold cursor-pointer">No gana</button>
-          <button onClick={() => setEditingMarket({ id: m.id, question: m.question, closes_at: m.closes_at || "" })} className="px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 text-[11px] cursor-pointer">✏️</button>
-        </div>
-      )}
-    </>
-  )}
-  {m.resolved && (
-    <div className="flex gap-1.5">
-      <button
-        onClick={async () => {
-          const token = localStorage.getItem("token");
-          await fetch(`https://api.ecuapred.com/admin/markets/${m.id}/archive`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
-            body: JSON.stringify({ archived: !m.archived }),
-          });
-          fetchMarkets();
-          showToast(m.archived ? "Mercado restaurado" : "Mercado archivado", "info");
-        }}
-        className={`flex-1 py-1.5 rounded-lg border text-[11px] font-medium transition ${m.archived ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20" : "bg-slate-100 dark:bg-white/[0.04] text-slate-500 dark:text-white/30 border-slate-200 dark:border-white/[0.08]"}`}
-      >
-        {m.archived ? "📂 Restaurar" : "🗄️ Archivar"}
-      </button>
-      <button onClick={() => handleDeleteMarket(m.id)} className="px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 text-[11px] cursor-pointer">🗑️</button>
-    </div>
-  )}
-</div>
+                        <div className="grid grid-cols-3 gap-1 pt-0.5">
+                          <div className="bg-emerald-50 dark:bg-emerald-500/10 rounded-lg px-2 py-1.5 text-center">
+                            <p className="text-[10px] text-slate-400 dark:text-white/30 uppercase tracking-widest">Sí</p>
+                            <p className="text-[13px] font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">${Number(m.yes).toFixed(1)}</p>
+                          </div>
+                          <div className="bg-rose-50 dark:bg-rose-500/10 rounded-lg px-2 py-1.5 text-center">
+                            <p className="text-[10px] text-slate-400 dark:text-white/30 uppercase tracking-widest">No</p>
+                            <p className="text-[13px] font-bold text-rose-500 dark:text-rose-400 tabular-nums">${Number(m.no).toFixed(1)}</p>
+                          </div>
+                          <div className="bg-amber-50 dark:bg-amber-500/10 rounded-lg px-2 py-1.5 text-center">
+                            <p className="text-[10px] text-slate-400 dark:text-white/30 uppercase tracking-widest">Total</p>
+                            <p className="text-[13px] font-bold text-amber-600 dark:text-amber-400 tabular-nums">${(Number(m.yes) + Number(m.no)).toFixed(1)}</p>
+                          </div>
+                        </div>
+                        {/* Fecha/countdown */}
+                        {m.closes_at && (
+                          <div className="flex items-center gap-1.5 text-[11px]">
+                            <span className="text-slate-400 dark:text-white/30">⏱</span>
+                            {!m.resolved && countdown
+                              ? <span className="text-amber-500 dark:text-amber-400 font-medium">Cierra en {countdown}</span>
+                              : <span className="text-slate-400 dark:text-white/30">{new Date(m.closes_at).toLocaleDateString("es-EC", { timeZone: "America/Guayaquil", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+                            }
+                          </div>
+                        )}
                       </div>
+
+                      {/* Acciones */}
+                      <div className="px-4 pb-4 border-t border-slate-100 dark:border-white/[0.04] pt-3">
+                        {m.resolved ? (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={async () => {
+                                const token = localStorage.getItem("token");
+                                await fetch(`https://api.ecuapred.com/admin/markets/${m.id}/archive`, {
+                                  method: "PUT",
+                                  headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+                                  body: JSON.stringify({ archived: !m.archived }),
+                                });
+                                fetchMarkets();
+                                showToast(m.archived ? "Mercado restaurado" : "Mercado archivado", "info");
+                              }}
+                              className={`flex-1 py-2 rounded-xl border text-[11px] font-medium transition cursor-pointer ${m.archived ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20" : "bg-slate-100 dark:bg-white/[0.04] text-slate-500 dark:text-white/30 border-slate-200 dark:border-white/[0.08]"}`}
+                            >
+                              {m.archived ? "📂 Restaurar" : "🗄️ Archivar"}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteMarket(m.id)}
+                              disabled={loadingAction === `delete-${m.id}`}
+                              className="px-4 py-2 rounded-xl bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 text-[11px] transition disabled:opacity-40 cursor-pointer"
+                            >
+                              {loadingAction === `delete-${m.id}` ? "…" : "🗑️ Eliminar"}
+                            </button>
+                          </div>
+                        ) : isEditing ? (
+                          <div className="flex gap-2">
+                            <button onClick={handleEditMarket} className="flex-1 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-[12px] transition cursor-pointer">✓ Guardar</button>
+                            <button onClick={() => setEditingMarket(null)} className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-white/[0.04] text-slate-500 dark:text-white/30 border border-slate-200 dark:border-white/[0.08] text-[11px] cursor-pointer">✕</button>
+                          </div>
+                        ) : (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => resolveMarket(m.id, "yes")}
+                              disabled={!!loadingAction}
+                              className="flex-1 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/20 text-[11px] font-bold transition disabled:opacity-40 cursor-pointer"
+                            >
+                              {loadingAction === `resolve-${m.id}` ? "…" : "✅ Sí gana"}
+                            </button>
+                            <button
+                              onClick={() => resolveMarket(m.id, "no")}
+                              disabled={!!loadingAction}
+                              className="flex-1 py-2 rounded-xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 border border-rose-200 dark:border-rose-500/20 text-[11px] font-bold transition disabled:opacity-40 cursor-pointer"
+                            >
+                              {loadingAction === `resolve-${m.id}` ? "…" : "❌ No gana"}
+                            </button>
+                            <button
+                              onClick={() => setEditingMarket({ id: m.id, question: m.question, closes_at: m.closes_at ? new Date(m.closes_at).toLocaleString("sv-SE", { timeZone: "America/Guayaquil" }).slice(0, 16) : "" })}
+                              className="px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 text-[11px] transition cursor-pointer"
+                            >
+                              ✏️
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
                     </div>
-                  ))}
-                </div>
-                <PaginationBar page={marketPage} totalPages={marketPages} setPage={setMarketPage} />
+                  );
+                })}
               </div>
+
+              {filteredMarkets.length === 0 && (
+                <div className="text-center py-16 text-slate-400 dark:text-white/20 text-[13px]">
+                  No hay mercados que coincidan con los filtros
+                </div>
+              )}
+
+              <PaginationBar page={marketPage} totalPages={marketPages} setPage={setMarketPage} />
             </>
           )}
 
