@@ -209,9 +209,14 @@ export default function MarketPage() {
 
   const handleShare = async () => {
     const isMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 1023px)").matches;
+    const total = (Number(market?.yes) || 0) + (Number(market?.no) || 0) || 1;
+    const isZeroPool = market?.yes === 0 && market?.no === 0;
+    const yPct = isZeroPool ? "50" : ((Number(market?.yes ?? 0) / total) * 100).toFixed(0);
+    const nPct = isZeroPool ? "50" : ((Number(market?.no ?? 0) / total) * 100).toFixed(0);
+    const shareText = `${market?.question ?? ""}\n✅ Sí: ${yPct}% | ❌ No: ${nPct}%`;
     if (isMobile && typeof navigator !== "undefined" && navigator.share) {
       try {
-        await navigator.share({ title: market?.question ?? "", url: window.location.href });
+        await navigator.share({ title: market?.question ?? "", text: shareText, url: window.location.href });
       } catch {
         // usuario canceló
       }
@@ -694,7 +699,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
                   <button onClick={handleCopyLink} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer">
                     <Link2 size={13} /> Copiar enlace
                   </button>
-                  <a href={`https://wa.me/?text=${encodeURIComponent(`${market.question}\n${typeof window !== "undefined" ? window.location.href : ""}`)}`} target="_blank" rel="noopener noreferrer" onClick={() => setShowShare(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                  <a href={`https://wa.me/?text=${encodeURIComponent(`${market.question}\n✅ Sí: ${yesPct}% | ❌ No: ${noPct}%\n${typeof window !== "undefined" ? window.location.href : ""}`)}`} target="_blank" rel="noopener noreferrer" onClick={() => setShowShare(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                     <span className="text-sm">📱</span> WhatsApp
                   </a>
                 </div>
@@ -964,7 +969,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
                       <button onClick={handleCopyLink} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer">
                         <Link2 size={13} /> Copiar enlace
                       </button>
-                      <a href={`https://wa.me/?text=${encodeURIComponent(`${market.question}\n${typeof window !== "undefined" ? window.location.href : ""}`)}`} target="_blank" rel="noopener noreferrer" onClick={() => setShowShare(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                      <a href={`https://wa.me/?text=${encodeURIComponent(`${market.question}\n✅ Sí: ${yesPct}% | ❌ No: ${noPct}%\n${typeof window !== "undefined" ? window.location.href : ""}`)}`} target="_blank" rel="noopener noreferrer" onClick={() => setShowShare(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                         <span className="text-sm">📱</span> WhatsApp
                       </a>
                     </div>
