@@ -16,6 +16,14 @@ const {
   emailMercadoGanado,
   emailRecargaTarjeta,
   emailRecargaTransferencia,
+  emailRecargaAprobada,
+  emailRecargaRechazada,
+  emailCuentaSuspendida,
+  emailCuentaActivada,
+  emailContactoRecibido,
+  emailMercadoPerdido,
+  emailCambioRol,
+  emailConfirmacionApuesta,
 } = require("./email");
 
 const googleClient = new OAuth2Client(
@@ -659,10 +667,18 @@ app.put("/admin/users/:id/role", auth, async (req, res) => {
     return res.status(400).json({ message: "Rol inválido" });
   }
 
+  const { data: targetUser } = await supabase
+    .from("users").select("nombre,email").eq("id", req.params.id).single();
+
   const { error } = await supabase
     .from("users").update({ role }).eq("id", req.params.id);
 
   if (error) return res.status(500).json({ message: error.message });
+
+  if (targetUser?.email) {
+    emailCambioRol({ nombre: targetUser.nombre, email: targetUser.email, role });
+  }
+
   broadcast("users", {});
   res.json({ message: "Rol actualizado" });
 });
@@ -731,10 +747,19 @@ app.put("/admin/users/:id/suspend", auth, async (req, res) => {
 
   const { suspended } = req.body;
 
+  const { data: targetUser } = await supabase
+    .from("users").select("nombre,email").eq("id", req.params.id).single();
+
   const { error } = await supabase
     .from("users").update({ suspended }).eq("id", req.params.id);
 
   if (error) return res.status(500).json({ message: error.message });
+
+  if (targetUser?.email) {
+    if (suspended) emailCuentaSuspendida({ nombre: targetUser.nombre, email: targetUser.email });
+    else emailCuentaActivada({ nombre: targetUser.nombre, email: targetUser.email });
+  }
+
   broadcast("users", {});
   res.json({ message: suspended ? "Usuario suspendido" : "Usuario activado" });
 });
@@ -909,6 +934,12 @@ await supabase.from("market_history").insert([{
 
 broadcast("bets", { market_id: marketId });
 broadcast("market_history", { market_id: marketId });
+
+// Solo enviar email de confirmación en la primera apuesta (no en cambios)
+if (!existingBet && user.email) {
+  emailConfirmacionApuesta({ nombre: user.nombre, email: user.email, question: market.question, amount: betAmount, type });
+}
+
 res.json({ message: "Predicción realizada", points: newPoints, market: updatedMarket });
 });
 // =======================
@@ -1040,6 +1071,8 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
       read: false,
       market_id: marketId,
     }]);
+    const { data: loser } = await supabase.from("users").select("nombre,email").eq("id", bet.user_id).single();
+    if (loser?.email) emailMercadoPerdido({ nombre: loser.nombre, email: loser.email, question: market.question, amount });
   }
 
   await supabase.from("markets").update({ resolved: true, winner }).eq("id", marketId);
@@ -2455,6 +2488,7 @@ app.post("/contacto", async (req, res) => {
     mensaje: mensaje.trim(),
   });
   if (error) return res.status(500).json({ message: error.message });
+  emailContactoRecibido({ nombre: nombre.trim(), email: email.trim(), asunto: asunto?.trim() || "Sin asunto" });
   broadcast("contactos", {});
   res.json({ message: "Mensaje enviado correctamente" });
 });
@@ -2497,6 +2531,7 @@ app.put("/admin/transactions/:id/status", auth, async (req, res) => {
         user_id: userId, title: "✅ Recarga exitosa",
         message: `Se acreditaron ${amount} $ a tu cuenta por transferencia bancaria.`, read: false,
       }]);
+      emailRecargaAprobada({ nombre: user.nombre, email: user.email, amount, newBalance });
     } else if (type === "retiro") {
       await supabase.from("notifications").insert([{
         user_id: userId, title: "✅ Retiro aprobado",
@@ -2521,6 +2556,7 @@ app.put("/admin/transactions/:id/status", auth, async (req, res) => {
         user_id: userId, title: "❌ Recarga rechazada",
         message: `Tu solicitud de recarga por $${amount} fue rechazada. Contáctanos si crees que es un error.`, read: false,
       }]);
+      emailRecargaRechazada({ nombre: user.nombre, email: user.email, amount });
     }
   }
 

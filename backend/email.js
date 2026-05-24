@@ -176,6 +176,173 @@ function emailRecargaTransferencia({ nombre, email, amount, transferCode }) {
   });
 }
 
+// ── Recarga por transferencia aprobada ──────────────────────────────────────
+function emailRecargaAprobada({ nombre, email, amount, newBalance }) {
+  return sendEmail({
+    to: email,
+    subject: "✅ Recarga aprobada",
+    html: baseTemplate(`
+      <h2 style="color:#10b981;margin-top:0">¡Tu recarga fue aprobada!</h2>
+      <p>Hola ${nombre || "usuario"}, tu transferencia bancaria fue verificada y el saldo ya está disponible en tu cuenta.</p>
+      <table style="width:100%;border-collapse:collapse;margin:16px 0">
+        <tr style="border-bottom:1px solid #1e293b">
+          <td style="padding:10px 0;color:#94a3b8;font-size:13px">Método de pago</td>
+          <td style="padding:10px 0;text-align:right;font-size:13px">Transferencia bancaria</td>
+        </tr>
+        <tr style="border-bottom:1px solid #1e293b">
+          <td style="padding:10px 0;color:#94a3b8;font-size:13px">Monto acreditado</td>
+          <td style="padding:10px 0;text-align:right;font-size:13px;color:#10b981;font-weight:bold">+$${Number(amount).toFixed(2)}</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 0;color:#94a3b8;font-size:13px">Nuevo saldo</td>
+          <td style="padding:10px 0;text-align:right;font-size:13px;font-weight:bold">$${Number(newBalance).toFixed(2)}</td>
+        </tr>
+      </table>
+      <a href="https://ecuapred.com" style="display:inline-block;margin-top:16px;padding:12px 24px;background:#10b981;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold">
+        Ir a predecir
+      </a>
+    `),
+  });
+}
+
+// ── Recarga por transferencia rechazada ──────────────────────────────────────
+function emailRecargaRechazada({ nombre, email, amount }) {
+  return sendEmail({
+    to: email,
+    subject: "❌ Recarga rechazada",
+    html: baseTemplate(`
+      <h2 style="color:#ef4444;margin-top:0">Recarga rechazada</h2>
+      <p>Hola ${nombre || "usuario"}, lamentablemente tu solicitud de recarga por:</p>
+      <p style="font-size:28px;font-weight:bold;color:#ef4444;margin:16px 0">$${Number(amount).toFixed(2)}</p>
+      <p>no pudo ser verificada. Las razones más comunes son:</p>
+      <ul style="color:#94a3b8;font-size:13px;line-height:1.8">
+        <li>El comprobante no corresponde al monto indicado</li>
+        <li>La transferencia fue a una cuenta diferente</li>
+        <li>El comprobante es ilegible o inválido</li>
+      </ul>
+      <p>Si crees que es un error, contáctanos.</p>
+      <a href="https://ecuapred.com/contacto" style="display:inline-block;margin-top:16px;padding:12px 24px;background:#10b981;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold">
+        Contactar soporte
+      </a>
+    `),
+  });
+}
+
+// ── Cuenta suspendida ────────────────────────────────────────────────────────
+function emailCuentaSuspendida({ nombre, email }) {
+  return sendEmail({
+    to: email,
+    subject: "⚠️ Tu cuenta ha sido suspendida",
+    html: baseTemplate(`
+      <h2 style="color:#f59e0b;margin-top:0">Cuenta suspendida</h2>
+      <p>Hola ${nombre || "usuario"}, tu cuenta en EcuaPred ha sido <strong>suspendida temporalmente</strong>.</p>
+      <p style="color:#94a3b8;font-size:13px">Durante este periodo no podrás acceder a la plataforma. Si crees que esto es un error o deseas más información, contáctanos.</p>
+      <a href="https://ecuapred.com/contacto" style="display:inline-block;margin-top:16px;padding:12px 24px;background:#10b981;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold">
+        Contactar soporte
+      </a>
+    `),
+  });
+}
+
+// ── Cuenta reactivada ────────────────────────────────────────────────────────
+function emailCuentaActivada({ nombre, email }) {
+  return sendEmail({
+    to: email,
+    subject: "✅ Tu cuenta ha sido reactivada",
+    html: baseTemplate(`
+      <h2 style="color:#10b981;margin-top:0">¡Cuenta reactivada!</h2>
+      <p>Hola ${nombre || "usuario"}, tu cuenta en EcuaPred ha sido <strong>reactivada</strong>. Ya puedes volver a acceder a la plataforma.</p>
+      <a href="https://ecuapred.com/login" style="display:inline-block;margin-top:16px;padding:12px 24px;background:#10b981;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold">
+        Iniciar sesión
+      </a>
+    `),
+  });
+}
+
+// ── Contacto recibido ────────────────────────────────────────────────────────
+function emailContactoRecibido({ nombre, email, asunto }) {
+  return sendEmail({
+    to: email,
+    subject: "📩 Recibimos tu mensaje — EcuaPred",
+    html: baseTemplate(`
+      <h2 style="color:#10b981;margin-top:0">¡Mensaje recibido!</h2>
+      <p>Hola ${nombre || "usuario"}, recibimos tu mensaje con el asunto:</p>
+      <div style="background:#1e293b;border-left:4px solid #10b981;padding:14px 18px;border-radius:8px;margin:16px 0">
+        <p style="margin:0;font-size:14px;font-style:italic">"${asunto || "Sin asunto"}"</p>
+      </div>
+      <p style="color:#94a3b8;font-size:13px">Nuestro equipo revisará tu solicitud y te responderá a este correo en un plazo de <strong style="color:#f1f5f9">24-48 horas</strong>.</p>
+      <p style="color:#64748b;font-size:12px;margin-top:24px">Si no enviaste este mensaje, puedes ignorar este correo.</p>
+    `),
+  });
+}
+
+// ── Predicción perdida ───────────────────────────────────────────────────────
+function emailMercadoPerdido({ nombre, email, question, amount }) {
+  return sendEmail({
+    to: email,
+    subject: "📉 Perdiste una predicción",
+    html: baseTemplate(`
+      <h2 style="color:#ef4444;margin-top:0">Tu predicción no fue correcta</h2>
+      <p>Hola ${nombre || "usuario"}, el mercado fue resuelto y tu predicción no coincidió con el resultado:</p>
+      <div style="background:#1e293b;border-left:4px solid #ef4444;padding:16px;border-radius:8px;margin:16px 0">
+        <p style="margin:0;font-size:15px">${question}</p>
+      </div>
+      <p>Monto invertido: <span style="font-size:20px;font-weight:bold;color:#ef4444">-$${Number(amount).toFixed(2)}</span></p>
+      <p style="color:#94a3b8;font-size:13px">¡No te rindas! Hay muchos mercados activos esperando tus predicciones.</p>
+      <a href="https://ecuapred.com" style="display:inline-block;margin-top:16px;padding:12px 24px;background:#10b981;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold">
+        Ver mercados activos
+      </a>
+    `),
+  });
+}
+
+// ── Cambio de rol ────────────────────────────────────────────────────────────
+function emailCambioRol({ nombre, email, role }) {
+  const isAdmin = role === "admin";
+  return sendEmail({
+    to: email,
+    subject: isAdmin ? "👑 Ahora eres administrador en EcuaPred" : "🔄 Tu rol fue actualizado en EcuaPred",
+    html: baseTemplate(`
+      <h2 style="color:${isAdmin ? "#f59e0b" : "#10b981"};margin-top:0">
+        ${isAdmin ? "¡Eres administrador!" : "Tu rol fue actualizado"}
+      </h2>
+      <p>Hola ${nombre || "usuario"}, tu rol en EcuaPred ha sido cambiado a:</p>
+      <p style="font-size:22px;font-weight:bold;color:${isAdmin ? "#f59e0b" : "#10b981"};margin:16px 0">
+        ${isAdmin ? "👑 Administrador" : "👤 Usuario"}
+      </p>
+      ${isAdmin
+        ? `<p style="color:#94a3b8;font-size:13px">Ahora tienes acceso al panel de administración en <a href="https://ecuapred.com/admin" style="color:#10b981">ecuapred.com/admin</a>.</p>`
+        : `<p style="color:#94a3b8;font-size:13px">Tus permisos de administrador han sido revocados. Si crees que esto es un error, contáctanos.</p>`
+      }
+      <a href="https://ecuapred.com" style="display:inline-block;margin-top:16px;padding:12px 24px;background:#10b981;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold">
+        Ir a EcuaPred
+      </a>
+    `),
+  });
+}
+
+// ── Confirmación de predicción ───────────────────────────────────────────────
+function emailConfirmacionApuesta({ nombre, email, question, amount, type }) {
+  const isYes = type === "yes";
+  return sendEmail({
+    to: email,
+    subject: "🎯 Predicción registrada",
+    html: baseTemplate(`
+      <h2 style="color:#10b981;margin-top:0">¡Predicción registrada!</h2>
+      <p>Hola ${nombre || "usuario"}, tu predicción fue registrada exitosamente:</p>
+      <div style="background:#1e293b;border-left:4px solid ${isYes ? "#10b981" : "#ef4444"};padding:16px;border-radius:8px;margin:16px 0">
+        <p style="margin:0 0 8px;font-size:15px">${question}</p>
+        <p style="margin:0;font-size:13px;color:#94a3b8">Tu predicción: <strong style="color:${isYes ? "#10b981" : "#ef4444"}">${isYes ? "✅ Sí" : "❌ No"}</strong></p>
+      </div>
+      <p>Monto invertido: <span style="font-size:20px;font-weight:bold;color:#10b981">$${Number(amount).toFixed(2)}</span></p>
+      <p style="color:#94a3b8;font-size:13px">Recibirás un correo cuando el mercado sea resuelto.</p>
+      <a href="https://ecuapred.com" style="display:inline-block;margin-top:16px;padding:12px 24px;background:#10b981;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold">
+        Ver mis predicciones
+      </a>
+    `),
+  });
+}
+
 // ── Mercado ganado ───────────────────────────────────────────────────────────
 function emailMercadoGanado({ nombre, email, question, reward }) {
   return sendEmail({
@@ -204,4 +371,12 @@ module.exports = {
   emailMercadoGanado,
   emailRecargaTarjeta,
   emailRecargaTransferencia,
+  emailRecargaAprobada,
+  emailRecargaRechazada,
+  emailCuentaSuspendida,
+  emailCuentaActivada,
+  emailContactoRecibido,
+  emailMercadoPerdido,
+  emailCambioRol,
+  emailConfirmacionApuesta,
 };
