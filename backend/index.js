@@ -47,6 +47,13 @@ app.use(express.json());
 // Rate limiters en memoria
 function makeRateLimiter(maxAttempts, windowMs, message) {
   const store = new Map();
+  // Limpiar IPs expiradas periódicamente para evitar memory leak
+  setInterval(() => {
+    const now = Date.now();
+    for (const [ip, times] of store) {
+      if (times.every(t => now - t >= windowMs)) store.delete(ip);
+    }
+  }, windowMs).unref();
   return (req, res, next) => {
     const ip = req.ip || req.socket.remoteAddress;
     const now = Date.now();
@@ -62,6 +69,7 @@ const registerRateLimit = makeRateLimiter(5,  60 * 60 * 1000, "Demasiados regist
 const betRateLimit      = makeRateLimiter(60,      60 * 1000, "Demasiadas apuestas seguidas. Espera un momento.");
 const withdrawalRateLimit = makeRateLimiter(5, 60 * 60 * 1000, "Demasiadas solicitudes de retiro. Espera 1 hora.");
 const transferRateLimit   = makeRateLimiter(10, 60 * 60 * 1000, "Demasiadas transferencias. Espera 1 hora.");
+const contactoRateLimit   = makeRateLimiter(5,  60 * 60 * 1000, "Demasiados mensajes enviados. Espera 1 hora.");
 
 const SECRET = process.env.JWT_SECRET;
 if (!SECRET) throw new Error("JWT_SECRET no está definido en .env");
@@ -169,12 +177,24 @@ app.post("/login", loginRateLimit, async (req, res) => {
 // =======================
 // 🔵 LOGIN CON GOOGLE
 // =======================
+const ALLOWED_GOOGLE_REDIRECT_URIS = [
+  "postmessage",
+  "https://ecuapred.com/login",
+  "https://ecuapred.com/register",
+  "http://localhost:3000/login",
+  "http://localhost:3000/register",
+];
+
 app.post("/auth/google", async (req, res) => {
   const { code } = req.body;
   if (!code) return res.status(400).json({ message: "Código de Google requerido" });
 
+  const redirectUri = req.body.redirect_uri || "postmessage";
+  if (!ALLOWED_GOOGLE_REDIRECT_URIS.includes(redirectUri)) {
+    return res.status(400).json({ message: "redirect_uri no permitido" });
+  }
+
   try {
-    const redirectUri = req.body.redirect_uri || "postmessage";
     const { tokens } = await googleClient.getToken({ code, redirect_uri: redirectUri });
 
     const ticket = await googleClient.verifyIdToken({
@@ -951,6 +971,9 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
     return res.status(400).json({ message: "Ganador inválido, debe ser 'yes' o 'no'" });
   }
   const marketId = Number(req.params.id);
+  if (!Number.isFinite(marketId) || marketId <= 0) {
+    return res.status(400).json({ message: "ID de mercado inválido" });
+  }
 
   // ✅ Obtener comisión desde config
   const { data: config } = await supabase
@@ -1090,8 +1113,13 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
 // 👑 ADMIN - CREAR MERCADO
 // =======================
 app.post("/admin/markets", auth, async (req, res) => {
+  const { data: adminUser } = await supabase.from("users").select("role").eq("id", req.userId).single();
+  if (!adminUser || adminUser.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
   const { question, category, closes_at } = req.body;
-  const insertData = { question, category: category || "general" };
+  if (!question?.trim()) return res.status(400).json({ message: "La pregunta es obligatoria" });
+
+  const insertData = { question: question.trim(), category: category || "general" };
   if (closes_at) insertData.closes_at = closes_at;
   const { error } = await supabase.from("markets").insert([insertData]);
   if (error) return res.status(400).json({ message: error.message });
@@ -1142,6 +1170,9 @@ app.get("/favorites", auth, async (req, res) => {
 
 app.post("/favorites/:marketId", auth, async (req, res) => {
   const marketId = Number(req.params.marketId);
+  if (!Number.isFinite(marketId) || marketId <= 0) {
+    return res.status(400).json({ message: "ID de mercado inválido" });
+  }
 
   const { data: existing } = await supabase
     .from("favorites")
@@ -1580,12 +1611,14 @@ app.post("/payphone/callback", async (req, res) => {
 });
 
 // =======================
-// 💳 PAYPHONE - CONFIG WIDGET (token nunca expuesto en el frontend)
+// 💳 PAYPHONE - CONFIG WIDGET
+// NOTA: El token del widget tiene scope limitado (solo inicia pagos).
+// La verificación real del pago se hace server-side en /payphone/callback.
 // =======================
 app.get("/payphone/widget-config", auth, (req, res) => {
   const token = process.env.PAYPHONE_TOKEN_API || process.env.PAYPHONE_TOKEN;
   const storeId = process.env.PAYPHONE_STORE_ID;
-  if (!token) return res.status(500).json({ message: "Payphone no configurado" });
+  if (!token || !storeId) return res.status(500).json({ message: "Payphone no configurado" });
   res.json({ token, storeId });
 });
 
@@ -2145,13 +2178,19 @@ app.post("/withdrawal", auth, withdrawalRateLimit, async (req, res) => {
     return res.status(400).json({ message: "Completa tus datos bancarios en tu perfil" });
   }
 
-  // Operación atómica: descontar puntos + crear transacción
+  // Optimistic lock: solo actualiza si los puntos no cambiaron desde la lectura
   const newPoints = Number(user.points) - withdrawAmount;
 
-  const { error: pointsError } = await supabase
-    .from("users").update({ points: newPoints }).eq("id", req.userId);
+  const { data: updated, error: pointsError } = await supabase
+    .from("users")
+    .update({ points: newPoints })
+    .eq("id", req.userId)
+    .eq("points", user.points) // lock: falla si otra transacción ya modificó el saldo
+    .select("points")
+    .maybeSingle();
 
   if (pointsError) return res.status(500).json({ message: "Error al procesar" });
+  if (!updated) return res.status(409).json({ message: "Saldo insuficiente o transacción en conflicto. Intenta nuevamente." });
 
   const { error: txError } = await supabase.from("transactions").insert({
     user_id: req.userId,
@@ -2460,7 +2499,7 @@ app.get("/admin/contactos", auth, async (req, res) => {
 // =======================
 // ✉️ FORMULARIO DE CONTACTO
 // =======================
-app.post("/contacto", async (req, res) => {
+app.post("/contacto", contactoRateLimit, async (req, res) => {
   const { nombre, email, asunto, mensaje, captchaToken } = req.body;
   if (!nombre?.trim() || !email?.trim() || !mensaje?.trim()) {
     return res.status(400).json({ message: "Nombre, email y mensaje son obligatorios" });
@@ -2609,10 +2648,26 @@ app.put("/admin/contactos/:id/leido", auth, async (req, res) => {
 // =======================
 // 📷 UPLOAD COMPROBANTE
 // =======================
+
+// Detecta el tipo real del archivo por magic bytes (no confiamos en el mimetype del cliente)
+function detectImageType(buffer) {
+  if (!buffer || buffer.length < 12) return null;
+  // JPEG: FF D8 FF
+  if (buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF) return { ext: "jpg", mime: "image/jpeg" };
+  // PNG: 89 50 4E 47 0D 0A 1A 0A
+  if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47 &&
+      buffer[4] === 0x0D && buffer[5] === 0x0A && buffer[6] === 0x1A && buffer[7] === 0x0A) return { ext: "png", mime: "image/png" };
+  // WebP: 52 49 46 46 ?? ?? ?? ?? 57 45 42 50
+  if (buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46 &&
+      buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50) return { ext: "webp", mime: "image/webp" };
+  return null; // tipo desconocido o no permitido
+}
+
 const _multerInstance = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB máx (el front ya comprime a ~200KB)
   fileFilter: (_, file, cb) => {
+    // Primera línea de defensa: MIME declarado por el cliente
     if (file.mimetype.startsWith("image/")) cb(null, true);
     else cb(new Error("Solo se permiten imágenes"));
   },
@@ -2637,7 +2692,13 @@ app.post("/upload/comprobante", auth, async (req, res) => {
 
   if (!req.file) return res.status(400).json({ message: "No se recibió imagen" });
 
-  const ext = req.file.mimetype === "image/png" ? "png" : "jpg";
+  // Segunda línea de defensa: verificar magic bytes del contenido real
+  const imageType = detectImageType(req.file.buffer);
+  if (!imageType) {
+    return res.status(400).json({ message: "El archivo no es una imagen válida (JPEG, PNG o WebP)" });
+  }
+
+  const ext = imageType.ext;
   const filename = `${req.userId}_${Date.now()}.${ext}`;
 
   console.log(`[upload] Subiendo ${filename} (${req.file.size} bytes) a Supabase Storage...`);
@@ -2645,7 +2706,7 @@ app.post("/upload/comprobante", auth, async (req, res) => {
   const { data: uploadData, error } = await supabase.storage
     .from("comprobantes")
     .upload(filename, req.file.buffer, {
-      contentType: req.file.mimetype,
+      contentType: imageType.mime, // usar el tipo detectado por magic bytes, no el del cliente
       upsert: false,
     });
 
