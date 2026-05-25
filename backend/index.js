@@ -182,7 +182,16 @@ app.post("/register/confirm", async (req, res) => {
   res.json({ message: "Cuenta creada correctamente", token, user: newUser });
 });
 
-// Enlace mágico: verificar automáticamente desde el correo
+// Store de códigos de un solo uso (válidos 2 minutos)
+const magicCodes = new Map();
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, v] of magicCodes) {
+    if (now > v.expiresAt) magicCodes.delete(k);
+  }
+}, 2 * 60 * 1000).unref();
+
+// Enlace mágico: el backend verifica, crea la cuenta y emite un código de un solo uso
 app.get("/verify-email", async (req, res) => {
   const { token } = req.query;
   let foundKey  = null;
@@ -194,37 +203,53 @@ app.get("/verify-email", async (req, res) => {
     }
   }
 
-  if (!foundKey) return res.redirect("https://ecuapred.com/register?error=token_invalido");
+  if (!foundKey) return res.redirect("https://ecuapred.com/verify-email?error=token_invalido");
 
-  // Verificar que no exista ya
-  const { data: existing } = await supabase.from("users").select("id").eq("email", foundKey).maybeSingle();
-  if (existing) {
-    pendingRegistrations.delete(foundKey);
-    // Ya existe: intentar login directo
-    const { data: user } = await supabase.from("users").select("*").eq("email", foundKey).single();
-    if (user) {
-      const jwtToken = jwt.sign({ id: user.id, role: user.role }, SECRET, { expiresIn: "30d" });
-      return res.redirect(`https://ecuapred.com/verify-email?token=${jwtToken}&status=already`);
-    }
-    return res.redirect("https://ecuapred.com/register?error=ya_existe");
+  // Si la cuenta ya existe (doble click), emitir igual un código
+  const { data: existing } = await supabase.from("users").select("*").eq("email", foundKey).maybeSingle();
+  let finalUser = existing;
+
+  if (!existing) {
+    const { error } = await supabase.from("users").insert([{
+      email: foundKey, password: foundData.hashedPassword,
+      nombre: foundData.nombre, apellido: foundData.apellido,
+      cedula: foundData.cedula, celular: foundData.celular,
+      ciudad: foundData.ciudad, pais: foundData.pais,
+      role: "user", points: 0, avatar: "", provider: "local",
+    }]);
+    if (error) return res.redirect("https://ecuapred.com/verify-email?error=error_servidor");
+    const { data: newUser } = await supabase.from("users").select("*").eq("email", foundKey).single();
+    finalUser = newUser;
+    emailBienvenida({ nombre: foundData.nombre, email: foundKey });
+    broadcast("users", {});
   }
 
-  const { error } = await supabase.from("users").insert([{
-    email: foundKey, password: foundData.hashedPassword,
-    nombre: foundData.nombre, apellido: foundData.apellido,
-    cedula: foundData.cedula, celular: foundData.celular,
-    ciudad: foundData.ciudad, pais: foundData.pais,
-    role: "user", points: 0, avatar: "", provider: "local",
-  }]);
-  if (error) return res.redirect("https://ecuapred.com/register?error=error_servidor");
-
   pendingRegistrations.delete(foundKey);
-  const { data: newUser } = await supabase.from("users").select("*").eq("email", foundKey).single();
-  emailBienvenida({ nombre: foundData.nombre, email: foundKey });
-  broadcast("users", {});
 
-  const jwtToken = jwt.sign({ id: newUser.id, role: newUser.role }, SECRET, { expiresIn: "30d" });
-  res.redirect(`https://ecuapred.com/verify-email?jwt=${jwtToken}&status=ok`);
+  // Generar código de un solo uso (válido 2 minutos) — el JWT nunca va en la URL
+  const onetimeCode = crypto.randomBytes(24).toString("hex");
+  magicCodes.set(onetimeCode, {
+    userId: finalUser.id,
+    role:   finalUser.role,
+    expiresAt: Date.now() + 2 * 60 * 1000,
+  });
+
+  res.redirect(`https://ecuapred.com/verify-email?code=${onetimeCode}`);
+});
+
+// Intercambio del código de un solo uso por JWT
+app.post("/auth/exchange", (req, res) => {
+  const { code } = req.body;
+  const entry = magicCodes.get(code);
+
+  if (!entry || Date.now() > entry.expiresAt) {
+    magicCodes.delete(code);
+    return res.status(400).json({ message: "Código inválido o expirado" });
+  }
+
+  magicCodes.delete(code); // Un solo uso
+  const token = jwt.sign({ id: entry.userId, role: entry.role }, SECRET, { expiresIn: "30d" });
+  res.json({ token });
 });
 
 // =======================

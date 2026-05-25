@@ -7,63 +7,76 @@ import { Loader2, CheckCircle, XCircle } from "lucide-react";
 function VerifyEmailContent() {
   const router       = useRouter();
   const searchParams = useSearchParams();
-  const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
+  const [status, setStatus]   = useState<"loading" | "ok" | "error">("loading");
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    const jwt    = searchParams.get("jwt");
-    const error  = searchParams.get("error");
-    const st     = searchParams.get("status");
+    const code  = searchParams.get("code");
+    const error = searchParams.get("error");
 
     if (error) {
       const msgs: Record<string, string> = {
         token_invalido: "El enlace no es válido o ya expiró. Vuelve a registrarte.",
-        ya_existe:      "Esta cuenta ya fue verificada. Inicia sesión.",
         error_servidor: "Ocurrió un error. Inténtalo de nuevo.",
       };
       setStatus("error");
-      setMessage(msgs[error] || "Error desconocido.");
+      setMessage(msgs[error] || "Enlace inválido.");
       return;
     }
 
-    if (jwt) {
-      // Guardar token y redirigir al home
-      localStorage.setItem("token", jwt);
-      // Obtener datos del usuario
-      fetch("https://api.ecuapred.com/me", {
-        headers: { authorization: `Bearer ${jwt}` },
-      })
-        .then((r) => r.json())
-        .then((data) => {
-          localStorage.setItem("role", data.role || "user");
-          localStorage.setItem("points", String(data.points || 0));
-          window.dispatchEvent(new Event("auth-change"));
-          setStatus("ok");
-          setMessage(st === "already" ? "¡Bienvenido de nuevo!" : "¡Cuenta verificada! Entrando a EcuaPred...");
-          setTimeout(() => router.push("/"), 1800);
-        })
-        .catch(() => {
-          setStatus("ok");
-          setMessage("¡Cuenta verificada! Redirigiendo...");
-          setTimeout(() => router.push("/"), 1800);
+    if (!code) {
+      setStatus("error");
+      setMessage("Enlace inválido o expirado.");
+      return;
+    }
+
+    // Intercambiar el código de un solo uso por el JWT
+    fetch("https://api.ecuapred.com/auth/exchange", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code }),
+    })
+      .then((r) => r.json())
+      .then(async (data) => {
+        if (!data.token) {
+          setStatus("error");
+          setMessage("El enlace ya fue usado o expiró. Vuelve a registrarte.");
+          return;
+        }
+
+        // Guardar sesión
+        localStorage.setItem("token", data.token);
+        const meRes = await fetch("https://api.ecuapred.com/me", {
+          headers: { authorization: `Bearer ${data.token}` },
         });
-      return;
-    }
+        if (meRes.ok) {
+          const me = await meRes.json();
+          localStorage.setItem("role", me.role || "user");
+          localStorage.setItem("points", String(me.points || 0));
+        }
+        window.dispatchEvent(new Event("auth-change"));
 
-    // Sin parámetros válidos
-    setStatus("error");
-    setMessage("Enlace inválido o expirado.");
+        setStatus("ok");
+        setMessage("¡Cuenta verificada! Entrando a EcuaPred...");
+        setTimeout(() => router.push("/"), 1800);
+      })
+      .catch(() => {
+        setStatus("error");
+        setMessage("Error de conexión. Inténtalo de nuevo.");
+      });
   }, [searchParams, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-950">
       <div className="flex flex-col items-center gap-5 text-center px-6 max-w-sm">
+
         {status === "loading" && (
           <>
             <Loader2 size={48} className="text-emerald-500 animate-spin" />
             <p className="text-base font-semibold text-slate-700 dark:text-slate-200">Verificando tu cuenta...</p>
           </>
         )}
+
         {status === "ok" && (
           <>
             <div className="h-16 w-16 rounded-2xl bg-emerald-500/10 grid place-items-center">
@@ -74,6 +87,7 @@ function VerifyEmailContent() {
             <div className="w-8 h-1 rounded-full bg-emerald-500 animate-pulse" />
           </>
         )}
+
         {status === "error" && (
           <>
             <div className="h-16 w-16 rounded-2xl bg-rose-500/10 grid place-items-center">
@@ -89,6 +103,7 @@ function VerifyEmailContent() {
             </button>
           </>
         )}
+
       </div>
     </div>
   );
