@@ -121,7 +121,9 @@ export default function Header() {
           <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 px-3 py-2 rounded-xl w-full">
             <Search size={15} className="text-slate-400 shrink-0" />
             <input
+              type="search"
               placeholder="Buscar mercados..."
+              autoComplete="off"
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               className="bg-transparent outline-none w-full text-sm text-slate-900 dark:text-white placeholder-slate-400"
@@ -281,8 +283,10 @@ export default function Header() {
           <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-900 px-4 py-2.5 rounded-2xl">
             <Search size={16} className="text-slate-400 shrink-0" />
             <input
+              type="search"
               autoFocus
               placeholder="Buscar mercados..."
+              autoComplete="off"
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               className="bg-transparent outline-none w-full text-sm text-slate-900 dark:text-white placeholder-slate-400"
