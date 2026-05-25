@@ -307,53 +307,54 @@ function CategoryBar({
 // ─────────────────────────────────────────────────────────────────────────────
 
 function HomeSkeleton() {
+  // Anchos variados para que los pills parezcan reales
+  const pillWidths = ["w-24", "w-20", "w-22", "w-20", "w-16", "w-20", "w-20", "w-24"];
+
   return (
     <main className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
       <Header />
-      {/* Barra de categorías */}
-      <div className="sticky top-0 z-20 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md py-2.5 px-4 border-b border-slate-100 dark:border-slate-900">
-        <div className="flex gap-2 overflow-hidden">
-          {Array.from({ length: 7 }).map((_, i) => (
-            <div key={i} className="h-8 w-24 rounded-full bg-slate-100 dark:bg-slate-800/60 animate-pulse shrink-0" />
+
+      {/* Barra de categorías skeleton */}
+      <div className="sticky top-0 z-20 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex gap-1.5 sm:gap-2 py-2.5 overflow-hidden">
+          {pillWidths.map((w, i) => (
+            <div key={i} className={`h-[30px] ${w} rounded-full bg-slate-100 dark:bg-slate-800/70 animate-pulse shrink-0`} />
           ))}
+          {/* "En vivo" pill — extremo derecho */}
+          <div className="ml-auto h-[30px] w-20 rounded-full bg-slate-100 dark:bg-slate-800/70 animate-pulse shrink-0" />
         </div>
       </div>
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Título de sección */}
-        <div className="flex items-center gap-3 mb-5">
-          <div className="h-5 w-5 rounded bg-slate-200 dark:bg-slate-800 animate-pulse" />
-          <div className="h-6 w-44 rounded-lg bg-slate-200 dark:bg-slate-800 animate-pulse" />
-          <div className="h-4 w-8 rounded bg-slate-200 dark:bg-slate-800 animate-pulse" />
+        <div className="mb-5">
+          <div className="h-5 w-52 rounded-lg bg-slate-100 dark:bg-slate-800 animate-pulse" />
         </div>
+
+        {/* Grid de tarjetas */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3.5">
-              {/* Badge de categoría + corazón */}
+            <div
+              key={i}
+              className="bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800 rounded-xl p-3 sm:p-4 space-y-3"
+            >
+              {/* Badge categoría + corazón */}
               <div className="flex items-center justify-between">
-                <div className="h-5 w-16 rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse" />
-                <div className="h-5 w-5 rounded bg-slate-200 dark:bg-slate-800 animate-pulse" />
+                <div className="h-5 w-14 rounded bg-slate-100 dark:bg-slate-800 animate-pulse" />
+                <div className="h-4 w-4 rounded bg-slate-100 dark:bg-slate-800 animate-pulse" />
               </div>
-              {/* Texto de la pregunta */}
-              <div className="space-y-2">
-                <div className="h-4 w-full rounded bg-slate-200 dark:bg-slate-800 animate-pulse" />
-                <div className="h-4 w-5/6 rounded bg-slate-200 dark:bg-slate-800 animate-pulse" />
-                <div className="h-4 w-2/3 rounded bg-slate-200 dark:bg-slate-800 animate-pulse" />
+
+              {/* Pregunta (2 líneas) */}
+              <div className="space-y-1.5 mb-1">
+                <div className="h-[13px] w-full rounded bg-slate-100 dark:bg-slate-800 animate-pulse" />
+                <div className="h-[13px] w-4/5 rounded bg-slate-100 dark:bg-slate-800 animate-pulse" />
               </div>
-              {/* Barra de probabilidad */}
-              <div className="space-y-1.5">
-                <div className="flex justify-between">
-                  <div className="h-3.5 w-10 rounded bg-slate-200 dark:bg-slate-800 animate-pulse" />
-                  <div className="h-3.5 w-10 rounded bg-slate-200 dark:bg-slate-800 animate-pulse" />
-                </div>
-                <div className="h-2 w-full rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse" />
-              </div>
-              {/* Botones Sí / No */}
-              <div className="grid grid-cols-2 gap-2">
-                <div className="h-10 rounded-xl bg-slate-200 dark:bg-slate-800 animate-pulse" />
-                <div className="h-10 rounded-xl bg-slate-200 dark:bg-slate-800 animate-pulse" />
-              </div>
-              {/* Countdown */}
-              <div className="h-3.5 w-28 rounded bg-slate-200 dark:bg-slate-800 animate-pulse mx-auto" />
+
+              {/* Meta (total + cierre) */}
+              <div className="h-[11px] w-3/5 rounded bg-slate-100 dark:bg-slate-800 animate-pulse" />
+
+              {/* Barra de voto fusionada */}
+              <div className="h-10 w-full rounded-lg bg-slate-100 dark:bg-slate-800 animate-pulse" />
             </div>
           ))}
         </div>
