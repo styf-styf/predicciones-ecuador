@@ -1214,6 +1214,8 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
                       <input
                         type={showPwCurrent ? "text" : "password"}
                         placeholder="••••••••"
+                        name="current-password"
+                        autoComplete="current-password"
                         value={pwForm.current}
                         onChange={(e) => setPwForm((p) => ({ ...p, current: e.target.value }))}
                         className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 pr-10 text-[13px] text-slate-700 dark:text-white outline-none focus:border-slate-900 dark:focus:border-slate-400 transition"
@@ -1234,6 +1236,8 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
                         <input
                           type={showPwNext ? "text" : "password"}
                           placeholder="••••••••"
+                          name="new-password"
+                          autoComplete="new-password"
                           value={pwForm.next}
                           onChange={(e) => setPwForm((p) => ({ ...p, next: e.target.value }))}
                           className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 pr-10 text-[13px] text-slate-700 dark:text-white outline-none focus:border-slate-900 dark:focus:border-slate-400 transition"
@@ -1253,6 +1257,8 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
                         <input
                           type={showPwConfirm ? "text" : "password"}
                           placeholder="••••••••"
+                          name="confirm-password"
+                          autoComplete="new-password"
                           value={pwForm.confirm}
                           onChange={(e) => setPwForm((p) => ({ ...p, confirm: e.target.value }))}
                           className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 pr-10 text-[13px] text-slate-700 dark:text-white outline-none focus:border-slate-900 dark:focus:border-slate-400 transition"
@@ -1315,6 +1321,7 @@ function ProfileField({
         <input
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          autoComplete="off"
           className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-[13px] text-slate-700 dark:text-white outline-none focus:border-emerald-500 transition"
         />
       ) : (
