@@ -782,17 +782,20 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
         <div className="sticky top-[49px] z-10 -mx-4 -mt-6 px-4 py-3 bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
-              {market.category && (
-                <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1 block">
-                  {categoryIcon} {market.category}
-                </span>
-              )}
+              {/* Fila: categoría (izq) + cierra en (der) */}
+              <div className="flex items-center justify-between mb-1">
+                {market.category ? (
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                    {categoryIcon} {market.category}
+                  </span>
+                ) : <span />}
+                {market.closes_at && !market.resolved && !isInResolution && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 text-[11px] font-semibold">
+                    ⏱ {formatCountdown(market.closes_at)}
+                  </span>
+                )}
+              </div>
               <h1 className="text-[15px] font-bold leading-snug">{market.question}</h1>
-              {market.closes_at && !market.resolved && !isInResolution && (
-                <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 text-[11px] font-semibold">
-                  ⏱ {formatCountdown(market.closes_at)}
-                </span>
-              )}
             </div>
             <div className="relative shrink-0">
               <button onClick={handleShare} className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer">
