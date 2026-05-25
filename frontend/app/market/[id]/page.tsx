@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { TrendingUp, MessageCircle, Send, Newspaper, Share2, Link2 } from "lucide-react";
@@ -10,6 +10,85 @@ import { MarketCard } from "@/components/MarketCard";
 
 
 const MAX_CHANGES = 3;
+
+// Paleta igual al diseño original del HTML
+const BET_SI_BASE:  [number,number,number] = [168, 230, 192];
+const BET_SI_VOTED: [number,number,number] = [76,  175, 130];
+const BET_NO_BASE:  [number,number,number] = [244, 169, 168];
+const BET_NO_VOTED: [number,number,number] = [224,  85,  85];
+
+/** Barra Sí/No con canvas para el panel de apuesta.
+ *  El lado seleccionado usa el color "voted" (más saturado). */
+function BetVoteBar({ yesPct, noPct, selected, onSelect }: {
+  yesPct: number;
+  noPct:  number;
+  selected: "yes" | "no";
+  onSelect: (s: "yes" | "no") => void;
+}) {
+  const canvasRef    = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const draw = useCallback(() => {
+    const canvas    = canvasRef.current;
+    const container = containerRef.current;
+    if (!canvas || !container) return;
+    const rect = container.getBoundingClientRect();
+    canvas.width  = rect.width  || 340;
+    canvas.height = rect.height || 42;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const w = canvas.width, h = canvas.height;
+
+    const siC = selected === "yes" ? BET_SI_VOTED : BET_SI_BASE;
+    const noC = selected === "no"  ? BET_NO_VOTED : BET_NO_BASE;
+
+    const splitX = w * (yesPct / 100);
+    const blendW = w * 0.12;
+    const bs = Math.max(0, (splitX - blendW) / w);
+    const be = Math.min(1, (splitX + blendW) / w);
+
+    const grad = ctx.createLinearGradient(0, 0, w, 0);
+    const mid = (a: number, b: number) => Math.round(a + (b - a) * 0.5);
+    grad.addColorStop(0,  `rgb(${siC[0]},${siC[1]},${siC[2]})`);
+    grad.addColorStop(bs, `rgb(${siC[0]},${siC[1]},${siC[2]})`);
+    grad.addColorStop((bs+be)/2, `rgb(${mid(siC[0],noC[0])},${mid(siC[1],noC[1])},${mid(siC[2],noC[2])})`);
+    grad.addColorStop(be, `rgb(${noC[0]},${noC[1]},${noC[2]})`);
+    grad.addColorStop(1,  `rgb(${noC[0]},${noC[1]},${noC[2]})`);
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+  }, [yesPct, selected]);
+
+  useEffect(() => {
+    draw();
+    const obs = new ResizeObserver(draw);
+    if (containerRef.current) obs.observe(containerRef.current);
+    return () => obs.disconnect();
+  }, [draw]);
+
+  const siC = selected === "yes" ? BET_SI_VOTED : BET_SI_BASE;
+  const noC = selected === "no"  ? BET_NO_VOTED : BET_NO_BASE;
+  const siText = `rgb(${Math.round(siC[0]*.3)},${Math.round(siC[1]*.3)},${Math.round(siC[2]*.4)})`;
+  const noText = `rgb(${Math.round(noC[0]*.45)},${Math.round(noC[1]*.25)},${Math.round(noC[2]*.25)})`;
+  const siLeft  = `${Math.max(yesPct * 0.5, 14)}%`;
+  const noRight = `${Math.max(noPct  * 0.5, 14)}%`;
+
+  return (
+    <div ref={containerRef} className="relative h-[42px] rounded-lg overflow-hidden cursor-pointer">
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block" />
+      <div className="absolute inset-y-0 left-0 w-1/2 z-[3]"  onClick={() => onSelect("yes")} />
+      <div className="absolute inset-y-0 right-0 w-1/2 z-[3]" onClick={() => onSelect("no")}  />
+      <span className="absolute top-1/2 z-[4] pointer-events-none whitespace-nowrap font-semibold text-[13px]"
+        style={{ left: siLeft, transform: "translate(-50%,-50%)", color: siText }}>
+        Sí {yesPct}%
+      </span>
+      <span className="absolute top-1/2 z-[4] pointer-events-none whitespace-nowrap font-semibold text-[13px]"
+        style={{ right: noRight, transform: "translate(50%,-50%)", color: noText }}>
+        No {noPct}%
+      </span>
+    </div>
+  );
+}
 
 function BetPanel({
   betType, setBetType, amount, setAmount, points, userBet, changeCount,
@@ -33,117 +112,132 @@ function BetPanel({
   betSuccess: boolean;
   handleBet: () => void;
 }) {
-  const amt = parseFloat(amount) || (userBet ? userBet.amount : 0);
-  const prevAmt = userBet ? userBet.amount : 0;
+  const isNo     = betType === "no";
+  const amt      = parseFloat(amount) || 0;
+  const prevAmt  = userBet ? userBet.amount : 0;
   const prevType = userBet ? userBet.type : null;
-  const baseYes = prevType === "yes" ? marketYes - prevAmt : marketYes;
-  const baseNo  = prevType === "no"  ? marketNo  - prevAmt : marketNo;
-  const yesPool = betType === "yes" ? baseYes + amt : baseYes;
-  const noPool  = betType === "no"  ? baseNo  + amt : baseNo;
-  const myPool  = betType === "yes" ? yesPool : noPool;
-  const oppPool = betType === "yes" ? noPool  : yesPool;
-  const grossProfit = myPool > 0 ? oppPool * (amt / myPool) : 0;
-  const commission  = grossProfit * ((betConfig.commission ?? 3) / 100);
-  const estimatedTotal = amt + grossProfit - commission;
+  const baseYes  = prevType === "yes" ? marketYes - prevAmt : marketYes;
+  const baseNo   = prevType === "no"  ? marketNo  - prevAmt : marketNo;
+  const yesPool  = betType === "yes" ? baseYes + amt : baseYes;
+  const noPool   = betType === "no"  ? baseNo  + amt : baseNo;
+  const myPool   = betType === "yes" ? yesPool : noPool;
+  const oppPool  = betType === "yes" ? noPool  : yesPool;
+  const gross    = myPool > 0 ? oppPool * (amt / myPool) : 0;
+  const comm     = gross * ((betConfig.commission ?? 3) / 100);
+  const estimated = amt > 0 ? amt + gross - comm : 0;
 
-  const radioButtons = (
-    <div className="flex gap-6">
-      {(["yes", "no"] as const).map((t) => (
-        <button key={t} onClick={() => setBetType(t)} className="flex items-center gap-2.5 cursor-pointer">
-          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${betType === t ? (t === "yes" ? "border-emerald-500 bg-emerald-500" : "border-rose-500 bg-rose-500") : "border-slate-300 dark:border-slate-600"}`}>
-            {betType === t && <div className="w-2 h-2 rounded-full bg-white" />}
-          </div>
-          <span className={`text-sm font-medium ${betType === t ? (t === "yes" ? "text-emerald-500" : "text-rose-500") : "text-slate-500 dark:text-slate-400"}`}>
-            {t === "yes" ? "Sí" : "No"} — {t === "yes" ? yesPct : noPct}%
-          </span>
-        </button>
-      ))}
-    </div>
-  );
+  const yesPctNum = parseInt(yesPct);
+  const noPctNum  = parseInt(noPct);
 
-  const amountButtons = (
-    <div>
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm text-slate-500 dark:text-slate-400">Monto</span>
-        <span className="text-2xl font-bold text-slate-900 dark:text-white">{amount ? `${amount} $` : "0 $"}</span>
-      </div>
-      <div className="flex gap-2 flex-wrap">
-        {[1, 5, 10, 50].map((val) => (
-          <button key={val} onClick={() => { const cur = parseFloat(amount) || 0; const max = points !== null ? points : Infinity; setAmount(String(Math.min(cur + val, max))); }}
-            className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700 cursor-pointer">+{val}</button>
-        ))}
-        <button onClick={() => setAmount(String(points !== null ? points : 0))} className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700 cursor-pointer">Máx.</button>
-        {amount && <button onClick={() => setAmount("")} className="px-3 py-1.5 rounded-full text-xs font-medium bg-slate-200 dark:bg-slate-800 text-rose-500 dark:text-rose-400 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700 cursor-pointer">Borrar</button>}
-      </div>
-    </div>
-  );
+  // Colores dinámicos según lado seleccionado
+  const cardBg     = isNo ? "#fff5f5" : "#f0fdf4";
+  const cardBorder = isNo ? "#fecaca" : "#bbf7d0";
+  const gainColor  = isNo ? "#dc2626" : "#16a34a";
+  const btnBg      = isNo ? "#ef4444" : "#22c55e";
 
-  const estimatedCard = (amt > 0 || userBet) ? (
-    <div className={`rounded-xl p-3 text-center border ${betType === "yes" ? "border-emerald-500/30 bg-emerald-500/5" : "border-rose-500/30 bg-rose-500/5"}`}>
-      <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Ganancia estimada si aciertas</p>
-      <p className={`text-xl font-black ${betType === "yes" ? "text-emerald-400" : "text-rose-400"}`}>+{estimatedTotal.toFixed(2)} $</p>
-    </div>
-  ) : null;
+  if (changeCount >= MAX_CHANGES) {
+    return (
+      <p className="text-center text-sm text-slate-400 bg-slate-200 dark:bg-slate-800 rounded-xl py-3">
+        🔒 Alcanzaste el límite de <span className="font-bold text-slate-900 dark:text-white">{MAX_CHANGES} cambios</span>
+      </p>
+    );
+  }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
+      {/* Éxito */}
       {token && betSuccess && (
-        <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-center text-sm font-semibold text-emerald-500 flex items-center justify-center gap-2">
+        <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-center text-sm font-semibold text-emerald-500 flex items-center justify-center gap-2">
           ✅ ¡Predicción registrada exitosamente!
         </div>
       )}
-      {token && userBet ? (
-        <div className="space-y-4">
-          <div className={`rounded-xl p-4 text-center border ${userBet.type === "yes" ? "border-emerald-500/40 bg-emerald-500/10" : "border-rose-500/40 bg-rose-500/10"}`}>
-            <p className="text-sm text-slate-400 mb-1">Tu predicción actual</p>
-            <p className={`text-2xl font-black ${userBet.type === "yes" ? "text-emerald-400" : "text-rose-400"}`}>{userBet.type === "yes" ? "✅ Sí" : "❌ No"}</p>
-            <p className="text-sm text-slate-400 mt-1">{userBet.amount} $ en predicciones</p>
-          </div>
-          {changeCount < MAX_CHANGES ? (
-            <div className="space-y-3">
-              {radioButtons}
-              {amountButtons}
-              {estimatedCard}
-              <button onClick={handleBet} disabled={bettingLoading || !amount} className={`w-full py-3 rounded-xl font-bold text-sm transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${betType === "yes" ? "bg-emerald-500 text-slate-950" : "bg-rose-500 text-white"}`}>
-                {bettingLoading ? "Procesando..." : `Cambiar predicción — ${betType === "yes" ? "Sí" : "No"}`}
-              </button>
-              <p className="text-xs text-slate-400 text-center pt-px">Cambios restantes: <span className="font-bold text-slate-900 dark:text-white">{MAX_CHANGES - changeCount}</span> de {MAX_CHANGES}</p>
+
+      {/* Tarjeta combinada: predicción actual + ganancia estimada */}
+      {(amt > 0 || userBet) && (
+        <div style={{ background: cardBg, border: `1px solid ${cardBorder}`, borderRadius: 10, padding: "12px 14px", display: "flex", transition: "background 0.2s, border-color 0.2s" }}>
+          {/* Columna izquierda: predicción actual (solo si ya apostó) */}
+          {userBet && (
+            <div style={{ flex: 1, textAlign: "center", paddingRight: 12, borderRight: `1px solid ${cardBorder}` }}>
+              <p style={{ fontSize: 10, color: "#6b7280", margin: "0 0 6px", letterSpacing: "0.05em", textTransform: "uppercase" }}>Predicción actual</p>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 4 }}>
+                <span style={{ width: 20, height: 20, borderRadius: 4, background: isNo ? "#ef4444" : "#22c55e", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  {isNo
+                    ? <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    : <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  }
+                </span>
+                <span style={{ fontSize: 18, fontWeight: 700, color: "#111" }}>{isNo ? "No" : "Sí"}</span>
+              </div>
+              <p style={{ fontSize: 12, color: "#6b7280", margin: 0 }}>{userBet.amount} $ apostados</p>
             </div>
-          ) : (
-            <p className="text-center text-sm text-slate-400 bg-slate-200 dark:bg-slate-800 rounded-xl py-3">🔒 Alcanzaste el límite de <span className="text-white font-bold">{MAX_CHANGES} cambios</span></p>
           )}
+          {/* Columna derecha: ganancia estimada */}
+          <div style={{ flex: 1, textAlign: "center", paddingLeft: userBet ? 12 : 0 }}>
+            <p style={{ fontSize: 10, color: "#6b7280", margin: "0 0 6px", letterSpacing: "0.05em", textTransform: "uppercase" }}>Ganancia estimada</p>
+            <p style={{ fontSize: 20, fontWeight: 700, color: gainColor, margin: "0 0 4px", transition: "color 0.2s" }}>+{estimated.toFixed(2)} $</p>
+            <p style={{ fontSize: 10, color: "#6b7280", margin: 0 }}>si aciertas</p>
+          </div>
+        </div>
+      )}
+
+      {/* Monto */}
+      <div className="flex justify-between items-center">
+        <span className="text-sm text-slate-500 dark:text-slate-400">Monto</span>
+        <span className="text-[18px] font-bold text-slate-900 dark:text-white">{amt > 0 ? `${amt} $` : "0 $"}</span>
+      </div>
+
+      {/* Botones de monto rápido */}
+      <div className="flex gap-1.5">
+        {[1, 5, 10, 50].map((val) => (
+          <button key={val}
+            onClick={() => { const cur = parseFloat(amount) || 0; const max = points !== null ? points : Infinity; setAmount(String(Math.min(cur + val, max))); }}
+            className="flex-1 py-[7px] rounded-full text-xs font-medium bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer">
+            +{val}
+          </button>
+        ))}
+        <button onClick={() => setAmount(String(points !== null ? points : 0))}
+          className="flex-1 py-[7px] rounded-full text-xs font-medium bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer">
+          Máx.
+        </button>
+        <button onClick={() => setAmount("")}
+          className="flex-1 py-[7px] rounded-full text-xs font-medium bg-white dark:bg-slate-900 text-rose-500 border border-rose-200 dark:border-rose-800 hover:bg-rose-50 transition cursor-pointer">
+          Borrar
+        </button>
+      </div>
+
+      {/* Selector Sí/No con gradiente canvas */}
+      <BetVoteBar yesPct={yesPctNum} noPct={noPctNum} selected={betType} onSelect={setBetType} />
+
+      {/* Botón confirmar o login */}
+      {!token ? (
+        <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl space-y-3">
+          <p className="text-sm text-slate-700 dark:text-slate-200 text-center font-medium">Regístrate para realizar tu predicción</p>
+          <div className="flex gap-2">
+            <Link href="/register"
+              onClick={() => { try { localStorage.setItem("pendingBet", JSON.stringify({ marketId, amount: parseFloat(amount) || undefined, type: betType })); } catch {} }}
+              className="flex-1 bg-emerald-500 text-slate-950 font-bold text-sm px-3 py-2.5 rounded-xl text-center">
+              Crear cuenta
+            </Link>
+            <Link href="/login"
+              onClick={() => { try { localStorage.setItem("pendingBet", JSON.stringify({ marketId, amount: parseFloat(amount) || undefined, type: betType })); } catch {} }}
+              className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-bold text-sm px-3 py-2.5 rounded-xl text-center">
+              Iniciar sesión
+            </Link>
+          </div>
         </div>
       ) : (
-        <div className="space-y-3">
-          {radioButtons}
-          {amountButtons}
-          {estimatedCard}
-          {!token ? (
-            <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl space-y-3">
-              <p className="text-sm text-slate-700 dark:text-slate-200 text-center font-medium">Regístrate para realizar tu predicción</p>
-              <div className="flex gap-2">
-                <Link
-                  href="/register"
-                  onClick={() => { try { localStorage.setItem("pendingBet", JSON.stringify({ marketId, amount: parseFloat(amount) || undefined, type: betType })); } catch {} }}
-                  className="flex-1 bg-emerald-500 text-slate-950 font-bold text-sm px-3 py-2.5 rounded-xl text-center"
-                >
-                  Crear cuenta
-                </Link>
-                <Link
-                  href="/login"
-                  onClick={() => { try { localStorage.setItem("pendingBet", JSON.stringify({ marketId, amount: parseFloat(amount) || undefined, type: betType })); } catch {} }}
-                  className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-bold text-sm px-3 py-2.5 rounded-xl text-center"
-                >
-                  Iniciar sesión
-                </Link>
-              </div>
-            </div>
-          ) : (
-            <button onClick={handleBet} disabled={bettingLoading || !amount} className={`w-full py-3 rounded-xl font-bold text-sm transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${betType === "yes" ? "bg-emerald-500 text-slate-950" : "bg-rose-500 text-white"}`}>
-              {bettingLoading ? "Procesando..." : `Confirmar predicción — ${betType === "yes" ? "Sí" : "No"}`}
-            </button>
-          )}
-        </div>
+        <button onClick={handleBet} disabled={bettingLoading || !amount}
+          style={{ background: btnBg, transition: "background 0.2s" }}
+          className="w-full py-3.5 rounded-[10px] text-white font-semibold text-[15px] disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99] cursor-pointer">
+          {bettingLoading ? "Procesando..." : `${userBet ? "Cambiar" : "Confirmar"} predicción — ${isNo ? "No" : "Sí"}`}
+        </button>
+      )}
+
+      {/* Cambios restantes */}
+      {userBet && changeCount < MAX_CHANGES && (
+        <p className="text-center text-xs text-slate-400">
+          Cambios restantes: <strong className="text-slate-900 dark:text-white">{MAX_CHANGES - changeCount} de {MAX_CHANGES}</strong>
+        </p>
       )}
     </div>
   );
