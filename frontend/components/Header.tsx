@@ -236,7 +236,7 @@ export default function Header() {
                   className="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-1.5 rounded-xl hover:border-emerald-500/50 transition-all"
                 >
                   {points !== null && (
-                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{points} $</span>
+                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{Number(points).toFixed(2)} $</span>
                   )}
                   <div className="h-7 w-7 rounded-full bg-emerald-500/20 border border-emerald-500/30 grid place-items-center shrink-0">
                     <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">{userName?.charAt(0).toUpperCase() || "U"}</span>
