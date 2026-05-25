@@ -1138,7 +1138,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
             </div>
 
             {/* Probabilidad */}
-            <div className="border-t border-slate-100 dark:border-slate-800 p-5">
+            <div className="p-5">
               <div className="flex items-start justify-between gap-3 mb-2">
                 <div className="flex items-baseline gap-1.5">
                   <span className="text-3xl font-black text-emerald-500">{yesPct}%</span>
