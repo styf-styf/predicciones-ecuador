@@ -445,7 +445,8 @@ app.put("/me/profile", auth, async (req, res) => {
   const { nombre, apellido, cedula, celular, ciudad, direccion, banco, numero_cuenta, tipo_cuenta, provincia } = req.body;
 
   const isStr = (v, max) => v === undefined || v === null || (typeof v === "string" && v.trim().length <= max);
-  const isDigits = (v, max) => v === undefined || v === null || (typeof v === "string" && /^\d+$/.test(v.trim()) && v.trim().length <= max);
+  // Permite vacío ("") además de null/undefined; convierte a null después
+  const isDigits = (v, max) => v === undefined || v === null || v === "" || (typeof v === "string" && /^\d+$/.test(v.trim()) && v.trim().length <= max);
   const tiposCuenta = ["ahorros", "corriente"];
 
   if (
@@ -454,21 +455,23 @@ app.put("/me/profile", auth, async (req, res) => {
     !isStr(banco, 100) || !isStr(provincia, 100) ||
     !isDigits(cedula, 10) || !isDigits(celular, 15) ||
     !isDigits(numero_cuenta, 20) ||
-    (tipo_cuenta !== undefined && tipo_cuenta !== null && !tiposCuenta.includes(tipo_cuenta))
+    (tipo_cuenta !== undefined && tipo_cuenta !== null && tipo_cuenta !== "" && !tiposCuenta.includes(tipo_cuenta))
   ) {
     return res.status(400).json({ message: "Datos inválidos" });
   }
 
   const trim = (v) => (typeof v === "string" ? v.trim() : v);
+  // Convierte string vacío a null para campos opcionales numéricos
+  const toNull = (v) => (typeof v === "string" && v.trim() === "" ? null : trim(v));
 
   const { error } = await supabase
     .from("users")
     .update({
       nombre: trim(nombre), apellido: trim(apellido),
-      cedula: trim(cedula), celular: trim(celular),
+      cedula: toNull(cedula), celular: toNull(celular),
       ciudad: trim(ciudad), direccion: trim(direccion),
-      banco: trim(banco), numero_cuenta: trim(numero_cuenta),
-      tipo_cuenta, provincia: trim(provincia),
+      banco: trim(banco), numero_cuenta: toNull(numero_cuenta),
+      tipo_cuenta: tipo_cuenta || null, provincia: trim(provincia),
       pais: "Ecuador",
     })
     .eq("id", req.userId);

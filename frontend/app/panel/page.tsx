@@ -7,7 +7,8 @@ import {
   Wallet, Trophy, BarChart3, ArrowUpRight, Shield, X,
   TrendingUp, TrendingDown, ArrowDownLeft, ArrowUpLeft,
   User, Settings, Home, ChevronRight, Copy, Check,
-  AlertCircle, ExternalLink, Clock, CheckCircle, XCircle
+  AlertCircle, ExternalLink, Clock, CheckCircle, XCircle,
+  Eye, EyeOff,
 } from "lucide-react";
 import Header from "@/components/Header";
 
@@ -58,6 +59,9 @@ function PanelContent() {
   const [savingPw, setSavingPw] = useState(false);
   const [pwError, setPwError] = useState("");
   const [pwSuccess, setPwSuccess] = useState("");
+  const [showPwCurrent, setShowPwCurrent] = useState(false);
+  const [showPwNext, setShowPwNext] = useState(false);
+  const [showPwConfirm, setShowPwConfirm] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
 const showToast = (message: string, type: "success" | "error" | "info" = "success") => setToast({ message, type });
   useEffect(() => {
@@ -130,13 +134,33 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
     setSavingProfile(true);
     const token = localStorage.getItem("token");
     try {
+      // Los campos de dígitos vacíos deben ir como null, no como ""
+      const payload = {
+        ...profileForm,
+        cedula:        profileForm.cedula?.trim()        || null,
+        celular:       profileForm.celular?.trim()       || null,
+        numero_cuenta: profileForm.numero_cuenta?.trim() || null,
+        tipo_cuenta:   profileForm.tipo_cuenta           || null,
+      };
       const res = await fetch("https://api.ecuapred.com/me/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
-        body: JSON.stringify(profileForm),
+        body: JSON.stringify(payload),
       });
-      if (res.ok) { setProfileSaved(true); setTimeout(() => setProfileSaved(false), 3000); showToast("Perfil guardado correctamente", "success"); loadPanel(); }
-    } finally { setSavingProfile(false); }
+      if (res.ok) {
+        setProfileSaved(true);
+        setTimeout(() => setProfileSaved(false), 3000);
+        showToast("Perfil guardado correctamente", "success");
+        loadPanel();
+      } else {
+        const data = await res.json();
+        showToast(data.message || "Error al guardar perfil", "error");
+      }
+    } catch {
+      showToast("Error de conexión", "error");
+    } finally {
+      setSavingProfile(false);
+    }
   };
 
   const handleChangePassword = async () => {
@@ -1186,34 +1210,61 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
                 <div className="space-y-3">
                   <div>
                     <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Contraseña actual</p>
-                    <input
-                      type="password"
-                      placeholder="••••••••"
-                      value={pwForm.current}
-                      onChange={(e) => setPwForm((p) => ({ ...p, current: e.target.value }))}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-[13px] text-slate-700 dark:text-white outline-none focus:border-slate-900 dark:focus:border-slate-400 transition"
-                    />
+                    <div className="relative">
+                      <input
+                        type={showPwCurrent ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={pwForm.current}
+                        onChange={(e) => setPwForm((p) => ({ ...p, current: e.target.value }))}
+                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 pr-10 text-[13px] text-slate-700 dark:text-white outline-none focus:border-slate-900 dark:focus:border-slate-400 transition"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPwCurrent((v) => !v)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white transition cursor-pointer"
+                      >
+                        {showPwCurrent ? <EyeOff size={14} /> : <Eye size={14} />}
+                      </button>
+                    </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Nueva contraseña</p>
-                      <input
-                        type="password"
-                        placeholder="••••••••"
-                        value={pwForm.next}
-                        onChange={(e) => setPwForm((p) => ({ ...p, next: e.target.value }))}
-                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-[13px] text-slate-700 dark:text-white outline-none focus:border-slate-900 dark:focus:border-slate-400 transition"
-                      />
+                      <div className="relative">
+                        <input
+                          type={showPwNext ? "text" : "password"}
+                          placeholder="••••••••"
+                          value={pwForm.next}
+                          onChange={(e) => setPwForm((p) => ({ ...p, next: e.target.value }))}
+                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 pr-10 text-[13px] text-slate-700 dark:text-white outline-none focus:border-slate-900 dark:focus:border-slate-400 transition"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPwNext((v) => !v)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white transition cursor-pointer"
+                        >
+                          {showPwNext ? <EyeOff size={14} /> : <Eye size={14} />}
+                        </button>
+                      </div>
                     </div>
                     <div>
                       <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Confirmar contraseña</p>
-                      <input
-                        type="password"
-                        placeholder="••••••••"
-                        value={pwForm.confirm}
-                        onChange={(e) => setPwForm((p) => ({ ...p, confirm: e.target.value }))}
-                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-[13px] text-slate-700 dark:text-white outline-none focus:border-slate-900 dark:focus:border-slate-400 transition"
-                      />
+                      <div className="relative">
+                        <input
+                          type={showPwConfirm ? "text" : "password"}
+                          placeholder="••••••••"
+                          value={pwForm.confirm}
+                          onChange={(e) => setPwForm((p) => ({ ...p, confirm: e.target.value }))}
+                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 pr-10 text-[13px] text-slate-700 dark:text-white outline-none focus:border-slate-900 dark:focus:border-slate-400 transition"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPwConfirm((v) => !v)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white transition cursor-pointer"
+                        >
+                          {showPwConfirm ? <EyeOff size={14} /> : <Eye size={14} />}
+                        </button>
+                      </div>
                     </div>
                   </div>
                   {pwError && (
