@@ -176,7 +176,10 @@ app.post("/register/confirm", async (req, res) => {
   pendingRegistrations.delete(key);
   emailBienvenida({ nombre: pending.nombre, email: key });
   broadcast("users", {});
-  res.json({ message: "Cuenta creada correctamente" });
+
+  const { data: newUser } = await supabase.from("users").select("*").eq("email", key).single();
+  const token = jwt.sign({ id: newUser.id, role: newUser.role }, SECRET, { expiresIn: "30d" });
+  res.json({ message: "Cuenta creada correctamente", token, user: newUser });
 });
 
 // Enlace mágico: verificar automáticamente desde el correo

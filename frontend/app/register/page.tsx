@@ -166,8 +166,12 @@ export default function RegisterPage() {
       });
       const data = await res.json();
       if (!res.ok) { setError(data.message || "Código incorrecto"); return; }
-      setSuccess("✅ Cuenta creada. Redirigiendo...");
-      setTimeout(() => router.push("/login"), 1500);
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("role", data.user?.role || "user");
+      localStorage.setItem("points", String(data.user?.points || 0));
+      window.dispatchEvent(new Event("auth-change"));
+      setSuccess("✅ ¡Cuenta creada! Entrando a EcuaPred...");
+      setTimeout(() => router.push("/"), 1500);
     } catch { setError("Error en el servidor"); }
     finally  { setLoading(false); }
   };
