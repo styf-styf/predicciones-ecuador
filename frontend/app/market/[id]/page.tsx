@@ -70,8 +70,9 @@ function BetVoteBar({ yesPct, noPct, selected, onSelect }: {
   const noC = selected === "no"  ? BET_NO_VOTED : BET_NO_BASE;
   const siText = `rgb(${Math.round(siC[0]*.3)},${Math.round(siC[1]*.3)},${Math.round(siC[2]*.4)})`;
   const noText = `rgb(${Math.round(noC[0]*.45)},${Math.round(noC[1]*.25)},${Math.round(noC[2]*.25)})`;
-  const siLeft  = `${Math.max(yesPct * 0.5, 13)}%`;
-  const noRight = `${Math.max(noPct  * 0.5, 13)}%`;
+  // Fijos en los extremos para no solaparse con "Presiona para cambiar"
+  const siLeft  = "13%";
+  const noRight = "13%";
 
   return (
     <div ref={containerRef} className="relative h-8 rounded-full overflow-hidden cursor-pointer">
