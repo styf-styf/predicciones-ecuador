@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useGoogleLogin } from "@react-oauth/google";
-import { Eye, EyeOff, Loader2, UserPlus, ArrowLeft, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, Loader2, UserPlus, ArrowLeft, ArrowRight, Mail } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 
 const FEATURES = [
@@ -36,7 +36,7 @@ const GoogleIcon = () => (
 export default function RegisterPage() {
   const router = useRouter();
 
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [form, setForm] = useState({
     nombre: "", apellido: "", email: "", password: "",
     confirmPassword: "", cedula: "", celular: "", ciudad: "",
@@ -47,6 +47,7 @@ export default function RegisterPage() {
   const [success, setSuccess]             = useState("");
   const [showPassword, setShowPassword]   = useState(false);
   const [showConfirm, setShowConfirm]     = useState(false);
+  const [verifyCode, setVerifyCode]       = useState("");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -127,7 +128,7 @@ export default function RegisterPage() {
     setStep(2);
   };
 
-  // Enviar formulario completo
+  // Paso 2 → enviar código al correo
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(""); setSuccess("");
@@ -136,7 +137,7 @@ export default function RegisterPage() {
     }
     setLoading(true);
     try {
-      const res  = await fetch("https://api.ecuapred.com/register", {
+      const res  = await fetch("https://api.ecuapred.com/register/send-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -147,8 +148,25 @@ export default function RegisterPage() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.message || "Error al registrar"); return; }
-      setSuccess("✅ Cuenta creada, redirigiendo al login...");
+      if (!res.ok) { setError(data.message || "Error al enviar código"); return; }
+      setStep(3);
+    } catch { setError("Error en el servidor"); }
+    finally  { setLoading(false); }
+  };
+
+  // Paso 3 → confirmar código
+  const handleConfirmCode = async () => {
+    if (verifyCode.trim().length !== 6) { setError("Ingresa el código de 6 dígitos"); return; }
+    setLoading(true); setError("");
+    try {
+      const res  = await fetch("https://api.ecuapred.com/register/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email, code: verifyCode.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.message || "Código incorrecto"); return; }
+      setSuccess("✅ Cuenta creada. Redirigiendo...");
       setTimeout(() => router.push("/login"), 1500);
     } catch { setError("Error en el servidor"); }
     finally  { setLoading(false); }
@@ -212,10 +230,11 @@ export default function RegisterPage() {
 
                 {/* Steps */}
                 <div className="flex items-center justify-center gap-2 mt-4">
-                  <div className={`h-2 w-16 rounded-full transition-all ${step >= 1 ? "bg-emerald-500" : "bg-slate-200 dark:bg-slate-700"}`} />
-                  <div className={`h-2 w-16 rounded-full transition-all ${step >= 2 ? "bg-emerald-500" : "bg-slate-200 dark:bg-slate-700"}`} />
+                  <div className={`h-2 w-10 rounded-full transition-all ${step >= 1 ? "bg-emerald-500" : "bg-slate-200 dark:bg-slate-700"}`} />
+                  <div className={`h-2 w-10 rounded-full transition-all ${step >= 2 ? "bg-emerald-500" : "bg-slate-200 dark:bg-slate-700"}`} />
+                  <div className={`h-2 w-10 rounded-full transition-all ${step >= 3 ? "bg-emerald-500" : "bg-slate-200 dark:bg-slate-700"}`} />
                 </div>
-                <p className="text-xs text-slate-400 mt-1.5">Paso {step} de 2</p>
+                <p className="text-xs text-slate-400 mt-1.5">Paso {step} de 3</p>
               </div>
 
               {/* Tarjeta */}
@@ -346,6 +365,65 @@ export default function RegisterPage() {
                       {loading ? "Creando cuenta..." : "Crear cuenta"}
                     </button>
                   </form>
+                )}
+
+                {/* ── PASO 3: Verificar código ── */}
+                {step === 3 && (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <button type="button" onClick={() => { setStep(2); setError(""); setVerifyCode(""); }}
+                        className="text-slate-400 hover:text-slate-600 dark:hover:text-white transition cursor-pointer">
+                        <ArrowLeft size={16} />
+                      </button>
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Verificar correo</p>
+                    </div>
+
+                    <div className="flex flex-col items-center gap-2 py-2">
+                      <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 grid place-items-center">
+                        <Mail size={22} className="text-emerald-500" />
+                      </div>
+                      <p className="text-sm font-semibold text-center">Revisa tu correo</p>
+                      <p className="text-xs text-slate-400 text-center">
+                        Enviamos un código de 6 dígitos a<br />
+                        <span className="font-semibold text-slate-600 dark:text-slate-300">{form.email}</span>
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">Código de verificación</label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={6}
+                        placeholder="123456"
+                        value={verifyCode}
+                        onChange={(e) => { setVerifyCode(e.target.value.replace(/\D/g, "")); setError(""); }}
+                        onKeyDown={(e) => e.key === "Enter" && handleConfirmCode()}
+                        className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-center text-2xl font-bold tracking-[0.5em] focus:border-emerald-500 transition text-slate-900 dark:text-white placeholder-slate-300"
+                      />
+                    </div>
+
+                    {error   && <div className="text-sm px-4 py-2.5 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">{error}</div>}
+                    {success && <div className="text-sm px-4 py-2.5 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">{success}</div>}
+
+                    <button
+                      onClick={handleConfirmCode}
+                      disabled={loading || verifyCode.length !== 6}
+                      className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition disabled:opacity-60 cursor-pointer"
+                    >
+                      {loading ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
+                      {loading ? "Verificando..." : "Confirmar y crear cuenta"}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleRegister as any}
+                      disabled={loading}
+                      className="w-full text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition py-1 cursor-pointer"
+                    >
+                      ¿No llegó el correo? Reenviar código
+                    </button>
+                  </div>
                 )}
 
               </div>

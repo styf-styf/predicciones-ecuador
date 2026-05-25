@@ -7,8 +7,10 @@ const multer = require("multer");
 const supabase = require("./supabase");
 const { OAuth2Client } = require("google-auth-library");
 const scheduler = require("./scheduler");
+const crypto = require("crypto");
 const {
   emailBienvenida,
+  emailVerificacionRegistro,
   emailRetiroSolicitado,
   emailRetiroAprobado,
   emailRetiroRechazado,
@@ -105,6 +107,125 @@ const auth = async (req, res, next) => {
 
 // =======================
 // 👤 REGISTRO
+// =======================
+// =======================
+// 📧 VERIFICACIÓN DE REGISTRO
+// =======================
+
+// Store en memoria: email → { code, magicToken, hashedPassword, datos, expiresAt }
+const pendingRegistrations = new Map();
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, val] of pendingRegistrations) {
+    if (now > val.expiresAt) pendingRegistrations.delete(key);
+  }
+}, 10 * 60 * 1000).unref();
+
+// Paso 1: enviar código al correo
+app.post("/register/send-code", registerRateLimit, async (req, res) => {
+  const { email, password, nombre, apellido, cedula, celular, ciudad, pais } = req.body;
+
+  if (!email?.trim() || !password?.trim())
+    return res.status(400).json({ message: "Email y contraseña son obligatorios" });
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email.trim()))
+    return res.status(400).json({ message: "Formato de email inválido" });
+  if (password.length < 8)
+    return res.status(400).json({ message: "La contraseña debe tener al menos 8 caracteres" });
+
+  const { data: existing } = await supabase.from("users").select("id").eq("email", email.trim().toLowerCase()).maybeSingle();
+  if (existing) return res.status(400).json({ message: "El usuario ya existe" });
+
+  const code       = String(Math.floor(100000 + Math.random() * 900000));
+  const magicToken = crypto.randomBytes(32).toString("hex");
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  pendingRegistrations.set(email.trim().toLowerCase(), {
+    code, magicToken, hashedPassword,
+    nombre, apellido, cedula, celular, ciudad, pais: pais || "Ecuador",
+    expiresAt: Date.now() + 15 * 60 * 1000,
+  });
+
+  emailVerificacionRegistro({ nombre, email: email.trim(), code, magicToken });
+  res.json({ ok: true });
+});
+
+// Paso 2: confirmar con código
+app.post("/register/confirm", async (req, res) => {
+  const { email, code } = req.body;
+  const key = email?.trim().toLowerCase();
+  const pending = pendingRegistrations.get(key);
+
+  if (!pending)           return res.status(400).json({ message: "No hay registro pendiente para este correo" });
+  if (Date.now() > pending.expiresAt) {
+    pendingRegistrations.delete(key);
+    return res.status(400).json({ message: "El código expiró. Vuelve a registrarte" });
+  }
+  if (pending.code !== String(code).trim())
+    return res.status(400).json({ message: "Código incorrecto" });
+
+  const { error } = await supabase.from("users").insert([{
+    email: key, password: pending.hashedPassword,
+    nombre: pending.nombre, apellido: pending.apellido,
+    cedula: pending.cedula, celular: pending.celular,
+    ciudad: pending.ciudad, pais: pending.pais,
+    role: "user", points: 0, avatar: "", provider: "local",
+  }]);
+  if (error) return res.status(400).json({ message: error.message });
+
+  pendingRegistrations.delete(key);
+  emailBienvenida({ nombre: pending.nombre, email: key });
+  broadcast("users", {});
+  res.json({ message: "Cuenta creada correctamente" });
+});
+
+// Enlace mágico: verificar automáticamente desde el correo
+app.get("/verify-email", async (req, res) => {
+  const { token } = req.query;
+  let foundKey  = null;
+  let foundData = null;
+
+  for (const [k, v] of pendingRegistrations) {
+    if (v.magicToken === token && Date.now() < v.expiresAt) {
+      foundKey = k; foundData = v; break;
+    }
+  }
+
+  if (!foundKey) return res.redirect("https://ecuapred.com/register?error=token_invalido");
+
+  // Verificar que no exista ya
+  const { data: existing } = await supabase.from("users").select("id").eq("email", foundKey).maybeSingle();
+  if (existing) {
+    pendingRegistrations.delete(foundKey);
+    // Ya existe: intentar login directo
+    const { data: user } = await supabase.from("users").select("*").eq("email", foundKey).single();
+    if (user) {
+      const jwtToken = jwt.sign({ id: user.id, role: user.role }, SECRET, { expiresIn: "30d" });
+      return res.redirect(`https://ecuapred.com/verify-email?token=${jwtToken}&status=already`);
+    }
+    return res.redirect("https://ecuapred.com/register?error=ya_existe");
+  }
+
+  const { error } = await supabase.from("users").insert([{
+    email: foundKey, password: foundData.hashedPassword,
+    nombre: foundData.nombre, apellido: foundData.apellido,
+    cedula: foundData.cedula, celular: foundData.celular,
+    ciudad: foundData.ciudad, pais: foundData.pais,
+    role: "user", points: 0, avatar: "", provider: "local",
+  }]);
+  if (error) return res.redirect("https://ecuapred.com/register?error=error_servidor");
+
+  pendingRegistrations.delete(foundKey);
+  const { data: newUser } = await supabase.from("users").select("*").eq("email", foundKey).single();
+  emailBienvenida({ nombre: foundData.nombre, email: foundKey });
+  broadcast("users", {});
+
+  const jwtToken = jwt.sign({ id: newUser.id, role: newUser.role }, SECRET, { expiresIn: "30d" });
+  res.redirect(`https://ecuapred.com/verify-email?jwt=${jwtToken}&status=ok`);
+});
+
+// =======================
+// 📝 REGISTRO (legacy — mantenido para compatibilidad)
 // =======================
 app.post("/register", registerRateLimit, async (req, res) => {
   const { email, password, nombre, apellido, cedula, celular, ciudad, direccion, pais } = req.body;

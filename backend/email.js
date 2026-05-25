@@ -362,8 +362,36 @@ function emailMercadoGanado({ nombre, email, question, reward }) {
   });
 }
 
+// ── Verificación de registro ─────────────────────────────────────────────────
+function emailVerificacionRegistro({ nombre, email, code, magicToken }) {
+  const magicLink = `https://ecuapred.com/verify-email?token=${magicToken}`;
+  return sendEmail({
+    to: email,
+    subject: "Verifica tu cuenta de EcuaPred",
+    html: baseTemplate(`
+      <h2 style="color:#10b981;margin-top:0">¡Hola, ${nombre || "usuario"}!</h2>
+      <p>Para completar tu registro en EcuaPred confirma que este correo te pertenece.</p>
+
+      <p style="margin-top:24px;margin-bottom:8px;font-size:13px;color:#94a3b8">Tu código de verificación:</p>
+      <div style="letter-spacing:10px;font-size:36px;font-weight:900;color:#10b981;background:#0f2820;border-radius:12px;padding:20px 24px;text-align:center;margin-bottom:8px">
+        ${code}
+      </div>
+      <p style="font-size:12px;color:#64748b;text-align:center;margin-top:4px">Válido por 15 minutos · Ingrésalo en la página de registro</p>
+
+      <div style="margin:28px 0;border-top:1px solid #1e293b"></div>
+
+      <p style="font-size:13px;color:#94a3b8">O si prefieres, haz clic en el botón para verificar automáticamente y acceder directamente:</p>
+      <a href="${magicLink}" style="display:inline-block;margin-top:12px;padding:13px 28px;background:#10b981;color:#fff;text-decoration:none;border-radius:10px;font-weight:bold;font-size:15px">
+        ✅ Verificar y entrar a EcuaPred
+      </a>
+      <p style="font-size:11px;color:#475569;margin-top:16px">Si no creaste una cuenta, ignora este correo.</p>
+    `),
+  });
+}
+
 module.exports = {
   emailBienvenida,
+  emailVerificacionRegistro,
   emailRetiroSolicitado,
   emailRetiroAprobado,
   emailRetiroRechazado,
