@@ -555,7 +555,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
                           <span className="text-emerald-500 text-xs ml-1">(tú)</span>
                         </span>
                       </div>
-                      <span className="text-sm font-semibold shrink-0">{ranking[userRankIndex]?.points} $</span>
+                      <span className="text-sm font-semibold shrink-0">{Number(ranking[userRankIndex]?.points).toFixed(2)} $</span>
                     </div>
                   </>
                 )}
