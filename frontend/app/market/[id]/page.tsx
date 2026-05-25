@@ -204,7 +204,7 @@ function BetPanel({
           </button>
         ))}
         <button onClick={() => setAmount(Number(points !== null ? points : 0).toFixed(2))}
-          className="flex-1 py-[7px] rounded-full text-xs font-medium bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer">
+          className="flex-1 py-[7px] rounded-lg text-xs font-medium bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer">
           Máx.
         </button>
         <button onClick={() => setAmount("")}
