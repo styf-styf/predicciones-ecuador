@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useGoogleLogin } from "@react-oauth/google";
-import { Eye, EyeOff, Loader2, UserPlus, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, Loader2, UserPlus, ArrowLeft, ArrowRight } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 
 const FEATURES = [
@@ -36,9 +36,10 @@ const GoogleIcon = () => (
 export default function RegisterPage() {
   const router = useRouter();
 
+  const [step, setStep] = useState<1 | 2>(1);
   const [form, setForm] = useState({
     nombre: "", apellido: "", email: "", password: "",
-    confirmPassword: "", cedula: "", celular: "", ciudad: "", direccion: "",
+    confirmPassword: "", cedula: "", celular: "", ciudad: "",
   });
   const [loading, setLoading]             = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -78,8 +79,8 @@ export default function RegisterPage() {
 
   const getPasswordStrength = (pwd: string) => {
     if (pwd.length === 0) return null;
-    if (pwd.length < 6)  return { label: "Muy débil", color: "bg-rose-500",    width: "w-1/4" };
-    if (pwd.length < 8)  return { label: "Débil",     color: "bg-orange-400",  width: "w-2/4" };
+    if (pwd.length < 6)  return { label: "Muy débil", color: "bg-rose-500",   width: "w-1/4" };
+    if (pwd.length < 8)  return { label: "Débil",     color: "bg-orange-400", width: "w-2/4" };
     if (!/[A-Z]/.test(pwd) || !/[0-9]/.test(pwd)) return { label: "Media", color: "bg-amber-400", width: "w-3/4" };
     return { label: "Fuerte", color: "bg-emerald-500", width: "w-full" };
   };
@@ -111,15 +112,28 @@ export default function RegisterPage() {
     onError: () => { setError("Error al iniciar con Google"); setGoogleLoading(false); },
   });
 
+  // Validar paso 1 y avanzar
+  const handleNext = () => {
+    setError("");
+    if (!form.email || !form.password || !form.confirmPassword) {
+      setError("Completa todos los campos"); return;
+    }
+    if (form.password !== form.confirmPassword) {
+      setError("Las contraseñas no coinciden"); return;
+    }
+    if (form.password.length < 8) {
+      setError("La contraseña debe tener al menos 8 caracteres"); return;
+    }
+    setStep(2);
+  };
+
+  // Enviar formulario completo
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(""); setSuccess("");
-    if (!form.nombre || !form.apellido || !form.email || !form.password || !form.confirmPassword) {
-      setError("Completa los campos obligatorios (*)"); return;
+    if (!form.nombre || !form.apellido) {
+      setError("Nombre y apellido son obligatorios"); return;
     }
-    if (form.password !== form.confirmPassword) { setError("Las contraseñas no coinciden"); return; }
-    if (form.password.length < 8) { setError("La contraseña debe tener al menos 8 caracteres"); return; }
-
     setLoading(true);
     try {
       const res  = await fetch("https://api.ecuapred.com/register", {
@@ -129,7 +143,7 @@ export default function RegisterPage() {
           email: form.email, password: form.password,
           nombre: form.nombre, apellido: form.apellido,
           cedula: form.cedula, celular: form.celular,
-          ciudad: form.ciudad, direccion: form.direccion, pais: "Ecuador",
+          ciudad: form.ciudad, pais: "Ecuador",
         }),
       });
       const data = await res.json();
@@ -144,19 +158,16 @@ export default function RegisterPage() {
     <div className="h-screen flex flex-col overflow-hidden bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
 
       {/* ── Cuerpo principal ── */}
-      <div className="flex flex-1">
+      <div className="flex flex-1 overflow-hidden">
 
         {/* Panel izquierdo — branding (solo desktop) */}
         <div className="hidden lg:flex flex-col w-[50%] bg-emerald-500 text-slate-950 relative shrink-0">
-          {/* Flecha volver */}
           <Link
             href="/"
             className="absolute top-5 left-5 flex items-center gap-1.5 text-slate-950/70 hover:text-slate-950 transition-colors font-medium text-sm cursor-pointer"
           >
             <ArrowLeft size={18} strokeWidth={2.5} />
           </Link>
-
-          {/* Contenido centrado */}
           <div className="flex-1 flex flex-col items-center justify-center px-12 gap-6">
             <div className="flex flex-col items-center gap-2">
               <div className="h-16 w-16 rounded-2xl bg-emerald-400/60 grid place-items-center font-black text-slate-950 text-3xl shadow-inner">
@@ -177,12 +188,11 @@ export default function RegisterPage() {
         </div>
 
         {/* Panel derecho — formulario */}
-        <div className="flex-1 flex flex-col relative min-h-0 overflow-y-auto">
+        <div className="flex-1 flex flex-col relative">
           {/* ThemeToggle */}
           <div className="absolute top-4 right-5 z-10">
             <ThemeToggle />
           </div>
-
           {/* Flecha volver móvil */}
           <Link
             href="/"
@@ -191,131 +201,153 @@ export default function RegisterPage() {
             <ArrowLeft size={16} /> Volver
           </Link>
 
-          {/* Formulario */}
-          <div className="flex-1 flex items-start justify-center px-5 py-16">
-            <div className="w-full max-w-md">
+          {/* Contenido centrado verticalmente */}
+          <div className="flex-1 flex items-center justify-center px-5">
+            <div className="w-full max-w-sm">
 
-              {/* Título */}
-              <div className="text-center mb-6">
+              {/* Título + indicador de pasos */}
+              <div className="text-center mb-5">
                 <h2 className="text-2xl font-black">Crear cuenta</h2>
                 <p className="text-emerald-500 text-sm mt-1 font-medium">Únete a EcuaPred</p>
+
+                {/* Steps */}
+                <div className="flex items-center justify-center gap-2 mt-4">
+                  <div className={`h-2 w-16 rounded-full transition-all ${step >= 1 ? "bg-emerald-500" : "bg-slate-200 dark:bg-slate-700"}`} />
+                  <div className={`h-2 w-16 rounded-full transition-all ${step >= 2 ? "bg-emerald-500" : "bg-slate-200 dark:bg-slate-700"}`} />
+                </div>
+                <p className="text-xs text-slate-400 mt-1.5">Paso {step} de 2</p>
               </div>
 
-              {/* Tarjeta del formulario */}
+              {/* Tarjeta */}
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-lg">
-                <form onSubmit={handleRegister} className="space-y-4">
 
-                  {/* Datos personales */}
-                  <div>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Datos personales</p>
-                    <div className="space-y-2">
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 block">Nombre *</label>
-                          <input name="nombre" placeholder="Juan" onChange={handleChange}
-                            className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400" />
-                        </div>
-                        <div>
-                          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 block">Apellido *</label>
-                          <input name="apellido" placeholder="Pérez" onChange={handleChange}
-                            className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400" />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 block">Cédula de identidad</label>
-                        <input name="cedula" placeholder="1234567890" onChange={handleChange}
-                          className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400" />
-                      </div>
+                {/* ── PASO 1: Cuenta ── */}
+                {step === 1 && (
+                  <div className="space-y-4">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Cuenta</p>
+
+                    <div>
+                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">Correo electrónico *</label>
+                      <input name="email" type="email" placeholder="tu@correo.com" value={form.email} onChange={handleChange}
+                        onKeyDown={(e) => e.key === "Enter" && handleNext()}
+                        className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400 text-slate-900 dark:text-white" />
                     </div>
-                  </div>
 
-                  {/* Cuenta */}
-                  <div>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Cuenta</p>
-                    <div className="space-y-2">
-                      <div>
-                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 block">Correo electrónico *</label>
-                        <input name="email" type="email" placeholder="tu@correo.com" onChange={handleChange}
-                          className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400" />
+                    <div>
+                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">Contraseña *</label>
+                      <div className="relative">
+                        <input name="password" type={showPassword ? "text" : "password"} placeholder="••••••••" value={form.password} onChange={handleChange}
+                          onKeyDown={(e) => e.key === "Enter" && handleNext()}
+                          className="w-full px-4 py-2.5 pr-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400 text-slate-900 dark:text-white" />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white transition cursor-pointer">
+                          {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                        </button>
                       </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 block">Contraseña *</label>
-                          <div className="relative">
-                            <input name="password" type={showPassword ? "text" : "password"} placeholder="••••••••" onChange={handleChange}
-                              className="w-full px-3 py-2.5 pr-9 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400" />
-                            <button type="button" onClick={() => setShowPassword(!showPassword)}
-                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white transition cursor-pointer">
-                              {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-                            </button>
+                      {strength && (
+                        <div className="mt-1.5">
+                          <div className="h-1 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                            <div className={`h-full rounded-full transition-all ${strength.color} ${strength.width}`} />
                           </div>
-                          {strength && (
-                            <div className="mt-1.5">
-                              <div className="h-1 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                                <div className={`h-full rounded-full transition-all ${strength.color} ${strength.width}`} />
-                              </div>
-                            </div>
-                          )}
                         </div>
-                        <div>
-                          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 block">Confirmar *</label>
-                          <div className="relative">
-                            <input name="confirmPassword" type={showConfirm ? "text" : "password"} placeholder="••••••••" onChange={handleChange}
-                              className={`w-full px-3 py-2.5 pr-9 rounded-xl bg-slate-50 dark:bg-slate-800 border outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400 ${form.confirmPassword && form.password !== form.confirmPassword ? "border-rose-500" : "border-slate-200 dark:border-slate-700"}`} />
-                            <button type="button" onClick={() => setShowConfirm(!showConfirm)}
-                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white transition cursor-pointer">
-                              {showConfirm ? <EyeOff size={14} /> : <Eye size={14} />}
-                            </button>
-                          </div>
-                          {form.confirmPassword && form.password !== form.confirmPassword && (
-                            <p className="text-xs text-rose-400 mt-0.5">No coinciden</p>
-                          )}
-                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">Confirmar contraseña *</label>
+                      <div className="relative">
+                        <input name="confirmPassword" type={showConfirm ? "text" : "password"} placeholder="••••••••" value={form.confirmPassword} onChange={handleChange}
+                          onKeyDown={(e) => e.key === "Enter" && handleNext()}
+                          className={`w-full px-4 py-2.5 pr-11 rounded-xl bg-slate-50 dark:bg-slate-800 border outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400 text-slate-900 dark:text-white ${form.confirmPassword && form.password !== form.confirmPassword ? "border-rose-500" : "border-slate-200 dark:border-slate-700"}`} />
+                        <button type="button" onClick={() => setShowConfirm(!showConfirm)}
+                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white transition cursor-pointer">
+                          {showConfirm ? <EyeOff size={15} /> : <Eye size={15} />}
+                        </button>
+                      </div>
+                      {form.confirmPassword && form.password !== form.confirmPassword && (
+                        <p className="text-xs text-rose-400 mt-0.5">No coinciden</p>
+                      )}
+                    </div>
+
+                    {error && <div className="text-sm px-4 py-2.5 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">{error}</div>}
+
+                    <button onClick={handleNext}
+                      className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition cursor-pointer">
+                      Siguiente <ArrowRight size={16} />
+                    </button>
+
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+                      <span className="text-xs text-slate-400">o regístrate con</span>
+                      <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+                    </div>
+
+                    <button type="button"
+                      onClick={() => { setGoogleLoading(true); googleLogin(); }}
+                      disabled={googleLoading}
+                      className="w-full flex items-center justify-center gap-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-[0.98] transition disabled:opacity-60 text-sm cursor-pointer">
+                      {googleLoading ? <Loader2 size={16} className="animate-spin" /> : <GoogleIcon />}
+                      {googleLoading ? "Conectando..." : "Continuar con Google"}
+                    </button>
+                  </div>
+                )}
+
+                {/* ── PASO 2: Datos personales + Contacto ── */}
+                {step === 2 && (
+                  <form onSubmit={handleRegister} className="space-y-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <button type="button" onClick={() => { setStep(1); setError(""); }}
+                        className="text-slate-400 hover:text-slate-600 dark:hover:text-white transition cursor-pointer">
+                        <ArrowLeft size={16} />
+                      </button>
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Datos personales</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">Nombre *</label>
+                        <input name="nombre" placeholder="Juan" value={form.nombre} onChange={handleChange}
+                          className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400 text-slate-900 dark:text-white" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">Apellido *</label>
+                        <input name="apellido" placeholder="Pérez" value={form.apellido} onChange={handleChange}
+                          className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400 text-slate-900 dark:text-white" />
                       </div>
                     </div>
-                  </div>
 
-                  {/* Contacto */}
-                  <div>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Contacto <span className="normal-case font-normal">(opcional)</span></p>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">Cédula de identidad</label>
+                      <input name="cedula" placeholder="1234567890" value={form.cedula} onChange={handleChange}
+                        className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400 text-slate-900 dark:text-white" />
+                    </div>
+
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest pt-1">Contacto <span className="normal-case font-normal">(opcional)</span></p>
+
+                    <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 block">Celular</label>
-                        <input name="celular" placeholder="0991234567" onChange={handleChange}
-                          className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400" />
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">Celular</label>
+                        <input name="celular" placeholder="0991234567" value={form.celular} onChange={handleChange}
+                          className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400 text-slate-900 dark:text-white" />
                       </div>
                       <div>
-                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 block">Ciudad</label>
-                        <input name="ciudad" placeholder="Quito" onChange={handleChange}
-                          className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400" />
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">Ciudad</label>
+                        <input name="ciudad" placeholder="Quito" value={form.ciudad} onChange={handleChange}
+                          className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400 text-slate-900 dark:text-white" />
                       </div>
                     </div>
-                  </div>
 
-                  {error   && <div className="text-sm px-4 py-2.5 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">{error}</div>}
-                  {success && <div className="text-sm px-4 py-2.5 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">{success}</div>}
+                    {error   && <div className="text-sm px-4 py-2.5 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">{error}</div>}
+                    {success && <div className="text-sm px-4 py-2.5 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">{success}</div>}
 
-                  <button type="submit" disabled={loading}
-                    className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition disabled:opacity-60 cursor-pointer">
-                    {loading ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
-                    {loading ? "Creando cuenta..." : "Crear cuenta"}
-                  </button>
+                    <button type="submit" disabled={loading}
+                      className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition disabled:opacity-60 cursor-pointer">
+                      {loading ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
+                      {loading ? "Creando cuenta..." : "Crear cuenta"}
+                    </button>
+                  </form>
+                )}
 
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
-                    <span className="text-xs text-slate-400">o regístrate con</span>
-                    <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
-                  </div>
-
-                  <button type="button"
-                    onClick={() => { setGoogleLoading(true); googleLogin(); }}
-                    disabled={googleLoading}
-                    className="w-full flex items-center justify-center gap-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-[0.98] transition disabled:opacity-60 text-sm cursor-pointer">
-                    {googleLoading ? <Loader2 size={16} className="animate-spin" /> : <GoogleIcon />}
-                    {googleLoading ? "Conectando..." : "Continuar con Google"}
-                  </button>
-
-                </form>
               </div>
 
               <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-4">
@@ -330,8 +362,6 @@ export default function RegisterPage() {
         </div>
 
       </div>
-
-
     </div>
   );
 }
