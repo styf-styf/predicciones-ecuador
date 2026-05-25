@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useGoogleLogin } from "@react-oauth/google";
 import { Eye, EyeOff, Loader2, UserPlus, ArrowLeft } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
+import Footer from "@/components/Footer";
 
 const FEATURES = [
   { icon: "📈", text: "Predice resultados de eventos reales" },
@@ -332,15 +333,7 @@ export default function RegisterPage() {
       </div>
 
       {/* ── Footer ── */}
-      <footer className="border-t border-slate-200 dark:border-slate-800 px-6 py-3 flex items-center justify-between text-xs text-slate-400 dark:text-slate-500 shrink-0">
-        <span className="font-semibold text-slate-600 dark:text-slate-300">EcuaPred <span className="font-normal text-slate-400">EC</span></span>
-        <span className="hidden sm:block">© 2026 Todos los derechos reservados</span>
-        <div className="flex items-center gap-4">
-          <Link href="/terminos"   className="hover:text-slate-600 dark:hover:text-slate-300 transition cursor-pointer">Términos</Link>
-          <Link href="/privacidad" className="hover:text-slate-600 dark:hover:text-slate-300 transition cursor-pointer">Privacidad</Link>
-          <Link href="/contacto"   className="hover:text-slate-600 dark:hover:text-slate-300 transition cursor-pointer">Contacto</Link>
-        </div>
-      </footer>
+      <Footer />
 
     </div>
   );
