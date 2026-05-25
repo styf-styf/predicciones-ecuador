@@ -70,19 +70,26 @@ function BetVoteBar({ yesPct, noPct, selected, onSelect }: {
   const noC = selected === "no"  ? BET_NO_VOTED : BET_NO_BASE;
   const siText = `rgb(${Math.round(siC[0]*.3)},${Math.round(siC[1]*.3)},${Math.round(siC[2]*.4)})`;
   const noText = `rgb(${Math.round(noC[0]*.45)},${Math.round(noC[1]*.25)},${Math.round(noC[2]*.25)})`;
-  const siLeft  = `${Math.max(yesPct * 0.5, 14)}%`;
-  const noRight = `${Math.max(noPct  * 0.5, 14)}%`;
+  const siLeft  = `${Math.max(yesPct * 0.5, 13)}%`;
+  const noRight = `${Math.max(noPct  * 0.5, 13)}%`;
 
   return (
-    <div ref={containerRef} className="relative h-[42px] rounded-lg overflow-hidden cursor-pointer">
+    <div ref={containerRef} className="relative h-8 rounded-full overflow-hidden cursor-pointer">
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block" />
       <div className="absolute inset-y-0 left-0 w-1/2 z-[3]"  onClick={() => onSelect("yes")} />
       <div className="absolute inset-y-0 right-0 w-1/2 z-[3]" onClick={() => onSelect("no")}  />
-      <span className="absolute top-1/2 z-[4] pointer-events-none whitespace-nowrap font-semibold text-[13px]"
+      {/* Sí % */}
+      <span className="absolute top-1/2 z-[4] pointer-events-none whitespace-nowrap font-semibold text-[12px]"
         style={{ left: siLeft, transform: "translate(-50%,-50%)", color: siText }}>
         Sí {yesPct}%
       </span>
-      <span className="absolute top-1/2 z-[4] pointer-events-none whitespace-nowrap font-semibold text-[13px]"
+      {/* Texto central fijo */}
+      <span className="absolute top-1/2 left-1/2 z-[5] pointer-events-none whitespace-nowrap font-bold text-[9px] uppercase tracking-[0.06em]"
+        style={{ transform: "translate(-50%,-50%)", color: "rgba(255,255,255,0.9)" }}>
+        Presiona para cambiar
+      </span>
+      {/* No % */}
+      <span className="absolute top-1/2 z-[4] pointer-events-none whitespace-nowrap font-semibold text-[12px]"
         style={{ right: noRight, transform: "translate(50%,-50%)", color: noText }}>
         No {noPct}%
       </span>
@@ -191,7 +198,7 @@ function BetPanel({
         {[1, 5, 10, 50].map((val) => (
           <button key={val}
             onClick={() => { const cur = parseFloat(amount) || 0; const max = points !== null ? points : Infinity; setAmount(String(Math.min(cur + val, max))); }}
-            className="flex-1 py-[7px] rounded-full text-xs font-medium bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer">
+            className="flex-1 py-[7px] rounded-lg text-xs font-medium bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer">
             +{val}
           </button>
         ))}
@@ -200,7 +207,7 @@ function BetPanel({
           Máx.
         </button>
         <button onClick={() => setAmount("")}
-          className="flex-1 py-[7px] rounded-full text-xs font-medium bg-white dark:bg-slate-900 text-rose-500 border border-rose-200 dark:border-rose-800 hover:bg-rose-50 transition cursor-pointer">
+          className="flex-1 py-[7px] rounded-lg text-xs font-medium bg-white dark:bg-slate-900 text-rose-500 border border-rose-200 dark:border-rose-800 hover:bg-rose-50 transition cursor-pointer">
           Borrar
         </button>
       </div>
