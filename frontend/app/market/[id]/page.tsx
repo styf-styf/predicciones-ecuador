@@ -39,9 +39,8 @@ function BetVoteBar({ yesPct, noPct, selected, onSelect }: {
     if (!ctx) return;
     const w = canvas.width, h = canvas.height;
 
-    // Siempre pastel — igual que las tarjetas del home
-    const siC = BET_SI_BASE;
-    const noC = BET_NO_BASE;
+    const siC = selected === "yes" ? BET_SI_VOTED : BET_SI_BASE;
+    const noC = selected === "no"  ? BET_NO_VOTED : BET_NO_BASE;
 
     const splitX = w * (yesPct / 100);
     const blendW = w * 0.12;
@@ -67,8 +66,8 @@ function BetVoteBar({ yesPct, noPct, selected, onSelect }: {
     return () => obs.disconnect();
   }, [draw]);
 
-  const siC = BET_SI_BASE;
-  const noC = BET_NO_BASE;
+  const siC = selected === "yes" ? BET_SI_VOTED : BET_SI_BASE;
+  const noC = selected === "no"  ? BET_NO_VOTED : BET_NO_BASE;
   const siText = `rgb(${Math.round(siC[0]*.3)},${Math.round(siC[1]*.3)},${Math.round(siC[2]*.4)})`;
   const noText = `rgb(${Math.round(noC[0]*.45)},${Math.round(noC[1]*.25)},${Math.round(noC[2]*.25)})`;
   // Fijos en los extremos para no solaparse con "Presiona para cambiar"
