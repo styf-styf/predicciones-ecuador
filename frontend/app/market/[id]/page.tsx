@@ -176,7 +176,7 @@ function BetPanel({
                 </span>
                 <span style={{ fontSize: 18, fontWeight: 700, color: "#111" }}>{isNo ? "No" : "Sí"}</span>
               </div>
-              <p style={{ fontSize: 12, color: "#6b7280", margin: 0 }}>{userBet.amount} $ apostados</p>
+              <p style={{ fontSize: 12, color: "#6b7280", margin: 0 }}>{Number(userBet.amount).toFixed(2)} $ apostados</p>
             </div>
           )}
           {/* Columna derecha: ganancia estimada */}
@@ -723,7 +723,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
          <span className={`text-lg font-black ${userBet.type === "yes" ? "text-emerald-500" : "text-rose-500"}`}>
            {userBet.type === "yes" ? "✅ Sí" : "❌ No"}
          </span>
-         <span className="text-sm font-bold text-slate-900 dark:text-white">{userBet.amount} $ apostados</span>
+         <span className="text-sm font-bold text-slate-900 dark:text-white">{Number(userBet.amount).toFixed(2)} $ apostados</span>
        </div>
        {estimatedWinnings !== null && (
          <div className="border-t border-slate-200 dark:border-slate-700 pt-3 space-y-1.5 text-sm">
@@ -830,7 +830,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-400">Invertiste</span>
-                <span className="font-bold text-slate-900 dark:text-white">{userBet.amount} $</span>
+                <span className="font-bold text-slate-900 dark:text-white">{Number(userBet.amount).toFixed(2)} $</span>
               </div>
               {userBet.type === market.winner ? (
                 <>
@@ -846,7 +846,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
               ) : (
                 <div className="flex justify-between items-center border-t border-rose-500/20 pt-2.5">
                   <span className="text-slate-400">Perdiste</span>
-                  <span className="font-black text-lg text-rose-500">-{userBet.amount} $</span>
+                  <span className="font-black text-lg text-rose-500">-{Number(userBet.amount).toFixed(2)} $</span>
                 </div>
               )}
             </div>
@@ -1262,7 +1262,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-slate-400">Invertiste</span>
-                  <span className="font-bold text-slate-900 dark:text-white">{userBet.amount} $</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{Number(userBet.amount).toFixed(2)} $</span>
                 </div>
                 {userBet.type === market.winner ? (
                   <>
@@ -1278,7 +1278,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
                 ) : (
                   <div className="flex justify-between items-center border-t border-rose-500/20 pt-2.5">
                     <span className="text-slate-400">Perdiste</span>
-                    <span className="font-black text-lg text-rose-500">-{userBet.amount} $</span>
+                    <span className="font-black text-lg text-rose-500">-{Number(userBet.amount).toFixed(2)} $</span>
                   </div>
                 )}
               </div>
