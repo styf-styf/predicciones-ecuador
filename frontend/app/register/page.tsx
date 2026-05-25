@@ -251,7 +251,7 @@ export default function RegisterPage() {
 
                     <div>
                       <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">Correo electrónico *</label>
-                      <input name="email" type="email" placeholder="tu@correo.com" value={form.email} onChange={handleChange}
+                      <input name="email" type="email" placeholder="tu@correo.com" autoComplete="off" value={form.email} onChange={handleChange}
                         onKeyDown={(e) => e.key === "Enter" && handleNext()}
                         className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400 text-slate-900 dark:text-white" />
                     </div>
@@ -259,7 +259,7 @@ export default function RegisterPage() {
                     <div>
                       <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">Contraseña *</label>
                       <div className="relative">
-                        <input name="password" type={showPassword ? "text" : "password"} placeholder="••••••••" value={form.password} onChange={handleChange}
+                        <input name="password" type={showPassword ? "text" : "password"} placeholder="••••••••" autoComplete="new-password" value={form.password} onChange={handleChange}
                           onKeyDown={(e) => e.key === "Enter" && handleNext()}
                           className="w-full px-4 py-2.5 pr-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400 text-slate-900 dark:text-white" />
                         <button type="button" onClick={() => setShowPassword(!showPassword)}
@@ -279,7 +279,7 @@ export default function RegisterPage() {
                     <div>
                       <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">Confirmar contraseña *</label>
                       <div className="relative">
-                        <input name="confirmPassword" type={showConfirm ? "text" : "password"} placeholder="••••••••" value={form.confirmPassword} onChange={handleChange}
+                        <input name="confirmPassword" type={showConfirm ? "text" : "password"} placeholder="••••••••" autoComplete="new-password" value={form.confirmPassword} onChange={handleChange}
                           onKeyDown={(e) => e.key === "Enter" && handleNext()}
                           className={`w-full px-4 py-2.5 pr-11 rounded-xl bg-slate-50 dark:bg-slate-800 border outline-none text-sm focus:border-emerald-500 transition placeholder-slate-400 text-slate-900 dark:text-white ${form.confirmPassword && form.password !== form.confirmPassword ? "border-rose-500" : "border-slate-200 dark:border-slate-700"}`} />
                         <button type="button" onClick={() => setShowConfirm(!showConfirm)}
