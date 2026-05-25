@@ -123,7 +123,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
+    <div className="h-screen flex flex-col overflow-hidden bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
 
       {/* ── Cuerpo principal ── */}
       <div className="flex flex-1">
@@ -162,7 +162,7 @@ export default function Login() {
         </div>
 
         {/* Panel derecho — formulario */}
-        <div className="flex-1 flex flex-col relative">
+        <div className="flex-1 flex flex-col relative min-h-0 overflow-y-auto">
           {/* ThemeToggle esquina superior derecha */}
           <div className="absolute top-4 right-5 z-10">
             <ThemeToggle />
