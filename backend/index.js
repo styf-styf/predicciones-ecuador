@@ -477,6 +477,36 @@ app.put("/me/profile", auth, async (req, res) => {
   res.json({ message: "Perfil actualizado" });
 });
 
+app.put("/me/password", auth, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword)
+    return res.status(400).json({ message: "Faltan campos obligatorios" });
+  if (typeof newPassword !== "string" || newPassword.length < 8)
+    return res.status(400).json({ message: "La contraseña debe tener al menos 8 caracteres" });
+
+  const { data: userData, error } = await supabase
+    .from("users").select("id,password,provider").eq("id", req.userId).single();
+
+  if (error || !userData)
+    return res.status(400).json({ message: "Usuario no encontrado" });
+  if (userData.provider === "google" || !userData.password)
+    return res.status(400).json({ message: "Las cuentas de Google no pueden cambiar contraseña" });
+
+  const valid = await bcrypt.compare(currentPassword, userData.password);
+  if (!valid)
+    return res.status(400).json({ message: "Contraseña actual incorrecta" });
+
+  const hashed = await bcrypt.hash(newPassword, 10);
+  const { error: updateError } = await supabase
+    .from("users").update({ password: hashed }).eq("id", req.userId);
+
+  if (updateError)
+    return res.status(500).json({ message: updateError.message });
+
+  res.json({ message: "Contraseña actualizada correctamente" });
+});
+
 app.get("/my-bets", auth, async (req, res) => {
   const { data, error } = await supabase
     .from("bets")

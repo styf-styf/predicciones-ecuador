@@ -54,6 +54,10 @@ function PanelContent() {
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
   const [editingProfile, setEditingProfile] = useState(false);
+  const [pwForm, setPwForm] = useState({ current: "", next: "", confirm: "" });
+  const [savingPw, setSavingPw] = useState(false);
+  const [pwError, setPwError] = useState("");
+  const [pwSuccess, setPwSuccess] = useState("");
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
 const showToast = (message: string, type: "success" | "error" | "info" = "success") => setToast({ message, type });
   useEffect(() => {
@@ -133,6 +137,37 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
       });
       if (res.ok) { setProfileSaved(true); setTimeout(() => setProfileSaved(false), 3000); showToast("Perfil guardado correctamente", "success"); loadPanel(); }
     } finally { setSavingProfile(false); }
+  };
+
+  const handleChangePassword = async () => {
+    setPwError(""); setPwSuccess("");
+    if (!pwForm.current || !pwForm.next || !pwForm.confirm) {
+      setPwError("Completa todos los campos"); return;
+    }
+    if (pwForm.next.length < 8) {
+      setPwError("La nueva contraseña debe tener al menos 8 caracteres"); return;
+    }
+    if (pwForm.next !== pwForm.confirm) {
+      setPwError("Las contraseñas no coinciden"); return;
+    }
+    setSavingPw(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("https://api.ecuapred.com/me/password", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+        body: JSON.stringify({ currentPassword: pwForm.current, newPassword: pwForm.next }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setPwError(data.message || "Error al cambiar contraseña"); return; }
+      setPwSuccess("Contraseña actualizada correctamente");
+      setPwForm({ current: "", next: "", confirm: "" });
+      setTimeout(() => setPwSuccess(""), 4000);
+    } catch {
+      setPwError("Error de conexión");
+    } finally {
+      setSavingPw(false);
+    }
   };
 
   const handleSolicitarRetiro = async () => {
@@ -360,10 +395,10 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
 
         {/* Hero */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6">
+        <div className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 pb-8">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-4">
-              <div className="h-14 w-14 rounded-2xl bg-emerald-500 text-white font-bold text-2xl grid place-items-center shrink-0">
+              <div className="h-14 w-14 rounded-full bg-emerald-500 text-white font-bold text-2xl grid place-items-center shrink-0">
                 {(user.nombre || user.email)?.charAt(0).toUpperCase()}
               </div>
               <div>
@@ -390,6 +425,20 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
                 <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{Number(user.points).toFixed(2)} $</span>
               </div>
             </div>
+          </div>
+          {/* Metadata inferior */}
+          <div className="absolute bottom-2 right-4 flex items-center gap-1.5 text-[10px] text-slate-300 dark:text-slate-600">
+            {user.role === "admin" && (
+              <>
+                <span className="text-amber-400 dark:text-amber-500 font-semibold">🛡️ Admin</span>
+                <span>·</span>
+              </>
+            )}
+            <span>miembro desde {new Date(user.created_at + "Z").toLocaleDateString("es-EC", { timeZone: "America/Guayaquil", day: "numeric", month: "short", year: "numeric" })}</span>
+            <span>·</span>
+            <span className={user.suspended ? "text-rose-400 dark:text-rose-500" : "text-emerald-400 dark:text-emerald-500"}>
+              ● {user.suspended ? "Suspendido" : "Activo"}
+            </span>
           </div>
         </div>
 
@@ -1019,153 +1068,175 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
               </div>
             )}
 
-            {/* Info de cuenta */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-4">
-              <h3 className="font-bold">Información de cuenta</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {[
-                  { label: "Email", value: user.email, disabled: true },
-                  { label: "Rol", value: user.role, disabled: true },
-                  { label: "Estado", value: user.suspended ? "Suspendido" : "Activo", disabled: true },
-                  { label: "Miembro desde", value: new Date(user.created_at + "Z").toLocaleDateString("es-EC", { timeZone: "America/Guayaquil", day: "numeric", month: "long", year: "numeric" }), disabled: true },
-                ].map((item) => (
-                  <div key={item.label}>
-                    <label className="text-xs text-slate-400 uppercase tracking-widest block mb-1">{item.label}</label>
-                    <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-500 dark:text-slate-400">
-                      {item.value}
-                    </div>
-                  </div>
-                ))}
+            {/* Información de tu cuenta */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="font-bold text-[15px]">Información de tu cuenta</h3>
+                {editingProfile ? (
+                  <button
+                    onClick={() => setEditingProfile(false)}
+                    className="flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs font-medium text-rose-500 dark:text-rose-400 hover:border-rose-400 dark:hover:border-rose-500 transition cursor-pointer"
+                  >
+                    <X size={12} /> Cancelar
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setEditingProfile(true)}
+                    className="flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:border-slate-900 dark:hover:border-white hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    Editar
+                  </button>
+                )}
               </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+                {/* Identidad */}
+                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 flex flex-col gap-3">
+                  <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Identidad</p>
+                  <ProfileField label="Correo" value={user.email} userValue={user.email} editing={false} disabled onChange={() => {}} />
+                  <ProfileField label="Nombre" value={profileForm.nombre} userValue={user.nombre} editing={editingProfile} onChange={(v) => setProfileForm((p) => ({ ...p, nombre: v }))} />
+                  <ProfileField label="Apellido" value={profileForm.apellido} userValue={user.apellido} editing={editingProfile} onChange={(v) => setProfileForm((p) => ({ ...p, apellido: v }))} />
+                  <ProfileField label="Cédula / Pasaporte" value={profileForm.cedula} userValue={user.cedula} editing={editingProfile} onChange={(v) => setProfileForm((p) => ({ ...p, cedula: v }))} />
+                </div>
+
+                {/* Contacto y banco */}
+                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 flex flex-col gap-3">
+                  <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Contacto y banco</p>
+                  <ProfileField label="Celular" value={profileForm.celular} userValue={user.celular} editing={editingProfile} onChange={(v) => setProfileForm((p) => ({ ...p, celular: v }))} />
+                  <ProfileField label="Banco" value={profileForm.banco} userValue={user.banco} editing={editingProfile} onChange={(v) => setProfileForm((p) => ({ ...p, banco: v }))} />
+                  <ProfileField label="Número de cuenta" value={profileForm.numero_cuenta} userValue={user.numero_cuenta} editing={editingProfile} onChange={(v) => setProfileForm((p) => ({ ...p, numero_cuenta: v }))} />
+                  <div>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Tipo de cuenta</p>
+                    {editingProfile ? (
+                      <select
+                        value={profileForm.tipo_cuenta}
+                        onChange={(e) => setProfileForm((p) => ({ ...p, tipo_cuenta: e.target.value }))}
+                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-[13px] text-slate-700 dark:text-white outline-none focus:border-emerald-500 transition"
+                      >
+                        <option value="">Seleccionar...</option>
+                        <option value="ahorros">Ahorros</option>
+                        <option value="corriente">Corriente</option>
+                      </select>
+                    ) : (
+                      <div className={`px-3 py-2 rounded-lg text-[13px] border ${user.tipo_cuenta ? "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-white" : "bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-700 text-amber-600 dark:text-amber-400"}`}>
+                        {user.tipo_cuenta || "Sin completar"}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Ubicación */}
+                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 flex flex-col gap-3">
+                  <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Ubicación</p>
+                  <div>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">País</p>
+                    <div className="px-3 py-2 rounded-lg text-[13px] border bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-white">Ecuador</div>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Provincia</p>
+                    {editingProfile ? (
+                      <select
+                        value={profileForm.provincia}
+                        onChange={(e) => setProfileForm((p) => ({ ...p, provincia: e.target.value }))}
+                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-[13px] text-slate-700 dark:text-white outline-none focus:border-emerald-500 transition"
+                      >
+                        <option value="">Seleccionar...</option>
+                        {["Azuay","Bolívar","Cañar","Carchi","Chimborazo","Cotopaxi","El Oro","Esmeraldas","Galápagos","Guayas","Imbabura","Loja","Los Ríos","Manabí","Morona Santiago","Napo","Orellana","Pastaza","Pichincha","Santa Elena","Santo Domingo de los Tsáchilas","Sucumbíos","Tungurahua","Zamora Chinchipe"].map((p) => (
+                          <option key={p} value={p}>{p}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div className={`px-3 py-2 rounded-lg text-[13px] border ${user.provincia ? "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-white" : "bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-700 text-amber-600 dark:text-amber-400"}`}>
+                        {user.provincia || "Sin completar"}
+                      </div>
+                    )}
+                  </div>
+                  <ProfileField label="Ciudad" value={profileForm.ciudad} userValue={user.ciudad} editing={editingProfile} onChange={(v) => setProfileForm((p) => ({ ...p, ciudad: v }))} />
+                  <ProfileField label="Dirección" value={profileForm.direccion} userValue={user.direccion} editing={editingProfile} onChange={(v) => setProfileForm((p) => ({ ...p, direccion: v }))} />
+                </div>
+
+              </div>
+
+              {editingProfile && (
+                <div className="mt-4 flex justify-end">
+                  <button
+                    onClick={async () => { await handleSaveProfile(); setEditingProfile(false); }}
+                    disabled={savingProfile}
+                    className="flex items-center gap-2 bg-slate-900 dark:bg-white hover:bg-slate-700 dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold text-sm px-4 py-2.5 rounded-lg transition disabled:opacity-60 cursor-pointer"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    {savingProfile ? "Guardando..." : "Guardar cambios"}
+                  </button>
+                </div>
+              )}
             </div>
 
-           {/* Información personal */}
-<div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-4">
-  <div className="flex items-center justify-between">
-    <h3 className="font-bold">Información personal</h3>
-    {editingProfile ? (
-      <button
-        onClick={() => setEditingProfile(false)}
-        className="text-xs font-semibold text-white bg-rose-500 hover:bg-rose-400 border border-rose-500 px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 cursor-pointer"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        Cancelar
-      </button>
-    ) : (
-      <button
-        onClick={() => setEditingProfile(true)}
-        className="text-xs font-semibold text-white bg-sky-500 hover:bg-sky-400 border border-sky-500 px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 cursor-pointer"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-        Editar información
-      </button>
-    )}
-  </div>
-
-  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-    {[
-      { key: "nombre", label: "Nombre" },
-      { key: "apellido", label: "Apellido" },
-      { key: "cedula", label: "Cédula / Pasaporte" },
-      { key: "celular", label: "Celular" },
-      { key: "pais", label: "País" },
-      { key: "ciudad", label: "Ciudad" },
-      { key: "banco", label: "Banco" },
-      { key: "numero_cuenta", label: "Número de cuenta" },
-    ].map((field) => (
-      <div key={field.key}>
-        <label className="text-xs text-slate-400 uppercase tracking-widest block mb-1">{field.label}</label>
-        {editingProfile ? (
-  field.key === "pais" ? (
-  <input
-    value="Ecuador"
-    disabled
-    className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-400 dark:text-slate-500 cursor-not-allowed"
-  />
-  ) : (
-    <input
-      value={(profileForm as any)[field.key]}
-      onChange={(e) => setProfileForm((prev) => ({ ...prev, [field.key]: e.target.value }))}
-      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500 transition text-slate-900 dark:text-white"
-    /> 
-  )
-
-        ) : (
-          <div className={`px-4 py-3 rounded-xl text-sm border ${(user as any)[field.key] ? "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" : "bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800 text-amber-500 dark:text-amber-400"}`}>
-            {field.key === "pais" ? ((user as any)[field.key] || "Ecuador") : ((user as any)[field.key] || "Sin completar")}
-          </div>
-        )}
-      </div>
-    ))}
-  </div>
-
-  {/* Provincia */}
-<div>
-  <label className="text-xs text-slate-400 uppercase tracking-widest block mb-1">Provincia</label>
-  {editingProfile ? (
-    <select
-      value={profileForm.provincia}
-      onChange={(e) => setProfileForm((prev) => ({ ...prev, provincia: e.target.value }))}
-      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500 transition text-slate-900 dark:text-white"
-    >
-      <option value="">Seleccionar...</option>
-      {["Azuay","Bolívar","Cañar","Carchi","Chimborazo","Cotopaxi","El Oro","Esmeraldas","Galápagos","Guayas","Imbabura","Loja","Los Ríos","Manabí","Morona Santiago","Napo","Orellana","Pastaza","Pichincha","Santa Elena","Santo Domingo de los Tsáchilas","Sucumbíos","Tungurahua","Zamora Chinchipe"].map((p) => (
-        <option key={p} value={p}>{p}</option>
-      ))}
-    </select>
-  ) : (
-    <div className={`px-4 py-3 rounded-xl text-sm border ${user.provincia ? "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" : "bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800 text-amber-500 dark:text-amber-400"}`}>
-      {user.provincia || "Sin completar"}
-    </div>
-  )}
- </div>
-
-  {/* Tipo de cuenta */}
-  <div>
-    <label className="text-xs text-slate-400 uppercase tracking-widest block mb-1">Tipo de cuenta</label>
-    {editingProfile ? (
-      <select
-        value={profileForm.tipo_cuenta}
-        onChange={(e) => setProfileForm((prev) => ({ ...prev, tipo_cuenta: e.target.value }))}
-        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500 transition text-slate-900 dark:text-white"
-      >
-        <option value="">Seleccionar...</option>
-        <option value="ahorros">Ahorros</option>
-        <option value="corriente">Corriente</option>
-      </select>
-    ) : (
-      <div className={`px-4 py-3 rounded-xl text-sm border ${user.tipo_cuenta ? "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" : "bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800 text-amber-500 dark:text-amber-400"}`}>
-        {user.tipo_cuenta || "Sin completar"}
-      </div>
-    )}
-  </div>
-
-  {/* Dirección */}
-  <div>
-    <label className="text-xs text-slate-400 uppercase tracking-widest block mb-1">Dirección</label>
-    {editingProfile ? (
-      <input
-        value={profileForm.direccion}
-        onChange={(e) => setProfileForm((prev) => ({ ...prev, direccion: e.target.value }))}
-        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500 transition text-slate-900 dark:text-white"
-      />
-    ) : (
-      <div className={`px-4 py-3 rounded-xl text-sm border ${user.direccion ? "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" : "bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800 text-amber-500 dark:text-amber-400"}`}>
-        {user.direccion || "Sin completar"}
-      </div>
-    )}
-  </div>
-
-  {editingProfile && (
-    <button
-      onClick={async () => { await handleSaveProfile(); setEditingProfile(false); }}
-      disabled={savingProfile}
-      className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 cursor-pointer text-white font-bold py-3 rounded-xl text-sm transition active:scale-[0.99] flex items-center justify-center gap-2"
-    >
-      {profileSaved ? <><Check size={15} /> Guardado</> : savingProfile ? "Guardando..." : "Guardar cambios"}
-    </button>
-  )}
- </div>
+            {/* Cambiar contraseña */}
+            {!isGoogleUser && (
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="font-bold text-[15px]">Cambiar contraseña</h3>
+                    <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">Elige una contraseña segura de al menos 8 caracteres</p>
+                  </div>
+                  <Shield size={20} className="text-slate-200 dark:text-slate-700" />
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Contraseña actual</p>
+                    <input
+                      type="password"
+                      placeholder="••••••••"
+                      value={pwForm.current}
+                      onChange={(e) => setPwForm((p) => ({ ...p, current: e.target.value }))}
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-[13px] text-slate-700 dark:text-white outline-none focus:border-slate-900 dark:focus:border-slate-400 transition"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Nueva contraseña</p>
+                      <input
+                        type="password"
+                        placeholder="••••••••"
+                        value={pwForm.next}
+                        onChange={(e) => setPwForm((p) => ({ ...p, next: e.target.value }))}
+                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-[13px] text-slate-700 dark:text-white outline-none focus:border-slate-900 dark:focus:border-slate-400 transition"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Confirmar contraseña</p>
+                      <input
+                        type="password"
+                        placeholder="••••••••"
+                        value={pwForm.confirm}
+                        onChange={(e) => setPwForm((p) => ({ ...p, confirm: e.target.value }))}
+                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-[13px] text-slate-700 dark:text-white outline-none focus:border-slate-900 dark:focus:border-slate-400 transition"
+                      />
+                    </div>
+                  </div>
+                  {pwError && (
+                    <div className="text-xs text-rose-500 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-lg px-3 py-2.5">{pwError}</div>
+                  )}
+                  {pwSuccess && (
+                    <div className="text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg px-3 py-2.5 flex items-center gap-2">
+                      <Check size={12} /> {pwSuccess}
+                    </div>
+                  )}
+                  <div className="flex justify-end mt-1">
+                    <button
+                      onClick={handleChangePassword}
+                      disabled={savingPw}
+                      className="flex items-center gap-2 bg-slate-900 dark:bg-white hover:bg-slate-700 dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold text-sm px-4 py-2.5 rounded-lg transition disabled:opacity-60 cursor-pointer"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      {savingPw ? "Guardando..." : "Guardar cambios"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
           </div>
         )}
@@ -1173,6 +1244,38 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
         </div>
       </div>
     </main>
+  );
+}
+
+function ProfileField({
+  label, value, userValue, editing, onChange, disabled = false,
+}: {
+  label: string;
+  value: string;
+  userValue?: string;
+  editing: boolean;
+  onChange: (v: string) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div>
+      <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">{label}</p>
+      {editing && !disabled ? (
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-[13px] text-slate-700 dark:text-white outline-none focus:border-emerald-500 transition"
+        />
+      ) : (
+        <div className={`px-3 py-2 rounded-lg text-[13px] border ${
+          disabled || userValue
+            ? "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-white"
+            : "bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-700 text-amber-600 dark:text-amber-400"
+        }`}>
+          {value || (disabled ? "" : "Sin completar")}
+        </div>
+      )}
+    </div>
   );
 }
 
