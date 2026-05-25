@@ -364,7 +364,7 @@ function emailMercadoGanado({ nombre, email, question, reward }) {
 
 // ── Verificación de registro ─────────────────────────────────────────────────
 function emailVerificacionRegistro({ nombre, email, code, magicToken }) {
-  const magicLink = `https://ecuapred.com/verify-email?token=${magicToken}`;
+  const magicLink = `https://api.ecuapred.com/verify-email?token=${magicToken}`;
   return sendEmail({
     to: email,
     subject: "Verifica tu cuenta de EcuaPred",
