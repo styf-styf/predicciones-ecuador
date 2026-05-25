@@ -191,19 +191,19 @@ function BetPanel({
       {/* Monto */}
       <div className="flex justify-between items-center">
         <span className="text-sm text-slate-500 dark:text-slate-400">Monto</span>
-        <span className="text-[18px] font-bold text-slate-900 dark:text-white">{amt > 0 ? `${amt} $` : "0 $"}</span>
+        <span className="text-[18px] font-bold text-slate-900 dark:text-white">{amt > 0 ? `${amt.toFixed(2)} $` : "0 $"}</span>
       </div>
 
       {/* Botones de monto rápido */}
       <div className="flex gap-1.5">
         {[1, 5, 10, 50].map((val) => (
           <button key={val}
-            onClick={() => { const cur = parseFloat(amount) || 0; const max = points !== null ? points : Infinity; setAmount(String(Math.min(cur + val, max))); }}
+            onClick={() => { const cur = parseFloat(amount) || 0; const max = points !== null ? points : Infinity; setAmount(Number(Math.min(cur + val, max)).toFixed(2)); }}
             className="flex-1 py-[7px] rounded-lg text-xs font-medium bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer">
             +{val}
           </button>
         ))}
-        <button onClick={() => setAmount(String(points !== null ? points : 0))}
+        <button onClick={() => setAmount(Number(points !== null ? points : 0).toFixed(2))}
           className="flex-1 py-[7px] rounded-full text-xs font-medium bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer">
           Máx.
         </button>
