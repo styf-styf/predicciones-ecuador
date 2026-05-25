@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Trophy } from "lucide-react";
+import { useRef, useEffect, useCallback } from "react";
 
 export interface Market {
   id: number;
@@ -16,13 +17,115 @@ export interface Market {
 }
 
 const CATEGORY_COLORS: Record<string, { border: string; bg: string }> = {
-  deporte:    { border: "hover:border-sky-400 dark:hover:border-sky-500",         bg: "bg-sky-500/[0.03] dark:bg-sky-500/[0.05]"      },
-  farandula:  { border: "hover:border-pink-400 dark:hover:border-pink-500",       bg: "bg-pink-500/[0.03] dark:bg-pink-500/[0.05]"    },
+  deporte:    { border: "hover:border-sky-400 dark:hover:border-sky-500",         bg: "bg-sky-500/[0.03] dark:bg-sky-500/[0.05]"       },
+  farandula:  { border: "hover:border-pink-400 dark:hover:border-pink-500",       bg: "bg-pink-500/[0.03] dark:bg-pink-500/[0.05]"     },
   politica:   { border: "hover:border-violet-400 dark:hover:border-violet-500",   bg: "bg-violet-500/[0.03] dark:bg-violet-500/[0.05]" },
-  elecciones: { border: "hover:border-amber-400 dark:hover:border-amber-500",     bg: "bg-amber-500/[0.03] dark:bg-amber-500/[0.05]"  },
+  elecciones: { border: "hover:border-amber-400 dark:hover:border-amber-500",     bg: "bg-amber-500/[0.03] dark:bg-amber-500/[0.05]"   },
   pais:       { border: "hover:border-emerald-400 dark:hover:border-emerald-500", bg: "bg-emerald-500/[0.03] dark:bg-emerald-500/[0.05]"},
-  general:    { border: "hover:border-slate-400 dark:hover:border-slate-500",     bg: ""                                               },
+  general:    { border: "hover:border-slate-400 dark:hover:border-slate-500",     bg: ""                                                },
 };
+
+// Paleta del diseño original
+const SI_COLOR:  [number, number, number] = [168, 230, 192]; // verde pastel
+const NO_COLOR:  [number, number, number] = [244, 169, 168]; // rosa pastel
+
+function lerp(a: number, b: number, t: number) { return a + (b - a) * t; }
+
+/** Barra fusionada Sí/No con gradiente canvas (fiel al diseño original) */
+function VoteBar({ yesPct, noPct, marketId }: { yesPct: number; noPct: number; marketId: number }) {
+  const canvasRef    = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const draw = useCallback(() => {
+    const canvas    = canvasRef.current;
+    const container = containerRef.current;
+    if (!canvas || !container) return;
+
+    const rect    = container.getBoundingClientRect();
+    canvas.width  = rect.width  || 340;
+    canvas.height = rect.height || 40;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const w = canvas.width;
+    const h = canvas.height;
+    const siC = SI_COLOR;
+    const noC = NO_COLOR;
+
+    const splitX     = w * (yesPct / 100);
+    const blendW     = w * 0.18;
+    const blendStart = Math.max(0, (splitX - blendW) / w);
+    const blendEnd   = Math.min(1, (splitX + blendW) / w);
+
+    const grad = ctx.createLinearGradient(0, 0, w, 0);
+    grad.addColorStop(0,          `rgb(${siC[0]},${siC[1]},${siC[2]})`);
+    grad.addColorStop(blendStart, `rgb(${siC[0]},${siC[1]},${siC[2]})`);
+    const midR = Math.round(lerp(siC[0], noC[0], 0.5));
+    const midG = Math.round(lerp(siC[1], noC[1], 0.5));
+    const midB = Math.round(lerp(siC[2], noC[2], 0.5));
+    grad.addColorStop((blendStart + blendEnd) / 2, `rgb(${midR},${midG},${midB})`);
+    grad.addColorStop(blendEnd, `rgb(${noC[0]},${noC[1]},${noC[2]})`);
+    grad.addColorStop(1,        `rgb(${noC[0]},${noC[1]},${noC[2]})`);
+
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+  }, [yesPct]);
+
+  useEffect(() => {
+    draw();
+    const observer = new ResizeObserver(draw);
+    if (containerRef.current) observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, [draw]);
+
+  // Posición de las etiquetas (igual que el original): mínimo 14% desde cada borde
+  const siLeft  = `${Math.max(yesPct * 0.5, 14)}%`;
+  const noRight = `${Math.max(noPct  * 0.5, 14)}%`;
+
+  // Color del texto: versión oscurecida de cada color base
+  const siTextColor = `rgb(${Math.round(SI_COLOR[0] * 0.35)},${Math.round(SI_COLOR[1] * 0.35)},${Math.round(SI_COLOR[2] * 0.45)})`;
+  const noTextColor = `rgb(${Math.round(NO_COLOR[0] * 0.45)},${Math.round(NO_COLOR[1] * 0.28)},${Math.round(NO_COLOR[2] * 0.28)})`;
+
+  return (
+    <div ref={containerRef} className="relative h-10 rounded-lg overflow-hidden">
+      {/* Canvas con el gradiente */}
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block" />
+
+      {/* Zona clic Sí (mitad izquierda) */}
+      <Link
+        href={`/market/${marketId}?bet=yes`}
+        className="absolute inset-y-0 left-0 w-1/2 z-[3]"
+        onClick={(e) => e.stopPropagation()}
+        aria-label="Votar Sí"
+      />
+      {/* Zona clic No (mitad derecha) */}
+      <Link
+        href={`/market/${marketId}?bet=no`}
+        className="absolute inset-y-0 right-0 w-1/2 z-[3]"
+        onClick={(e) => e.stopPropagation()}
+        aria-label="Votar No"
+      />
+
+      {/* Etiqueta Sí */}
+      <span
+        className="absolute top-1/2 z-[4] pointer-events-none whitespace-nowrap font-semibold text-[13px] transition-[left] duration-500"
+        style={{ left: siLeft, transform: "translate(-50%, -50%)", color: siTextColor }}
+      >
+        Sí {yesPct}%
+      </span>
+
+      {/* Etiqueta No */}
+      <span
+        className="absolute top-1/2 z-[4] pointer-events-none whitespace-nowrap font-semibold text-[13px] transition-[right] duration-500"
+        style={{ right: noRight, transform: "translate(50%, -50%)", color: noTextColor }}
+      >
+        No {noPct}%
+      </span>
+    </div>
+  );
+}
 
 export function formatCountdown(closesAt: string): string {
   const diff = new Date(closesAt).getTime() - Date.now();
@@ -61,12 +164,11 @@ export function MarketCard({
   isTogglingFavorite?: boolean;
   onToggleFavorite?: (e: React.MouseEvent, id: number) => void;
 }) {
-  const total = (market.yes ?? 0) + (market.no ?? 0) || 1;
+  const total      = (market.yes ?? 0) + (market.no ?? 0) || 1;
   const isResolved = market.resolved;
-  const isZero = market.yes === 0 && market.no === 0;
+  const isZero     = market.yes === 0 && market.no === 0;
 
-  const yesRaw = isZero ? 50 : (market.yes / total) * 100;
-  const yesPct = Math.round(yesRaw);
+  const yesPct = Math.round(isZero ? 50 : (market.yes / total) * 100);
   const noPct  = 100 - yesPct;
 
   const catColors = CATEGORY_COLORS[market.category ?? ""] ?? CATEGORY_COLORS.general;
@@ -115,7 +217,7 @@ export function MarketCard({
         </Link>
       </div>
 
-      {/* Total apostado */}
+      {/* Meta: total apostado + cierre */}
       <div className="flex justify-between text-[11px] text-slate-400 dark:text-slate-500 mb-3">
         <span>{(Number(market.yes) + Number(market.no)).toFixed(1)} $ en predicciones</span>
         {market.closes_at && !market.resolved && (
@@ -141,26 +243,7 @@ export function MarketCard({
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-2">
-          <Link
-            href={`/market/${market.id}?bet=yes`}
-            className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium rounded-lg py-2 text-xs text-center transition-all flex items-center justify-center gap-1
-              hover:bg-emerald-200 dark:hover:bg-emerald-900/60 hover:scale-[1.03]
-              active:scale-95 active:bg-emerald-300 dark:active:bg-emerald-900/80"
-          >
-            <span className="opacity-70">Sí</span>
-            <span className="font-bold">{yesPct}%</span>
-          </Link>
-          <Link
-            href={`/market/${market.id}?bet=no`}
-            className="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 font-medium rounded-lg py-2 text-xs text-center transition-all flex items-center justify-center gap-1
-              hover:bg-rose-200 dark:hover:bg-rose-900/60 hover:scale-[1.03]
-              active:scale-95 active:bg-rose-300 dark:active:bg-rose-900/80"
-          >
-            <span className="opacity-70">No</span>
-            <span className="font-bold">{noPct}%</span>
-          </Link>
-        </div>
+        <VoteBar yesPct={yesPct} noPct={noPct} marketId={market.id} />
       )}
     </div>
   );
