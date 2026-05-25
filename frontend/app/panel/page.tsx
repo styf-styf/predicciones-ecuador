@@ -405,7 +405,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
     setTabVisible(true);
   }, 150);
  }}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all ${
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
                 tab === t.id
                   ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
@@ -426,7 +426,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
             <div className="grid grid-cols-3 gap-2">
               <button
                 onClick={() => setShowBetsDetail(!showBetsDetail)}
-                className={`text-left bg-white dark:bg-slate-900 border rounded-xl p-3 transition-all ${showBetsDetail ? "border-blue-400 dark:border-blue-500 ring-1 ring-blue-400/30" : "border-slate-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-700"}`}
+                className={`text-left bg-white dark:bg-slate-900 border rounded-xl p-3 transition-all cursor-pointer ${showBetsDetail ? "border-blue-400 dark:border-blue-500 ring-1 ring-blue-400/30" : "border-slate-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-700"}`}
               >
                 <div className="flex items-center gap-1.5 text-blue-500">
                   <BarChart3 size={12} />
@@ -586,7 +586,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
                     <button
                       onClick={() => setMovPage((p) => Math.max(1, p - 1))}
                       disabled={movPage === 1}
-                      className="px-4 py-2 rounded-xl text-sm font-medium border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                      className="px-4 py-2 rounded-xl text-sm font-medium border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all"
                     >
                       ← Anterior
                     </button>
@@ -595,7 +595,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
                         <button
                           key={i}
                           onClick={() => setMovPage(i + 1)}
-                          className={`w-8 h-8 rounded-lg text-sm font-medium transition-all ${
+                          className={`w-8 h-8 rounded-lg text-sm font-medium transition-all cursor-pointer ${
                             movPage === i + 1
                               ? "bg-emerald-500 text-white shadow-sm scale-[1.05]"
                               : "bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300"
@@ -608,7 +608,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
                     <button
                       onClick={() => setMovPage((p) => Math.min(movTotalPages, p + 1))}
                       disabled={movPage === movTotalPages}
-                      className="px-4 py-2 rounded-xl text-sm font-medium border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                      className="px-4 py-2 rounded-xl text-sm font-medium border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all"
                     >
                       Siguiente →
                     </button>
@@ -634,13 +634,13 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
             <div className="flex gap-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-1">
               <button
                 onClick={() => setWalletAction("recarga")}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all ${walletAction === "recarga" ? "bg-emerald-500 text-white" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-200"}`}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${walletAction === "recarga" ? "bg-emerald-500 text-white" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-200"}`}
               >
                 <ArrowDownLeft size={15} /> Recargar
               </button>
               <button
                 onClick={() => setWalletAction("retiro")}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all ${walletAction === "retiro" ? "bg-rose-500 text-white" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-200"}`}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${walletAction === "retiro" ? "bg-rose-500 text-white" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-200"}`}
               >
                 <ArrowUpLeft size={15} /> Retirar
               </button>
@@ -662,7 +662,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
                   <div className="flex gap-2 flex-wrap mb-3">
                     {[5, 10, 20, 50, 100].map((v) => (
                       <button key={v} onClick={() => setWalletAmount(String(v))}
-                        className={`px-3 py-1.5 rounded-full text-sm border transition-all ${walletAmount === String(v) ? "bg-emerald-500 text-white border-emerald-500" : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"}`}>
+                        className={`px-3 py-1.5 rounded-full text-sm border transition-all cursor-pointer ${walletAmount === String(v) ? "bg-emerald-500 text-white border-emerald-500" : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"}`}>
                         ${v}
                       </button>
                     ))}
@@ -679,13 +679,13 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
                   <div className="flex gap-2">
                     <button
                       onClick={() => setPaymentMethod("transferencia")}
-                      className={`flex-1 py-2.5 rounded-xl text-sm font-medium border transition-all ${paymentMethod === "transferencia" ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-transparent" : "border-slate-200 dark:border-slate-700 text-slate-500"}`}
+                      className={`flex-1 py-2.5 rounded-xl text-sm font-medium border transition-all cursor-pointer ${paymentMethod === "transferencia" ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-transparent" : "border-slate-200 dark:border-slate-700 text-slate-500"}`}
                     >
                       Transferencia
                     </button>
                     <button
                       onClick={() => setPaymentMethod("tarjeta")}
-                      className={`flex-1 py-2.5 rounded-xl text-sm font-medium border transition-all ${paymentMethod === "tarjeta" ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-transparent" : "border-slate-200 dark:border-slate-700 text-slate-500"}`}
+                      className={`flex-1 py-2.5 rounded-xl text-sm font-medium border transition-all cursor-pointer ${paymentMethod === "tarjeta" ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-transparent" : "border-slate-200 dark:border-slate-700 text-slate-500"}`}
                     >
                       💳 Tarjeta
                     </button>
@@ -825,7 +825,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
       <button
         onClick={handleSendTransfer}
         disabled={sendingTransfer || uploadingImg || !walletAmount || parseFloat(walletAmount) < 1 || !comprobanteFile}
-        className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl text-sm transition active:scale-[0.99] flex items-center justify-center gap-2"
+        className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer text-white font-bold py-3 rounded-xl text-sm transition active:scale-[0.99] flex items-center justify-center gap-2"
       >
         {uploadingImg ? "Subiendo foto..." : sendingTransfer ? "Enviando..." : "Enviar comprobante"}
       </button>
@@ -859,7 +859,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
                           }
                         }}
                         disabled={!walletAmount || parseFloat(walletAmount) < 1}
-                        className="w-full bg-blue-500 hover:bg-blue-400 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl text-sm transition active:scale-[0.99]"
+                        className="w-full bg-blue-500 hover:bg-blue-400 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer text-white font-bold py-3 rounded-xl text-sm transition active:scale-[0.99]"
                       >
                         Pagar ${walletAmount || "0"} con tarjeta
                       </button>
@@ -935,7 +935,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
                   <div className="flex gap-2 flex-wrap mb-3">
                     {[10, 20, 50, 100].filter((v) => v <= Number(user.points)).map((v) => (
                       <button key={v} onClick={() => setWalletAmount(String(v))}
-                        className={`px-3 py-1.5 rounded-full text-sm border transition-all ${walletAmount === String(v) ? "bg-rose-500 text-white border-rose-500" : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"}`}>
+                        className={`px-3 py-1.5 rounded-full text-sm border transition-all cursor-pointer ${walletAmount === String(v) ? "bg-rose-500 text-white border-rose-500" : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"}`}>
                         ${v}
                       </button>
                     ))}
@@ -972,7 +972,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
     <p className="text-sm text-slate-400">Cédula: {user.cedula}</p>
     <p className="text-sm text-slate-400">{user.banco} · {user.tipo_cuenta} · {user.numero_cuenta}</p>
     <p className="text-sm text-slate-400">Celular: {user.celular}</p>
-    <button onClick={() => setTab("perfil")} className="text-xs text-slate-400 hover:text-slate-600 underline">Editar información</button>
+    <button onClick={() => setTab("perfil")} className="text-xs text-slate-400 hover:text-slate-600 underline cursor-pointer">Editar información</button>
   </div>
 ) : (
   <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex gap-3">
@@ -993,7 +993,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
   <button
     onClick={handleSolicitarRetiro}
     disabled={sendingRetiro || !user.banco || !user.numero_cuenta || !walletAmount || parseFloat(walletAmount) < 10}
-    className="w-full bg-rose-500 hover:bg-rose-400 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl text-sm transition active:scale-[0.99]"
+    className="w-full bg-rose-500 hover:bg-rose-400 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer text-white font-bold py-3 rounded-xl text-sm transition active:scale-[0.99]"
   >
     {sendingRetiro ? "Enviando..." : "Solicitar retiro"}
   </button>
@@ -1160,7 +1160,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
     <button
       onClick={async () => { await handleSaveProfile(); setEditingProfile(false); }}
       disabled={savingProfile}
-      className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 text-white font-bold py-3 rounded-xl text-sm transition active:scale-[0.99] flex items-center justify-center gap-2"
+      className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 cursor-pointer text-white font-bold py-3 rounded-xl text-sm transition active:scale-[0.99] flex items-center justify-center gap-2"
     >
       {profileSaved ? <><Check size={15} /> Guardado</> : savingProfile ? "Guardando..." : "Guardar cambios"}
     </button>
@@ -1235,7 +1235,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium">Pago con tarjeta</p>
-        <button onClick={onClose} className="text-xs text-slate-400 hover:text-slate-600">Cancelar</button>
+        <button onClick={onClose} className="text-xs text-slate-400 hover:text-slate-600 cursor-pointer">Cancelar</button>
       </div>
       <div id="pp-button" className="min-h-[200px]" />
     </div>
