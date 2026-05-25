@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useGoogleLogin } from "@react-oauth/google";
 import { Eye, EyeOff, LogIn, Loader2, ArrowLeft } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
-import Footer from "@/components/Footer";
 
 const FEATURES = [
   { icon: "📈", text: "Predice resultados de eventos reales" },
@@ -268,8 +267,6 @@ export default function Login() {
 
       </div>
 
-      {/* ── Footer ── */}
-      <Footer />
 
     </div>
   );
