@@ -181,8 +181,12 @@ const ALLOWED_GOOGLE_REDIRECT_URIS = [
   "postmessage",
   "https://ecuapred.com/login",
   "https://ecuapred.com/register",
+  "https://www.ecuapred.com/login",
+  "https://www.ecuapred.com/register",
   "http://localhost:3000/login",
   "http://localhost:3000/register",
+  "http://localhost:3001/login",
+  "http://localhost:3001/register",
 ];
 
 app.post("/auth/google", async (req, res) => {
@@ -190,8 +194,10 @@ app.post("/auth/google", async (req, res) => {
   if (!code) return res.status(400).json({ message: "Código de Google requerido" });
 
   const redirectUri = req.body.redirect_uri || "postmessage";
+  console.log("[auth/google] redirect_uri recibido:", redirectUri);
   if (!ALLOWED_GOOGLE_REDIRECT_URIS.includes(redirectUri)) {
-    return res.status(400).json({ message: "redirect_uri no permitido" });
+    console.warn("[auth/google] redirect_uri NO permitido:", redirectUri);
+    return res.status(400).json({ message: "redirect_uri no permitido", received: redirectUri });
   }
 
   try {
