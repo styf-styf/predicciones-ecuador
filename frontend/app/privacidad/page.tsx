@@ -15,7 +15,7 @@ export default function PrivacidadPage() {
         {[
           {
             title: "1. Responsable del tratamiento de datos",
-            content: `El responsable del tratamiento de sus datos personales es [NOMBRE LEGAL DE LA EMPRESA], con RUC [NÚMERO DE RUC], domiciliada en [DIRECCIÓN FÍSICA], Ecuador. Para cualquier consulta relacionada con sus datos personales puede contactarnos en info@ecuapred.com.`
+            content: `El responsable del tratamiento de sus datos personales es [NOMBRE LEGAL DE LA EMPRESA], operadora de la plataforma tecnológica EcuaPred, con RUC [NÚMERO DE RUC], domiciliada en [DIRECCIÓN FÍSICA], Ecuador. Para cualquier consulta relacionada con sus datos personales puede contactarnos en info@ecuapred.com.`
           },
           {
             title: "2. Información que recopilamos",

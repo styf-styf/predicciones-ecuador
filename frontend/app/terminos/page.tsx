@@ -15,7 +15,7 @@ export default function TerminosPage() {
         {[
           {
             title: "1. Identificación del proveedor",
-            content: `EcuaPred es una plataforma de entretenimiento y predicciones operada por [NOMBRE LEGAL DE LA EMPRESA], con RUC [NÚMERO DE RUC], domiciliada en [DIRECCIÓN FÍSICA], Ecuador. Para contactarnos: info@ecuapred.com.`
+            content: `EcuaPred es una plataforma tecnológica de mercados de predicción operada por [NOMBRE LEGAL DE LA EMPRESA], con RUC [NÚMERO DE RUC], domiciliada en [DIRECCIÓN FÍSICA], Ecuador. Para contactarnos: info@ecuapred.com.`
           },
           {
             title: "2. Aceptación de los términos",
@@ -23,7 +23,7 @@ export default function TerminosPage() {
           },
           {
             title: "3. Descripción del servicio",
-            content: `EcuaPred es una plataforma de entretenimiento que permite a los usuarios participar en mercados de predicción sobre eventos reales utilizando saldo adquirido mediante recargas. El saldo puede ser retirado según las condiciones establecidas en estos términos. EcuaPred no garantiza ganancias ni resultados específicos. La participación implica riesgo de pérdida del saldo invertido.`
+            content: `EcuaPred es una plataforma tecnológica que facilita mercados de predicción entre usuarios sobre eventos reales de diversas categorías: deportes, política, economía, entretenimiento y más. Los usuarios adquieren saldo mediante recargas para participar en dichos mercados. El saldo puede ser retirado según las condiciones establecidas en estos términos. EcuaPred no garantiza ganancias ni resultados específicos. La participación implica riesgo de pérdida del saldo invertido.`
           },
           {
             title: "4. Modelo peer-to-peer",
