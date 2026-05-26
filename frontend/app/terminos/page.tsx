@@ -78,7 +78,27 @@ export default function TerminosPage() {
             content: `Estos términos se rigen por las leyes de la República del Ecuador. Ante cualquier conflicto, las partes buscarán en primer lugar una solución amistosa. En caso de no llegar a un acuerdo, el conflicto será sometido a la jurisdicción de los jueces y tribunales competentes de Ecuador, de conformidad con la Ley Orgánica de Defensa del Consumidor y demás normas aplicables.`
           },
           {
-            title: "17. Contacto",
+            title: "17. Disputas sobre resolución de mercados",
+            content: `Si un usuario considera que un mercado fue resuelto de manera incorrecta, puede iniciar una disputa siguiendo este proceso: (1) Enviar un correo a info@ecuapred.com con el asunto "Disputa de mercado" dentro de los 3 días calendario siguientes a la resolución del mercado, indicando el mercado en cuestión y adjuntando la fuente pública que sustenta su reclamo. (2) EcuaPred revisará la disputa contrastando el resultado con fuentes oficiales verificables (medios de comunicación reconocidos, resultados oficiales de organismos competentes) y emitirá una respuesta en un plazo máximo de 5 días hábiles. (3) Si la disputa resulta fundada, EcuaPred corregirá la resolución y redistribuirá los saldos correspondientes. (4) La decisión de EcuaPred basada en fuentes verificables públicas es definitiva. No se aceptarán disputas presentadas fuera del plazo indicado.`
+          },
+          {
+            title: "18. Prevención de lavado de activos (AML)",
+            content: `EcuaPred está comprometido con la prevención del lavado de activos y el financiamiento de actividades ilícitas. En cumplimiento de la normativa ecuatoriana vigente: (a) EcuaPred puede solicitar en cualquier momento documentación adicional de identidad (cédula, pasaporte, justificación de fondos) a cualquier usuario, especialmente ante transacciones inusuales o montos elevados; (b) EcuaPred puede retener retiros y suspender cuentas mientras se realizan verificaciones de cumplimiento; (c) Queda expresamente prohibido utilizar la plataforma para introducir, transferir o disimular fondos de origen ilícito; (d) EcuaPred cooperará con las autoridades ecuatorianas competentes ante cualquier requerimiento legal relacionado con investigaciones de lavado de activos. El incumplimiento de esta sección puede resultar en la cancelación definitiva de la cuenta y la denuncia ante las autoridades correspondientes.`
+          },
+          {
+            title: "19. Propiedad intelectual",
+            content: `El nombre EcuaPred, su logotipo, diseño, código fuente, estructura de mercados y demás elementos de la plataforma son propiedad exclusiva de sus operadores. Queda prohibida su reproducción, distribución, modificación o uso comercial sin autorización expresa y por escrito. El usuario no adquiere ningún derecho de propiedad intelectual sobre la plataforma por el hecho de utilizarla. Los contenidos generados por los usuarios (comentarios, sugerencias) pueden ser utilizados por EcuaPred para mejorar el servicio sin compensación adicional.`
+          },
+          {
+            title: "20. Fuerza mayor",
+            content: `EcuaPred no será responsable por retrasos o incumplimientos derivados de causas fuera de su control razonable, incluyendo: fallos de infraestructura de terceros (servidores, proveedores de pago, red eléctrica), desastres naturales, actos de gobierno, ciberataques externos, pandemias u otras emergencias nacionales. En caso de fuerza mayor, EcuaPred notificará a los usuarios a través de los canales disponibles, adoptará las medidas razonables para restablecer el servicio y garantizará que los saldos de los usuarios no se vean afectados por dichas circunstancias.`
+          },
+          {
+            title: "21. Predicción responsable",
+            content: `EcuaPred promueve la participación responsable en sus mercados de predicción. Recomendamos: (a) Participar solo con saldo que usted puede permitirse perder; (b) No tomar decisiones de inversión basadas exclusivamente en resultados pasados en la plataforma; (c) Establecer límites personales de participación. Si considera que su uso de la plataforma está afectando negativamente su situación económica o emocional, le recomendamos buscar apoyo profesional. EcuaPred se reserva el derecho de establecer límites de participación a usuarios que presenten patrones de uso inusuales, como medida de protección.`
+          },
+          {
+            title: "22. Contacto",
             content: `Para consultas sobre estos términos puede contactarnos en info@ecuapred.com o mediante el formulario de contacto disponible en ecuapred.com/contacto.`
           },
         ].map((section) => (
