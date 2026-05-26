@@ -1366,7 +1366,7 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
     await supabase.from("notifications").insert([{
       user_id: bet.user_id,
       title: "🎉 ¡Ganaste una predicción!",
-      message: `Apostaste ${amount.toFixed(2)} $ a "${market.question}" · Comisión (${config?.commission ?? 3}%): -${commission.toFixed(2)} $ · Total recibido: ${payout.toFixed(2)} $`,
+      message: `Invertiste ${amount.toFixed(2)} $ en "${market.question}" · Comisión (${config?.commission ?? 3}%): -${commission.toFixed(2)} $ · Total recibido: ${payout.toFixed(2)} $`,
       read: false,
       market_id: marketId,
     }]);

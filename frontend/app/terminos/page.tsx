@@ -31,7 +31,7 @@ export default function TerminosPage() {
           },
           {
             title: "5. Comisiones",
-            content: `EcuaPred cobra una comisión sobre el volumen total de saldo participado en cada mercado al momento de su resolución, como contraprestación por el servicio tecnológico de facilitación. La tasa de comisión vigente está disponible en la configuración de la plataforma y puede ser modificada con previo aviso según lo establecido en estos términos.`
+            content: `EcuaPred cobra una comisión del 5% únicamente sobre la ganancia bruta obtenida por cada usuario ganador al momento de resolverse un mercado. La inversión original del usuario siempre es devuelta en su totalidad. No se cobra comisión por recargas, retiros ni por participar en mercados que no se ganen. Ejemplo: si un usuario gana $20 de ganancia bruta, la comisión es $1 y recibe $19 de ganancia neta más su inversión original. La tasa de comisión puede ser modificada con previo aviso según lo establecido en estos términos.`
           },
           {
             title: "6. Elegibilidad",
