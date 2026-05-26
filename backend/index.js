@@ -123,6 +123,7 @@ const betRateLimit        = makeRateLimiter(60,      60 * 1000, "Demasiadas apue
 const withdrawalRateLimit = makeRateLimiter(5, 60 * 60 * 1000, "Demasiadas solicitudes de retiro. Espera 1 hora.");
 const transferRateLimit   = makeRateLimiter(10, 60 * 60 * 1000, "Demasiadas transferencias. Espera 1 hora.");
 const contactoRateLimit   = makeRateLimiter(5,  60 * 60 * 1000, "Demasiados mensajes enviados. Espera 1 hora.");
+const commentRateLimit    = makeRateLimiter(10,      60 * 1000, "Estás comentando demasiado rápido. Espera un momento.");
 
 const SECRET = process.env.JWT_SECRET;
 if (!SECRET) throw new Error("JWT_SECRET no está definido en .env");
@@ -1503,7 +1504,7 @@ app.get("/markets/:id/comments", async (req, res) => {
   res.json(data);
 });
 
-app.post("/markets/:id/comments", auth, async (req, res) => {
+app.post("/markets/:id/comments", auth, commentRateLimit, async (req, res) => {
   const { id } = req.params;
   const { content } = req.body;
   if (!content || content.trim() === "") return res.status(400).json({ message: "Comentario vacío" });

@@ -243,17 +243,44 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
       img.src = objectUrl;
     });
 
+  const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+
   const handleComprobanteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 10 * 1024 * 1024) {
-      showToast("La imagen no puede superar 10 MB", "error");
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      showToast("Solo se permiten imágenes JPG, PNG o WebP", "error");
+      e.target.value = "";
       return;
     }
-    setComprobanteFile(file);
-    const reader = new FileReader();
-    reader.onload = (ev) => setComprobantePreview(ev.target?.result as string);
-    reader.readAsDataURL(file);
+    if (file.size > 10 * 1024 * 1024) {
+      showToast("La imagen no puede superar 10 MB", "error");
+      e.target.value = "";
+      return;
+    }
+
+    // Verificar dimensiones mínimas para descartar imágenes corruptas o miniaturas
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      if (img.width < 100 || img.height < 100) {
+        showToast("La imagen es demasiado pequeña. Adjunta una foto legible del comprobante.", "error");
+        e.target.value = "";
+        return;
+      }
+      setComprobanteFile(file);
+      const reader = new FileReader();
+      reader.onload = (ev) => setComprobantePreview(ev.target?.result as string);
+      reader.readAsDataURL(file);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      showToast("No se pudo leer la imagen. Intenta con otro archivo.", "error");
+      e.target.value = "";
+    };
+    img.src = objectUrl;
   };
 
   const handleSendTransfer = async () => {

@@ -41,6 +41,7 @@ export default function RegisterPage() {
     nombre: "", apellido: "", email: "", password: "",
     confirmPassword: "", cedula: "", celular: "", ciudad: "",
   });
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [loading, setLoading]             = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError]                 = useState("");
@@ -124,6 +125,9 @@ export default function RegisterPage() {
     }
     if (form.password.length < 8) {
       setError("La contraseña debe tener al menos 8 caracteres"); return;
+    }
+    if (!ageConfirmed) {
+      setError("Debes confirmar que eres mayor de 18 años"); return;
     }
     setStep(2);
   };
@@ -291,6 +295,22 @@ export default function RegisterPage() {
                         <p className="text-xs text-rose-400 mt-0.5">No coinciden</p>
                       )}
                     </div>
+
+                    {/* Verificación de edad */}
+                    <label className="flex items-start gap-3 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={ageConfirmed}
+                        onChange={(e) => setAgeConfirmed(e.target.checked)}
+                        className="mt-0.5 accent-emerald-500 w-4 h-4 shrink-0 cursor-pointer"
+                      />
+                      <span className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                        Confirmo que tengo <strong className="text-slate-700 dark:text-slate-300">18 años o más</strong> y acepto los{" "}
+                        <a href="/terminos" target="_blank" className="text-emerald-500 hover:text-emerald-400 underline">Términos de uso</a>{" "}
+                        y la{" "}
+                        <a href="/privacidad" target="_blank" className="text-emerald-500 hover:text-emerald-400 underline">Política de privacidad</a>.
+                      </span>
+                    </label>
 
                     {error && <div className="text-sm px-4 py-2.5 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">{error}</div>}
 

@@ -427,7 +427,7 @@ export default function AdminPage() {
     if (res.ok) setTransactions(data);
   };
 
-  const handleTransactionStatus = async (id: string, status: "aprobado" | "rechazado", userId: string, amount: number, tx: any) => {
+  const doTransactionStatus = async (id: string, status: "aprobado" | "rechazado", userId: string, amount: number, tx: any) => {
     setLoadingAction(`tx-${id}`);
     const token = localStorage.getItem("token");
     const res = await fetch(`https://api.ecuapred.com/admin/transactions/${id}/status`, {
@@ -441,6 +441,18 @@ export default function AdminPage() {
     setTransactions(prev => prev.map(t => t.id === id ? { ...t, status } : t));
     showToast(status === "aprobado" ? "Transacción aprobada ✅" : "Transacción rechazada", status === "aprobado" ? "success" : "info");
     fetchTransactions(); fetchUsers(); fetchStats();
+  };
+
+  const handleTransactionStatus = (id: string, status: "aprobado" | "rechazado", userId: string, amount: number, tx: any) => {
+    const isApprove = status === "aprobado";
+    const typeLabel = tx.type === "retiro" ? "retiro" : "recarga";
+    openModal({
+      title: isApprove ? `¿Aprobar ${typeLabel} de $${amount}?` : `¿Rechazar ${typeLabel} de $${amount}?`,
+      description: `${tx.users?.email ?? "Usuario"} · ${isApprove ? "Se acreditarán los fondos." : "La transacción quedará rechazada."}`,
+      confirmLabel: isApprove ? "Aprobar" : "Rechazar",
+      danger: !isApprove,
+      onConfirm: () => doTransactionStatus(id, status, userId, amount, tx),
+    });
   };
 
   const fetchBankAccounts = async () => {
