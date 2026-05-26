@@ -389,6 +389,30 @@ function emailVerificacionRegistro({ nombre, email, code, magicToken }) {
   });
 }
 
+// ── Recuperar contraseña ─────────────────────────────────────────────────────
+function emailRecuperarContrasena({ nombre, email, resetUrl }) {
+  return sendEmail({
+    to: email,
+    subject: "Recupera tu contraseña — EcuaPred",
+    html: baseTemplate(`
+      <h2 style="color:#10b981;margin-top:0">Recuperar contraseña</h2>
+      <p>Hola <strong>${nombre || "usuario"}</strong>, recibimos una solicitud para restablecer la contraseña de tu cuenta.</p>
+      <p>Haz clic en el botón para crear una nueva contraseña. El enlace es válido por <strong>15 minutos</strong>.</p>
+      <a href="${resetUrl}"
+        style="display:inline-block;margin:20px 0;padding:13px 28px;background:#10b981;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;font-size:15px">
+        Restablecer contraseña
+      </a>
+      <p style="font-size:12px;color:#94a3b8;margin-top:8px">
+        O copia este enlace en tu navegador:<br/>
+        <span style="color:#64748b;word-break:break-all">${resetUrl}</span>
+      </p>
+      <p style="font-size:11px;color:#475569;margin-top:20px;border-top:1px solid #1e293b;padding-top:16px">
+        Si no solicitaste este cambio, ignora este correo. Tu contraseña no será modificada.
+      </p>
+    `),
+  });
+}
+
 module.exports = {
   emailBienvenida,
   emailVerificacionRegistro,
@@ -407,4 +431,5 @@ module.exports = {
   emailMercadoPerdido,
   emailCambioRol,
   emailConfirmacionApuesta,
+  emailRecuperarContrasena,
 };

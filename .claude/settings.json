@@ -14,7 +14,8 @@
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\Styf\\\\Desktop\\\\predicciones-ecuador - copia\" -Directory)",
       "Bash(npm config *)",
       "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(JSON.stringify\\(Object.keys\\({...p.dependencies,...\\(p.devDependencies||{}\\)}\\).filter\\(k=>k.includes\\('captcha'\\)\\)\\)\\)\")",
-      "Bash(dir node_modules\\\\react-google-recaptcha)"
+      "Bash(dir node_modules\\\\react-google-recaptcha)",
+      "PowerShell(Get-ChildItem -Path \"c:\\\\Users\\\\Styf\\\\Desktop\\\\predicciones-ecuador - copia\" -Recurse -Force | Select-Object FullName | ForEach-Object { $_.FullName })"
     ],
     "additionalDirectories": [
       "C:\\Users\\Styf\\Desktop\\predicciones-ecuador - copia\\.claude"

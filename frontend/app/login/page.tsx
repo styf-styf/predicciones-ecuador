@@ -50,6 +50,13 @@ export default function Login() {
     else if (token) router.push("/");
 
     const params = new URLSearchParams(window.location.search);
+
+    // Sesión expirada → mostrar aviso
+    if (params.get("expired") === "1") {
+      setIsError(false);
+      setMessage("⏱ Tu sesión expiró. Inicia sesión de nuevo.");
+    }
+
     const code   = params.get("code");
     if (code) {
       setGoogleLoading(true);
@@ -203,7 +210,12 @@ export default function Login() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">Contraseña</label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Contraseña</label>
+                    <Link href="/forgot-password" className="text-xs text-emerald-500 hover:text-emerald-400 transition font-medium cursor-pointer">
+                      ¿Olvidaste tu contraseña?
+                    </Link>
+                  </div>
                   <div className="relative">
                     <input
                       type={showPassword ? "text" : "password"}

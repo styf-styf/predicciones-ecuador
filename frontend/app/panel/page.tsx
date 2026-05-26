@@ -1,5 +1,6 @@
 ﻿"use client";
 import React, { Suspense } from "react";
+import { authFetch } from "@/lib/authFetch";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -76,11 +77,11 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
     const headers = { authorization: `Bearer ${token}` };
     try {
       const [meRes, betsRes, rankRes, movRes, configRes, banksRes] = await Promise.all([
-        fetch("https://api.ecuapred.com/me", { headers }),
-        fetch("https://api.ecuapred.com/my-bets", { headers }),
+        authFetch("https://api.ecuapred.com/me", { headers }),
+        authFetch("https://api.ecuapred.com/my-bets", { headers }),
         fetch("https://api.ecuapred.com/ranking"),
-        fetch("https://api.ecuapred.com/my-movements", { headers }),
-        fetch("https://api.ecuapred.com/config", { headers }),
+        authFetch("https://api.ecuapred.com/my-movements", { headers }),
+        authFetch("https://api.ecuapred.com/config", { headers }),
         fetch("https://api.ecuapred.com/bank-accounts"),
       ]);
       if (!meRes.ok) { router.push("/login"); return; }

@@ -1,4 +1,5 @@
 require("dotenv").config();
+const Sentry = require("@sentry/node");
 const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
@@ -26,6 +27,7 @@ const {
   emailMercadoPerdido,
   emailCambioRol,
   emailConfirmacionApuesta,
+  emailRecuperarContrasena,
 } = require("./email");
 
 const googleClient = new OAuth2Client(
@@ -33,7 +35,18 @@ const googleClient = new OAuth2Client(
   process.env.GOOGLE_CLIENT_SECRET
 );
 
+// Sentry — inicializar antes de cualquier middleware
+// Obtén tu DSN en: https://sentry.io → Projects → tu proyecto → Settings → DSN
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV || "production",
+    tracesSampleRate: 0.2, // 20% de requests trackeados
+  });
+}
+
 const app = express();
+if (process.env.SENTRY_DSN) app.use(Sentry.Handlers.requestHandler());
 app.use(cors({
   origin: (origin, callback) => {
     const allowed = ["https://predicciones-ecuador.vercel.app", "https://ecuapred.com", "https://www.ecuapred.com", "http://localhost:3000"];
@@ -46,10 +59,10 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Rate limiters en memoria
+// ── Rate limiters ────────────────────────────────────────────────────────────
+// En memoria: para endpoints de baja criticidad (rápido, sin latencia de BD)
 function makeRateLimiter(maxAttempts, windowMs, message) {
   const store = new Map();
-  // Limpiar IPs expiradas periódicamente para evitar memory leak
   setInterval(() => {
     const now = Date.now();
     for (const [ip, times] of store) {
@@ -66,9 +79,47 @@ function makeRateLimiter(maxAttempts, windowMs, message) {
     next();
   };
 }
-const loginRateLimit    = makeRateLimiter(10, 15 * 60 * 1000, "Demasiados intentos. Espera 15 minutos.");
-const registerRateLimit = makeRateLimiter(5,  60 * 60 * 1000, "Demasiados registros desde esta IP. Espera 1 hora.");
-const betRateLimit      = makeRateLimiter(60,      60 * 1000, "Demasiadas apuestas seguidas. Espera un momento.");
+
+// Persistente en Supabase: para endpoints críticos (login, register, forgot-password)
+// Sobrevive reinicios del servidor. Requiere tabla `rate_limits` (ver migrations/rate_limits.sql)
+function makeDbRateLimiter(action, maxAttempts, windowMs, message) {
+  // Fallback en memoria por si la BD falla
+  const fallback = makeRateLimiter(maxAttempts, windowMs, message);
+
+  return async (req, res, next) => {
+    const ip  = (req.ip || req.socket.remoteAddress || "unknown").slice(0, 64);
+    const key = `${ip}:${action}`;
+    const since = new Date(Date.now() - windowMs).toISOString();
+
+    try {
+      // Contar intentos recientes
+      const { count, error: countErr } = await supabase
+        .from("rate_limits")
+        .select("id", { count: "exact", head: true })
+        .eq("key", key)
+        .gte("hit_at", since);
+
+      if (countErr) throw countErr;
+
+      if (count >= maxAttempts) return res.status(429).json({ message });
+
+      // Registrar este intento
+      await supabase.from("rate_limits").insert({ key });
+
+      // Limpiar registros viejos de esta key en background
+      supabase.from("rate_limits").delete().eq("key", key).lt("hit_at", since).then(() => {});
+
+      next();
+    } catch {
+      // Si Supabase falla, usa el fallback en memoria
+      return fallback(req, res, next);
+    }
+  };
+}
+
+const loginRateLimit      = makeDbRateLimiter("login",    10, 15 * 60 * 1000, "Demasiados intentos. Espera 15 minutos.");
+const registerRateLimit   = makeDbRateLimiter("register",  5, 60 * 60 * 1000, "Demasiados registros desde esta IP. Espera 1 hora.");
+const betRateLimit        = makeRateLimiter(60,      60 * 1000, "Demasiadas apuestas seguidas. Espera un momento.");
 const withdrawalRateLimit = makeRateLimiter(5, 60 * 60 * 1000, "Demasiadas solicitudes de retiro. Espera 1 hora.");
 const transferRateLimit   = makeRateLimiter(10, 60 * 60 * 1000, "Demasiadas transferencias. Espera 1 hora.");
 const contactoRateLimit   = makeRateLimiter(5,  60 * 60 * 1000, "Demasiados mensajes enviados. Espera 1 hora.");
@@ -321,6 +372,63 @@ app.post("/login", loginRateLimit, async (req, res) => {
     token,
     user: { id: data.id, email: data.email, role: data.role, points: data.points },
   });
+});
+
+// =======================
+// 🔑 RECUPERAR CONTRASEÑA
+// =======================
+const resetTokens = new Map(); // token → { email, expiresAt }
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, v] of resetTokens) if (v.expiresAt < now) resetTokens.delete(k);
+}, 5 * 60 * 1000).unref();
+
+const forgotRateLimit = makeDbRateLimiter("forgot", 3, 60 * 60 * 1000, "Demasiadas solicitudes. Espera 1 hora.");
+
+app.post("/auth/forgot-password", forgotRateLimit, async (req, res) => {
+  const { email } = req.body;
+  // Siempre devuelve el mismo mensaje para no revelar si el email existe
+  const ok = () => res.json({ message: "Si ese correo está registrado, recibirás un enlace en breve." });
+
+  if (!email?.trim()) return ok();
+
+  const { data: user } = await supabase
+    .from("users")
+    .select("id, email, nombre, provider")
+    .eq("email", email.trim().toLowerCase())
+    .maybeSingle();
+
+  if (!user || user.provider === "google") return ok(); // Google no tiene contraseña local
+
+  const token = crypto.randomBytes(32).toString("hex");
+  resetTokens.set(token, { email: user.email, expiresAt: Date.now() + 15 * 60 * 1000 });
+
+  const resetUrl = `https://ecuapred.com/reset-password?token=${token}`;
+  await emailRecuperarContrasena({ nombre: user.nombre, email: user.email, resetUrl });
+
+  return ok();
+});
+
+app.post("/auth/reset-password", async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  if (!token || !newPassword)
+    return res.status(400).json({ message: "Faltan campos obligatorios" });
+  if (typeof newPassword !== "string" || newPassword.length < 8)
+    return res.status(400).json({ message: "La contraseña debe tener al menos 8 caracteres" });
+
+  const entry = resetTokens.get(token);
+  if (!entry || Date.now() > entry.expiresAt) {
+    resetTokens.delete(token);
+    return res.status(400).json({ message: "El enlace es inválido o ya expiró. Solicita uno nuevo." });
+  }
+
+  const hashed = await bcrypt.hash(newPassword, 10);
+  const { error } = await supabase.from("users").update({ password: hashed }).eq("email", entry.email);
+  if (error) return res.status(500).json({ message: error.message });
+
+  resetTokens.delete(token); // Un solo uso
+  res.json({ message: "Contraseña actualizada correctamente." });
 });
 
 // =======================
@@ -3146,6 +3254,9 @@ scheduler.init({
   groqApiKey: process.env.GROQ_API_KEY,
   broadcast,
 }).then(() => scheduler.startScheduler());
+
+// Sentry error handler — debe ir ANTES del app.listen y DESPUÉS de todas las rutas
+if (process.env.SENTRY_DSN) app.use(Sentry.Handlers.errorHandler());
 
 app.listen(4000, () => {
   console.log("Servidor en https://api.ecuapred.com");
