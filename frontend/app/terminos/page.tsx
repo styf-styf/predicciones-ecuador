@@ -43,7 +43,7 @@ export default function TerminosPage() {
           },
           {
             title: "8. Recargas",
-            content: `Las recargas se acreditan en saldo virtual a la tasa de 1 USD = 1 punto. Los métodos de pago disponibles son transferencia bancaria y pago mediante Payphone. Las recargas por transferencia requieren adjuntar comprobante y están sujetas a verificación por parte del equipo de EcuaPred en un plazo de hasta 24 horas hábiles. EcuaPred se reserva el derecho de rechazar recargas que no puedan ser verificadas.`
+            content: `Las recargas se acreditan directamente en dólares (USD) al saldo de su cuenta. Los métodos de pago disponibles son transferencia bancaria y pago mediante Payphone. Las recargas por transferencia requieren adjuntar comprobante y están sujetas a verificación por parte del equipo de EcuaPred en un plazo de hasta 24 horas hábiles. EcuaPred se reserva el derecho de rechazar recargas que no puedan ser verificadas.`
           },
           {
             title: "9. Retiros",
