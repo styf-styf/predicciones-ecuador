@@ -19,7 +19,7 @@ export default function PrivacidadPage() {
           },
           {
             title: "2. Información que recopilamos",
-            content: `Recopilamos los siguientes datos personales: (a) Datos de identificación: nombre, apellido, cédula de identidad o pasaporte; (b) Datos de contacto: correo electrónico, número de celular, ciudad y provincia; (c) Datos bancarios: banco, número de cuenta, tipo de cuenta, titular; (d) Datos de actividad: predicciones realizadas, transacciones, movimientos de saldo, comentarios; (e) Datos técnicos: dirección IP, tipo de navegador, dispositivo utilizado. La cédula y datos bancarios son recopilados únicamente para verificación de identidad y procesamiento de retiros.`
+            content: `Recopilamos los siguientes datos personales: (a) Datos de identificación: nombre, apellido, cédula de identidad o pasaporte; (b) Datos de contacto: correo electrónico, número de celular, ciudad y provincia; (c) Datos bancarios: banco, número de cuenta, tipo de cuenta, titular; (d) Datos de actividad: predicciones realizadas, transacciones, movimientos de saldo, comentarios en mercados; (e) Datos técnicos: dirección IP, tipo de navegador, dispositivo utilizado. La cédula y datos bancarios son recopilados únicamente para verificación de identidad y procesamiento de retiros.`
           },
           {
             title: "3. Base legal del tratamiento",

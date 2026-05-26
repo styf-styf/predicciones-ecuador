@@ -119,7 +119,7 @@ function makeDbRateLimiter(action, maxAttempts, windowMs, message) {
 
 const loginRateLimit      = makeDbRateLimiter("login",    10, 15 * 60 * 1000, "Demasiados intentos. Espera 15 minutos.");
 const registerRateLimit   = makeDbRateLimiter("register",  5, 60 * 60 * 1000, "Demasiados registros desde esta IP. Espera 1 hora.");
-const betRateLimit        = makeRateLimiter(60,      60 * 1000, "Demasiadas apuestas seguidas. Espera un momento.");
+const betRateLimit        = makeRateLimiter(60,      60 * 1000, "Demasiadas predicciones seguidas. Espera un momento.");
 const withdrawalRateLimit = makeRateLimiter(5, 60 * 60 * 1000, "Demasiadas solicitudes de retiro. Espera 1 hora.");
 const transferRateLimit   = makeRateLimiter(10, 60 * 60 * 1000, "Demasiadas transferencias. Espera 1 hora.");
 const contactoRateLimit   = makeRateLimiter(5,  60 * 60 * 1000, "Demasiados mensajes enviados. Espera 1 hora.");
@@ -1127,7 +1127,7 @@ app.put("/notifications/:id/read", auth, async (req, res) => {
 app.post("/bet", auth, betRateLimit, async (req, res) => {
   const { marketId, type, amount } = req.body;
   if (type !== "yes" && type !== "no") {
-    return res.status(400).json({ message: "Tipo de apuesta inválido" });
+    return res.status(400).json({ message: "Tipo de predicción inválido" });
   }
   const betAmount = parseFloat(amount);
 
@@ -1234,7 +1234,7 @@ app.post("/bet", auth, betRateLimit, async (req, res) => {
     await supabase.from("users").update({ points: user.points }).eq("id", user.id);
     await supabase.from("markets").update({ yes: market.yes, no: market.no }).eq("id", marketId);
     console.error("[bet] Error guardando apuesta:", betOpError.message);
-    return res.status(500).json({ message: "Error al registrar apuesta. Saldo revertido." });
+    return res.status(500).json({ message: "Error al registrar predicción. Saldo revertido." });
   }
 
  const { data: updatedMarket } = await supabase

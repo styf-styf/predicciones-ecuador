@@ -379,7 +379,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
               </div>
             ))}
           </div>
-          {/* Apuestas recientes */}
+          {/* Predicciones recientes */}
           <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800">
               <div className="h-5 w-40 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />

@@ -176,7 +176,7 @@ function BetPanel({
                 </span>
                 <span style={{ fontSize: 18, fontWeight: 700, color: "#111" }}>{isNo ? "No" : "Sí"}</span>
               </div>
-              <p style={{ fontSize: 12, color: "#6b7280", margin: 0 }}>{Number(userBet.amount).toFixed(2)} $ apostados</p>
+              <p style={{ fontSize: 12, color: "#6b7280", margin: 0 }}>{Number(userBet.amount).toFixed(2)} $ invertidos</p>
             </div>
           )}
           {/* Columna derecha: ganancia estimada */}
@@ -606,7 +606,7 @@ export default function MarketPage() {
           <div className="h-12 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
         </div>
 
-        {/* Mejores apostadores */}
+        {/* Mejores predictores */}
         <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3">
           <div className="h-5 w-40 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
           {[...Array(3)].map((_, i) => (
@@ -725,7 +725,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
          <span className={`text-lg font-black ${userBet.type === "yes" ? "text-emerald-500" : "text-rose-500"}`}>
            {userBet.type === "yes" ? "✅ Sí" : "❌ No"}
          </span>
-         <span className="text-sm font-bold text-slate-900 dark:text-white">{Number(userBet.amount).toFixed(2)} $ apostados</span>
+         <span className="text-sm font-bold text-slate-900 dark:text-white">{Number(userBet.amount).toFixed(2)} $ invertidos</span>
        </div>
        {estimatedWinnings !== null && (
          <div className="border-t border-slate-200 dark:border-slate-700 pt-3 space-y-1.5 text-sm">
@@ -911,7 +911,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
           )}
           <div className="p-3 flex flex-wrap gap-2">
             {[
-              { emoji: "📊", label: "Total apostado", value: `$${(Number(market.yes) + Number(market.no)).toFixed(1)}`, colorClass: "text-slate-900 dark:text-white" },
+              { emoji: "📊", label: "Total en juego", value: `$${(Number(market.yes) + Number(market.no)).toFixed(1)}`, colorClass: "text-slate-900 dark:text-white" },
               { emoji: "👥", label: "Participantes", value: String(uniqueBettors), colorClass: "text-slate-900 dark:text-white" },
               { emoji: "📅", label: "Creado", value: new Date(market.created_at + "Z").toLocaleDateString("es-EC", { timeZone: "America/Guayaquil", day: "numeric", month: "short", year: "numeric" }), colorClass: "text-slate-900 dark:text-white" },
               { emoji: "✦", label: "Estado", value: statusLabel, colorClass: statusColor },
@@ -1125,7 +1125,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
             {/* Stats grid */}
             <div className="p-3 flex flex-wrap gap-2">
               {[
-                { emoji: "📊", label: "Total apostado", value: `$${(Number(market.yes) + Number(market.no)).toFixed(1)}`, colorClass: "text-slate-900 dark:text-white" },
+                { emoji: "📊", label: "Total en juego", value: `$${(Number(market.yes) + Number(market.no)).toFixed(1)}`, colorClass: "text-slate-900 dark:text-white" },
                 { emoji: "👥", label: "Participantes", value: String(uniqueBettors), colorClass: "text-slate-900 dark:text-white" },
                 { emoji: "📅", label: "Creado", value: new Date(market.created_at + "Z").toLocaleDateString("es-EC", { timeZone: "America/Guayaquil", day: "numeric", month: "short", year: "numeric" }), colorClass: "text-slate-900 dark:text-white" },
                 { emoji: "✦", label: "Estado", value: statusLabel, colorClass: statusColor },
@@ -1293,7 +1293,7 @@ const noPct = isZero ? "50" : ((market.no / total) * 100).toFixed(0);
             </div>
           ) : null}
 
-          {/* Top apostadores desktop */}
+          {/* Top predictores desktop */}
           {topHolders.length > 0 && (
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
               <p className="text-xs text-slate-400 uppercase tracking-widest mb-4">Top Predictores</p>
