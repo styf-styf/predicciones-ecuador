@@ -190,33 +190,49 @@ function BetPanel({
         </div>
       )}
 
-      {/* Monto */}
-      <div className="flex justify-between items-center">
-        <span className="text-sm text-slate-500 dark:text-slate-400">Monto</span>
-        <span className="text-[18px] font-bold text-slate-900 dark:text-white">{amt > 0 ? `${amt.toFixed(2)} $` : "0 $"}</span>
-      </div>
-
-      {/* Botones de monto rápido */}
-      <div className="flex gap-1.5">
-        {[1, 5, 10, 50].map((val) => (
-          <button key={val}
-            onClick={() => { const cur = parseFloat(amount) || 0; const max = (noBalance || points === null) ? Infinity : points; setAmount(Number(Math.min(cur + val, max)).toFixed(2)); }}
-            className="flex-1 py-[7px] rounded-lg text-xs font-medium bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer">
-            +{val}
-          </button>
-        ))}
-        {!noBalance && (
-          <button onClick={() => setAmount(Number(points !== null ? points : 0).toFixed(2))}
-            className="flex-1 py-[7px] rounded-lg text-xs font-medium bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer">
-            Máx.
-          </button>
-        )}
-        {amt > 0 && (
-          <button onClick={() => setAmount("")}
-            className="flex-1 py-[7px] rounded-lg text-xs font-medium bg-white dark:bg-slate-900 text-rose-500 border border-rose-200 dark:border-rose-800 hover:bg-rose-50 transition cursor-pointer">
-            Borrar
-          </button>
-        )}
+      {/* Monto — input directo + botones rápidos */}
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 focus-within:border-emerald-500 transition">
+          <span className="text-sm text-slate-400 shrink-0">$</span>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            max={(!noBalance && !token === false && points !== null && points > 0) ? points : undefined}
+            placeholder="0.00"
+            value={amount}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (!noBalance && token && points !== null && points > 0) {
+                const num = parseFloat(val);
+                if (!isNaN(num) && num > points) { setAmount(points.toFixed(2)); return; }
+              }
+              setAmount(val);
+            }}
+            className="flex-1 bg-transparent outline-none text-[18px] font-bold text-slate-900 dark:text-white tabular-nums placeholder-slate-300 dark:placeholder-slate-600 min-w-0"
+          />
+          {!noBalance && token && points !== null && points > 0 && (
+            <button onClick={() => setAmount(points.toFixed(2))}
+              className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold shrink-0 hover:text-emerald-500 transition cursor-pointer">
+              Máx.
+            </button>
+          )}
+        </div>
+        <div className="flex gap-1.5">
+          {[1, 5, 10, 50].map((val) => (
+            <button key={val}
+              onClick={() => { const cur = parseFloat(amount) || 0; const max = (noBalance || !token || points === null || points <= 0) ? Infinity : points; setAmount(Number(Math.min(cur + val, max)).toFixed(2)); }}
+              className="flex-1 py-[7px] rounded-lg text-xs font-medium bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer">
+              +{val}
+            </button>
+          ))}
+          {amt > 0 && (
+            <button onClick={() => setAmount("")}
+              className="flex-1 py-[7px] rounded-lg text-xs font-medium bg-white dark:bg-slate-900 text-rose-500 border border-rose-200 dark:border-rose-800 hover:bg-rose-50 transition cursor-pointer">
+              Borrar
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Selector Sí/No con gradiente canvas */}
