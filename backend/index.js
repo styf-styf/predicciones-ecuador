@@ -220,10 +220,10 @@ app.post("/register/confirm", async (req, res) => {
   const welcomePoints = cfg?.welcome_points ?? 0;
   const welcomeLimit = cfg?.welcome_points_limit ?? null;
 
-  let pointsToGive = welcomePoints;
-  if (welcomeLimit !== null) {
+  let pointsToGive = 0;
+  if (welcomeLimit && welcomeLimit > 0) {
     const { count } = await supabase.from("users").select("id", { count: "exact", head: true });
-    if ((count ?? 0) >= welcomeLimit) pointsToGive = 0;
+    if ((count ?? 0) < welcomeLimit) pointsToGive = welcomePoints;
   }
 
   const { error } = await supabase.from("users").insert([{
@@ -276,10 +276,10 @@ app.get("/verify-email", async (req, res) => {
     const welcomePointsMagic = cfgMagic?.welcome_points ?? 0;
     const welcomeLimitMagic = cfgMagic?.welcome_points_limit ?? null;
 
-    let pointsToGiveMagic = welcomePointsMagic;
-    if (welcomeLimitMagic !== null) {
+    let pointsToGiveMagic = 0;
+    if (welcomeLimitMagic && welcomeLimitMagic > 0) {
       const { count } = await supabase.from("users").select("id", { count: "exact", head: true });
-      if ((count ?? 0) >= welcomeLimitMagic) pointsToGiveMagic = 0;
+      if ((count ?? 0) < welcomeLimitMagic) pointsToGiveMagic = welcomePointsMagic;
     }
 
     const { error } = await supabase.from("users").insert([{
@@ -502,10 +502,10 @@ app.post("/auth/google", async (req, res) => {
       const welcomePoints = config?.welcome_points ?? 0;
       const welcomeLimit = config?.welcome_points_limit ?? null;
 
-      let pointsToGive = welcomePoints;
-      if (welcomeLimit !== null) {
+      let pointsToGive = 0;
+      if (welcomeLimit && welcomeLimit > 0) {
         const { count } = await supabase.from("users").select("id", { count: "exact", head: true });
-        if ((count ?? 0) >= welcomeLimit) pointsToGive = 0;
+        if ((count ?? 0) < welcomeLimit) pointsToGive = welcomePoints;
       }
 
       const { data: newUser, error } = await supabase
