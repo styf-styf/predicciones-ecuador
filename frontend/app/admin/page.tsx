@@ -2936,7 +2936,7 @@ export default function AdminPage() {
                 {[
                   { label: "Comisión", value: `${config.commission}%`, color: "text-emerald-600 dark:text-emerald-400" },
                   { label: "$ bienvenida", value: `${config.welcome_points}`, color: "text-blue-500 dark:text-blue-400" },
-                  { label: "Límite bienvenida", value: config.welcome_points_limit ? `${users.length} / ${config.welcome_points_limit}` : "Sin límite", color: "text-amber-500 dark:text-amber-400" },
+                  { label: "Límite bienvenida", value: config.welcome_points_limit ? `Primeros ${config.welcome_points_limit} usuarios` : "Sin límite", color: "text-amber-500 dark:text-amber-400" },
                 ].map((item) => (
                   <div key={item.label} className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-4 text-center">
                     <p className="text-[10px] text-slate-400 dark:text-white/25 uppercase tracking-widest mb-2">{item.label}</p>
