@@ -216,12 +216,15 @@ app.post("/register/confirm", async (req, res) => {
   if (pending.code !== String(code).trim())
     return res.status(400).json({ message: "Código incorrecto" });
 
+  const { data: cfg } = await supabase.from("config").select("welcome_points").eq("id", 1).single();
+  const welcomePoints = cfg?.welcome_points ?? 0;
+
   const { error } = await supabase.from("users").insert([{
     email: key, password: pending.hashedPassword,
     nombre: pending.nombre, apellido: pending.apellido,
     cedula: pending.cedula, celular: pending.celular,
     ciudad: pending.ciudad, pais: pending.pais,
-    role: "user", points: 0, avatar: "", provider: "local",
+    role: "user", points: welcomePoints, avatar: "", provider: "local",
   }]);
   if (error) return res.status(400).json({ message: error.message });
 
@@ -262,12 +265,15 @@ app.get("/verify-email", async (req, res) => {
   let finalUser = existing;
 
   if (!existing) {
+    const { data: cfgMagic } = await supabase.from("config").select("welcome_points").eq("id", 1).single();
+    const welcomePointsMagic = cfgMagic?.welcome_points ?? 0;
+
     const { error } = await supabase.from("users").insert([{
       email: foundKey, password: foundData.hashedPassword,
       nombre: foundData.nombre, apellido: foundData.apellido,
       cedula: foundData.cedula, celular: foundData.celular,
       ciudad: foundData.ciudad, pais: foundData.pais,
-      role: "user", points: 0, avatar: "", provider: "local",
+      role: "user", points: welcomePointsMagic, avatar: "", provider: "local",
     }]);
     if (error) return res.redirect("https://ecuapred.com/verify-email?error=error_servidor");
     const { data: newUser } = await supabase.from("users").select("*").eq("email", foundKey).single();
