@@ -2959,7 +2959,13 @@ export default function AdminPage() {
                         className="text-[11px] text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white border border-slate-200 dark:border-white/[0.08] px-3 py-1 rounded-lg transition cursor-pointer">
                         Cancelar
                       </button>
-                      <button onClick={async () => { setSavingFinancial(true); await handleSaveSettings(); setSavingFinancial(false); setEditingFinancial(false); }}
+                      <button onClick={() => openModal({
+                          title: "¿Guardar parámetros financieros?",
+                          description: "Estos cambios afectan comisiones y saldo de bienvenida para nuevos usuarios.",
+                          confirmLabel: "Guardar",
+                          danger: false,
+                          onConfirm: async () => { setSavingFinancial(true); await handleSaveSettings(); setSavingFinancial(false); setEditingFinancial(false); },
+                        })}
                         disabled={savingFinancial}
                         className="text-[11px] bg-emerald-500 hover:bg-emerald-400 text-black font-bold px-3 py-1 rounded-lg transition cursor-pointer disabled:opacity-60">
                         {savingFinancial ? "Guardando..." : "Guardar"}
