@@ -200,15 +200,17 @@ function BetPanel({
       <div className="flex gap-1.5">
         {[1, 5, 10, 50].map((val) => (
           <button key={val}
-            onClick={() => { const cur = parseFloat(amount) || 0; const max = points !== null ? points : Infinity; setAmount(Number(Math.min(cur + val, max)).toFixed(2)); }}
+            onClick={() => { const cur = parseFloat(amount) || 0; const max = (noBalance || points === null) ? Infinity : points; setAmount(Number(Math.min(cur + val, max)).toFixed(2)); }}
             className="flex-1 py-[7px] rounded-lg text-xs font-medium bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer">
             +{val}
           </button>
         ))}
-        <button onClick={() => setAmount(Number(points !== null ? points : 0).toFixed(2))}
-          className="flex-1 py-[7px] rounded-lg text-xs font-medium bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer">
-          Máx.
-        </button>
+        {!noBalance && (
+          <button onClick={() => setAmount(Number(points !== null ? points : 0).toFixed(2))}
+            className="flex-1 py-[7px] rounded-lg text-xs font-medium bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer">
+            Máx.
+          </button>
+        )}
         {amt > 0 && (
           <button onClick={() => setAmount("")}
             className="flex-1 py-[7px] rounded-lg text-xs font-medium bg-white dark:bg-slate-900 text-rose-500 border border-rose-200 dark:border-rose-800 hover:bg-rose-50 transition cursor-pointer">
