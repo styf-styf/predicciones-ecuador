@@ -121,6 +121,12 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
     const status = searchParams.get("status");
     if (status === "exitoso") showToast("¡Pago completado! Tu saldo será actualizado en breve", "success");
     else if (status === "cancelado") showToast("Pago cancelado", "info");
+
+    const tabParam = searchParams.get("tab");
+    if (tabParam === "wallet" || tabParam === "recargar") {
+      setTab("wallet");
+      setWalletAction("recarga");
+    }
   }, []);
 
   useEffect(() => {
