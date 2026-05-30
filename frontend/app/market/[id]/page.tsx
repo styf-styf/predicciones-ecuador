@@ -151,18 +151,7 @@ function BetPanel({
     );
   }
 
-  if (token && points !== null && points <= 0 && !userBet) {
-    return (
-      <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-4 text-center space-y-2">
-        <p className="text-2xl">💰</p>
-        <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">Necesitas saldo para predecir</p>
-        <p className="text-xs text-amber-600/70 dark:text-amber-400/60">Tu saldo es $0.00. Recarga tu cuenta para participar en este mercado.</p>
-        <a href="/panel?tab=recargar" className="inline-block mt-1 bg-amber-500 hover:bg-amber-400 text-white font-bold text-xs px-5 py-2 rounded-lg transition cursor-pointer">
-          Recargar ahora
-        </a>
-      </div>
-    );
-  }
+  const noBalance = token && points !== null && points <= 0 && !userBet;
 
   return (
     <div className="space-y-3">
@@ -247,6 +236,14 @@ function BetPanel({
               Iniciar sesión
             </Link>
           </div>
+        </div>
+      ) : noBalance ? (
+        <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-4 text-center space-y-2">
+          <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">💰 Necesitas saldo para predecir</p>
+          <p className="text-xs text-amber-600/70 dark:text-amber-400/60">Recarga tu cuenta para participar en este mercado.</p>
+          <a href="/panel?tab=recargar" className="inline-block mt-1 bg-amber-500 hover:bg-amber-400 text-white font-bold text-xs px-5 py-2 rounded-lg transition cursor-pointer">
+            Recargar ahora
+          </a>
         </div>
       ) : (
         <button onClick={handleBet} disabled={bettingLoading || !amount}
