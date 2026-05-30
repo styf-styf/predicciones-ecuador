@@ -145,6 +145,8 @@ export default function AdminPage() {
 
   // ── Nuevos estados ──
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
+  const [editingFinancial, setEditingFinancial] = useState(false);
+  const [savingFinancial, setSavingFinancial] = useState(false);
   const [modal, setModal] = useState<{
     title: string; description?: string; confirmLabel?: string; danger?: boolean; onConfirm: () => void;
   } | null>(null);
@@ -2943,21 +2945,52 @@ export default function AdminPage() {
                 ))}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {[
-                  { key: "commission", label: "Comisión (%)", step: "0.1" },
-                  { key: "welcome_points", label: "Saldo de bienvenida ($)", step: "1" },
-                  { key: "welcome_points_limit", label: "Límite de usuarios con bienvenida", step: "1" },
-                ].map((field) => (
-                  <div key={field.key} className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-4 space-y-2">
-                    <label className="text-[11px] text-slate-400 dark:text-white/30 uppercase tracking-widest block">{field.label}</label>
-                    <input type="number" step={field.step}
-                      value={(settingsForm as any)[field.key]}
-                      onChange={(e) => setSettingsForm((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                      placeholder={field.key === "welcome_points_limit" ? "Vacío = sin límite" : ""}
-                      className="w-full bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-4 py-2.5 outline-none text-[14px] text-slate-900 dark:text-white focus:border-emerald-500/60 transition tabular-nums placeholder-slate-400 dark:placeholder-white/20" />
-                  </div>
-                ))}
+              <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-100 dark:border-white/[0.04] flex items-center justify-between">
+                  <p className="text-[11px] text-slate-400 dark:text-white/30 uppercase tracking-widest">Parámetros financieros</p>
+                  {!editingFinancial ? (
+                    <button onClick={() => setEditingFinancial(true)}
+                      className="text-[11px] text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white border border-slate-200 dark:border-white/[0.08] px-3 py-1 rounded-lg transition cursor-pointer">
+                      Editar
+                    </button>
+                  ) : (
+                    <div className="flex gap-2">
+                      <button onClick={() => { setEditingFinancial(false); fetchSettings(); }}
+                        className="text-[11px] text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white border border-slate-200 dark:border-white/[0.08] px-3 py-1 rounded-lg transition cursor-pointer">
+                        Cancelar
+                      </button>
+                      <button onClick={async () => { setSavingFinancial(true); await handleSaveSettings(); setSavingFinancial(false); setEditingFinancial(false); }}
+                        disabled={savingFinancial}
+                        className="text-[11px] bg-emerald-500 hover:bg-emerald-400 text-black font-bold px-3 py-1 rounded-lg transition cursor-pointer disabled:opacity-60">
+                        {savingFinancial ? "Guardando..." : "Guardar"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div className="divide-y divide-slate-100 dark:divide-white/[0.04]">
+                  {[
+                    { key: "commission", label: "Comisión (%)", step: "0.1" },
+                    { key: "welcome_points", label: "Saldo de bienvenida ($)", step: "1" },
+                    { key: "welcome_points_limit", label: "Límite usuarios bienvenida", step: "1" },
+                  ].map((field) => (
+                    <div key={field.key} className="px-5 py-3.5 flex items-center justify-between gap-4">
+                      <label className="text-[12px] text-slate-500 dark:text-white/40 shrink-0">{field.label}</label>
+                      {editingFinancial ? (
+                        <input type="number" step={field.step}
+                          value={(settingsForm as any)[field.key]}
+                          onChange={(e) => setSettingsForm((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                          placeholder={field.key === "welcome_points_limit" ? "Sin límite" : ""}
+                          className="w-32 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-1.5 outline-none text-[13px] text-slate-900 dark:text-white focus:border-emerald-500/60 transition tabular-nums text-right placeholder-slate-400 dark:placeholder-white/20" />
+                      ) : (
+                        <span className="text-[13px] font-bold text-slate-900 dark:text-white tabular-nums">
+                          {field.key === "commission" ? `${(settingsForm as any)[field.key]}%`
+                            : field.key === "welcome_points_limit" ? ((settingsForm as any)[field.key] || "Sin límite")
+                            : `$${(settingsForm as any)[field.key]}`}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="border-t border-slate-200 dark:border-white/[0.06] pt-6 mt-2">
