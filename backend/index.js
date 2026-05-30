@@ -216,15 +216,22 @@ app.post("/register/confirm", async (req, res) => {
   if (pending.code !== String(code).trim())
     return res.status(400).json({ message: "Código incorrecto" });
 
-  const { data: cfg } = await supabase.from("config").select("welcome_points").eq("id", 1).single();
+  const { data: cfg } = await supabase.from("config").select("welcome_points, welcome_points_limit").eq("id", 1).single();
   const welcomePoints = cfg?.welcome_points ?? 0;
+  const welcomeLimit = cfg?.welcome_points_limit ?? null;
+
+  let pointsToGive = welcomePoints;
+  if (welcomeLimit !== null) {
+    const { count } = await supabase.from("users").select("id", { count: "exact", head: true });
+    if ((count ?? 0) >= welcomeLimit) pointsToGive = 0;
+  }
 
   const { error } = await supabase.from("users").insert([{
     email: key, password: pending.hashedPassword,
     nombre: pending.nombre, apellido: pending.apellido,
     cedula: pending.cedula, celular: pending.celular,
     ciudad: pending.ciudad, pais: pending.pais,
-    role: "user", points: welcomePoints, avatar: "", provider: "local",
+    role: "user", points: pointsToGive, avatar: "", provider: "local",
   }]);
   if (error) return res.status(400).json({ message: error.message });
 
@@ -265,15 +272,22 @@ app.get("/verify-email", async (req, res) => {
   let finalUser = existing;
 
   if (!existing) {
-    const { data: cfgMagic } = await supabase.from("config").select("welcome_points").eq("id", 1).single();
+    const { data: cfgMagic } = await supabase.from("config").select("welcome_points, welcome_points_limit").eq("id", 1).single();
     const welcomePointsMagic = cfgMagic?.welcome_points ?? 0;
+    const welcomeLimitMagic = cfgMagic?.welcome_points_limit ?? null;
+
+    let pointsToGiveMagic = welcomePointsMagic;
+    if (welcomeLimitMagic !== null) {
+      const { count } = await supabase.from("users").select("id", { count: "exact", head: true });
+      if ((count ?? 0) >= welcomeLimitMagic) pointsToGiveMagic = 0;
+    }
 
     const { error } = await supabase.from("users").insert([{
       email: foundKey, password: foundData.hashedPassword,
       nombre: foundData.nombre, apellido: foundData.apellido,
       cedula: foundData.cedula, celular: foundData.celular,
       ciudad: foundData.ciudad, pais: foundData.pais,
-      role: "user", points: welcomePointsMagic, avatar: "", provider: "local",
+      role: "user", points: pointsToGiveMagic, avatar: "", provider: "local",
     }]);
     if (error) return res.redirect("https://ecuapred.com/verify-email?error=error_servidor");
     const { data: newUser } = await supabase.from("users").select("*").eq("email", foundKey).single();
@@ -483,9 +497,16 @@ app.post("/auth/google", async (req, res) => {
     if (!user) {
       // ✅ Obtener puntos de bienvenida desde config
       const { data: config } = await supabase
-        .from("config").select("welcome_points").eq("id", 1).single();
+        .from("config").select("welcome_points, welcome_points_limit").eq("id", 1).single();
 
-      const welcomePoints = config?.welcome_points ?? 100;
+      const welcomePoints = config?.welcome_points ?? 0;
+      const welcomeLimit = config?.welcome_points_limit ?? null;
+
+      let pointsToGive = welcomePoints;
+      if (welcomeLimit !== null) {
+        const { count } = await supabase.from("users").select("id", { count: "exact", head: true });
+        if ((count ?? 0) >= welcomeLimit) pointsToGive = 0;
+      }
 
       const { data: newUser, error } = await supabase
         .from("users")
@@ -497,7 +518,7 @@ app.post("/auth/google", async (req, res) => {
           provider: "google",
           password: "",
           role: "user",
-          points: welcomePoints,
+          points: pointsToGive,
           pais: "Ecuador",
         }])
         .select()
@@ -920,7 +941,7 @@ app.put("/admin/settings", auth, async (req, res) => {
     return res.status(403).json({ message: "Solo admin" });
   }
 
-  const { min_bet, max_bet, commission, welcome_points, trending_count, winners_count, autoplay_ms, banco_nombre, banco_tipo, banco_cuenta, banco_titular, banco_cedula } = req.body;
+  const { min_bet, max_bet, commission, welcome_points, welcome_points_limit, trending_count, winners_count, autoplay_ms, banco_nombre, banco_tipo, banco_cuenta, banco_titular, banco_cedula } = req.body;
 
   if (min_bet < 0 || max_bet < 0) {
     return res.status(400).json({ message: "Los valores no pueden ser negativos" });
@@ -941,6 +962,7 @@ app.put("/admin/settings", auth, async (req, res) => {
     max_bet,
     commission,
     welcome_points,
+    welcome_points_limit: welcome_points_limit === "" || welcome_points_limit === null ? null : Number(welcome_points_limit),
     trending_count,
     winners_count,
     autoplay_ms,

@@ -100,11 +100,11 @@ export default function AdminPage() {
   const [activeSection, setActiveSection] = useState<Section>("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settingsForm, setSettingsForm] = useState<{
-    commission: string; welcome_points: string;
+    commission: string; welcome_points: string; welcome_points_limit: string;
     trending_count: number; winners_count: number; autoplay_ms: number;
     banco_nombre: string; banco_tipo: string; banco_cuenta: string; banco_titular: string; banco_cedula: string;
   }>({
-    commission: "", welcome_points: "",
+    commission: "", welcome_points: "", welcome_points_limit: "",
     trending_count: 1, winners_count: 1, autoplay_ms: 5000,
     banco_nombre: "", banco_tipo: "", banco_cuenta: "", banco_titular: "", banco_cedula: "",
   });
@@ -472,7 +472,7 @@ export default function AdminPage() {
     if (res.ok) {
       setConfig(data);
       setSettingsForm({
-        commission: data.commission, welcome_points: data.welcome_points,
+        commission: data.commission, welcome_points: data.welcome_points, welcome_points_limit: data.welcome_points_limit ?? "",
         trending_count: data.trending_count ?? 1,
         winners_count: data.winners_count ?? 1,
         autoplay_ms: data.autoplay_ms ?? 5000,
@@ -493,6 +493,7 @@ export default function AdminPage() {
       body: JSON.stringify({
         commission: parseFloat(settingsForm.commission),
         welcome_points: parseFloat(settingsForm.welcome_points),
+        welcome_points_limit: settingsForm.welcome_points_limit === "" ? null : Number(settingsForm.welcome_points_limit),
         trending_count: Number(settingsForm.trending_count ?? 1),
         winners_count: Number(settingsForm.winners_count ?? 1),
         autoplay_ms: Number(settingsForm.autoplay_ms ?? 5000),
@@ -2933,6 +2934,7 @@ export default function AdminPage() {
                 {[
                   { label: "Comisión", value: `${config.commission}%`, color: "text-emerald-600 dark:text-emerald-400" },
                   { label: "$ bienvenida", value: `${config.welcome_points}`, color: "text-blue-500 dark:text-blue-400" },
+                  { label: "Límite bienvenida", value: config.welcome_points_limit ? `${users.length} / ${config.welcome_points_limit}` : "Sin límite", color: "text-amber-500 dark:text-amber-400" },
                 ].map((item) => (
                   <div key={item.label} className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-4 text-center">
                     <p className="text-[10px] text-slate-400 dark:text-white/25 uppercase tracking-widest mb-2">{item.label}</p>
@@ -2944,14 +2946,16 @@ export default function AdminPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
                   { key: "commission", label: "Comisión (%)", step: "0.1" },
-                  { key: "welcome_points", label: "Saldo de bienvenida", step: "1" },
+                  { key: "welcome_points", label: "Saldo de bienvenida ($)", step: "1" },
+                  { key: "welcome_points_limit", label: "Límite de usuarios con bienvenida", step: "1" },
                 ].map((field) => (
                   <div key={field.key} className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-4 space-y-2">
                     <label className="text-[11px] text-slate-400 dark:text-white/30 uppercase tracking-widest block">{field.label}</label>
                     <input type="number" step={field.step}
                       value={(settingsForm as any)[field.key]}
                       onChange={(e) => setSettingsForm((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                      className="w-full bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-4 py-2.5 outline-none text-[14px] text-slate-900 dark:text-white focus:border-emerald-500/60 transition tabular-nums" />
+                      placeholder={field.key === "welcome_points_limit" ? "Vacío = sin límite" : ""}
+                      className="w-full bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-4 py-2.5 outline-none text-[14px] text-slate-900 dark:text-white focus:border-emerald-500/60 transition tabular-nums placeholder-slate-400 dark:placeholder-white/20" />
                   </div>
                 ))}
               </div>
