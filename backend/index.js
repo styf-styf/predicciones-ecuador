@@ -1175,9 +1175,10 @@ app.post("/bet", auth, betRateLimit, async (req, res) => {
   const maxBet = config?.max_bet ?? 10;
   const maxChanges = config?.max_changes ?? 3;
 
-  if (isNaN(betAmount) || betAmount < minBet || betAmount > maxBet) {
+  if (isNaN(betAmount) || betAmount < minBet || (maxBet > 0 && betAmount > maxBet)) {
+    const maxMsg = maxBet > 0 ? ` y ${maxBet} $` : "";
     return res.status(400).json({
-      message: `El monto debe ser entre ${minBet} y ${maxBet} $`
+      message: `El monto mínimo es ${minBet} $${maxMsg}`
     });
   }
 
