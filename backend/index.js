@@ -550,7 +550,7 @@ app.post("/auth/google", async (req, res) => {
 
 app.get("/config", async (req, res) => {
   const { data, error } = await supabase
-    .from("config").select("min_bet, max_bet, commission, banco_nombre, banco_tipo, banco_cuenta, banco_titular, banco_cedula").eq("id", 1).single();
+    .from("config").select("min_bet, max_bet, commission, max_changes, banco_nombre, banco_tipo, banco_cuenta, banco_titular, banco_cedula").eq("id", 1).single();
   if (error) return res.status(500).json({ message: error.message });
 
   const token = req.headers.authorization?.split(" ")[1];
@@ -559,8 +559,8 @@ app.get("/config", async (req, res) => {
 
   if (isAuth) return res.json(data);
 
-  const { min_bet, max_bet, commission } = data;
-  res.json({ min_bet, max_bet, commission });
+  const { min_bet, max_bet, commission, max_changes } = data;
+  res.json({ min_bet, max_bet, commission, max_changes });
 });
 
 // =======================
@@ -941,7 +941,7 @@ app.put("/admin/settings", auth, async (req, res) => {
     return res.status(403).json({ message: "Solo admin" });
   }
 
-  const { min_bet, max_bet, min_withdrawal, max_withdrawal, commission, welcome_points, welcome_points_limit, trending_count, winners_count, autoplay_ms, banco_nombre, banco_tipo, banco_cuenta, banco_titular, banco_cedula } = req.body;
+  const { min_bet, max_bet, min_withdrawal, max_withdrawal, max_changes, daily_withdrawal_limit, commission, welcome_points, welcome_points_limit, trending_count, winners_count, autoplay_ms, banco_nombre, banco_tipo, banco_cuenta, banco_titular, banco_cedula } = req.body;
 
   if (min_bet < 0 || max_bet < 0) {
     return res.status(400).json({ message: "Los valores no pueden ser negativos" });
@@ -964,6 +964,8 @@ app.put("/admin/settings", auth, async (req, res) => {
     max_bet,
     min_withdrawal: min_withdrawal === "" || min_withdrawal === null ? 10 : Number(min_withdrawal),
     max_withdrawal: max_withdrawal === "" || max_withdrawal === null ? 1000 : Number(max_withdrawal),
+    max_changes: max_changes === "" || max_changes === null ? 3 : Number(max_changes),
+    daily_withdrawal_limit: daily_withdrawal_limit === "" || daily_withdrawal_limit === null ? null : Number(daily_withdrawal_limit),
     commission,
     welcome_points,
     welcome_points_limit: welcome_points_limit === "" || welcome_points_limit === null ? null : Number(welcome_points_limit),
@@ -1164,10 +1166,11 @@ app.post("/bet", auth, betRateLimit, async (req, res) => {
   const betAmount = parseFloat(amount);
 
   const { data: config } = await supabase
-    .from("config").select("min_bet, max_bet").eq("id", 1).single();
+    .from("config").select("min_bet, max_bet, max_changes").eq("id", 1).single();
 
   const minBet = config?.min_bet ?? 1;
   const maxBet = config?.max_bet ?? 10;
+  const maxChanges = config?.max_changes ?? 3;
 
   if (isNaN(betAmount) || betAmount < minBet || betAmount > maxBet) {
     return res.status(400).json({
@@ -1194,11 +1197,11 @@ app.post("/bet", auth, betRateLimit, async (req, res) => {
     .eq("user_id", req.userId)
     .maybeSingle();
 
-  // ✅ Validar máximo 3 cambios (4 apuestas en total: la original + 3 cambios)
+  // ✅ Validar máximo de cambios configurable
   if (existingBet) {
     const changes = existingBet.changes ?? 0;
-    if (changes >= 3) {
-      return res.status(400).json({ message: "Alcanzaste el límite de 3 cambios de predicción" });
+    if (changes >= maxChanges) {
+      return res.status(400).json({ message: `Alcanzaste el límite de ${maxChanges} cambios de predicción` });
     }
   }
 
@@ -2491,15 +2494,32 @@ app.post("/withdrawal", auth, withdrawalRateLimit, async (req, res) => {
   const { amount, method } = req.body;
   const withdrawAmount = parseFloat(amount);
 
-  const { data: cfg } = await supabase.from("config").select("min_withdrawal, max_withdrawal").eq("id", 1).single();
+  const { data: cfg } = await supabase.from("config").select("min_withdrawal, max_withdrawal, daily_withdrawal_limit").eq("id", 1).single();
   const minWithdrawal = cfg?.min_withdrawal ?? 10;
   const maxWithdrawal = cfg?.max_withdrawal ?? 1000;
+  const dailyLimit = cfg?.daily_withdrawal_limit ?? null;
 
   if (!withdrawAmount || withdrawAmount < minWithdrawal) {
     return res.status(400).json({ message: `Monto mínimo de retiro: ${minWithdrawal} $` });
   }
   if (withdrawAmount > maxWithdrawal) {
     return res.status(400).json({ message: `Monto máximo de retiro: ${maxWithdrawal} $ por solicitud` });
+  }
+
+  if (dailyLimit !== null) {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const { data: todayTx } = await supabase
+      .from("transactions")
+      .select("amount")
+      .eq("user_id", req.userId)
+      .eq("type", "retiro")
+      .in("status", ["pendiente", "aprobado"])
+      .gte("created_at", startOfDay.toISOString());
+    const totalHoy = todayTx?.reduce((s, t) => s + Number(t.amount), 0) ?? 0;
+    if (totalHoy + withdrawAmount > dailyLimit) {
+      return res.status(400).json({ message: `Límite diario de retiro: ${dailyLimit} $. Hoy ya retiraste ${totalHoy.toFixed(2)} $` });
+    }
   }
 
   const { data: user } = await supabase

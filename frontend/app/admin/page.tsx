@@ -101,13 +101,15 @@ export default function AdminPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settingsForm, setSettingsForm] = useState<{
     min_bet: string; max_bet: string; min_withdrawal: string; max_withdrawal: string;
+    max_changes: string; daily_withdrawal_limit: string;
     commission: string; welcome_points: string; welcome_points_limit: string;
-    trending_count: number; winners_count: number; autoplay_ms: number;
+    trending_count: string; winners_count: string; autoplay_ms: string;
     banco_nombre: string; banco_tipo: string; banco_cuenta: string; banco_titular: string; banco_cedula: string;
   }>({
     min_bet: "", max_bet: "", min_withdrawal: "", max_withdrawal: "",
+    max_changes: "", daily_withdrawal_limit: "",
     commission: "", welcome_points: "", welcome_points_limit: "",
-    trending_count: 1, winners_count: 1, autoplay_ms: 5000,
+    trending_count: "", winners_count: "", autoplay_ms: "",
     banco_nombre: "", banco_tipo: "", banco_cuenta: "", banco_titular: "", banco_cedula: "",
   });
   const [searchQuery, setSearchQuery] = useState("");
@@ -478,7 +480,9 @@ export default function AdminPage() {
       setSettingsForm({
         min_bet: data.min_bet ?? "", max_bet: data.max_bet ?? "",
         min_withdrawal: data.min_withdrawal ?? "", max_withdrawal: data.max_withdrawal ?? "",
+        max_changes: data.max_changes ?? "", daily_withdrawal_limit: data.daily_withdrawal_limit ?? "",
         commission: data.commission, welcome_points: data.welcome_points, welcome_points_limit: data.welcome_points_limit ?? "",
+        trending_count: data.trending_count ?? "", winners_count: data.winners_count ?? "", autoplay_ms: data.autoplay_ms ?? "",
         trending_count: data.trending_count ?? 1,
         winners_count: data.winners_count ?? 1,
         autoplay_ms: data.autoplay_ms ?? 5000,
@@ -501,12 +505,14 @@ export default function AdminPage() {
         max_bet: parseFloat(settingsForm.max_bet),
         min_withdrawal: settingsForm.min_withdrawal === "" ? null : Number(settingsForm.min_withdrawal),
         max_withdrawal: settingsForm.max_withdrawal === "" ? null : Number(settingsForm.max_withdrawal),
+        max_changes: settingsForm.max_changes === "" ? 3 : Number(settingsForm.max_changes),
+        daily_withdrawal_limit: settingsForm.daily_withdrawal_limit === "" ? null : Number(settingsForm.daily_withdrawal_limit),
         commission: parseFloat(settingsForm.commission),
         welcome_points: parseFloat(settingsForm.welcome_points),
         welcome_points_limit: settingsForm.welcome_points_limit === "" ? null : Number(settingsForm.welcome_points_limit),
-        trending_count: Number(settingsForm.trending_count ?? 1),
-        winners_count: Number(settingsForm.winners_count ?? 1),
-        autoplay_ms: Number(settingsForm.autoplay_ms ?? 5000),
+        trending_count: settingsForm.trending_count === "" ? 1 : Number(settingsForm.trending_count),
+        winners_count: settingsForm.winners_count === "" ? 1 : Number(settingsForm.winners_count),
+        autoplay_ms: settingsForm.autoplay_ms === "" ? 5000 : Number(settingsForm.autoplay_ms),
         banco_nombre: settingsForm.banco_nombre,
         banco_tipo: settingsForm.banco_tipo,
         banco_cuenta: settingsForm.banco_cuenta,
@@ -2999,13 +3005,18 @@ export default function AdminPage() {
                 </div>
                 <div className="divide-y divide-slate-100 dark:divide-white/[0.04]">
                   {[
-                    { key: "min_bet", label: "Predicción mínima ($)", step: "0.5" },
-                    { key: "max_bet", label: "Predicción máxima ($)", step: "1" },
-                    { key: "min_withdrawal", label: "Retiro mínimo ($)", step: "1" },
-                    { key: "max_withdrawal", label: "Retiro máximo ($)", step: "10" },
-                    { key: "commission", label: "Comisión (%)", step: "0.1" },
-                    { key: "welcome_points", label: "Saldo de bienvenida ($)", step: "1" },
-                    { key: "welcome_points_limit", label: "Límite usuarios bienvenida", step: "1" },
+                    { key: "min_bet", label: "Predicción mínima ($)", step: "0.5", placeholder: "" },
+                    { key: "max_bet", label: "Predicción máxima ($)", step: "1", placeholder: "" },
+                    { key: "max_changes", label: "Cambios por predicción", step: "1", placeholder: "3" },
+                    { key: "min_withdrawal", label: "Retiro mínimo ($)", step: "1", placeholder: "" },
+                    { key: "max_withdrawal", label: "Retiro máximo ($)", step: "10", placeholder: "" },
+                    { key: "daily_withdrawal_limit", label: "Límite diario retiro ($)", step: "10", placeholder: "Sin límite" },
+                    { key: "commission", label: "Comisión (%)", step: "0.1", placeholder: "" },
+                    { key: "welcome_points", label: "Saldo de bienvenida ($)", step: "1", placeholder: "" },
+                    { key: "welcome_points_limit", label: "Límite usuarios bienvenida", step: "1", placeholder: "Sin límite" },
+                    { key: "trending_count", label: "Mercados trending", step: "1", placeholder: "1" },
+                    { key: "winners_count", label: "Ganadores en carrusel", step: "1", placeholder: "1" },
+                    { key: "autoplay_ms", label: "Autoplay carrusel (ms)", step: "500", placeholder: "5000" },
                   ].map((field) => (
                     <div key={field.key} className="px-5 py-3.5 flex items-center justify-between gap-4">
                       <label className="text-[12px] text-slate-500 dark:text-white/40 shrink-0">{field.label}</label>
@@ -3013,7 +3024,7 @@ export default function AdminPage() {
                         <input type="number" step={field.step}
                           value={(settingsForm as any)[field.key]}
                           onChange={(e) => setSettingsForm((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                          placeholder={field.key === "welcome_points_limit" ? "Sin límite" : ""}
+                          placeholder={(field as any).placeholder || ""}
                           className="w-32 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-1.5 outline-none text-[13px] text-slate-900 dark:text-white focus:border-emerald-500/60 transition tabular-nums text-right placeholder-slate-400 dark:placeholder-white/20" />
                       ) : (
                         <span className="text-[13px] font-bold text-slate-900 dark:text-white tabular-nums">

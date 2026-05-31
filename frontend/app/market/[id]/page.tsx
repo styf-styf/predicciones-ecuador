@@ -9,7 +9,7 @@ import { MarketCard } from "@/components/MarketCard";
 
 
 
-const MAX_CHANGES = 3;
+const MAX_CHANGES = 3; // fallback, se sobreescribe con betConfig.max_changes
 
 // Paleta igual al diseño original del HTML
 const BET_SI_BASE:  [number,number,number] = [168, 230, 192];
@@ -111,7 +111,7 @@ function BetPanel({
   changeCount: number;
   yesPct: string;
   noPct: string;
-  betConfig: { min_bet: number; commission: number };
+  betConfig: { min_bet: number; max_bet: number; commission: number; max_changes: number };
   marketYes: number;
   marketNo: number;
   marketId: number;
@@ -143,10 +143,10 @@ function BetPanel({
   const gainColor  = isNo ? "#dc2626" : "#16a34a";
   const btnBg      = isNo ? "#ef4444" : "#22c55e";
 
-  if (changeCount >= MAX_CHANGES) {
+  if (changeCount >= betConfig.max_changes) {
     return (
       <p className="text-center text-sm text-slate-400 bg-slate-200 dark:bg-slate-800 rounded-xl py-3">
-        🔒 Alcanzaste el límite de <span className="font-bold text-slate-900 dark:text-white">{MAX_CHANGES} cambios</span>
+        🔒 Alcanzaste el límite de <span className="font-bold text-slate-900 dark:text-white">{betConfig.max_changes} cambios</span>
       </p>
     );
   }
@@ -272,9 +272,9 @@ function BetPanel({
       )}
 
       {/* Cambios restantes */}
-      {userBet && changeCount < MAX_CHANGES && (
+      {userBet && changeCount < betConfig.max_changes && (
         <p className="text-center text-xs text-slate-400">
-          Cambios restantes: <strong className="text-slate-900 dark:text-white">{MAX_CHANGES - changeCount} de {MAX_CHANGES}</strong>
+          Cambios restantes: <strong className="text-slate-900 dark:text-white">{betConfig.max_changes - changeCount} de {betConfig.max_changes}</strong>
         </p>
       )}
     </div>
@@ -310,7 +310,7 @@ export default function MarketPage() {
   const [token, setToken] = useState<string | null>(null);
   const [userBet, setUserBet] = useState<{ type: "yes" | "no"; amount: number; payout?: number; commission_paid?: number } | null>(null);
   const [changeCount, setChangeCount] = useState(0);
-  const [betConfig, setBetConfig] = useState({ min_bet: 1, commission: 3 });
+  const [betConfig, setBetConfig] = useState({ min_bet: 1, max_bet: 100, commission: 3, max_changes: 3 });
   const [history, setHistory] = useState<any[]>([]);
   const [uniqueBettors, setUniqueBettors] = useState(0);
   const [topHolders, setTopHolders] = useState<any[]>([]);
@@ -411,7 +411,7 @@ export default function MarketPage() {
   const res = await fetch("https://api.ecuapred.com/config");
   if (res.ok) {
     const data = await res.json();
-    setBetConfig({ min_bet: data.min_bet ?? 1, commission: data.commission ?? 3 });
+    setBetConfig({ min_bet: data.min_bet ?? 1, max_bet: data.max_bet ?? 100, commission: data.commission ?? 3, max_changes: data.max_changes ?? 3 });
   }
  };
 
