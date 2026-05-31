@@ -198,21 +198,21 @@ function BetPanel({
             type="number"
             min="0"
             step="0.01"
-            max={(!noBalance && !token === false && points !== null && points > 0) ? points : undefined}
             placeholder="0.00"
             value={amount}
             onChange={(e) => {
               const val = e.target.value;
               if (!noBalance && token && points !== null && points > 0) {
+                const maxInvestable = Math.min(points + (userBet?.amount ?? 0), betConfig.max_bet);
                 const num = parseFloat(val);
-                if (!isNaN(num) && num > points) { setAmount(points.toFixed(2)); return; }
+                if (!isNaN(num) && num > maxInvestable) { setAmount(maxInvestable.toFixed(2)); return; }
               }
               setAmount(val);
             }}
             className="flex-1 bg-transparent outline-none text-[18px] font-bold text-slate-900 dark:text-white tabular-nums placeholder-slate-300 dark:placeholder-slate-600 min-w-0"
           />
           {!noBalance && token && points !== null && points > 0 && (
-            <button onClick={() => setAmount(points.toFixed(2))}
+            <button onClick={() => setAmount(Math.min(points + (userBet?.amount ?? 0), betConfig.max_bet).toFixed(2))}
               className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold shrink-0 hover:text-emerald-500 transition cursor-pointer">
               Máx.
             </button>
@@ -221,7 +221,7 @@ function BetPanel({
         <div className="flex gap-1.5">
           {[1, 5, 10, 50].map((val) => (
             <button key={val}
-              onClick={() => { const cur = parseFloat(amount) || 0; const max = (noBalance || !token || points === null || points <= 0) ? Infinity : points; setAmount(Number(Math.min(cur + val, max)).toFixed(2)); }}
+              onClick={() => { const cur = parseFloat(amount) || 0; const max = (noBalance || !token || points === null || points <= 0) ? Infinity : Math.min(points + (userBet?.amount ?? 0), betConfig.max_bet); setAmount(Number(Math.min(cur + val, max)).toFixed(2)); }}
               className="flex-1 py-[7px] rounded-lg text-xs font-medium bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer">
               +{val}
             </button>
