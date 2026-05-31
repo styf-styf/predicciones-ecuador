@@ -3013,9 +3013,9 @@ export default function AdminPage() {
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                 {[
                   { label: "Pred. mín.", value: `$${config.min_bet ?? "—"}`, color: "text-slate-700 dark:text-white/70" },
-                  { label: "Pred. máx.", value: `$${config.max_bet ?? "—"}`, color: "text-slate-700 dark:text-white/70" },
+                  { label: "Pred. máx.", value: !config.max_bet ? "Sin límite" : `$${config.max_bet}`, color: "text-slate-700 dark:text-white/70" },
                   { label: "Retiro mín.", value: `$${config.min_withdrawal ?? 10}`, color: "text-rose-500 dark:text-rose-400" },
-                  { label: "Retiro máx.", value: `$${config.max_withdrawal ?? 1000}`, color: "text-rose-500 dark:text-rose-400" },
+                  { label: "Retiro máx.", value: !config.max_withdrawal ? "Sin límite" : `$${config.max_withdrawal ?? 1000}`, color: "text-rose-500 dark:text-rose-400" },
                   { label: "Comisión", value: `${config.commission}%`, color: "text-emerald-600 dark:text-emerald-400" },
                   { label: "$ bienvenida", value: `$${config.welcome_points}`, color: "text-blue-500 dark:text-blue-400" },
                   { label: "Límite bienvenida", value: config.welcome_points_limit ? `Primeros ${config.welcome_points_limit}` : "Sin límite", color: "text-amber-500 dark:text-amber-400" },
@@ -3083,7 +3083,8 @@ export default function AdminPage() {
                       ) : (
                         <span className="text-[13px] font-bold text-slate-900 dark:text-white tabular-nums">
                           {field.key === "commission" ? `${(settingsForm as any)[field.key]}%`
-                            : field.key === "welcome_points_limit" ? ((settingsForm as any)[field.key] || "Sin límite")
+                            : (field.key === "welcome_points_limit" || field.key === "daily_withdrawal_limit" || field.key === "circulation_alert" || field.key === "pending_tx_alert") ? ((settingsForm as any)[field.key] || "Sin límite")
+                            : (field.key === "max_bet" || field.key === "max_withdrawal") && !(settingsForm as any)[field.key] ? "Sin límite"
                             : `$${(settingsForm as any)[field.key]}`}
                         </span>
                       )}
