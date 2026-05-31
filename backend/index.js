@@ -941,7 +941,7 @@ app.put("/admin/settings", auth, async (req, res) => {
     return res.status(403).json({ message: "Solo admin" });
   }
 
-  const { min_bet, max_bet, commission, welcome_points, welcome_points_limit, trending_count, winners_count, autoplay_ms, banco_nombre, banco_tipo, banco_cuenta, banco_titular, banco_cedula } = req.body;
+  const { min_bet, max_bet, min_withdrawal, max_withdrawal, commission, welcome_points, welcome_points_limit, trending_count, winners_count, autoplay_ms, banco_nombre, banco_tipo, banco_cuenta, banco_titular, banco_cedula } = req.body;
 
   if (min_bet < 0 || max_bet < 0) {
     return res.status(400).json({ message: "Los valores no pueden ser negativos" });
@@ -960,6 +960,10 @@ app.put("/admin/settings", auth, async (req, res) => {
   .update({
     min_bet,
     max_bet,
+    min_bet,
+    max_bet,
+    min_withdrawal: min_withdrawal === "" || min_withdrawal === null ? 10 : Number(min_withdrawal),
+    max_withdrawal: max_withdrawal === "" || max_withdrawal === null ? 1000 : Number(max_withdrawal),
     commission,
     welcome_points,
     welcome_points_limit: welcome_points_limit === "" || welcome_points_limit === null ? null : Number(welcome_points_limit),
@@ -2487,11 +2491,15 @@ app.post("/withdrawal", auth, withdrawalRateLimit, async (req, res) => {
   const { amount, method } = req.body;
   const withdrawAmount = parseFloat(amount);
 
-  if (!withdrawAmount || withdrawAmount < 10) {
-    return res.status(400).json({ message: "Monto mínimo de retiro: 10 $" });
+  const { data: cfg } = await supabase.from("config").select("min_withdrawal, max_withdrawal").eq("id", 1).single();
+  const minWithdrawal = cfg?.min_withdrawal ?? 10;
+  const maxWithdrawal = cfg?.max_withdrawal ?? 1000;
+
+  if (!withdrawAmount || withdrawAmount < minWithdrawal) {
+    return res.status(400).json({ message: `Monto mínimo de retiro: ${minWithdrawal} $` });
   }
-  if (withdrawAmount > 1000) {
-    return res.status(400).json({ message: "Monto máximo de retiro: 1000 $ por solicitud" });
+  if (withdrawAmount > maxWithdrawal) {
+    return res.status(400).json({ message: `Monto máximo de retiro: ${maxWithdrawal} $ por solicitud` });
   }
 
   const { data: user } = await supabase
