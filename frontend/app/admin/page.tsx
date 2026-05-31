@@ -2027,46 +2027,58 @@ export default function AdminPage() {
                     {n.status === "pending" && n.source === "bot_close" && (
                       <div className="flex gap-2">
                         <button
-                          onClick={async () => {
-                            const token = localStorage.getItem("token");
-                            const [r1, r2] = await Promise.all([
-                              fetch(`https://api.ecuapred.com/admin/market-news/${n.id}`, {
-                                method: "PUT",
-                                headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
-                                body: JSON.stringify({ market_id: n.market_id, status: "approved" }),
-                              }),
-                              fetch(`https://api.ecuapred.com/admin/resolve/${n.market_id}`, {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
-                                body: JSON.stringify({ winner: n.resolves_as }),
-                              }),
-                            ]);
-                            if (r1.ok && r2.ok) { showToast(`Mercado resuelto → ${n.resolves_as === "yes" ? "SÍ" : "NO"} ✅`, "success"); fetchMarketNews(); fetchMarkets(); }
-                            else showToast("Error al aprobar", "error");
-                          }}
+                          onClick={() => openModal({
+                            title: `¿Resolver mercado como "${n.resolves_as === "yes" ? "SÍ" : "NO"} gana"?`,
+                            description: "Esta acción es irreversible y distribuirá los premios a los ganadores.",
+                            confirmLabel: `Resolver → ${n.resolves_as === "yes" ? "SÍ" : "NO"}`,
+                            danger: true,
+                            onConfirm: async () => {
+                              const token = localStorage.getItem("token");
+                              const [r1, r2] = await Promise.all([
+                                fetch(`https://api.ecuapred.com/admin/market-news/${n.id}`, {
+                                  method: "PUT",
+                                  headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+                                  body: JSON.stringify({ market_id: n.market_id, status: "approved" }),
+                                }),
+                                fetch(`https://api.ecuapred.com/admin/resolve/${n.market_id}`, {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+                                  body: JSON.stringify({ winner: n.resolves_as }),
+                                }),
+                              ]);
+                              if (r1.ok && r2.ok) { showToast(`Mercado resuelto → ${n.resolves_as === "yes" ? "SÍ" : "NO"} ✅`, "success"); fetchMarketNews(); fetchMarkets(); }
+                              else showToast("Error al aprobar", "error");
+                            },
+                          })}
                           className={`flex-1 font-bold rounded-lg py-2 text-[12px] transition cursor-pointer ${n.resolves_as === "yes" ? "bg-emerald-500 hover:bg-emerald-400 text-black" : "bg-rose-500 hover:bg-rose-400 text-white"}`}
                         >
                           ✓ Aprobar y resolver → {n.resolves_as === "yes" ? "SÍ" : "NO"}
                         </button>
                         <button
-                          onClick={async () => {
-                            const token = localStorage.getItem("token");
-                            const inverted = n.resolves_as === "yes" ? "no" : "yes";
-                            const [r1, r2] = await Promise.all([
-                              fetch(`https://api.ecuapred.com/admin/market-news/${n.id}`, {
-                                method: "PUT",
-                                headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
-                                body: JSON.stringify({ market_id: n.market_id, status: "approved", resolves_as: inverted }),
-                              }),
-                              fetch(`https://api.ecuapred.com/admin/resolve/${n.market_id}`, {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
-                                body: JSON.stringify({ winner: inverted }),
-                              }),
-                            ]);
-                            if (r1.ok && r2.ok) { showToast(`Mercado resuelto → ${inverted === "yes" ? "SÍ" : "NO"} ✅`, "success"); fetchMarketNews(); fetchMarkets(); }
-                            else showToast("Error al aprobar", "error");
-                          }}
+                          onClick={() => openModal({
+                            title: `¿Resolver como "${n.resolves_as === "yes" ? "NO" : "SÍ"} gana"? (invertido)`,
+                            description: "Esta acción es irreversible y distribuirá los premios a los ganadores.",
+                            confirmLabel: `Resolver → ${n.resolves_as === "yes" ? "NO" : "SÍ"}`,
+                            danger: true,
+                            onConfirm: async () => {
+                              const token = localStorage.getItem("token");
+                              const inverted = n.resolves_as === "yes" ? "no" : "yes";
+                              const [r1, r2] = await Promise.all([
+                                fetch(`https://api.ecuapred.com/admin/market-news/${n.id}`, {
+                                  method: "PUT",
+                                  headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+                                  body: JSON.stringify({ market_id: n.market_id, status: "approved", resolves_as: inverted }),
+                                }),
+                                fetch(`https://api.ecuapred.com/admin/resolve/${n.market_id}`, {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+                                  body: JSON.stringify({ winner: inverted }),
+                                }),
+                              ]);
+                              if (r1.ok && r2.ok) { showToast(`Mercado resuelto → ${inverted === "yes" ? "SÍ" : "NO"} ✅`, "success"); fetchMarketNews(); fetchMarkets(); }
+                              else showToast("Error al aprobar", "error");
+                            },
+                          })}
                           className="px-4 py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] text-[12px] text-slate-500 dark:text-white/40 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition cursor-pointer"
                         >
                           ↔ Invertir
@@ -2932,7 +2944,7 @@ export default function AdminPage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 {[
                   { label: "Comisión", value: `${config.commission}%`, color: "text-emerald-600 dark:text-emerald-400" },
                   { label: "$ bienvenida", value: `${config.welcome_points}`, color: "text-blue-500 dark:text-blue-400" },
@@ -3244,7 +3256,7 @@ export default function AdminPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <code className="flex-1 text-[10px] bg-slate-100 dark:bg-white/[0.04] text-slate-600 dark:text-white/40 px-2 py-1.5 rounded-lg truncate font-mono">
-                          {t.token}
+                          {t.token.slice(0, 8)}••••••••••••••••{t.token.slice(-4)}
                         </code>
                         <button
                           onClick={() => {
