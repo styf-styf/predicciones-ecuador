@@ -91,6 +91,7 @@ export default function Header() {
     const es = new EventSource(url);
     es.addEventListener("notifications", () => loadNotifications());
     es.addEventListener("bets", () => loadMe());
+    es.addEventListener("winners", () => loadMe());
     es.addEventListener("transactions", () => { loadMe(); loadNotifications(); });
     return () => es.close();
   }, []);

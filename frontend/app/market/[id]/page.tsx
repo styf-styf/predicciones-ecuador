@@ -537,6 +537,8 @@ export default function MarketPage() {
   setBettingLoading(false);
   if (data.points !== undefined) {
     setPoints(data.points);
+    localStorage.setItem("points", String(data.points));
+    window.dispatchEvent(new Event("auth-change"));
     setAmount("");
     setUserBet({ type: betType, amount: amt });
     setChangeCount((prev) => prev + (userBet ? 1 : 0));
