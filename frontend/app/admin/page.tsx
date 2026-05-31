@@ -3036,8 +3036,18 @@ export default function AdminPage() {
                       const isEditing = editingField === p.key;
                       const val = (settingsForm as any)[p.key];
                       return (
-                        <div key={p.key} className={`bg-white dark:bg-[#111111] border rounded-xl p-4 flex flex-col gap-3 transition ${isEditing ? "border-emerald-500/40 dark:border-emerald-500/30" : "border-slate-200 dark:border-white/[0.06]"}`}>
-                          <p className="text-[10px] text-slate-400 dark:text-white/25 uppercase tracking-widest leading-tight">{p.label}</p>
+                        <div key={p.key} className={`bg-white dark:bg-[#111111] border rounded-xl p-4 flex flex-col gap-2 transition relative ${isEditing ? "border-emerald-500/40 dark:border-emerald-500/30" : "border-slate-200 dark:border-white/[0.06]"}`}>
+                          <div className="flex items-start justify-between gap-1">
+                            <p className="text-[10px] text-slate-400 dark:text-white/25 uppercase tracking-widest leading-tight">{p.label}</p>
+                            {!isEditing && (
+                              <button
+                                onClick={() => setEditingField(p.key)}
+                                className="p-1 rounded-md bg-sky-50 dark:bg-sky-500/10 text-sky-500 dark:text-sky-400 hover:bg-sky-100 dark:hover:bg-sky-500/20 transition cursor-pointer shrink-0"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                              </button>
+                            )}
+                          </div>
                           {isEditing ? (
                             <>
                               <input
@@ -3067,14 +3077,7 @@ export default function AdminPage() {
                               </div>
                             </>
                           ) : (
-                            <>
-                              <p className="text-[20px] font-bold text-slate-900 dark:text-white tabular-nums leading-none">{p.fmt(val)}</p>
-                              <button
-                                onClick={() => setEditingField(p.key)}
-                                className="text-[11px] text-slate-400 dark:text-white/25 hover:text-emerald-600 dark:hover:text-emerald-400 border border-slate-200 dark:border-white/[0.08] hover:border-emerald-500/40 rounded-lg py-1.5 transition cursor-pointer">
-                                Editar
-                              </button>
-                            </>
+                            <p className="text-[20px] font-bold text-slate-900 dark:text-white tabular-nums leading-none mt-1">{p.fmt(val)}</p>
                           )}
                         </div>
                       );
