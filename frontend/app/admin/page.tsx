@@ -155,6 +155,8 @@ export default function AdminPage() {
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
   const [editingFinancial, setEditingFinancial] = useState(false);
   const [savingFinancial, setSavingFinancial] = useState(false);
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [savingField, setSavingField] = useState(false);
   const [modal, setModal] = useState<{
     title: string; description?: string; confirmLabel?: string; danger?: boolean; onConfirm: () => void;
   } | null>(null);
@@ -3010,88 +3012,76 @@ export default function AdminPage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                {[
-                  { label: "Pred. mín.", value: `$${config.min_bet ?? "—"}`, color: "text-slate-700 dark:text-white/70" },
-                  { label: "Pred. máx.", value: !config.max_bet ? "Sin límite" : `$${config.max_bet}`, color: "text-slate-700 dark:text-white/70" },
-                  { label: "Retiro mín.", value: `$${config.min_withdrawal ?? 10}`, color: "text-rose-500 dark:text-rose-400" },
-                  { label: "Retiro máx.", value: !config.max_withdrawal ? "Sin límite" : `$${config.max_withdrawal ?? 1000}`, color: "text-rose-500 dark:text-rose-400" },
-                  { label: "Comisión", value: `${config.commission}%`, color: "text-emerald-600 dark:text-emerald-400" },
-                  { label: "$ bienvenida", value: `$${config.welcome_points}`, color: "text-blue-500 dark:text-blue-400" },
-                  { label: "Límite bienvenida", value: config.welcome_points_limit ? `Primeros ${config.welcome_points_limit}` : "Sin límite", color: "text-amber-500 dark:text-amber-400" },
-                ].map((item) => (
-                  <div key={item.label} className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-4 text-center">
-                    <p className="text-[10px] text-slate-400 dark:text-white/25 uppercase tracking-widest mb-2">{item.label}</p>
-                    <p className={`text-xl font-bold ${item.color} tabular-nums`}>{item.value}</p>
+              {/* Parámetros financieros — grid de tarjetas */}
+              {(() => {
+                const params = [
+                  { key: "min_bet",               label: "Predicción mínima",    step: "0.5",  fmt: (v: string) => v ? `$${v}` : "—" },
+                  { key: "max_bet",               label: "Predicción máxima",    step: "1",    fmt: (v: string) => !v || v === "0" ? "Sin límite" : `$${v}` },
+                  { key: "max_changes",           label: "Cambios por pred.",    step: "1",    fmt: (v: string) => v || "3" },
+                  { key: "commission",            label: "Comisión",             step: "0.1",  fmt: (v: string) => `${v}%` },
+                  { key: "min_withdrawal",        label: "Retiro mínimo",        step: "1",    fmt: (v: string) => v ? `$${v}` : "—" },
+                  { key: "max_withdrawal",        label: "Retiro máximo",        step: "10",   fmt: (v: string) => !v || v === "0" ? "Sin límite" : `$${v}` },
+                  { key: "daily_withdrawal_limit",label: "Límite diario retiro", step: "10",   fmt: (v: string) => v ? `$${v}` : "Sin límite" },
+                  { key: "welcome_points",        label: "$ bienvenida",         step: "1",    fmt: (v: string) => `$${v}` },
+                  { key: "welcome_points_limit",  label: "Límite bienvenida",    step: "1",    fmt: (v: string) => v ? `Primeros ${v}` : "Sin límite" },
+                  { key: "trending_count",        label: "Mercados trending",    step: "1",    fmt: (v: string) => v || "1" },
+                  { key: "winners_count",         label: "Ganadores carrusel",   step: "1",    fmt: (v: string) => v || "1" },
+                  { key: "autoplay_ms",           label: "Autoplay (ms)",        step: "500",  fmt: (v: string) => v ? `${v} ms` : "5000 ms" },
+                  { key: "circulation_alert",     label: "Alerta circulación",   step: "100",  fmt: (v: string) => v ? `$${v}` : "Sin alerta" },
+                  { key: "pending_tx_alert",      label: "Alerta tx pendientes", step: "1",    fmt: (v: string) => v ? `${v} tx` : "Sin alerta" },
+                ];
+                return (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {params.map((p) => {
+                      const isEditing = editingField === p.key;
+                      const val = (settingsForm as any)[p.key];
+                      return (
+                        <div key={p.key} className={`bg-white dark:bg-[#111111] border rounded-xl p-4 flex flex-col gap-3 transition ${isEditing ? "border-emerald-500/40 dark:border-emerald-500/30" : "border-slate-200 dark:border-white/[0.06]"}`}>
+                          <p className="text-[10px] text-slate-400 dark:text-white/25 uppercase tracking-widest leading-tight">{p.label}</p>
+                          {isEditing ? (
+                            <>
+                              <input
+                                type="number" step={p.step} autoFocus
+                                value={val}
+                                onChange={(e) => setSettingsForm(prev => ({ ...prev, [p.key]: e.target.value }))}
+                                onKeyDown={(e) => { if (e.key === "Escape") setEditingField(null); }}
+                                className="w-full bg-slate-50 dark:bg-white/[0.04] border border-emerald-500/40 rounded-lg px-3 py-1.5 outline-none text-[14px] font-bold text-slate-900 dark:text-white tabular-nums focus:border-emerald-500 transition"
+                              />
+                              <div className="flex gap-1.5">
+                                <button
+                                  onClick={() => { setEditingField(null); fetchSettings(); }}
+                                  className="flex-1 py-1.5 rounded-lg border border-slate-200 dark:border-white/[0.08] text-[11px] text-slate-500 dark:text-white/40 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition cursor-pointer">
+                                  Cancelar
+                                </button>
+                                <button
+                                  disabled={savingField}
+                                  onClick={async () => {
+                                    setSavingField(true);
+                                    await handleSaveSettings();
+                                    setSavingField(false);
+                                    setEditingField(null);
+                                  }}
+                                  className="flex-1 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-[11px] transition cursor-pointer disabled:opacity-60">
+                                  {savingField ? "..." : "Guardar"}
+                                </button>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <p className="text-[20px] font-bold text-slate-900 dark:text-white tabular-nums leading-none">{p.fmt(val)}</p>
+                              <button
+                                onClick={() => setEditingField(p.key)}
+                                className="text-[11px] text-slate-400 dark:text-white/25 hover:text-emerald-600 dark:hover:text-emerald-400 border border-slate-200 dark:border-white/[0.08] hover:border-emerald-500/40 rounded-lg py-1.5 transition cursor-pointer">
+                                Editar
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                ))}
-              </div>
-
-              <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl overflow-hidden">
-                <div className="px-5 py-4 border-b border-slate-100 dark:border-white/[0.04] flex items-center justify-between">
-                  <p className="text-[11px] text-slate-400 dark:text-white/30 uppercase tracking-widest">Parámetros financieros</p>
-                  {!editingFinancial ? (
-                    <button onClick={() => setEditingFinancial(true)}
-                      className="text-[11px] text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white border border-slate-200 dark:border-white/[0.08] px-3 py-1 rounded-lg transition cursor-pointer">
-                      Editar
-                    </button>
-                  ) : (
-                    <div className="flex gap-2">
-                      <button onClick={() => { setEditingFinancial(false); fetchSettings(); }}
-                        className="text-[11px] text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white border border-slate-200 dark:border-white/[0.08] px-3 py-1 rounded-lg transition cursor-pointer">
-                        Cancelar
-                      </button>
-                      <button onClick={() => openModal({
-                          title: "¿Guardar parámetros financieros?",
-                          description: "Estos cambios afectan comisiones y saldo de bienvenida para nuevos usuarios.",
-                          confirmLabel: "Guardar",
-                          danger: false,
-                          onConfirm: async () => { setSavingFinancial(true); await handleSaveSettings(); setSavingFinancial(false); setEditingFinancial(false); },
-                        })}
-                        disabled={savingFinancial}
-                        className="text-[11px] bg-emerald-500 hover:bg-emerald-400 text-black font-bold px-3 py-1 rounded-lg transition cursor-pointer disabled:opacity-60">
-                        {savingFinancial ? "Guardando..." : "Guardar"}
-                      </button>
-                    </div>
-                  )}
-                </div>
-                <div className="divide-y divide-slate-100 dark:divide-white/[0.04]">
-                  {[
-                    { key: "min_bet", label: "Predicción mínima ($)", step: "0.5", placeholder: "" },
-                    { key: "max_bet", label: "Predicción máxima ($)", step: "1", placeholder: "" },
-                    { key: "max_changes", label: "Cambios por predicción", step: "1", placeholder: "3" },
-                    { key: "min_withdrawal", label: "Retiro mínimo ($)", step: "1", placeholder: "" },
-                    { key: "max_withdrawal", label: "Retiro máximo ($)", step: "10", placeholder: "" },
-                    { key: "daily_withdrawal_limit", label: "Límite diario retiro ($)", step: "10", placeholder: "Sin límite" },
-                    { key: "commission", label: "Comisión (%)", step: "0.1", placeholder: "" },
-                    { key: "welcome_points", label: "Saldo de bienvenida ($)", step: "1", placeholder: "" },
-                    { key: "welcome_points_limit", label: "Límite usuarios bienvenida", step: "1", placeholder: "Sin límite" },
-                    { key: "trending_count", label: "Mercados trending", step: "1", placeholder: "1" },
-                    { key: "winners_count", label: "Ganadores en carrusel", step: "1", placeholder: "1" },
-                    { key: "autoplay_ms", label: "Autoplay carrusel (ms)", step: "500", placeholder: "5000" },
-                    { key: "circulation_alert", label: "Alerta circulación ($)", step: "100", placeholder: "Sin alerta" },
-                    { key: "pending_tx_alert", label: "Alerta tx pendientes", step: "1", placeholder: "Sin alerta" },
-                  ].map((field) => (
-                    <div key={field.key} className="px-5 py-3.5 flex items-center justify-between gap-4">
-                      <label className="text-[12px] text-slate-500 dark:text-white/40 shrink-0">{field.label}</label>
-                      {editingFinancial ? (
-                        <input type="number" step={field.step}
-                          value={(settingsForm as any)[field.key]}
-                          onChange={(e) => setSettingsForm((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                          placeholder={(field as any).placeholder || ""}
-                          className="w-32 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-1.5 outline-none text-[13px] text-slate-900 dark:text-white focus:border-emerald-500/60 transition tabular-nums text-right placeholder-slate-400 dark:placeholder-white/20" />
-                      ) : (
-                        <span className="text-[13px] font-bold text-slate-900 dark:text-white tabular-nums">
-                          {field.key === "commission" ? `${(settingsForm as any)[field.key]}%`
-                            : (field.key === "welcome_points_limit" || field.key === "daily_withdrawal_limit" || field.key === "circulation_alert" || field.key === "pending_tx_alert") ? ((settingsForm as any)[field.key] || "Sin límite")
-                            : (field.key === "max_bet" || field.key === "max_withdrawal") && !(settingsForm as any)[field.key] ? "Sin límite"
-                            : `$${(settingsForm as any)[field.key]}`}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
+                );
+              })()}
 
               {/* Categorías de mercado editables */}
               <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-5 space-y-3">
