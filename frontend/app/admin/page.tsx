@@ -157,6 +157,7 @@ export default function AdminPage() {
   const [savingFinancial, setSavingFinancial] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
   const [savingField, setSavingField] = useState(false);
+  const [newCat, setNewCat] = useState("");
   const [modal, setModal] = useState<{
     title: string; description?: string; confirmLabel?: string; danger?: boolean; onConfirm: () => void;
   } | null>(null);
@@ -3089,12 +3090,8 @@ export default function AdminPage() {
               {/* Categorías de mercado */}
               {(() => {
                 const cats = (settingsForm.market_categories || "deporte,farandula,politica,elecciones,pais,general")
-                  .split(",").map(c => c.trim()).filter(Boolean);
-                const [newCat, setNewCat] = React.useState("");
-                const countByCategory = React.useMemo(() =>
-                  cats.reduce((acc, c) => ({ ...acc, [c]: markets.filter(m => m.category === c).length }), {} as Record<string, number>),
-                  [cats, markets]
-                );
+                  .split(",").map((c: string) => c.trim()).filter(Boolean);
+                const countByCategory = cats.reduce((acc: Record<string, number>, c: string) => ({ ...acc, [c]: markets.filter(m => m.category === c).length }), {});
                 return (
                   <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl overflow-hidden">
                     <div className="px-5 py-4 border-b border-slate-100 dark:border-white/[0.04]">
