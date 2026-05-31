@@ -3086,32 +3086,98 @@ export default function AdminPage() {
                 );
               })()}
 
-              {/* Categorías de mercado editables */}
-              <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-[11px] text-slate-400 dark:text-white/30 uppercase tracking-widest">Categorías de mercado</p>
-                    <p className="text-[11px] text-slate-400 dark:text-white/20 mt-0.5">Separadas por coma · se usan en todos los selectores</p>
+              {/* Categorías de mercado */}
+              {(() => {
+                const cats = (settingsForm.market_categories || "deporte,farandula,politica,elecciones,pais,general")
+                  .split(",").map(c => c.trim()).filter(Boolean);
+                const [newCat, setNewCat] = React.useState("");
+                const countByCategory = React.useMemo(() =>
+                  cats.reduce((acc, c) => ({ ...acc, [c]: markets.filter(m => m.category === c).length }), {} as Record<string, number>),
+                  [cats, markets]
+                );
+                return (
+                  <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl overflow-hidden">
+                    <div className="px-5 py-4 border-b border-slate-100 dark:border-white/[0.04]">
+                      <p className="text-[11px] text-slate-400 dark:text-white/30 uppercase tracking-widest">Categorías de mercado</p>
+                      <p className="text-[11px] text-slate-400 dark:text-white/20 mt-0.5">Al eliminar puedes reasignar los mercados existentes</p>
+                    </div>
+                    <div className="divide-y divide-slate-100 dark:divide-white/[0.04]">
+                      {cats.map(cat => (
+                        <div key={cat} className="px-5 py-3 flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[13px] text-slate-700 dark:text-white/70 capitalize font-medium">{cat}</span>
+                            <span className="text-[10px] bg-slate-100 dark:bg-white/[0.06] text-slate-400 dark:text-white/25 px-1.5 py-0.5 rounded-md">{countByCategory[cat] ?? 0} mercados</span>
+                          </div>
+                          <button
+                            onClick={() => {
+                              const remaining = cats.filter(c => c !== cat);
+                              const count = countByCategory[cat] ?? 0;
+                              if (count > 0) {
+                                const reassignTo = remaining[0] || "general";
+                                openModal({
+                                  title: `¿Eliminar categoría "${cat}"?`,
+                                  description: `Tiene ${count} mercado${count !== 1 ? "s" : ""}. Se reasignarán a "${reassignTo}".`,
+                                  confirmLabel: "Eliminar y reasignar",
+                                  danger: true,
+                                  onConfirm: async () => {
+                                    const token = localStorage.getItem("token");
+                                    await fetch("https://api.ecuapred.com/admin/markets/recategorize", {
+                                      method: "PUT",
+                                      headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+                                      body: JSON.stringify({ from: cat, to: reassignTo }),
+                                    });
+                                    setSettingsForm(prev => ({ ...prev, market_categories: remaining.join(",") }));
+                                    await handleSaveSettings();
+                                    fetchMarkets();
+                                    showToast(`Categoría eliminada · mercados reasignados a "${reassignTo}"`, "success");
+                                  },
+                                });
+                              } else {
+                                openModal({
+                                  title: `¿Eliminar categoría "${cat}"?`,
+                                  description: "No tiene mercados asociados.",
+                                  confirmLabel: "Eliminar",
+                                  danger: true,
+                                  onConfirm: async () => {
+                                    setSettingsForm(prev => ({ ...prev, market_categories: remaining.join(",") }));
+                                    await handleSaveSettings();
+                                    showToast(`Categoría "${cat}" eliminada`, "info");
+                                  },
+                                });
+                              }
+                            }}
+                            className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 transition cursor-pointer"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="px-5 py-3 border-t border-slate-100 dark:border-white/[0.04] flex gap-2">
+                      <input
+                        value={newCat}
+                        onChange={(e) => setNewCat(e.target.value.toLowerCase().replace(/\s+/g, ""))}
+                        onKeyDown={(e) => { if (e.key === "Enter" && newCat.trim() && !cats.includes(newCat.trim())) { const updated = [...cats, newCat.trim()].join(","); setSettingsForm(prev => ({ ...prev, market_categories: updated })); handleSaveSettings(); setNewCat(""); } }}
+                        placeholder="Nueva categoría..."
+                        className="flex-1 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 outline-none text-[12px] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:border-emerald-500/60 transition"
+                      />
+                      <button
+                        onClick={() => {
+                          if (!newCat.trim() || cats.includes(newCat.trim())) return;
+                          const updated = [...cats, newCat.trim()].join(",");
+                          setSettingsForm(prev => ({ ...prev, market_categories: updated }));
+                          handleSaveSettings();
+                          setNewCat("");
+                          showToast(`Categoría "${newCat.trim()}" agregada ✅`, "success");
+                        }}
+                        className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-[12px] px-4 py-2 rounded-lg transition cursor-pointer"
+                      >
+                        + Agregar
+                      </button>
+                    </div>
                   </div>
-                </div>
-                <input
-                  value={settingsForm.market_categories}
-                  onChange={(e) => setSettingsForm(prev => ({ ...prev, market_categories: e.target.value }))}
-                  placeholder="deporte,farandula,politica,elecciones,pais,general"
-                  className="w-full bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-4 py-2.5 outline-none text-[13px] text-slate-900 dark:text-white focus:border-emerald-500/60 transition placeholder-slate-400 dark:placeholder-white/20"
-                />
-                <div className="flex flex-wrap gap-1.5">
-                  {(settingsForm.market_categories || "").split(",").filter(Boolean).map(cat => (
-                    <span key={cat} className="text-[11px] bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-white/50 px-2.5 py-1 rounded-full capitalize">{cat.trim()}</span>
-                  ))}
-                </div>
-                <button
-                  onClick={async () => { await handleSaveSettings(); showToast("Categorías guardadas ✅", "success"); }}
-                  className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-[12px] px-4 py-2 rounded-lg transition cursor-pointer"
-                >
-                  Guardar categorías
-                </button>
-              </div>
+                );
+              })()}
 
               <div className="border-t border-slate-200 dark:border-white/[0.06] pt-6 mt-2">
                 <p className="text-[11px] text-slate-400 dark:text-white/30 uppercase tracking-widest mb-4">Datos bancarios para recargas</p>

@@ -1494,6 +1494,17 @@ app.put("/admin/markets/:id/category", auth, async (req, res) => {
   res.json({ message: "Categoría actualizada" });
 });
 
+app.put("/admin/markets/recategorize", auth, async (req, res) => {
+  const { data: user } = await supabase.from("users").select("role").eq("id", req.userId).single();
+  if (!user || user.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+  const { from, to } = req.body;
+  if (!from || !to) return res.status(400).json({ message: "Faltan parámetros from/to" });
+  const { data, error } = await supabase.from("markets").update({ category: to }).eq("category", from);
+  if (error) return res.status(500).json({ message: error.message });
+  broadcast("markets", {});
+  res.json({ message: `Mercados reasignados de "${from}" a "${to}"` });
+});
+
 // =======================
 // ❤️ FAVORITOS
 // =======================
