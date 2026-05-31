@@ -201,7 +201,7 @@ export default function Login() {
                   <input
                     type="email"
                     placeholder="tu@correo.com"
-                    autoComplete="username"
+                    autoComplete="off"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleLogin()}
@@ -220,7 +220,7 @@ export default function Login() {
                     <input
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
-                      autoComplete="current-password"
+                      autoComplete="new-password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleLogin()}
