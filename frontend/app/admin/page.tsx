@@ -104,12 +104,16 @@ export default function AdminPage() {
     max_changes: string; daily_withdrawal_limit: string;
     commission: string; welcome_points: string; welcome_points_limit: string;
     trending_count: string; winners_count: string; autoplay_ms: string;
+    circulation_alert: string; pending_tx_alert: string;
+    market_categories: string;
     banco_nombre: string; banco_tipo: string; banco_cuenta: string; banco_titular: string; banco_cedula: string;
   }>({
     min_bet: "", max_bet: "", min_withdrawal: "", max_withdrawal: "",
     max_changes: "", daily_withdrawal_limit: "",
     commission: "", welcome_points: "", welcome_points_limit: "",
     trending_count: "", winners_count: "", autoplay_ms: "",
+    circulation_alert: "", pending_tx_alert: "",
+    market_categories: "",
     banco_nombre: "", banco_tipo: "", banco_cuenta: "", banco_titular: "", banco_cedula: "",
   });
   const [searchQuery, setSearchQuery] = useState("");
@@ -168,6 +172,16 @@ export default function AdminPage() {
 
   const showToast = (message: string, type: "success" | "error" | "info" = "success") => setToast({ message, type });
   const openModal = (opts: typeof modal) => setModal(opts);
+
+  const exportCSV = (filename: string, headers: string[], rows: string[][]) => {
+    const bom = "﻿";
+    const content = bom + [headers, ...rows].map(r => r.map(c => `"${String(c ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const searchRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -483,6 +497,8 @@ export default function AdminPage() {
         max_changes: data.max_changes ?? "", daily_withdrawal_limit: data.daily_withdrawal_limit ?? "",
         commission: data.commission, welcome_points: data.welcome_points, welcome_points_limit: data.welcome_points_limit ?? "",
         trending_count: data.trending_count ?? "", winners_count: data.winners_count ?? "", autoplay_ms: data.autoplay_ms ?? "",
+        circulation_alert: data.circulation_alert ?? "", pending_tx_alert: data.pending_tx_alert ?? "",
+        market_categories: data.market_categories ?? "deporte,farandula,politica,elecciones,pais,general",
         trending_count: data.trending_count ?? 1,
         winners_count: data.winners_count ?? 1,
         autoplay_ms: data.autoplay_ms ?? 5000,
@@ -513,6 +529,9 @@ export default function AdminPage() {
         trending_count: settingsForm.trending_count === "" ? 1 : Number(settingsForm.trending_count),
         winners_count: settingsForm.winners_count === "" ? 1 : Number(settingsForm.winners_count),
         autoplay_ms: settingsForm.autoplay_ms === "" ? 5000 : Number(settingsForm.autoplay_ms),
+        circulation_alert: settingsForm.circulation_alert === "" ? null : Number(settingsForm.circulation_alert),
+        pending_tx_alert: settingsForm.pending_tx_alert === "" ? null : Number(settingsForm.pending_tx_alert),
+        market_categories: settingsForm.market_categories || "deporte,farandula,politica,elecciones,pais,general",
         banco_nombre: settingsForm.banco_nombre,
         banco_tipo: settingsForm.banco_tipo,
         banco_cuenta: settingsForm.banco_cuenta,
@@ -937,6 +956,25 @@ export default function AdminPage() {
                 <p className="text-[12px] text-slate-400 dark:text-white/30 mt-0.5">Métricas en tiempo real</p>
               </div>
 
+              {/* Alertas de umbral */}
+              {config && stats && (() => {
+                const alerts: { label: string; color: string }[] = [];
+                if (config.circulation_alert && parseFloat(stats.totalPoints) >= config.circulation_alert)
+                  alerts.push({ label: `⚠️ Saldo en circulación ($${stats.totalPoints}) superó el umbral de $${config.circulation_alert}`, color: "amber" });
+                if (config.pending_tx_alert && transactions.filter(t => t.status === "pendiente").length >= config.pending_tx_alert)
+                  alerts.push({ label: `⚠️ Hay ${transactions.filter(t => t.status === "pendiente").length} transacciones pendientes (umbral: ${config.pending_tx_alert})`, color: "rose" });
+                if (alerts.length === 0) return null;
+                return (
+                  <div className="space-y-2">
+                    {alerts.map((a, i) => (
+                      <div key={i} className={`px-4 py-3 rounded-xl border text-[12px] font-medium ${a.color === "amber" ? "bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20 text-amber-700 dark:text-amber-400" : "bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20 text-rose-700 dark:text-rose-400"}`}>
+                        {a.label}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
                   { label: "Usuarios totales", value: stats?.totalUsers ?? "—", sub: `+${stats?.newUsersToday ?? 0} hoy`, icon: <Users size={13} />, color: "text-blue-500 dark:text-blue-400", up: true },
@@ -1159,12 +1197,9 @@ export default function AdminPage() {
                       className="flex-1 bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-4 py-2.5 outline-none text-[13px] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:border-emerald-500/60 transition" />
                     <select value={newCategory} onChange={(e) => setNewCategory(e.target.value)}
                       className="bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2.5 outline-none text-[13px] text-slate-900 dark:text-white focus:border-emerald-500/60 transition shrink-0">
-                      <option value="deporte">Deporte</option>
-                      <option value="farandula">Farándula</option>
-                      <option value="politica">Política</option>
-                      <option value="elecciones">Elecciones</option>
-                      <option value="pais">País</option>
-                      <option value="general">General</option>
+                      {(config?.market_categories || "deporte,farandula,politica,elecciones,pais,general").split(",").filter(Boolean).map((cat: string) => (
+                        <option key={cat.trim()} value={cat.trim()}>{cat.trim().charAt(0).toUpperCase() + cat.trim().slice(1)}</option>
+                      ))}
                     </select>
                   </div>
                   <div className="flex gap-2">
@@ -1373,9 +1408,20 @@ export default function AdminPage() {
           {/* USUARIOS */}
           {activeSection === "users" && (
             <>
-              <div>
-                <h1 className="text-lg font-bold">Usuarios</h1>
-                <p className="text-[12px] text-slate-400 dark:text-white/30 mt-0.5">{users.length} registrados</p>
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <h1 className="text-lg font-bold">Usuarios</h1>
+                  <p className="text-[12px] text-slate-400 dark:text-white/30 mt-0.5">{users.length} registrados</p>
+                </div>
+                <button
+                  onClick={() => exportCSV(`usuarios_${new Date().toISOString().slice(0,10)}.csv`,
+                    ["Email", "Nombre", "Apellido", "Saldo", "Rol", "Estado", "Cédula", "Celular", "Ciudad", "Registrado"],
+                    users.map(u => [u.email, u.nombre, u.apellido, Number(u.points).toFixed(2), u.role, u.suspended ? "Suspendido" : "Activo", u.cedula, u.celular, u.ciudad, new Date(u.created_at + "Z").toLocaleDateString("es-EC", { timeZone: "America/Guayaquil" })])
+                  )}
+                  className="flex items-center gap-1.5 bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-white/50 hover:text-slate-900 dark:hover:text-white px-3 py-1.5 rounded-lg text-[12px] transition cursor-pointer"
+                >
+                  ⬇ Exportar CSV
+                </button>
               </div>
 
               <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl overflow-hidden">
@@ -1462,6 +1508,15 @@ export default function AdminPage() {
                     {transactions.filter(t => t.status === "pendiente").length} pendientes · {transactions.length} total
                   </p>
                 </div>
+                <button
+                  onClick={() => exportCSV(`transacciones_${new Date().toISOString().slice(0,10)}.csv`,
+                    ["Email", "Tipo", "Monto", "Método", "Estado", "Código", "Fecha"],
+                    transactions.map(t => [t.users?.email, t.type, Number(t.amount).toFixed(2), t.payment_method, t.status, t.transfer_code ?? "", new Date(t.created_at).toLocaleString("es-EC", { timeZone: "America/Guayaquil" })])
+                  )}
+                  className="flex items-center gap-1.5 bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-white/50 hover:text-slate-900 dark:hover:text-white px-3 py-1.5 rounded-lg text-[12px] transition cursor-pointer shrink-0"
+                >
+                  ⬇ Exportar CSV
+                </button>
                 <div className="flex items-center gap-1 bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-lg p-1">
                   {([
                     { id: "transferencia", label: "Transferencia" },
@@ -3017,6 +3072,8 @@ export default function AdminPage() {
                     { key: "trending_count", label: "Mercados trending", step: "1", placeholder: "1" },
                     { key: "winners_count", label: "Ganadores en carrusel", step: "1", placeholder: "1" },
                     { key: "autoplay_ms", label: "Autoplay carrusel (ms)", step: "500", placeholder: "5000" },
+                    { key: "circulation_alert", label: "Alerta circulación ($)", step: "100", placeholder: "Sin alerta" },
+                    { key: "pending_tx_alert", label: "Alerta tx pendientes", step: "1", placeholder: "Sin alerta" },
                   ].map((field) => (
                     <div key={field.key} className="px-5 py-3.5 flex items-center justify-between gap-4">
                       <label className="text-[12px] text-slate-500 dark:text-white/40 shrink-0">{field.label}</label>
@@ -3036,6 +3093,33 @@ export default function AdminPage() {
                     </div>
                   ))}
                 </div>
+              </div>
+
+              {/* Categorías de mercado editables */}
+              <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[11px] text-slate-400 dark:text-white/30 uppercase tracking-widest">Categorías de mercado</p>
+                    <p className="text-[11px] text-slate-400 dark:text-white/20 mt-0.5">Separadas por coma · se usan en todos los selectores</p>
+                  </div>
+                </div>
+                <input
+                  value={settingsForm.market_categories}
+                  onChange={(e) => setSettingsForm(prev => ({ ...prev, market_categories: e.target.value }))}
+                  placeholder="deporte,farandula,politica,elecciones,pais,general"
+                  className="w-full bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-4 py-2.5 outline-none text-[13px] text-slate-900 dark:text-white focus:border-emerald-500/60 transition placeholder-slate-400 dark:placeholder-white/20"
+                />
+                <div className="flex flex-wrap gap-1.5">
+                  {(settingsForm.market_categories || "").split(",").filter(Boolean).map(cat => (
+                    <span key={cat} className="text-[11px] bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-white/50 px-2.5 py-1 rounded-full capitalize">{cat.trim()}</span>
+                  ))}
+                </div>
+                <button
+                  onClick={async () => { await handleSaveSettings(); showToast("Categorías guardadas ✅", "success"); }}
+                  className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-[12px] px-4 py-2 rounded-lg transition cursor-pointer"
+                >
+                  Guardar categorías
+                </button>
               </div>
 
               <div className="border-t border-slate-200 dark:border-white/[0.06] pt-6 mt-2">

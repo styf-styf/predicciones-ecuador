@@ -941,7 +941,7 @@ app.put("/admin/settings", auth, async (req, res) => {
     return res.status(403).json({ message: "Solo admin" });
   }
 
-  const { min_bet, max_bet, min_withdrawal, max_withdrawal, max_changes, daily_withdrawal_limit, commission, welcome_points, welcome_points_limit, trending_count, winners_count, autoplay_ms, banco_nombre, banco_tipo, banco_cuenta, banco_titular, banco_cedula } = req.body;
+  const { min_bet, max_bet, min_withdrawal, max_withdrawal, max_changes, daily_withdrawal_limit, commission, welcome_points, welcome_points_limit, trending_count, winners_count, autoplay_ms, circulation_alert, pending_tx_alert, market_categories, banco_nombre, banco_tipo, banco_cuenta, banco_titular, banco_cedula } = req.body;
 
   if (min_bet < 0 || max_bet < 0) {
     return res.status(400).json({ message: "Los valores no pueden ser negativos" });
@@ -972,6 +972,9 @@ app.put("/admin/settings", auth, async (req, res) => {
     trending_count,
     winners_count,
     autoplay_ms,
+    circulation_alert: circulation_alert === "" || circulation_alert === null ? null : Number(circulation_alert),
+    pending_tx_alert: pending_tx_alert === "" || pending_tx_alert === null ? null : Number(pending_tx_alert),
+    market_categories: market_categories || "deporte,farandula,politica,elecciones,pais,general",
     banco_nombre,
     banco_tipo,
     banco_cuenta,
