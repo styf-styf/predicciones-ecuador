@@ -631,10 +631,19 @@ export default function AdminPage() {
         });
         const data = await res.json();
         setLoadingAction(null);
-        showToast(data.message, res.ok ? "success" : "error");
-        if (data.warning) {
-          setTimeout(() => showToast(`⚠️ ${data.warning} — acredita manualmente en Usuarios`, "error"), 500);
-          console.warn("[resolve] Fallos de acreditación:", data.failedBets);
+        if (!res.ok) {
+          showToast(data.message || "Error al resolver", "error");
+        } else if (data.failedBets?.length > 0) {
+          showToast("Mercado resuelto con advertencias", "info");
+          openModal({
+            title: "⚠️ Ganadores no acreditados",
+            description: `${data.failedBets.length} usuario(s) no pudieron recibir su pago automáticamente. Acredítalos manualmente desde la sección Usuarios:\n\n${data.failedBets.map((f: any) => `• ${f.email} — $${f.monto}`).join("\n")}`,
+            confirmLabel: "Ir a Usuarios",
+            danger: false,
+            onConfirm: () => setActiveSection("users"),
+          });
+        } else {
+          showToast(data.message, "success");
         }
         fetchMarkets(); fetchWinners(); fetchStats();
       },
