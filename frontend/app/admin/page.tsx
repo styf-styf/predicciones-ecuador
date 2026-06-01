@@ -632,6 +632,10 @@ export default function AdminPage() {
         const data = await res.json();
         setLoadingAction(null);
         showToast(data.message, res.ok ? "success" : "error");
+        if (data.warning) {
+          setTimeout(() => showToast(`⚠️ ${data.warning} — acredita manualmente en Usuarios`, "error"), 500);
+          console.warn("[resolve] Fallos de acreditación:", data.failedBets);
+        }
         fetchMarkets(); fetchWinners(); fetchStats();
       },
     });

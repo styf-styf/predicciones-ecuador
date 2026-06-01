@@ -1350,6 +1350,7 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
   }
 
   let totalCommission = 0;
+  const failedBets = [];
 
   for (const bet of winningBets) {
     const amount = Number(bet.amount);
@@ -1386,6 +1387,7 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
 
     if (updateError) {
       console.error(`[resolve] Error actualizando puntos bet ${bet.id}: ${updateError.message}`);
+      failedBets.push({ betId: bet.id, userId: bet.user_id, email: user.email, monto: payout, error: updateError.message });
       continue;
     }
 
@@ -1439,9 +1441,13 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
   broadcast("markets", {});
   broadcast("winners", {});
   broadcast("notifications", {});
-  broadcast("bets", {}); // actualiza saldo en header para los ganadores
+  broadcast("bets", {});
   res.json({
-    message: `Mercado resuelto. Comisión total plataforma: ${totalCommission.toFixed(2)} pts`
+    message: `Mercado resuelto. Comisión total: ${totalCommission.toFixed(2)} $`,
+    ...(failedBets.length > 0 && {
+      warning: `${failedBets.length} ganador(es) no pudieron ser acreditados automáticamente`,
+      failedBets,
+    }),
   });
 });
 
