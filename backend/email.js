@@ -389,6 +389,36 @@ function emailVerificacionRegistro({ nombre, email, code, magicToken }) {
   });
 }
 
+// ── Alerta crítica al admin ──────────────────────────────────────────────────
+function emailAdminAlerta({ titulo, detalle, items = [] }) {
+  const adminEmail = process.env.ADMIN_EMAIL;
+  if (!adminEmail) return Promise.resolve(false);
+  return sendEmail({
+    to: adminEmail,
+    subject: `🚨 Alerta EcuaPred: ${titulo}`,
+    html: baseTemplate(`
+      <h2 style="color:#ef4444;margin-top:0">🚨 ${titulo}</h2>
+      <p style="color:#94a3b8;font-size:13px">${detalle}</p>
+      ${items.length > 0 ? `
+        <table style="width:100%;border-collapse:collapse;margin:16px 0">
+          ${items.map(item => `
+            <tr style="border-bottom:1px solid #1e293b">
+              <td style="padding:8px 0;color:#94a3b8;font-size:13px">${item.label}</td>
+              <td style="padding:8px 0;text-align:right;font-size:13px;color:#f1f5f9">${item.value}</td>
+            </tr>
+          `).join("")}
+        </table>
+      ` : ""}
+      <a href="https://ecuapred.com/admin" style="display:inline-block;margin-top:16px;padding:12px 24px;background:#10b981;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold">
+        Ir al panel admin
+      </a>
+      <p style="font-size:11px;color:#475569;margin-top:20px;border-top:1px solid #1e293b;padding-top:16px">
+        Este correo fue generado automáticamente por EcuaPred.
+      </p>
+    `),
+  });
+}
+
 // ── Recuperar contraseña ─────────────────────────────────────────────────────
 function emailRecuperarContrasena({ nombre, email, resetUrl }) {
   return sendEmail({
@@ -432,4 +462,5 @@ module.exports = {
   emailCambioRol,
   emailConfirmacionApuesta,
   emailRecuperarContrasena,
+  emailAdminAlerta,
 };

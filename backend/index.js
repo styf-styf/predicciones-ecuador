@@ -28,6 +28,7 @@ const {
   emailCambioRol,
   emailConfirmacionApuesta,
   emailRecuperarContrasena,
+  emailAdminAlerta,
 } = require("./email");
 
 const googleClient = new OAuth2Client(
@@ -1439,12 +1440,19 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
   await supabase.from("markets").update({ resolved: true, winner }).eq("id", marketId);
 
   if (failedBets.length > 0) {
-    await supabase.from("admin_alerts").insert([{
+    // Guardar en Supabase (puede fallar si Supabase está caído)
+    supabase.from("admin_alerts").insert([{
       type: "payout_failure",
       title: `${failedBets.length} ganador(es) no acreditados — Mercado #${marketId}`,
       details: { marketId, marketQuestion: market.question, failedBets },
-    }]);
-    broadcast("admin_alerts", {});
+    }]).then(() => broadcast("admin_alerts", {})).catch(err => console.error("[alerts] Error guardando alerta:", err.message));
+
+    // Email al admin como respaldo independiente de Supabase
+    emailAdminAlerta({
+      titulo: `${failedBets.length} ganador(es) no acreditados — Mercado #${marketId}`,
+      detalle: `Al resolver el mercado "${market.question}", los siguientes usuarios no pudieron recibir su pago automáticamente. Acredítalos manualmente desde el panel admin.`,
+      items: failedBets.map(f => ({ label: f.email, value: `$${f.monto}` })),
+    });
   }
 
   broadcast("markets", {});
