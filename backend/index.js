@@ -1438,6 +1438,15 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
 
   await supabase.from("markets").update({ resolved: true, winner }).eq("id", marketId);
 
+  if (failedBets.length > 0) {
+    await supabase.from("admin_alerts").insert([{
+      type: "payout_failure",
+      title: `${failedBets.length} ganador(es) no acreditados — Mercado #${marketId}`,
+      details: { marketId, marketQuestion: market.question, failedBets },
+    }]);
+    broadcast("admin_alerts", {});
+  }
+
   broadcast("markets", {});
   broadcast("winners", {});
   broadcast("notifications", {});
@@ -1449,6 +1458,33 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
       failedBets,
     }),
   });
+});
+
+// =======================
+// 🔔 ADMIN - ALERTAS
+// =======================
+app.get("/admin/alerts", auth, async (req, res) => {
+  const { data: admin } = await supabase.from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+  const { data, error } = await supabase.from("admin_alerts").select("*").order("created_at", { ascending: false }).limit(100);
+  if (error) return res.status(500).json({ message: error.message });
+  res.json(data);
+});
+
+app.put("/admin/alerts/:id/resolve", auth, async (req, res) => {
+  const { data: admin } = await supabase.from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+  const { error } = await supabase.from("admin_alerts").update({ resolved: true }).eq("id", req.params.id);
+  if (error) return res.status(500).json({ message: error.message });
+  res.json({ message: "Alerta resuelta" });
+});
+
+app.delete("/admin/alerts/:id", auth, async (req, res) => {
+  const { data: admin } = await supabase.from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+  const { error } = await supabase.from("admin_alerts").delete().eq("id", req.params.id);
+  if (error) return res.status(500).json({ message: error.message });
+  res.json({ message: "Alerta eliminada" });
 });
 
 // =======================

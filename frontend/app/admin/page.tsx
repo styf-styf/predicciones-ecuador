@@ -13,7 +13,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import ThemeToggle from "@/components/ThemeToggle";
 
-type Section = "overview" | "administracion" | "markets" | "users" | "settings" | "winners" | "transacciones" | "contacto" | "suggestions" | "noticias" | "comentarios" | "botnews";
+type Section = "overview" | "administracion" | "markets" | "users" | "settings" | "winners" | "transacciones" | "contacto" | "suggestions" | "noticias" | "comentarios" | "botnews" | "alertas";
 
 // ─── Toast ─────────────────────────────────────────────────────────────────────
 function Toast({ message, type, onClose }: { message: string; type: "success" | "error" | "info"; onClose: () => void }) {
@@ -130,6 +130,7 @@ export default function AdminPage() {
   const [adminComments, setAdminComments] = useState<any[]>([]);
   const [commentMarketFilter, setCommentMarketFilter] = useState<string>("all");
   const [finance, setFinance] = useState<any>(null);
+  const [adminAlerts, setAdminAlerts] = useState<any[]>([]);
 
   // ── Bancos ──
   const [bankAccounts, setBankAccounts] = useState<any[]>([]);
@@ -414,6 +415,15 @@ export default function AdminPage() {
     }
   };
 
+  const fetchAdminAlerts = async () => {
+    const token = localStorage.getItem("token");
+    const res = await fetch("https://api.ecuapred.com/admin/alerts", {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (res.ok) setAdminAlerts(data);
+  };
+
   const fetchFinance = async () => {
     const token = localStorage.getItem("token");
     const res = await fetch("https://api.ecuapred.com/admin/finance", {
@@ -556,7 +566,7 @@ export default function AdminPage() {
       if (data.role !== "admin") { window.location.href = "/"; return; }
       setIsLogged(true); setIsAdmin(true); setPoints(data.points || 0);
       setLoadingAdmin(false);
-      fetchWinners(); fetchStats(); fetchUsers(); fetchSettings(); fetchCharts(); fetchTransactions(); fetchContactos(); fetchSuggestions(); fetchMarketNews(); fetchExtensionTokens(); fetchAdminComments(); fetchFinance(); fetchBotUrls(); fetchBotStatus(); fetchBotSuggestions(); fetchBankAccounts();
+      fetchWinners(); fetchStats(); fetchUsers(); fetchSettings(); fetchCharts(); fetchTransactions(); fetchContactos(); fetchSuggestions(); fetchMarketNews(); fetchExtensionTokens(); fetchAdminComments(); fetchFinance(); fetchBotUrls(); fetchBotStatus(); fetchBotSuggestions(); fetchBankAccounts(); fetchAdminAlerts();
     } catch {
       localStorage.removeItem("token");
       window.location.href = "/login";
@@ -728,6 +738,7 @@ export default function AdminPage() {
     es.addEventListener("winners", () => fetchStats());
     es.addEventListener("notifications", () => fetchStats());
     es.addEventListener("comments", () => fetchAdminComments());
+    es.addEventListener("admin_alerts", () => fetchAdminAlerts());
     return () => es.close();
   }, []);
 
@@ -742,6 +753,7 @@ export default function AdminPage() {
     { id: "noticias", label: "Noticias", icon: <Newspaper size={15} />, badge: marketNews.filter(n => n.status === "pending").length },
     { id: "comentarios", label: "Comentarios", icon: <MessageCircle size={15} />, badge: adminComments.length },
     { id: "contacto", label: "Contacto", icon: <MessageSquare size={15} />, badge: contactos.filter(c => !c.leido).length },
+    { id: "alertas", label: "Alertas", icon: <span className="text-[13px]">🔔</span>, badge: adminAlerts.filter(a => !a.resolved).length },
     { id: "settings", label: "Configuración", icon: <Settings size={15} /> },
   ];
 
@@ -3012,6 +3024,96 @@ export default function AdminPage() {
                   </>
                 );
               })()}
+              </div>
+            </>
+          )}
+
+          {/* ALERTAS */}
+          {activeSection === "alertas" && (
+            <>
+              <div>
+                <h1 className="text-lg font-bold">Alertas</h1>
+                <p className="text-[12px] text-slate-400 dark:text-white/30 mt-0.5">
+                  {adminAlerts.filter(a => !a.resolved).length} sin resolver · {adminAlerts.length} total
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {adminAlerts.length === 0 && (
+                  <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-10 text-center">
+                    <p className="text-[12px] text-slate-400 dark:text-white/20">✅ Sin alertas pendientes</p>
+                  </div>
+                )}
+                {adminAlerts.map((alert) => (
+                  <div key={alert.id} className={`bg-white dark:bg-[#111111] border rounded-xl p-5 space-y-3 ${alert.resolved ? "border-slate-200 dark:border-white/[0.06] opacity-50" : "border-rose-200 dark:border-rose-500/20"}`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`text-[10px] px-2 py-0.5 rounded-md uppercase tracking-wider font-bold ${alert.resolved ? "bg-slate-100 dark:bg-white/[0.06] text-slate-400 dark:text-white/30" : "bg-rose-50 dark:bg-rose-500/15 text-rose-600 dark:text-rose-400"}`}>
+                            {alert.resolved ? "Resuelta" : "Pendiente"}
+                          </span>
+                          <span className="text-[10px] text-slate-400 dark:text-white/25">{new Date(alert.created_at + "Z").toLocaleString("es-EC", { timeZone: "America/Guayaquil", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+                        </div>
+                        <p className="text-[13px] font-semibold text-slate-900 dark:text-white">{alert.title}</p>
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        {!alert.resolved && (
+                          <button
+                            onClick={async () => {
+                              const token = localStorage.getItem("token");
+                              await fetch(`https://api.ecuapred.com/admin/alerts/${alert.id}/resolve`, {
+                                method: "PUT", headers: { authorization: `Bearer ${token}` },
+                              });
+                              fetchAdminAlerts();
+                              showToast("Alerta marcada como resuelta", "success");
+                            }}
+                            className="text-[11px] bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 px-3 py-1.5 rounded-lg transition cursor-pointer"
+                          >
+                            ✓ Resolver
+                          </button>
+                        )}
+                        <button
+                          onClick={() => openModal({
+                            title: "¿Eliminar alerta?",
+                            confirmLabel: "Eliminar",
+                            danger: true,
+                            onConfirm: async () => {
+                              const token = localStorage.getItem("token");
+                              await fetch(`https://api.ecuapred.com/admin/alerts/${alert.id}`, {
+                                method: "DELETE", headers: { authorization: `Bearer ${token}` },
+                              });
+                              fetchAdminAlerts();
+                            },
+                          })}
+                          className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 transition cursor-pointer"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Detalle de fallos */}
+                    {alert.details?.failedBets?.length > 0 && (
+                      <div className="bg-rose-50 dark:bg-rose-500/[0.08] border border-rose-200 dark:border-rose-500/20 rounded-lg p-3 space-y-2">
+                        <p className="text-[10px] text-rose-600 dark:text-rose-400 uppercase tracking-widest font-bold">Usuarios sin acreditar</p>
+                        {alert.details.failedBets.map((f: any, i: number) => (
+                          <div key={i} className="flex items-center justify-between gap-2">
+                            <span className="text-[12px] text-slate-600 dark:text-white/60">{f.email}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[12px] font-bold text-emerald-600 dark:text-emerald-400">${f.monto}</span>
+                              <button
+                                onClick={() => { setActiveSection("users"); }}
+                                className="text-[10px] text-sky-500 hover:text-sky-400 cursor-pointer"
+                              >
+                                Acreditar →
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </>
           )}
