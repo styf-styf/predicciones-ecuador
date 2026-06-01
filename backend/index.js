@@ -1506,9 +1506,22 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const CORPORATE_ALIASES = ["info", "soporte", "alertas", "admin"];
 
 // Webhook de Resend — recibe correos entrantes
-app.post("/email/webhook", async (req, res) => {
+app.post("/email/webhook", express.raw({ type: "application/json" }), async (req, res) => {
   try {
-    const event = req.body;
+    const signingSecret = process.env.RESEND_WEBHOOK_SECRET;
+    if (signingSecret) {
+      const { Resend } = require("resend");
+      const resendClient = new Resend(RESEND_API_KEY);
+      const signature = req.headers["svix-signature"];
+      const msgId = req.headers["svix-id"];
+      const msgTimestamp = req.headers["svix-timestamp"];
+      try {
+        resendClient.webhooks.verify(req.body, { "svix-id": msgId, "svix-signature": signature, "svix-timestamp": msgTimestamp }, signingSecret);
+      } catch {
+        return res.status(401).json({ message: "Firma inválida" });
+      }
+    }
+    const event = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
     if (event.type !== "email.received") return res.json({ ok: true });
 
     const { data: emailData } = event;
