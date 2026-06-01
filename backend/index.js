@@ -1544,6 +1544,7 @@ app.post("/email/webhook", async (req, res) => {
       text,
       message_id: emailData.headers?.["message-id"] || null,
       in_reply_to: emailData.headers?.["in-reply-to"] || null,
+      thread_references: emailData.headers?.["references"] || null,
       read: false,
     }]);
 
