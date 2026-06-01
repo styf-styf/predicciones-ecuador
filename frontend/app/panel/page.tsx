@@ -222,7 +222,7 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
       body: JSON.stringify({ amount: parseFloat(walletAmount), method: retiroMethod }),
     });
     const data = await res.json();
-    if (!res.ok) return alert(data.message);
+    if (!res.ok) { showToast(data.message || "Error al solicitar retiro", "error"); return; }
     setRetiroSent(true);
     setWalletAmount("");
     setTimeout(() => setRetiroSent(false), 4000);
