@@ -1499,6 +1499,131 @@ app.delete("/admin/alerts/:id", auth, async (req, res) => {
 });
 
 // =======================
+// 📧 CORREOS CORPORATIVOS
+// =======================
+
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const CORPORATE_ALIASES = ["info", "soporte", "alertas", "admin"];
+
+// Webhook de Resend — recibe correos entrantes
+app.post("/email/webhook", async (req, res) => {
+  try {
+    const event = req.body;
+    if (event.type !== "email.received") return res.json({ ok: true });
+
+    const { data: emailData } = event;
+    const toAddress = Array.isArray(emailData.to) ? emailData.to[0] : emailData.to;
+    const alias = toAddress?.split("@")[0]?.toLowerCase();
+
+    if (!CORPORATE_ALIASES.includes(alias)) return res.json({ ok: true });
+
+    // Obtener cuerpo completo del correo desde Resend
+    let html = null;
+    let text = null;
+    try {
+      const fullRes = await fetch(`https://api.resend.com/emails/${emailData.email_id}`, {
+        headers: { Authorization: `Bearer ${RESEND_API_KEY}` },
+      });
+      if (fullRes.ok) {
+        const full = await fullRes.json();
+        html = full.html || null;
+        text = full.text || null;
+      }
+    } catch (e) {
+      console.error("[email/webhook] Error obteniendo cuerpo:", e.message);
+    }
+
+    await supabase.from("emails").insert([{
+      id: emailData.email_id,
+      type: "received",
+      alias,
+      from_address: emailData.from,
+      to_address: toAddress,
+      subject: emailData.subject || "(Sin asunto)",
+      html,
+      text,
+      message_id: emailData.headers?.["message-id"] || null,
+      in_reply_to: emailData.headers?.["in-reply-to"] || null,
+      read: false,
+    }]);
+
+    broadcast("emails", { alias });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("[email/webhook] Error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Obtener correos
+app.get("/admin/emails", auth, async (req, res) => {
+  const { data: admin } = await supabase.from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+  const { alias, type } = req.query;
+  let query = supabase.from("emails").select("*").order("created_at", { ascending: false }).limit(100);
+  if (alias) query = query.eq("alias", alias);
+  if (type) query = query.eq("type", type);
+  const { data, error } = await query;
+  if (error) return res.status(500).json({ message: error.message });
+  res.json(data);
+});
+
+// Marcar como leído
+app.put("/admin/emails/:id/read", auth, async (req, res) => {
+  const { data: admin } = await supabase.from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+  await supabase.from("emails").update({ read: true }).eq("id", req.params.id);
+  res.json({ ok: true });
+});
+
+// Enviar / responder correo
+app.post("/admin/emails/send", auth, async (req, res) => {
+  const { data: admin } = await supabase.from("users").select("role, email, nombre").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const { to, subject, html, from_alias, in_reply_to, references } = req.body;
+  if (!to || !subject || !html || !from_alias) return res.status(400).json({ message: "Faltan campos requeridos" });
+  if (!CORPORATE_ALIASES.includes(from_alias)) return res.status(400).json({ message: "Alias no permitido" });
+
+  const fromAddress = `${from_alias.charAt(0).toUpperCase() + from_alias.slice(1)} EcuaPred <${from_alias}@ecuapred.com>`;
+  const headers = {};
+  if (in_reply_to) headers["In-Reply-To"] = in_reply_to;
+  if (references) headers["References"] = references;
+
+  const sendRes = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ from: fromAddress, to: [to], subject, html, ...(Object.keys(headers).length > 0 && { headers }) }),
+  });
+
+  const sendData = await sendRes.json();
+  if (!sendRes.ok) return res.status(500).json({ message: sendData.message || "Error al enviar" });
+
+  await supabase.from("emails").insert([{
+    id: sendData.id,
+    type: "sent",
+    alias: from_alias,
+    from_address: fromAddress,
+    to_address: to,
+    subject,
+    html,
+    message_id: sendData.id,
+    in_reply_to: in_reply_to || null,
+    read: true,
+  }]);
+
+  res.json({ ok: true, id: sendData.id });
+});
+
+// Eliminar correo
+app.delete("/admin/emails/:id", auth, async (req, res) => {
+  const { data: admin } = await supabase.from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+  await supabase.from("emails").delete().eq("id", req.params.id);
+  res.json({ ok: true });
+});
+
+// =======================
 // 👑 ADMIN - CREAR MERCADO
 // =======================
 app.post("/admin/markets", auth, async (req, res) => {

@@ -13,7 +13,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import ThemeToggle from "@/components/ThemeToggle";
 
-type Section = "overview" | "administracion" | "markets" | "users" | "settings" | "winners" | "transacciones" | "contacto" | "suggestions" | "noticias" | "comentarios" | "botnews" | "alertas";
+type Section = "overview" | "administracion" | "markets" | "users" | "settings" | "winners" | "transacciones" | "contacto" | "suggestions" | "noticias" | "comentarios" | "botnews" | "alertas" | "correos";
 
 // ─── Toast ─────────────────────────────────────────────────────────────────────
 function Toast({ message, type, onClose }: { message: string; type: "success" | "error" | "info"; onClose: () => void }) {
@@ -131,6 +131,13 @@ export default function AdminPage() {
   const [commentMarketFilter, setCommentMarketFilter] = useState<string>("all");
   const [finance, setFinance] = useState<any>(null);
   const [adminAlerts, setAdminAlerts] = useState<any[]>([]);
+  const [emails, setEmails] = useState<any[]>([]);
+  const [emailAlias, setEmailAlias] = useState<string>("all");
+  const [emailType, setEmailType] = useState<"all" | "received" | "sent">("all");
+  const [selectedEmail, setSelectedEmail] = useState<any>(null);
+  const [composing, setComposing] = useState(false);
+  const [composeForm, setComposeForm] = useState({ to: "", subject: "", html: "", from_alias: "info" });
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   // ── Bancos ──
   const [bankAccounts, setBankAccounts] = useState<any[]>([]);
@@ -415,6 +422,17 @@ export default function AdminPage() {
     }
   };
 
+  const fetchEmails = async () => {
+    const token = localStorage.getItem("token");
+    const params = new URLSearchParams();
+    if (emailAlias !== "all") params.set("alias", emailAlias);
+    if (emailType !== "all") params.set("type", emailType);
+    const res = await fetch(`https://api.ecuapred.com/admin/emails?${params}`, {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    if (res.ok) setEmails(await res.json());
+  };
+
   const fetchAdminAlerts = async () => {
     const token = localStorage.getItem("token");
     const res = await fetch("https://api.ecuapred.com/admin/alerts", {
@@ -566,7 +584,7 @@ export default function AdminPage() {
       if (data.role !== "admin") { window.location.href = "/"; return; }
       setIsLogged(true); setIsAdmin(true); setPoints(data.points || 0);
       setLoadingAdmin(false);
-      fetchWinners(); fetchStats(); fetchUsers(); fetchSettings(); fetchCharts(); fetchTransactions(); fetchContactos(); fetchSuggestions(); fetchMarketNews(); fetchExtensionTokens(); fetchAdminComments(); fetchFinance(); fetchBotUrls(); fetchBotStatus(); fetchBotSuggestions(); fetchBankAccounts(); fetchAdminAlerts();
+      fetchWinners(); fetchStats(); fetchUsers(); fetchSettings(); fetchCharts(); fetchTransactions(); fetchContactos(); fetchSuggestions(); fetchMarketNews(); fetchExtensionTokens(); fetchAdminComments(); fetchFinance(); fetchBotUrls(); fetchBotStatus(); fetchBotSuggestions(); fetchBankAccounts(); fetchAdminAlerts(); fetchEmails();
     } catch {
       localStorage.removeItem("token");
       window.location.href = "/login";
@@ -739,6 +757,7 @@ export default function AdminPage() {
     es.addEventListener("notifications", () => fetchStats());
     es.addEventListener("comments", () => fetchAdminComments());
     es.addEventListener("admin_alerts", () => fetchAdminAlerts());
+    es.addEventListener("emails", () => fetchEmails());
     return () => es.close();
   }, []);
 
@@ -753,6 +772,7 @@ export default function AdminPage() {
     { id: "noticias", label: "Noticias", icon: <Newspaper size={15} />, badge: marketNews.filter(n => n.status === "pending").length },
     { id: "comentarios", label: "Comentarios", icon: <MessageCircle size={15} />, badge: adminComments.length },
     { id: "contacto", label: "Contacto", icon: <MessageSquare size={15} />, badge: contactos.filter(c => !c.leido).length },
+    { id: "correos", label: "Correos", icon: <span className="text-[13px]">✉️</span>, badge: emails.filter(e => !e.read && e.type === "received").length },
     { id: "alertas", label: "Alertas", icon: <span className="text-[13px]">🔔</span>, badge: adminAlerts.filter(a => !a.resolved).length },
     { id: "settings", label: "Configuración", icon: <Settings size={15} /> },
   ];
@@ -3024,6 +3044,193 @@ export default function AdminPage() {
                   </>
                 );
               })()}
+              </div>
+            </>
+          )}
+
+          {/* CORREOS */}
+          {activeSection === "correos" && (
+            <>
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div>
+                  <h1 className="text-lg font-bold">Correos</h1>
+                  <p className="text-[12px] text-slate-400 dark:text-white/30 mt-0.5">
+                    {emails.filter(e => !e.read && e.type === "received").length} sin leer · {emails.length} total
+                  </p>
+                </div>
+                <button
+                  onClick={() => { setComposing(true); setSelectedEmail(null); setComposeForm({ to: "", subject: "", html: "", from_alias: "info" }); }}
+                  className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-[12px] px-4 py-2 rounded-lg transition cursor-pointer"
+                >
+                  ✉️ Nuevo correo
+                </button>
+              </div>
+
+              {/* Filtros */}
+              <div className="flex flex-wrap gap-2">
+                <div className="flex items-center gap-1 bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-lg p-1">
+                  {(["all", "received", "sent"] as const).map(t => (
+                    <button key={t} onClick={() => { setEmailType(t); setTimeout(fetchEmails, 0); }}
+                      className={`px-3 py-1.5 rounded-md text-[11px] font-medium transition cursor-pointer ${emailType === t ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "text-slate-500 dark:text-white/40"}`}>
+                      {t === "all" ? "Todos" : t === "received" ? "Recibidos" : "Enviados"}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-1 bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-lg p-1">
+                  {(["all", "info", "soporte", "alertas", "admin"] as const).map(a => (
+                    <button key={a} onClick={() => { setEmailAlias(a); setTimeout(fetchEmails, 0); }}
+                      className={`px-3 py-1.5 rounded-md text-[11px] font-medium transition cursor-pointer ${emailAlias === a ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "text-slate-500 dark:text-white/40"}`}>
+                      {a === "all" ? "Todos" : `${a}@`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                {/* Lista de correos */}
+                <div className="lg:col-span-1 bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl overflow-hidden">
+                  <div className="divide-y divide-slate-100 dark:divide-white/[0.04] max-h-[600px] overflow-y-auto">
+                    {emails.length === 0 && (
+                      <p className="px-5 py-8 text-[12px] text-slate-400 dark:text-white/20 text-center">Sin correos</p>
+                    )}
+                    {emails.map(email => (
+                      <button key={email.id}
+                        onClick={async () => {
+                          setSelectedEmail(email);
+                          setComposing(false);
+                          if (!email.read && email.type === "received") {
+                            const token = localStorage.getItem("token");
+                            await fetch(`https://api.ecuapred.com/admin/emails/${email.id}/read`, {
+                              method: "PUT", headers: { authorization: `Bearer ${token}` },
+                            });
+                            setEmails(prev => prev.map(e => e.id === email.id ? { ...e, read: true } : e));
+                          }
+                        }}
+                        className={`w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition ${selectedEmail?.id === email.id ? "bg-slate-100 dark:bg-white/[0.06]" : ""}`}
+                      >
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <div className="flex items-center gap-1.5">
+                            {!email.read && email.type === "received" && <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />}
+                            <span className={`text-[12px] truncate max-w-[140px] ${!email.read && email.type === "received" ? "font-bold text-slate-900 dark:text-white" : "text-slate-600 dark:text-white/60"}`}>
+                              {email.type === "received" ? email.from_address.split("<")[0].trim() || email.from_address : `→ ${email.to_address}`}
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-slate-400 dark:text-white/20 shrink-0">
+                            {new Date(email.created_at + "Z").toLocaleDateString("es-EC", { timeZone: "America/Guayaquil", day: "2-digit", month: "2-digit" })}
+                          </span>
+                        </div>
+                        <p className={`text-[11px] truncate ${!email.read && email.type === "received" ? "text-slate-700 dark:text-white/70 font-medium" : "text-slate-500 dark:text-white/40"}`}>{email.subject}</p>
+                        <span className="text-[10px] bg-slate-100 dark:bg-white/[0.06] text-slate-400 dark:text-white/25 px-1.5 py-0.5 rounded-md mt-1 inline-block">{email.alias}@</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Vista del correo / Composición */}
+                <div className="lg:col-span-2 bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl overflow-hidden">
+                  {composing ? (
+                    <div className="p-5 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[13px] font-bold text-slate-900 dark:text-white">Nuevo correo</p>
+                        <button onClick={() => setComposing(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"><X size={14} /></button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[10px] text-slate-400 dark:text-white/30 uppercase tracking-widest block mb-1">Desde</label>
+                          <select value={composeForm.from_alias} onChange={e => setComposeForm(p => ({ ...p, from_alias: e.target.value }))}
+                            className="w-full bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-[12px] text-slate-900 dark:text-white outline-none">
+                            {["info", "soporte", "alertas", "admin"].map(a => (
+                              <option key={a} value={a}>{a}@ecuapred.com</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-slate-400 dark:text-white/30 uppercase tracking-widest block mb-1">Para</label>
+                          <input value={composeForm.to} onChange={e => setComposeForm(p => ({ ...p, to: e.target.value }))} placeholder="destinatario@correo.com"
+                            className="w-full bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-[12px] text-slate-900 dark:text-white outline-none focus:border-emerald-500/60 transition" />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-slate-400 dark:text-white/30 uppercase tracking-widest block mb-1">Asunto</label>
+                        <input value={composeForm.subject} onChange={e => setComposeForm(p => ({ ...p, subject: e.target.value }))} placeholder="Asunto del correo"
+                          className="w-full bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-[12px] text-slate-900 dark:text-white outline-none focus:border-emerald-500/60 transition" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-slate-400 dark:text-white/30 uppercase tracking-widest block mb-1">Mensaje</label>
+                        <textarea value={composeForm.html} onChange={e => setComposeForm(p => ({ ...p, html: e.target.value }))} placeholder="Escribe tu mensaje..." rows={8}
+                          className="w-full bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-[12px] text-slate-900 dark:text-white outline-none focus:border-emerald-500/60 transition resize-none" />
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <button onClick={() => setComposing(false)} className="px-4 py-2 rounded-lg border border-slate-200 dark:border-white/[0.08] text-[12px] text-slate-500 cursor-pointer">Cancelar</button>
+                        <button
+                          disabled={sendingEmail || !composeForm.to || !composeForm.subject || !composeForm.html}
+                          onClick={async () => {
+                            setSendingEmail(true);
+                            const token = localStorage.getItem("token");
+                            const res = await fetch("https://api.ecuapred.com/admin/emails/send", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+                              body: JSON.stringify({ ...composeForm, html: composeForm.html.replace(/\n/g, "<br/>") }),
+                            });
+                            setSendingEmail(false);
+                            if (res.ok) { showToast("Correo enviado ✅", "success"); setComposing(false); fetchEmails(); }
+                            else { const d = await res.json(); showToast(d.message || "Error al enviar", "error"); }
+                          }}
+                          className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-[12px] px-5 py-2 rounded-lg transition cursor-pointer disabled:opacity-50"
+                        >
+                          {sendingEmail ? "Enviando..." : "Enviar"}
+                        </button>
+                      </div>
+                    </div>
+                  ) : selectedEmail ? (
+                    <div className="flex flex-col h-full">
+                      <div className="px-5 py-4 border-b border-slate-100 dark:border-white/[0.04] space-y-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-[14px] font-bold text-slate-900 dark:text-white">{selectedEmail.subject}</p>
+                          <button onClick={() => openModal({ title: "¿Eliminar correo?", confirmLabel: "Eliminar", danger: true, onConfirm: async () => {
+                            const token = localStorage.getItem("token");
+                            await fetch(`https://api.ecuapred.com/admin/emails/${selectedEmail.id}`, { method: "DELETE", headers: { authorization: `Bearer ${token}` } });
+                            setSelectedEmail(null); fetchEmails(); showToast("Correo eliminado", "info");
+                          }})} className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-rose-500 cursor-pointer shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                          </button>
+                        </div>
+                        <p className="text-[11px] text-slate-500 dark:text-white/40">De: {selectedEmail.from_address}</p>
+                        <p className="text-[11px] text-slate-500 dark:text-white/40">Para: {selectedEmail.to_address}</p>
+                        <p className="text-[10px] text-slate-400 dark:text-white/25">{new Date(selectedEmail.created_at + "Z").toLocaleString("es-EC", { timeZone: "America/Guayaquil", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
+                      </div>
+                      <div className="flex-1 p-5 overflow-y-auto">
+                        {selectedEmail.html ? (
+                          <div className="text-[13px] text-slate-700 dark:text-white/70 leading-relaxed" dangerouslySetInnerHTML={{ __html: selectedEmail.html }} />
+                        ) : (
+                          <p className="text-[13px] text-slate-500 dark:text-white/40 whitespace-pre-wrap">{selectedEmail.text || "(Sin contenido)"}</p>
+                        )}
+                      </div>
+                      {selectedEmail.type === "received" && (
+                        <div className="px-5 py-3 border-t border-slate-100 dark:border-white/[0.04]">
+                          <button
+                            onClick={() => {
+                              setComposing(true);
+                              setComposeForm({
+                                to: selectedEmail.from_address,
+                                subject: selectedEmail.subject.startsWith("Re:") ? selectedEmail.subject : `Re: ${selectedEmail.subject}`,
+                                html: "",
+                                from_alias: selectedEmail.alias,
+                              });
+                            }}
+                            className="flex items-center gap-2 bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-slate-700 dark:text-white/70 text-[12px] font-medium px-4 py-2 rounded-lg transition cursor-pointer"
+                          >
+                            ↩ Responder
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-64">
+                      <p className="text-[12px] text-slate-400 dark:text-white/20">Selecciona un correo para verlo</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </>
           )}
