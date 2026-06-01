@@ -779,8 +779,11 @@ app.get("/admin/stats", auth, async (req, res) => {
   const { count: closedMarkets } = await supabase
     .from("markets").select("*", { count: "exact", head: true }).eq("resolved", true);
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // Medianoche hora Ecuador (UTC-5)
+  const _now = new Date();
+  const _offset = -5 * 60;
+  const _localMin = _now.getTime() / 60000 + _offset;
+  const today = new Date((Math.floor(_localMin / (24 * 60)) * (24 * 60) - _offset) * 60000);
 
   const { count: newUsersToday } = await supabase
     .from("users").select("*", { count: "exact", head: true })
@@ -2572,8 +2575,12 @@ app.post("/withdrawal", auth, withdrawalRateLimit, async (req, res) => {
   }
 
   if (dailyLimit !== null) {
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
+    // Medianoche hora Ecuador (UTC-5)
+    const now = new Date();
+    const ecuadorOffset = -5 * 60;
+    const localMinutes = now.getTime() / 60000 + ecuadorOffset;
+    const startOfDayLocal = Math.floor(localMinutes / (24 * 60)) * (24 * 60);
+    const startOfDay = new Date((startOfDayLocal - ecuadorOffset) * 60000);
     const { data: todayTx } = await supabase
       .from("transactions")
       .select("amount")

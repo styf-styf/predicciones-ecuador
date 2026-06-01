@@ -391,7 +391,7 @@ function emailVerificacionRegistro({ nombre, email, code, magicToken }) {
 
 // ── Alerta crítica al admin ──────────────────────────────────────────────────
 function emailAdminAlerta({ titulo, detalle, items = [] }) {
-  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminEmail = process.env.ALERT_EMAIL;
   if (!adminEmail) return Promise.resolve(false);
   return sendEmail({
     to: adminEmail,

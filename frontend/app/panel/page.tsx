@@ -27,6 +27,7 @@ function PanelContent() {
   const [movements, setMovements] = useState<any[]>([]);
   const [ranking, setRanking] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [copied, setCopied] = useState(false);
   const [bankConfig, setBankConfig] = useState<any>(null);
   const [bankAccounts, setBankAccounts] = useState<any[]>([]);
@@ -75,14 +76,18 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
     const token = localStorage.getItem("token");
     if (!token) { router.push("/login"); return; }
     const headers = { authorization: `Bearer ${token}` };
+    const withTimeout = (ms: number) => new Promise<never>((_, reject) => setTimeout(() => reject(new Error("__timeout__")), ms));
     try {
-      const [meRes, betsRes, rankRes, movRes, configRes, banksRes] = await Promise.all([
-        authFetch("https://api.ecuapred.com/me", { headers }),
-        authFetch("https://api.ecuapred.com/my-bets", { headers }),
-        fetch("https://api.ecuapred.com/ranking"),
-        authFetch("https://api.ecuapred.com/my-movements", { headers }),
-        authFetch("https://api.ecuapred.com/config", { headers }),
-        fetch("https://api.ecuapred.com/bank-accounts"),
+      const [meRes, betsRes, rankRes, movRes, configRes, banksRes] = await Promise.race([
+        Promise.all([
+          authFetch("https://api.ecuapred.com/me", { headers }),
+          authFetch("https://api.ecuapred.com/my-bets", { headers }),
+          fetch("https://api.ecuapred.com/ranking"),
+          authFetch("https://api.ecuapred.com/my-movements", { headers }),
+          authFetch("https://api.ecuapred.com/config", { headers }),
+          fetch("https://api.ecuapred.com/bank-accounts"),
+        ]),
+        withTimeout(10000),
       ]);
       if (!meRes.ok) { router.push("/login"); return; }
       const meData = await meRes.json();
@@ -112,8 +117,13 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
       setBankConfig(configData);
       setBankAccounts(Array.isArray(banksData) ? banksData : []);
       setLoading(false);
-    } catch (error) {
-      router.push("/login");
+    } catch (error: any) {
+      if (error?.message === "__timeout__") {
+        setLoading(false);
+        setLoadError(true);
+      } else {
+        router.push("/login");
+      }
     }
   };
 
@@ -356,6 +366,22 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
 };
 
   
+
+  if (loadError) {
+    return (
+      <main className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center px-5">
+        <div className="text-center max-w-sm space-y-3">
+          <p className="text-3xl">⏱</p>
+          <p className="font-bold text-slate-900 dark:text-white">El servidor tardó demasiado</p>
+          <p className="text-sm text-slate-400">Puede ser un problema temporal. Intenta de nuevo.</p>
+          <button onClick={() => { setLoadError(false); setLoading(true); loadPanel(); }}
+            className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-5 py-2.5 rounded-xl text-sm transition cursor-pointer">
+            Reintentar
+          </button>
+        </div>
+      </main>
+    );
+  }
 
   if (loading) {
     return (
