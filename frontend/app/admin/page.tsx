@@ -138,6 +138,9 @@ export default function AdminPage() {
   const [composing, setComposing] = useState(false);
   const [composeForm, setComposeForm] = useState({ to: "", subject: "", html: "", from_alias: "info" });
   const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailAliases, setEmailAliases] = useState<string[]>(["info", "soporte", "alertas", "admin"]);
+  const [newAlias, setNewAlias] = useState("");
+  const [managingAliases, setManagingAliases] = useState(false);
 
   // ── Bancos ──
   const [bankAccounts, setBankAccounts] = useState<any[]>([]);
@@ -434,6 +437,14 @@ export default function AdminPage() {
     if (res.ok) setEmails(await res.json());
   };
 
+  const fetchEmailAliases = async () => {
+    const token = localStorage.getItem("token");
+    const res = await fetch("https://api.ecuapred.com/admin/email-aliases", {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    if (res.ok) setEmailAliases(await res.json());
+  };
+
   const fetchAdminAlerts = async () => {
     const token = localStorage.getItem("token");
     const res = await fetch("https://api.ecuapred.com/admin/alerts", {
@@ -585,7 +596,7 @@ export default function AdminPage() {
       if (data.role !== "admin") { window.location.href = "/"; return; }
       setIsLogged(true); setIsAdmin(true); setPoints(data.points || 0);
       setLoadingAdmin(false);
-      fetchWinners(); fetchStats(); fetchUsers(); fetchSettings(); fetchCharts(); fetchTransactions(); fetchContactos(); fetchSuggestions(); fetchMarketNews(); fetchExtensionTokens(); fetchAdminComments(); fetchFinance(); fetchBotUrls(); fetchBotStatus(); fetchBotSuggestions(); fetchBankAccounts(); fetchAdminAlerts(); fetchEmails();
+      fetchWinners(); fetchStats(); fetchUsers(); fetchSettings(); fetchCharts(); fetchTransactions(); fetchContactos(); fetchSuggestions(); fetchMarketNews(); fetchExtensionTokens(); fetchAdminComments(); fetchFinance(); fetchBotUrls(); fetchBotStatus(); fetchBotSuggestions(); fetchBankAccounts(); fetchAdminAlerts(); fetchEmails(); fetchEmailAliases();
     } catch {
       localStorage.removeItem("token");
       window.location.href = "/login";
@@ -3068,7 +3079,7 @@ export default function AdminPage() {
               </div>
 
               {/* Filtros */}
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 items-start">
                 <div className="flex items-center gap-1 bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-lg p-1">
                   {(["all", "received", "sent"] as const).map(t => (
                     <button key={t} onClick={() => setEmailType(t)}
@@ -3077,15 +3088,55 @@ export default function AdminPage() {
                     </button>
                   ))}
                 </div>
-                <div className="flex items-center gap-1 bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-lg p-1">
-                  {(["all", "info", "soporte", "alertas", "admin"] as const).map(a => (
+                <div className="flex items-center gap-1 bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-lg p-1 flex-wrap">
+                  {["all", ...emailAliases].map(a => (
                     <button key={a} onClick={() => setEmailAlias(a)}
                       className={`px-3 py-1.5 rounded-md text-[11px] font-medium transition cursor-pointer ${emailAlias === a ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "text-slate-500 dark:text-white/40"}`}>
                       {a === "all" ? "Todos" : `${a}@`}
                     </button>
                   ))}
                 </div>
+                <button onClick={() => setManagingAliases(v => !v)}
+                  className="px-3 py-1.5 rounded-lg text-[11px] font-medium border border-slate-200 dark:border-white/[0.06] bg-white dark:bg-[#111111] text-slate-500 dark:text-white/40 hover:text-slate-900 dark:hover:text-white transition cursor-pointer">
+                  ⚙ Aliases
+                </button>
               </div>
+
+              {/* Panel de gestión de aliases */}
+              {managingAliases && (
+                <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl p-4 space-y-3">
+                  <p className="text-[11px] font-semibold text-slate-700 dark:text-white/60">Aliases (@ecuapred.com)</p>
+                  <div className="flex flex-wrap gap-2">
+                    {emailAliases.map(a => (
+                      <div key={a} className="flex items-center gap-1.5 bg-slate-100 dark:bg-white/[0.06] rounded-md px-2.5 py-1">
+                        <span className="text-[11px] text-slate-700 dark:text-white/70">{a}@</span>
+                        <button onClick={async () => {
+                          const token = localStorage.getItem("token");
+                          await fetch(`https://api.ecuapred.com/admin/email-aliases/${a}`, { method: "DELETE", headers: { authorization: `Bearer ${token}` } });
+                          setEmailAliases(prev => prev.filter(x => x !== a));
+                          if (emailAlias === a) setEmailAlias("all");
+                        }} className="text-slate-400 hover:text-rose-500 transition cursor-pointer text-[11px]">✕</button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <input value={newAlias} onChange={e => setNewAlias(e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, ""))}
+                      placeholder="nuevo alias" onKeyDown={async e => { if (e.key === "Enter") { /* submit */ } }}
+                      className="flex-1 text-[11px] px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/[0.06] bg-transparent text-slate-700 dark:text-white/70 outline-none" />
+                    <button onClick={async () => {
+                      if (!newAlias.trim()) return;
+                      const token = localStorage.getItem("token");
+                      const res = await fetch("https://api.ecuapred.com/admin/email-aliases", {
+                        method: "POST", headers: { authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+                        body: JSON.stringify({ alias: newAlias }),
+                      });
+                      if (res.ok) { setEmailAliases(prev => [...prev, newAlias]); setNewAlias(""); }
+                    }} className="px-3 py-1.5 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[11px] font-medium cursor-pointer">
+                      Agregar
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 {/* Lista de correos */}
@@ -3139,7 +3190,7 @@ export default function AdminPage() {
                           <label className="text-[10px] text-slate-400 dark:text-white/30 uppercase tracking-widest block mb-1">Desde</label>
                           <select value={composeForm.from_alias} onChange={e => setComposeForm(p => ({ ...p, from_alias: e.target.value }))}
                             className="w-full bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-[12px] text-slate-900 dark:text-white outline-none">
-                            {["info", "soporte", "alertas", "admin"].map(a => (
+                            {emailAliases.map(a => (
                               <option key={a} value={a}>{a}@ecuapred.com</option>
                             ))}
                           </select>

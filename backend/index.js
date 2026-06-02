@@ -1503,7 +1503,6 @@ app.delete("/admin/alerts/:id", auth, async (req, res) => {
 // =======================
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const CORPORATE_ALIASES = ["info", "soporte", "alertas", "admin"];
 
 // Webhook de Resend — recibe correos entrantes
 app.post("/email/webhook", async (req, res) => {
@@ -1515,7 +1514,8 @@ app.post("/email/webhook", async (req, res) => {
     const toAddress = Array.isArray(emailData.to) ? emailData.to[0] : emailData.to;
     const alias = toAddress?.split("@")[0]?.toLowerCase();
 
-    if (!CORPORATE_ALIASES.includes(alias)) return res.json({ ok: true });
+    const { data: aliasRow } = await supabase.from("email_aliases").select("alias").eq("alias", alias).maybeSingle();
+    if (!aliasRow) return res.json({ ok: true });
 
     // Obtener cuerpo completo del correo desde Resend
     let html = null;
@@ -1584,7 +1584,8 @@ app.post("/admin/emails/send", auth, async (req, res) => {
 
   const { to, subject, html, from_alias, in_reply_to, references } = req.body;
   if (!to || !subject || !html || !from_alias) return res.status(400).json({ message: "Faltan campos requeridos" });
-  if (!CORPORATE_ALIASES.includes(from_alias)) return res.status(400).json({ message: "Alias no permitido" });
+  const { data: aliasRow } = await supabase.from("email_aliases").select("alias").eq("alias", from_alias).maybeSingle();
+  if (!aliasRow) return res.status(400).json({ message: "Alias no permitido" });
 
   const fromAddress = `${from_alias.charAt(0).toUpperCase() + from_alias.slice(1)} EcuaPred <${from_alias}@ecuapred.com>`;
   const headers = {};
@@ -1621,6 +1622,35 @@ app.delete("/admin/emails/:id", auth, async (req, res) => {
   const { data: admin } = await supabase.from("users").select("role").eq("id", req.userId).single();
   if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
   await supabase.from("emails").delete().eq("id", req.params.id);
+  res.json({ ok: true });
+});
+
+// Listar aliases
+app.get("/admin/email-aliases", auth, async (req, res) => {
+  const { data: admin } = await supabase.from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+  const { data } = await supabase.from("email_aliases").select("alias").order("created_at");
+  res.json(data?.map(r => r.alias) || []);
+});
+
+// Agregar alias
+app.post("/admin/email-aliases", auth, async (req, res) => {
+  const { data: admin } = await supabase.from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+  const { alias } = req.body;
+  if (!alias?.trim()) return res.status(400).json({ message: "Alias requerido" });
+  const clean = alias.trim().toLowerCase().replace(/[^a-z0-9._-]/g, "");
+  if (!clean) return res.status(400).json({ message: "Alias inválido" });
+  const { error } = await supabase.from("email_aliases").insert([{ alias: clean }]);
+  if (error) return res.status(400).json({ message: "El alias ya existe" });
+  res.json({ ok: true, alias: clean });
+});
+
+// Eliminar alias
+app.delete("/admin/email-aliases/:alias", auth, async (req, res) => {
+  const { data: admin } = await supabase.from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+  await supabase.from("email_aliases").delete().eq("alias", req.params.alias);
   res.json({ ok: true });
 });
 
