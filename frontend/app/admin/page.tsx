@@ -3173,7 +3173,7 @@ export default function AdminPage() {
                             onClick={() => {
                               setComposing(true);
                               setComposeForm({
-                                to: selectedEmail.from_address,
+                                to: selectedEmail.from_address.match(/<(.+)>/)?.[1] || selectedEmail.from_address,
                                 subject: selectedEmail.subject.startsWith("Re:") ? selectedEmail.subject : `Re: ${selectedEmail.subject}`,
                                 html: "",
                                 from_alias: selectedEmail.alias,
