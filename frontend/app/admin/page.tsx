@@ -2999,12 +2999,22 @@ export default function AdminPage() {
                   ))}
                 </div>
                 <div className="flex items-center gap-1 bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-lg p-1 flex-wrap">
-                  {["all", ...emailAliases].map(a => (
-                    <button key={a} onClick={() => setEmailAlias(a)}
-                      className={`px-3 py-1.5 rounded-md text-[11px] font-medium transition cursor-pointer ${emailAlias === a ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "text-slate-500 dark:text-white/40"}`}>
-                      {a === "all" ? "Todos" : `${a}@`}
-                    </button>
-                  ))}
+                  {["all", ...emailAliases].map(a => {
+                    const unread = a === "all"
+                      ? emails.filter(e => !e.read && e.type === "received").length
+                      : emails.filter(e => !e.read && e.type === "received" && e.alias === a).length;
+                    return (
+                      <button key={a} onClick={() => setEmailAlias(a)}
+                        className={`px-3 py-1.5 rounded-md text-[11px] font-medium transition cursor-pointer flex items-center gap-1.5 ${emailAlias === a ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "text-slate-500 dark:text-white/40"}`}>
+                        {a === "all" ? "Todos" : `${a}@`}
+                        {unread > 0 && (
+                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${emailAlias === a ? "bg-white/20 text-white dark:bg-slate-900/20 dark:text-slate-900" : "bg-emerald-500 text-white"}`}>
+                            {unread}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
                 <button onClick={() => setManagingAliases(v => !v)}
                   className="px-3 py-1.5 rounded-lg text-[11px] font-medium border border-slate-200 dark:border-white/[0.06] bg-white dark:bg-[#111111] text-slate-500 dark:text-white/40 hover:text-slate-900 dark:hover:text-white transition cursor-pointer">
