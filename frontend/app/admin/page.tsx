@@ -13,7 +13,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import ThemeToggle from "@/components/ThemeToggle";
 
-type Section = "overview" | "administracion" | "markets" | "users" | "settings" | "winners" | "transacciones" | "contacto" | "suggestions" | "noticias" | "comentarios" | "botnews" | "alertas" | "correos";
+type Section = "overview" | "administracion" | "markets" | "users" | "settings" | "winners" | "transacciones" | "suggestions" | "noticias" | "comentarios" | "botnews" | "alertas" | "correos";
 
 // ─── Toast ─────────────────────────────────────────────────────────────────────
 function Toast({ message, type, onClose }: { message: string; type: "success" | "error" | "info"; onClose: () => void }) {
@@ -124,7 +124,6 @@ export default function AdminPage() {
   const [extensionTokens, setExtensionTokens] = useState<any[]>([]);
   const [newTokenLabel, setNewTokenLabel] = useState("");
   const [copiedTokenId, setCopiedTokenId] = useState<number | null>(null);
-  const [contactos, setContactos] = useState<any[]>([]);
   const [marketNews, setMarketNews] = useState<any[]>([]);
   const [newsMarketInput, setNewsMarketInput] = useState<{ [key: number]: string }>({});
   const [adminComments, setAdminComments] = useState<any[]>([]);
@@ -216,8 +215,6 @@ export default function AdminPage() {
       results.push({ label: u.nombre ? `${u.nombre} ${u.apellido || ""}`.trim() : u.email, sub: `Usuario · ${u.email}`, section: "users", icon: "👤" }));
     transactions.filter(t => t.users?.email?.toLowerCase().includes(q) || String(t.amount).includes(q)).slice(0, 2).forEach(t =>
       results.push({ label: t.users?.email || "—", sub: `Transacción · $${t.amount} · ${t.status}`, section: "transacciones", icon: "💳" }));
-    contactos.filter(c => c.nombre?.toLowerCase().includes(q) || c.email?.toLowerCase().includes(q) || c.asunto?.toLowerCase().includes(q)).slice(0, 2).forEach(c =>
-      results.push({ label: c.nombre || c.email, sub: `Contacto · ${c.asunto || "Sin asunto"}`, section: "contacto", icon: "✉️" }));
     adminComments.filter(c => c.content?.toLowerCase().includes(q) || c.text?.toLowerCase().includes(q)).slice(0, 2).forEach(c =>
       results.push({ label: (c.content || c.text || "").slice(0, 60), sub: "Comentario", section: "comentarios", icon: "💬" }));
     suggestions.filter(s => s.question?.toLowerCase().includes(q) || s.content?.toLowerCase().includes(q)).slice(0, 2).forEach(s =>
@@ -225,7 +222,7 @@ export default function AdminPage() {
     marketNews.filter(n => n.title?.toLowerCase().includes(q) || n.content?.toLowerCase().includes(q)).slice(0, 2).forEach(n =>
       results.push({ label: (n.title || n.content || "").slice(0, 60), sub: "Noticia", section: "noticias", icon: "📰" }));
     return results;
-  }, [searchQuery, markets, users, transactions, contactos, adminComments, suggestions, marketNews]);
+  }, [searchQuery, markets, users, transactions, adminComments, suggestions, marketNews]);
 
   // ── Paginación ──
   const filteredMarkets = markets.filter(m => {
@@ -472,15 +469,6 @@ export default function AdminPage() {
     if (res.ok) setAdminComments(data);
   };
 
-  const fetchContactos = async () => {
-    const token = localStorage.getItem("token");
-    const res = await fetch("https://api.ecuapred.com/admin/contactos", {
-      headers: { authorization: `Bearer ${token}` },
-    });
-    const data = await res.json();
-    if (res.ok) setContactos(data);
-  };
-
   const fetchTransactions = async () => {
     const token = localStorage.getItem("token");
     const res = await fetch("https://api.ecuapred.com/admin/transactions", {
@@ -596,7 +584,7 @@ export default function AdminPage() {
       if (data.role !== "admin") { window.location.href = "/"; return; }
       setIsLogged(true); setIsAdmin(true); setPoints(data.points || 0);
       setLoadingAdmin(false);
-      fetchWinners(); fetchStats(); fetchUsers(); fetchSettings(); fetchCharts(); fetchTransactions(); fetchContactos(); fetchSuggestions(); fetchMarketNews(); fetchExtensionTokens(); fetchAdminComments(); fetchFinance(); fetchBotUrls(); fetchBotStatus(); fetchBotSuggestions(); fetchBankAccounts(); fetchAdminAlerts(); fetchEmails(); fetchEmailAliases();
+      fetchWinners(); fetchStats(); fetchUsers(); fetchSettings(); fetchCharts(); fetchTransactions(); fetchSuggestions(); fetchMarketNews(); fetchExtensionTokens(); fetchAdminComments(); fetchFinance(); fetchBotUrls(); fetchBotStatus(); fetchBotSuggestions(); fetchBankAccounts(); fetchAdminAlerts(); fetchEmails(); fetchEmailAliases();
     } catch {
       localStorage.removeItem("token");
       window.location.href = "/login";
@@ -761,7 +749,6 @@ export default function AdminPage() {
     es.addEventListener("markets", () => { fetchMarkets(); fetchStats(); });
     es.addEventListener("bets", () => { fetchStats(); fetchFinance(); });
     es.addEventListener("transactions", () => { fetchTransactions(); fetchFinance(); });
-    es.addEventListener("contactos", () => fetchContactos());
     es.addEventListener("users", () => fetchUsers());
     es.addEventListener("suggestions", () => fetchSuggestions());
     es.addEventListener("news", () => fetchMarketNews());
@@ -783,7 +770,6 @@ export default function AdminPage() {
     { id: "suggestions", label: "Sugerencias", icon: <Lightbulb size={15} />, badge: suggestions.filter(s => s.status === "pending").length },
     { id: "noticias", label: "Noticias", icon: <Newspaper size={15} />, badge: marketNews.filter(n => n.status === "pending").length },
     { id: "comentarios", label: "Comentarios", icon: <MessageCircle size={15} />, badge: adminComments.length },
-    { id: "contacto", label: "Contacto", icon: <MessageSquare size={15} />, badge: contactos.filter(c => !c.leido).length },
     { id: "correos", label: "Correos", icon: <span className="text-[13px]">✉️</span>, badge: emails.filter(e => !e.read && e.type === "received").length },
     { id: "alertas", label: "Alertas", icon: <span className="text-[13px]">🔔</span>, badge: adminAlerts.filter(a => !a.resolved).length },
     { id: "settings", label: "Configuración", icon: <Settings size={15} /> },
@@ -2459,82 +2445,6 @@ export default function AdminPage() {
           )}
 
           {/* CONTACTO */}
-          {activeSection === "contacto" && (
-            <>
-              <div>
-                <h1 className="text-lg font-bold">Contacto</h1>
-                <p className="text-[12px] text-slate-400 dark:text-white/30 mt-0.5">
-                  {contactos.filter(c => !c.leido).length} sin leer · {contactos.length} total
-                </p>
-              </div>
-
-              <div className="bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl overflow-hidden">
-                <div className="px-5 py-3 border-b border-slate-100 dark:border-white/[0.06] hidden sm:block">
-                  <div className="grid grid-cols-12 text-[10px] text-slate-400 dark:text-white/25 uppercase tracking-widest">
-                    <span className="col-span-2">Nombre</span>
-                    <span className="col-span-2">Email</span>
-                    <span className="col-span-2">Asunto</span>
-                    <span className="col-span-4">Mensaje</span>
-                    <span className="col-span-1 text-center">Estado</span>
-                    <span className="col-span-1 text-right">Acción</span>
-                  </div>
-                </div>
-
-                <div className="divide-y divide-slate-100 dark:divide-white/[0.03]">
-                  {contactos.length === 0 && (
-                    <p className="px-5 py-8 text-[12px] text-slate-400 dark:text-white/20 text-center">Sin mensajes aún</p>
-                  )}
-                  {contactos.map((c) => (
-                    <div key={c.id} className={`px-5 py-4 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition ${!c.leido ? "bg-blue-50/50 dark:bg-blue-500/5" : ""}`}>
-                      <div className="hidden sm:grid grid-cols-12 items-start gap-2">
-                        <p className="col-span-2 text-[12px] text-slate-600 dark:text-white/60 truncate">{c.nombre}</p>
-                        <p className="col-span-2 text-[12px] text-slate-400 dark:text-white/30 truncate">{c.email}</p>
-                        <p className="col-span-2 text-[12px] text-slate-600 dark:text-white/60 truncate">{c.asunto || "—"}</p>
-                        <p className="col-span-4 text-[12px] text-slate-500 dark:text-white/40 line-clamp-2">{c.mensaje}</p>
-                        <div className="col-span-1 flex justify-center">
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded-md ${!c.leido ? "bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400" : "bg-slate-100 dark:bg-white/[0.06] text-slate-400 dark:text-white/25"}`}>
-                            {c.leido ? "Leído" : "Nuevo"}
-                          </span>
-                        </div>
-                        <div className="col-span-1 flex justify-end">
-                          {!c.leido && (
-                            <button
-                              onClick={async () => { const token = localStorage.getItem("token"); await fetch(`https://api.ecuapred.com/admin/contactos/${c.id}/leido`, { method: "PUT", headers: { authorization: `Bearer ${token}` } }); fetchContactos(); showToast("Marcado como leído", "info"); }}
-                              className="text-[10px] bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/20 px-2 py-1 rounded-md transition cursor-pointer"
-                            >
-                              Leído
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                      <div className="sm:hidden space-y-2">
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <p className="text-[12px] font-medium text-slate-700 dark:text-white/70">{c.nombre}</p>
-                            <p className="text-[11px] text-slate-400 dark:text-white/30">{c.email}</p>
-                          </div>
-                          <span className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded-md ${!c.leido ? "bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400" : "bg-slate-100 dark:bg-white/[0.06] text-slate-400 dark:text-white/25"}`}>
-                            {c.leido ? "Leído" : "Nuevo"}
-                          </span>
-                        </div>
-                        {c.asunto && <p className="text-[11px] font-medium text-slate-600 dark:text-white/50">{c.asunto}</p>}
-                        <p className="text-[11px] text-slate-400 dark:text-white/30">{c.mensaje}</p>
-                        {!c.leido && (
-                          <button
-                            onClick={async () => { const token = localStorage.getItem("token"); await fetch(`https://api.ecuapred.com/admin/contactos/${c.id}/leido`, { method: "PUT", headers: { authorization: `Bearer ${token}` } }); fetchContactos(); showToast("Marcado como leído", "info"); }}
-                            className="text-[11px] bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 px-3 py-1.5 rounded-lg cursor-pointer"
-                          >
-                            Marcar leído
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-
           {/* BOT NEWS */}
           {activeSection === "botnews" && (
             <>

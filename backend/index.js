@@ -3066,17 +3066,6 @@ app.get("/admin/transactions", auth, async (req, res) => {
 // =======================
 // ✉️ ADMIN - LISTAR CONTACTOS
 // =======================
-app.get("/admin/contactos", auth, async (req, res) => {
-  const { data: admin } = await supabase
-    .from("users").select("role").eq("id", req.userId).single();
-  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
-
-  const { data, error } = await supabase
-    .from("contactos").select("*").order("created_at", { ascending: false });
-  if (error) return res.status(500).json({ message: error.message });
-  res.json(data);
-});
-
 // =======================
 // ✉️ FORMULARIO DE CONTACTO
 // =======================
@@ -3101,15 +3090,23 @@ app.post("/contacto", contactoRateLimit, async (req, res) => {
     return res.status(400).json({ message: "Uno o más campos exceden el límite de caracteres" });
   }
 
-  const { error } = await supabase.from("contactos").insert({
-    nombre: nombre.trim(),
-    email: email.trim(),
-    asunto: asunto?.trim() || "",
-    mensaje: mensaje.trim(),
+  const subject = asunto?.trim() || "Sin asunto";
+  const html = `<p><strong>De:</strong> ${nombre.trim()} &lt;${email.trim()}&gt;</p><p><strong>Asunto:</strong> ${subject}</p><hr/><p>${mensaje.trim().replace(/\n/g, "<br/>")}</p>`;
+
+  const { error } = await supabase.from("emails").insert({
+    id: crypto.randomUUID(),
+    type: "received",
+    alias: "info",
+    from_address: `${nombre.trim()} <${email.trim()}>`,
+    to_address: "info@ecuapred.com",
+    subject,
+    html,
+    text: mensaje.trim(),
+    read: false,
   });
   if (error) return res.status(500).json({ message: error.message });
-  emailContactoRecibido({ nombre: nombre.trim(), email: email.trim(), asunto: asunto?.trim() || "Sin asunto" });
-  broadcast("contactos", {});
+  emailContactoRecibido({ nombre: nombre.trim(), email: email.trim(), asunto: subject });
+  broadcast("emails", { alias: "info" });
   res.json({ message: "Mensaje enviado correctamente" });
 });
 
@@ -3216,15 +3213,6 @@ app.delete("/admin/market-news/:id", auth, async (req, res) => {
 // =======================
 // ✉️ ADMIN - MARCAR CONTACTO COMO LEÍDO
 // =======================
-app.put("/admin/contactos/:id/leido", auth, async (req, res) => {
-  const { data: admin } = await supabase
-    .from("users").select("role").eq("id", req.userId).single();
-  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
-
-  const { error } = await supabase.from("contactos").update({ leido: true }).eq("id", req.params.id);
-  if (error) return res.status(500).json({ message: error.message });
-  res.json({ message: "Marcado como leído" });
-});
 
 // =======================
 // 📷 UPLOAD COMPROBANTE
