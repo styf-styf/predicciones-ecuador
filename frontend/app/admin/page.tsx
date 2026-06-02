@@ -424,10 +424,7 @@ export default function AdminPage() {
 
   const fetchEmails = async () => {
     const token = localStorage.getItem("token");
-    const params = new URLSearchParams();
-    if (emailAlias !== "all") params.set("alias", emailAlias);
-    if (emailType !== "all") params.set("type", emailType);
-    const res = await fetch(`https://api.ecuapred.com/admin/emails?${params}`, {
+    const res = await fetch(`https://api.ecuapred.com/admin/emails`, {
       headers: { authorization: `Bearer ${token}` },
     });
     if (res.ok) setEmails(await res.json());
@@ -3070,7 +3067,7 @@ export default function AdminPage() {
               <div className="flex flex-wrap gap-2">
                 <div className="flex items-center gap-1 bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-lg p-1">
                   {(["all", "received", "sent"] as const).map(t => (
-                    <button key={t} onClick={() => { setEmailType(t); setTimeout(fetchEmails, 0); }}
+                    <button key={t} onClick={() => setEmailType(t)}
                       className={`px-3 py-1.5 rounded-md text-[11px] font-medium transition cursor-pointer ${emailType === t ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "text-slate-500 dark:text-white/40"}`}>
                       {t === "all" ? "Todos" : t === "received" ? "Recibidos" : "Enviados"}
                     </button>
@@ -3078,7 +3075,7 @@ export default function AdminPage() {
                 </div>
                 <div className="flex items-center gap-1 bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-lg p-1">
                   {(["all", "info", "soporte", "alertas", "admin"] as const).map(a => (
-                    <button key={a} onClick={() => { setEmailAlias(a); setTimeout(fetchEmails, 0); }}
+                    <button key={a} onClick={() => setEmailAlias(a)}
                       className={`px-3 py-1.5 rounded-md text-[11px] font-medium transition cursor-pointer ${emailAlias === a ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "text-slate-500 dark:text-white/40"}`}>
                       {a === "all" ? "Todos" : `${a}@`}
                     </button>
@@ -3090,10 +3087,9 @@ export default function AdminPage() {
                 {/* Lista de correos */}
                 <div className="lg:col-span-1 bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl overflow-hidden">
                   <div className="divide-y divide-slate-100 dark:divide-white/[0.04] max-h-[600px] overflow-y-auto">
-                    {emails.length === 0 && (
+                    {(() => { const filtered = emails.filter(e => (emailType === "all" || e.type === emailType) && (emailAlias === "all" || e.alias === emailAlias)); return filtered.length === 0 ? (
                       <p className="px-5 py-8 text-[12px] text-slate-400 dark:text-white/20 text-center">Sin correos</p>
-                    )}
-                    {emails.map(email => (
+                    ) : filtered.map(email => (
                       <button key={email.id}
                         onClick={async () => {
                           setSelectedEmail(email);
@@ -3116,13 +3112,13 @@ export default function AdminPage() {
                             </span>
                           </div>
                           <span className="text-[10px] text-slate-400 dark:text-white/20 shrink-0">
-                            {new Date(email.created_at + "Z").toLocaleDateString("es-EC", { timeZone: "America/Guayaquil", day: "2-digit", month: "2-digit" })}
+                            {new Date(email.created_at).toLocaleDateString("es-EC", { timeZone: "America/Guayaquil", day: "2-digit", month: "2-digit" })}
                           </span>
                         </div>
                         <p className={`text-[11px] truncate ${!email.read && email.type === "received" ? "text-slate-700 dark:text-white/70 font-medium" : "text-slate-500 dark:text-white/40"}`}>{email.subject}</p>
                         <span className="text-[10px] bg-slate-100 dark:bg-white/[0.06] text-slate-400 dark:text-white/25 px-1.5 py-0.5 rounded-md mt-1 inline-block">{email.alias}@</span>
                       </button>
-                    ))}
+                    ))}); })()}
                   </div>
                 </div>
 
@@ -3197,7 +3193,7 @@ export default function AdminPage() {
                         </div>
                         <p className="text-[11px] text-slate-500 dark:text-white/40">De: {selectedEmail.from_address}</p>
                         <p className="text-[11px] text-slate-500 dark:text-white/40">Para: {selectedEmail.to_address}</p>
-                        <p className="text-[10px] text-slate-400 dark:text-white/25">{new Date(selectedEmail.created_at + "Z").toLocaleString("es-EC", { timeZone: "America/Guayaquil", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
+                        <p className="text-[10px] text-slate-400 dark:text-white/25">{new Date(selectedEmail.created_at).toLocaleString("es-EC", { timeZone: "America/Guayaquil", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
                       </div>
                       <div className="flex-1 p-5 overflow-y-auto">
                         {selectedEmail.html ? (
