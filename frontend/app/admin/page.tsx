@@ -235,6 +235,10 @@ export default function AdminPage() {
     u.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     u.nombre?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  const filteredEmails = emails.filter(e =>
+    (emailType === "all" || e.type === emailType) &&
+    (emailAlias === "all" || e.alias === emailAlias)
+  );
   const { paginated: paginatedMarkets, page: marketPage, setPage: setMarketPage, totalPages: marketPages } = usePagination(filteredMarkets, 15);
   const { paginated: paginatedUsers, page: userPage, setPage: setUserPage, totalPages: userPages } = usePagination(filteredUsers, 20);
   const { paginated: paginatedWinners, page: winnerPage, setPage: setWinnerPage, totalPages: winnerPages } = usePagination(winners, 20);
@@ -3087,9 +3091,9 @@ export default function AdminPage() {
                 {/* Lista de correos */}
                 <div className="lg:col-span-1 bg-white dark:bg-[#111111] border border-slate-200 dark:border-white/[0.06] rounded-xl overflow-hidden">
                   <div className="divide-y divide-slate-100 dark:divide-white/[0.04] max-h-[600px] overflow-y-auto">
-                    {(() => { const filtered = emails.filter(e => (emailType === "all" || e.type === emailType) && (emailAlias === "all" || e.alias === emailAlias)); return filtered.length === 0 ? (
+                    {filteredEmails.length === 0 ? (
                       <p className="px-5 py-8 text-[12px] text-slate-400 dark:text-white/20 text-center">Sin correos</p>
-                    ) : filtered.map(email => (
+                    ) : filteredEmails.map(email => (
                       <button key={email.id}
                         onClick={async () => {
                           setSelectedEmail(email);
@@ -3118,7 +3122,7 @@ export default function AdminPage() {
                         <p className={`text-[11px] truncate ${!email.read && email.type === "received" ? "text-slate-700 dark:text-white/70 font-medium" : "text-slate-500 dark:text-white/40"}`}>{email.subject}</p>
                         <span className="text-[10px] bg-slate-100 dark:bg-white/[0.06] text-slate-400 dark:text-white/25 px-1.5 py-0.5 rounded-md mt-1 inline-block">{email.alias}@</span>
                       </button>
-                    ))}); })()}
+                    ))}
                   </div>
                 </div>
 
