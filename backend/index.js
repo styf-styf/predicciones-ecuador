@@ -1521,7 +1521,7 @@ app.post("/email/webhook", async (req, res) => {
     let html = null;
     let text = null;
     try {
-      const fullRes = await fetch(`https://api.resend.com/emails/${emailData.email_id}`, {
+      const fullRes = await fetch(`https://api.resend.com/emails/receiving/${emailData.email_id}`, {
         headers: { Authorization: `Bearer ${RESEND_API_KEY}` },
       });
       if (fullRes.ok) {
