@@ -3032,16 +3032,28 @@ export default function AdminPage() {
                         <span className="text-[11px] text-slate-700 dark:text-white/70">{a}@</span>
                         <button onClick={async () => {
                           const token = localStorage.getItem("token");
-                          await fetch(`https://api.ecuapred.com/admin/email-aliases/${a}`, { method: "DELETE", headers: { authorization: `Bearer ${token}` } });
-                          setEmailAliases(prev => prev.filter(x => x !== a));
-                          if (emailAlias === a) setEmailAlias("all");
+                          const res = await fetch(`https://api.ecuapred.com/admin/email-aliases/${a}`, { method: "DELETE", headers: { authorization: `Bearer ${token}` } });
+                          if (res.ok) {
+                            setEmailAliases(prev => prev.filter(x => x !== a));
+                            if (emailAlias === a) setEmailAlias("all");
+                          }
                         }} className="text-slate-400 hover:text-rose-500 transition cursor-pointer text-[11px]">✕</button>
                       </div>
                     ))}
                   </div>
                   <div className="flex gap-2">
                     <input value={newAlias} onChange={e => setNewAlias(e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, ""))}
-                      placeholder="nuevo alias" onKeyDown={async e => { if (e.key === "Enter") { /* submit */ } }}
+                      placeholder="nuevo alias" onKeyDown={async e => {
+                        if (e.key === "Enter") {
+                          if (!newAlias.trim()) return;
+                          const token = localStorage.getItem("token");
+                          const res = await fetch("https://api.ecuapred.com/admin/email-aliases", {
+                            method: "POST", headers: { authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+                            body: JSON.stringify({ alias: newAlias }),
+                          });
+                          if (res.ok) { setEmailAliases(prev => [...prev, newAlias]); setNewAlias(""); }
+                        }
+                      }}
                       className="flex-1 text-[11px] px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/[0.06] bg-transparent text-slate-700 dark:text-white/70 outline-none" />
                     <button onClick={async () => {
                       if (!newAlias.trim()) return;
@@ -3172,7 +3184,12 @@ export default function AdminPage() {
                       </div>
                       <div className="flex-1 p-5 overflow-y-auto">
                         {selectedEmail.html ? (
-                          <div className="text-[13px] text-slate-700 dark:text-white/70 leading-relaxed" dangerouslySetInnerHTML={{ __html: selectedEmail.html }} />
+                          <iframe
+                            srcDoc={selectedEmail.html}
+                            sandbox="allow-popups"
+                            className="w-full min-h-[300px] border-0 rounded"
+                            title="Contenido del correo"
+                          />
                         ) : (
                           <p className="text-[13px] text-slate-500 dark:text-white/40 whitespace-pre-wrap">{selectedEmail.text || "(Sin contenido)"}</p>
                         )}

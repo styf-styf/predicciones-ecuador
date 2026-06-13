@@ -58,7 +58,9 @@ app.use(cors({
     }
   },
 }));
-app.use(express.json());
+app.use(express.json({
+  verify: (req, _res, buf) => { req.rawBody = buf; },
+}));
 
 // ── Rate limiters ────────────────────────────────────────────────────────────
 // En memoria: para endpoints de baja criticidad (rápido, sin latencia de BD)
@@ -124,6 +126,15 @@ const betRateLimit        = makeRateLimiter(60,      60 * 1000, "Demasiadas pred
 const withdrawalRateLimit = makeRateLimiter(5, 60 * 60 * 1000, "Demasiadas solicitudes de retiro. Espera 1 hora.");
 const transferRateLimit   = makeRateLimiter(10, 60 * 60 * 1000, "Demasiadas transferencias. Espera 1 hora.");
 const contactoRateLimit   = makeRateLimiter(5,  60 * 60 * 1000, "Demasiados mensajes enviados. Espera 1 hora.");
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+}
 const commentRateLimit    = makeRateLimiter(10,      60 * 1000, "Estás comentando demasiado rápido. Espera un momento.");
 
 const SECRET = process.env.JWT_SECRET;
@@ -1385,13 +1396,16 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
 
     const newPoints = parseFloat((Number(user.points) + payout).toFixed(2));
 
-    const { error: updateError } = await supabase.from("users")
+    const { error: updateError, data: updatedUser } = await supabase.from("users")
       .update({ points: newPoints })
-      .eq("id", bet.user_id);
+      .eq("id", bet.user_id)
+      .eq("points", user.points)
+      .select("id");
 
-    if (updateError) {
-      console.error(`[resolve] Error actualizando puntos bet ${bet.id}: ${updateError.message}`);
-      failedBets.push({ betId: bet.id, userId: bet.user_id, email: user.email, monto: payout, error: updateError.message });
+    if (updateError || !updatedUser || updatedUser.length === 0) {
+      const errMsg = updateError?.message || "Race condition: puntos modificados concurrentemente";
+      console.error(`[resolve] Error actualizando puntos bet ${bet.id}: ${errMsg}`);
+      failedBets.push({ betId: bet.id, userId: bet.user_id, email: user.email, monto: payout, error: errMsg });
       continue;
     }
 
@@ -1415,7 +1429,8 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
       read: false,
       market_id: marketId,
     }]);
-    emailMercadoGanado({ nombre: user.nombre, email: user.email, question: market.question, reward: payout });
+    emailMercadoGanado({ nombre: user.nombre, email: user.email, question: market.question, reward: payout })
+      .catch(e => console.error(`[resolve] Error email ganado bet ${bet.id}:`, e.message));
 
     await supabase.from("winners").insert([{
       user_id: bet.user_id,
@@ -1437,7 +1452,8 @@ app.post("/admin/resolve/:id", auth, async (req, res) => {
       market_id: marketId,
     }]);
     const { data: loser } = await supabase.from("users").select("nombre,email").eq("id", bet.user_id).single();
-    if (loser?.email) emailMercadoPerdido({ nombre: loser.nombre, email: loser.email, question: market.question, amount });
+    if (loser?.email) emailMercadoPerdido({ nombre: loser.nombre, email: loser.email, question: market.question, amount })
+      .catch(e => console.error(`[resolve] Error email perdido bet ${bet.id}:`, e.message));
   }
 
   await supabase.from("markets").update({ resolved: true, winner }).eq("id", marketId);
@@ -1507,6 +1523,27 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY;
 // Webhook de Resend — recibe correos entrantes
 app.post("/email/webhook", async (req, res) => {
   try {
+    // Verificar firma Svix (usada por Resend para webhooks)
+    const webhookSecret = process.env.RESEND_WEBHOOK_SECRET;
+    if (webhookSecret) {
+      const msgId = req.headers["svix-id"];
+      const msgTimestamp = req.headers["svix-timestamp"];
+      const msgSignature = req.headers["svix-signature"];
+      if (!msgId || !msgTimestamp || !msgSignature) {
+        return res.status(401).json({ message: "Firma de webhook ausente" });
+      }
+      // Rechazar timestamps con más de 5 minutos de diferencia (replay attacks)
+      if (Math.abs(Date.now() / 1000 - Number(msgTimestamp)) > 300) {
+        return res.status(401).json({ message: "Webhook expirado" });
+      }
+      const signedContent = `${msgId}.${msgTimestamp}.${req.rawBody?.toString() ?? JSON.stringify(req.body)}`;
+      const secretBytes = Buffer.from(webhookSecret.replace(/^whsec_/, ""), "base64");
+      const expectedSig = crypto.createHmac("sha256", secretBytes).update(signedContent).digest("base64");
+      const providedSigs = msgSignature.split(" ").map(s => s.replace(/^v1,/, ""));
+      const valid = providedSigs.some(s => crypto.timingSafeEqual(Buffer.from(s), Buffer.from(expectedSig)));
+      if (!valid) return res.status(401).json({ message: "Firma de webhook inválida" });
+    }
+
     const event = req.body;
     if (!event || event.type !== "email.received") return res.json({ ok: true });
 
@@ -2124,17 +2161,19 @@ app.post("/payphone/callback", async (req, res) => {
       return res.status(400).json({ message: "Pago no verificado" });
     }
 
-    // Obtener transacción pendiente
-    const { data: transaction } = await supabase
+    // Marcar atómicamente como procesando (previene doble-crédito por callbacks concurrentes)
+    const { data: claimed, error: claimError } = await supabase
       .from("transactions")
-      .select("*")
+      .update({ status: "procesando" })
       .eq("reference", clientTransactionId)
       .eq("status", "pendiente")
-      .maybeSingle();
+      .select("*");
 
-    if (!transaction) {
+    if (claimError || !claimed || claimed.length === 0) {
       return res.status(400).json({ message: "Transacción no encontrada o ya procesada" });
     }
+
+    const transaction = claimed[0];
 
     // Sumar puntos al usuario (1 USD = 1 punto)
     const { data: user } = await supabase
@@ -2144,7 +2183,8 @@ app.post("/payphone/callback", async (req, res) => {
 
     await supabase.from("users")
       .update({ points: newPoints })
-      .eq("id", transaction.user_id);
+      .eq("id", transaction.user_id)
+      .eq("points", user.points);
 
     // Marcar transacción como completada
     await supabase.from("transactions")
@@ -3091,7 +3131,7 @@ app.post("/contacto", contactoRateLimit, async (req, res) => {
   }
 
   const subject = asunto?.trim() || "Sin asunto";
-  const html = `<p><strong>De:</strong> ${nombre.trim()} &lt;${email.trim()}&gt;</p><p><strong>Asunto:</strong> ${subject}</p><hr/><p>${mensaje.trim().replace(/\n/g, "<br/>")}</p>`;
+  const html = `<p><strong>De:</strong> ${escapeHtml(nombre.trim())} &lt;${escapeHtml(email.trim())}&gt;</p><p><strong>Asunto:</strong> ${escapeHtml(subject)}</p><hr/><p>${escapeHtml(mensaje.trim()).replace(/\n/g, "<br/>")}</p>`;
 
   const { error } = await supabase.from("emails").insert({
     id: crypto.randomUUID(),
