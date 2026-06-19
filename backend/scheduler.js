@@ -75,6 +75,7 @@ let shouldStop = false;
 let schedulerEnabled = true;
 let lastRun = null;
 let lastStats = { processed: 0, found: 0, urls: 0, errors: 0 };
+let lastError = null;
 // Evita reintentar el mismo mercado si Claude falla (se resetea al reiniciar el servidor)
 const attemptedClosures = new Set();
 
@@ -367,10 +368,20 @@ DEVUELVE null OBLIGATORIAMENTE en los siguientes casos (no son negociables):
       status: "pending",
     });
 
+    lastError = null;
     console.log(`[bot] ✅ ${parsed.new_market_question}`);
     return true;
   } catch (err) {
     console.error("[bot] Error procesando:", headline.title, "-", err.message);
+    if (err.message?.includes("credit balance is too low")) {
+      lastError = "Sin créditos en Anthropic";
+    } else if (err.status === 401 || err.message?.includes("401")) {
+      lastError = "API key inválida";
+    } else if (err.message?.includes("rate limit") || err.status === 429) {
+      lastError = "Límite de peticiones alcanzado";
+    } else {
+      lastError = `Error de API: ${err.message?.slice(0, 60) || "desconocido"}`;
+    }
     return null; // Error de API → NO marcar como vista, reintentar después
   }
 }
@@ -569,7 +580,7 @@ function startScheduler() {
 }
 
 function getStatus() {
-  return { isRunning, schedulerEnabled, lastRun, ...lastStats };
+  return { isRunning, schedulerEnabled, lastRun, lastError, ...lastStats };
 }
 
 module.exports = { init, runBot, stopBot, enableBot, startScheduler, getStatus };
