@@ -249,10 +249,10 @@ Fuente: ${headline.source}
 Fecha de hoy: ${today}
 ${contentSection}
 
-Mercados activos en la plataforma (NO duplicar):
+Mercados activos en la plataforma (NO duplicar ni generar pregunta sobre el mismo tema):
 ${marketsText}
 
-Sugerencias pendientes de los últimos 14 días (NO duplicar ni parafrasear):
+Sugerencias pendientes de los últimos 14 días (NO duplicar, NO parafrasear, NO generar pregunta sobre el mismo hecho aunque el título sea diferente):
 ${pendingText}
 
 Responde SOLO en JSON sin markdown:
@@ -271,7 +271,7 @@ Reglas:
 - CRÍTICO: Solo genera pregunta si el evento ocurre EN Ecuador o afecta DIRECTAMENTE a Ecuador o a ecuatorianos. Si la noticia es sobre otro país (España, Colombia, EE.UU., etc.) y Ecuador no es el actor principal, devuelve null en new_market_question
 - Usa el contenido del artículo para hacer la pregunta lo más específica posible (nombres, cifras, fechas concretas)
 - Solo genera pregunta si la noticia es relevante (economía, política, deporte, farándula, finanzas)
-- Si ya existe una pregunta similar en mercados activos o sugerencias pendientes sobre el mismo tema, devuelve null
+- CRÍTICO: Si el hecho o tema de esta noticia ya está cubierto por algún mercado activo o sugerencia pendiente (aunque la redacción sea diferente), devuelve null. El mismo evento publicado en distintos medios NO genera preguntas diferentes
 - category debe ser una de las 6 opciones exactas, elige según el tema principal de la noticia
 
 DEVUELVE null OBLIGATORIAMENTE en los siguientes casos (no son negociables):
@@ -323,7 +323,7 @@ DEVUELVE null OBLIGATORIAMENTE en los siguientes casos (no son negociables):
       const existKws = extractKeywords(existing);
       const shared = existKws.filter(w => newKws.has(w)).length;
       const similarity = newKws.size > 0 ? shared / newKws.size : 0;
-      if (similarity >= 0.6) {
+      if (similarity >= 0.5) {
         console.log(`[bot] Duplicado semántico (${Math.round(similarity * 100)}%): "${parsed.new_market_question}" ≈ "${existing}"`);
         return false;
       }
