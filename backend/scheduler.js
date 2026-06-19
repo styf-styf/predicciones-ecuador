@@ -182,19 +182,18 @@ async function runBot() {
 
         if (seen) continue;
 
-        const { error: seenError } = await supabase
-          .from("bot_seen_urls")
-          .insert({ news_url: headline.url });
-
-        if (seenError) continue;
-
-        const success = await processWithAI(headline);
-        if (success) {
+        const result = await processWithAI(headline);
+        if (result === true) {
+          // Éxito: pregunta generada
+          await supabase.from("bot_seen_urls").insert({ news_url: headline.url });
           stats.processed++;
           if (broadcast) broadcast("suggestions", {});
-        } else {
+        } else if (result === false) {
+          // Claude descartó la noticia (trivial, duplicado, no apta) → marcar como vista
+          await supabase.from("bot_seen_urls").insert({ news_url: headline.url });
           stats.errors++;
         }
+        // null = error de API → no marcar como vista, se reintentará en la próxima corrida
 
         await new Promise(r => setTimeout(r, 1500));
       }
@@ -294,7 +293,7 @@ DEVUELVE null OBLIGATORIAMENTE en los siguientes casos (no son negociables):
     let parsed;
     try { parsed = JSON.parse(clean); } catch { return false; }
 
-    if (!parsed.new_market_question) return false;
+    if (!parsed.new_market_question) return false; // Claude descartó → marcar como vista
 
     // ── Dedup por keywords (red de seguridad independiente de la IA) ──────────
     // Palabras vacías en español que no aportan semántica
@@ -325,7 +324,7 @@ DEVUELVE null OBLIGATORIAMENTE en los siguientes casos (no son negociables):
       const similarity = newKws.size > 0 ? shared / newKws.size : 0;
       if (similarity >= 0.5) {
         console.log(`[bot] Duplicado semántico (${Math.round(similarity * 100)}%): "${parsed.new_market_question}" ≈ "${existing}"`);
-        return false;
+        return false; // Duplicado → marcar como vista
       }
     }
     // ────────────────────────────────────────────────────────────────────────────
@@ -372,7 +371,7 @@ DEVUELVE null OBLIGATORIAMENTE en los siguientes casos (no son negociables):
     return true;
   } catch (err) {
     console.error("[bot] Error procesando:", headline.title, "-", err.message);
-    return false;
+    return null; // Error de API → NO marcar como vista, reintentar después
   }
 }
 
