@@ -3546,7 +3546,7 @@ app.post("/admin/bot/run", auth, async (req, res) => {
 
   // Responde de inmediato — el bot corre en background para evitar timeout HTTP
   res.json({ message: "Bot iniciado" });
-  scheduler.runBot();
+  scheduler.runBot({ force: true });
 });
 
 app.delete("/admin/bot/cache", auth, async (req, res) => {

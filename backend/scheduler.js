@@ -122,7 +122,7 @@ function enableBot() {
   return { message: "Bot activado" };
 }
 
-async function runBot() {
+async function runBot({ force = false } = {}) {
   if (!schedulerEnabled) return { message: "Bot desactivado" };
   if (isRunning) return { message: "Bot ya está corriendo" };
   isRunning = true;
@@ -146,7 +146,7 @@ async function runBot() {
     for (const botUrl of botUrls) {
       if (shouldStop) { console.log("[bot] Detenido por solicitud del admin"); break; }
 
-      if (botUrl.last_checked_at) {
+      if (!force && botUrl.last_checked_at) {
         const lastChecked = new Date(botUrl.last_checked_at);
         const minutesSince = (now.getTime() - lastChecked.getTime()) / 60000;
         if (minutesSince < (botUrl.interval_min || 15)) continue;
