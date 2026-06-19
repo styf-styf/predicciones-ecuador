@@ -3558,6 +3558,16 @@ app.delete("/admin/bot/cache", auth, async (req, res) => {
   res.json({ message: "Caché limpiado" });
 });
 
+app.post("/admin/bot/provider", auth, async (req, res) => {
+  const { data: admin } = await supabase.from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const { provider } = req.body;
+  const ok = scheduler.setProvider(provider);
+  if (!ok) return res.status(400).json({ message: "Proveedor inválido. Usa 'claude' o 'groq'" });
+  res.json({ message: `IA cambiada a ${provider}`, aiProvider: provider });
+});
+
 app.post("/admin/bot/stop", auth, async (req, res) => {
   const { data: admin } = await supabase.from("users").select("role").eq("id", req.userId).single();
   if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });

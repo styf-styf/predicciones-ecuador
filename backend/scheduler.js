@@ -76,6 +76,7 @@ let schedulerEnabled = true;
 let lastRun = null;
 let lastStats = { processed: 0, found: 0, urls: 0, errors: 0 };
 let lastError = null;
+let aiProvider = "claude"; // "claude" | "groq"
 // Evita reintentar el mismo mercado si Claude falla (se resetea al reiniciar el servidor)
 const attemptedClosures = new Set();
 
@@ -106,6 +107,41 @@ async function init(deps) {
     console.error("[bot] No se pudo leer bot_enabled, se asume activo:", err.message);
     schedulerEnabled = true;
   }
+}
+
+function setProvider(provider) {
+  if (provider !== "claude" && provider !== "groq") return false;
+  aiProvider = provider;
+  lastError = null;
+  console.log(`[bot] IA cambiada a: ${provider}`);
+  return true;
+}
+
+async function callAI(prompt, maxTokens = 1024) {
+  if (aiProvider === "groq") {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || `Groq error ${res.status}`);
+    return data.choices?.[0]?.message?.content || "{}";
+  }
+
+  // Claude (default)
+  const data = await anthropicClient.messages.create({
+    model: "claude-opus-4-8",
+    max_tokens: maxTokens,
+    messages: [{ role: "user", content: prompt }],
+  });
+  return data.content[0]?.text || "{}";
 }
 
 function stopBot() {
@@ -290,12 +326,7 @@ DEVUELVE null OBLIGATORIAMENTE en los siguientes casos (no son negociables):
 - Noticias cuyo resultado ya se conoce al momento de publicar (el evento ya ocurrió y no hay consecuencia pendiente)
 - Noticias donde no existe un evento futuro verificable y concreto dentro de los próximos 5 días`;
 
-    const aiData = await anthropicClient.messages.create({
-      model: "claude-opus-4-8",
-      max_tokens: 1024,
-      messages: [{ role: "user", content: prompt }],
-    });
-    const rawText = aiData.content[0]?.text || "{}";
+    const rawText = await callAI(prompt, 1024);
     const clean = rawText.replace(/```json|```/g, "").trim();
 
     let parsed;
@@ -505,12 +536,7 @@ Responde SOLO en JSON sin markdown:
   "reasoning": "explicación breve de tu determinación en 1-2 oraciones"
 }`;
 
-    const aiData = await anthropicClient.messages.create({
-      model: "claude-opus-4-8",
-      max_tokens: 2048,
-      messages: [{ role: "user", content: prompt }],
-    });
-    const rawText = aiData.content[0]?.text || "{}";
+    const rawText = await callAI(prompt, 2048);
     const clean = rawText.replace(/```json|```/g, "").trim();
 
     let parsed;
@@ -587,7 +613,7 @@ function startScheduler() {
 }
 
 function getStatus() {
-  return { isRunning, schedulerEnabled, lastRun, lastError, ...lastStats };
+  return { isRunning, schedulerEnabled, lastRun, lastError, aiProvider, ...lastStats };
 }
 
-module.exports = { init, runBot, stopBot, enableBot, startScheduler, getStatus };
+module.exports = { init, runBot, stopBot, enableBot, startScheduler, getStatus, setProvider };

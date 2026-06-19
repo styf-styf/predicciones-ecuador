@@ -2608,7 +2608,25 @@ export default function AdminPage() {
                       </span>
                     )}
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
+                    <select
+                      value={botStatus?.aiProvider || "claude"}
+                      onChange={async (e) => {
+                        const token = localStorage.getItem("token");
+                        const res = await fetch("https://api.ecuapred.com/admin/bot/provider", {
+                          method: "POST",
+                          headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+                          body: JSON.stringify({ provider: e.target.value }),
+                        });
+                        const data = await res.json();
+                        fetchBotStatus();
+                        showToast(data.message, res.ok ? "success" : "error");
+                      }}
+                      className="bg-slate-100 dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-white/50 px-3 py-2 sm:py-1.5 rounded-lg text-[12px] transition cursor-pointer"
+                    >
+                      <option value="claude">Claude Opus</option>
+                      <option value="groq">Groq Llama</option>
+                    </select>
                     <button
                       disabled={botRunning || botUrls.filter(u => u.active).length === 0}
                       onClick={async () => {
