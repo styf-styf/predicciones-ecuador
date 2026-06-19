@@ -234,7 +234,7 @@ async function processWithAI(headline) {
     const marketsText = activeMarkets?.map(m => `- ${m.question}`).join("\n") || "Ninguno";
     const pendingText = recentSuggestions?.map(s => `- ${s.new_market_question}`).join("\n") || "Ninguna";
     const today = new Date().toISOString().split("T")[0];
-    const in5Days = new Date(Date.now() + 5 * 86400000).toISOString().split("T")[0];
+    const in7Days = new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0];
 
     const contentSection = articleContent
       ? `\nContenido del artículo (primeras ~500 palabras):\n${articleContent}`
@@ -257,11 +257,11 @@ ${pendingText}
 
 Responde SOLO en JSON sin markdown:
 {
-  "new_market_question": "pregunta verificable con Sí/No que cierre entre 1 y 5 días, o null si la noticia no lo amerita",
+  "new_market_question": "pregunta verificable con Sí/No, o null si la noticia no lo amerita",
   "probability_yes": número 0-100,
   "probability_no": número 0-100,
   "probability_reasoning": "explicación breve en 1 oración basada en el contenido del artículo",
-  "suggested_close_date": "fecha YYYY-MM-DD entre ${today} y ${in5Days}",
+  "suggested_close_date": "fecha YYYY-MM-DD entre ${today} y ${in7Days}",
   "impact": "alto o medio o bajo",
   "category": "una de estas opciones exactas: deporte, farandula, politica, elecciones, pais, general",
   "summary": "resumen del artículo en 1-2 oraciones con los datos más relevantes"
@@ -273,6 +273,13 @@ Reglas:
 - Solo genera pregunta si la noticia es relevante (economía, política, deporte, farándula, finanzas)
 - CRÍTICO: Si el hecho o tema de esta noticia ya está cubierto por algún mercado activo o sugerencia pendiente (aunque la redacción sea diferente), devuelve null. El mismo evento publicado en distintos medios NO genera preguntas diferentes
 - category debe ser una de las 6 opciones exactas, elige según el tema principal de la noticia
+- FECHA DE CIERRE — elige según el tipo de evento:
+  · Si el artículo menciona una fecha concreta (partido, votación, audiencia, fallo, anuncio): usa ESA misma fecha como cierre, NO el día siguiente, porque el resultado se conoce el mismo día y el mercado debe cerrar antes de que ocurra
+  · Deportes sin fecha concreta: hoy + 1 o + 2 días
+  · Política/judicial con fecha anunciada: la fecha del evento
+  · Economía/anuncio esperado esta semana: la fecha del anuncio si se menciona, si no hoy + 2 o + 3
+  · Situación en curso sin fecha clara: hoy + 3 o + 4 días
+  · Máximo permitido: ${in7Days}
 
 DEVUELVE null OBLIGATORIAMENTE en los siguientes casos (no son negociables):
 - Muertes, fallecimientos o asesinatos de personas, sea una o varias víctimas
@@ -335,7 +342,7 @@ DEVUELVE null OBLIGATORIAMENTE en los siguientes casos (no son negociables):
 
     // Validar y normalizar la fecha sugerida por el bot
     const todayStr = new Date().toISOString().split("T")[0];
-    const maxStr = new Date(Date.now() + 5 * 86400000).toISOString().split("T")[0];
+    const maxStr = new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0];
     let closeDate = null;
     if (parsed.suggested_close_date) {
       const raw = String(parsed.suggested_close_date).slice(0, 10);
@@ -348,7 +355,7 @@ DEVUELVE null OBLIGATORIAMENTE en los siguientes casos (no son negociables):
     }
     if (!closeDate) {
       // Fallback: hoy + 3 días
-      closeDate = new Date(Date.now() + 3 * 86400000).toISOString().split("T")[0];
+      closeDate = new Date(Date.now() + 2 * 86400000).toISOString().split("T")[0];
     }
 
     await supabase.from("news_suggestions").insert({
