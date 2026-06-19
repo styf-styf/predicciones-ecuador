@@ -2637,19 +2637,25 @@ export default function AdminPage() {
                       {botRunning ? "⏳ Ejecutando..." : "▶ Ejecutar ahora"}
                     </button>
                     <button
-                      onClick={async () => {
-                        if (!confirm("¿Borrar el historial de noticias vistas? El bot volverá a procesar todas las noticias recientes.")) return;
-                        const token = localStorage.getItem("token");
-                        try {
-                          await fetch("https://api.ecuapred.com/admin/bot/cache", {
-                            method: "DELETE",
-                            headers: { authorization: `Bearer ${token}` },
-                          });
-                          showToast("Caché borrado · El bot procesará noticias nuevamente", "success");
-                        } catch {
-                          showToast("Error al borrar caché", "error");
-                        }
-                      }}
+                      onClick={() => openModal({
+                        title: "Borrar caché del bot",
+                        description: "Se eliminará el historial de noticias vistas. El bot volverá a procesar todas las noticias recientes y podría gastar más créditos de API.",
+                        confirmLabel: "Borrar caché",
+                        danger: true,
+                        onConfirm: async () => {
+                          setModal(null);
+                          const token = localStorage.getItem("token");
+                          try {
+                            await fetch("https://api.ecuapred.com/admin/bot/cache", {
+                              method: "DELETE",
+                              headers: { authorization: `Bearer ${token}` },
+                            });
+                            showToast("Caché borrado · El bot procesará noticias nuevamente", "success");
+                          } catch {
+                            showToast("Error al borrar caché", "error");
+                          }
+                        },
+                      })}
                       className="bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-white/50 px-3 py-2 sm:py-1.5 rounded-lg text-[12px] transition cursor-pointer"
                     >
                       🗑 Borrar caché
