@@ -3549,6 +3549,15 @@ app.post("/admin/bot/run", auth, async (req, res) => {
   scheduler.runBot();
 });
 
+app.delete("/admin/bot/cache", auth, async (req, res) => {
+  const { data: admin } = await supabase.from("users").select("role").eq("id", req.userId).single();
+  if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+
+  const { error } = await supabase.from("bot_seen_urls").delete().neq("id", 0);
+  if (error) return res.status(500).json({ message: "Error al limpiar caché" });
+  res.json({ message: "Caché limpiado" });
+});
+
 app.post("/admin/bot/stop", auth, async (req, res) => {
   const { data: admin } = await supabase.from("users").select("role").eq("id", req.userId).single();
   if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
