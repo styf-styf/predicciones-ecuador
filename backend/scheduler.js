@@ -270,8 +270,16 @@ Reglas:
 - Usa el contenido del artículo para hacer la pregunta lo más específica posible (nombres, cifras, fechas concretas)
 - Solo genera pregunta si la noticia es relevante (economía, política, deporte, farándula, finanzas)
 - Si ya existe una pregunta similar en mercados activos o sugerencias pendientes sobre el mismo tema, devuelve null
-- Si la noticia es trivial o no involucra a Ecuador, devuelve null en new_market_question
-- category debe ser una de las 6 opciones exactas, elige según el tema principal de la noticia`;
+- category debe ser una de las 6 opciones exactas, elige según el tema principal de la noticia
+
+DEVUELVE null OBLIGATORIAMENTE en los siguientes casos (no son negociables):
+- Muertes, fallecimientos o asesinatos de personas, sea una o varias víctimas
+- Criminalidad, delincuencia, robos, asaltos, extorsión, narcotráfico, sicariato, femicidios
+- Accidentes de tránsito, desastres naturales o emergencias sanitarias sin implicación política o económica directa
+- Declaraciones de opinión o entrevistas sin anuncio de acción concreta futura
+- Notas de farándula donde no hay un evento verificable próximo (ej: "X luce nuevo look", "X habla de su vida personal")
+- Noticias cuyo resultado ya se conoce al momento de publicar (el evento ya ocurrió y no hay consecuencia pendiente)
+- Noticias donde no existe un evento futuro verificable y concreto dentro de los próximos 5 días`;
 
     const aiData = await anthropicClient.messages.create({
       model: "claude-opus-4-8",
