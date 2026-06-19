@@ -597,6 +597,24 @@ async function cleanOldComprobantes() {
   }
 }
 
+async function cleanOldSuggestions() {
+  try {
+    const cutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+
+    const { data, error } = await supabase
+      .from("news_suggestions")
+      .delete()
+      .in("status", ["pending", "rejected"])
+      .lt("created_at", cutoff)
+      .select("id");
+
+    if (error) { console.error("[cleanup] Error borrando sugerencias antiguas:", error.message); return; }
+    if (data?.length > 0) console.log(`[cleanup] ✅ ${data.length} sugerencias de +14 días eliminadas`);
+  } catch (err) {
+    console.error("[cleanup] Error en cleanOldSuggestions:", err.message);
+  }
+}
+
 function startScheduler() {
   cron.schedule("* * * * *", async () => {
     if (!schedulerEnabled) return;
@@ -607,6 +625,7 @@ function startScheduler() {
   // Limpieza de comprobantes: corre una vez al día a las 03:00 hora Ecuador (08:00 UTC)
   cron.schedule("0 8 * * *", async () => {
     await cleanOldComprobantes();
+    await cleanOldSuggestions();
   });
 
   console.log("[bot] Scheduler iniciado — revisando cada minuto");
