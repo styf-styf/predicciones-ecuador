@@ -317,7 +317,46 @@ Responde SOLO en JSON sin markdown:
   "summary": "resumen del artículo en 1-2 oraciones con los datos más relevantes"
 }
 
-Reglas:
+${aiProvider === "groq" ? `
+INSTRUCCIONES ESTRICTAS — Lee cada regla y aplícala sin excepción:
+
+PASO 1 — FILTRO DE ECUADOR (si falla → new_market_question: null):
+¿El evento ocurre EN Ecuador o involucra a ecuatorianos como actor principal?
+- SÍ → continúa al paso 2
+- NO → new_market_question: null
+Ejemplos que fallan: noticias del Mundial sobre otros países, política de Colombia, farándula internacional
+
+PASO 2 — FILTRO DE EVENTO FUTURO CONCRETO (si falla → new_market_question: null):
+¿Hay un evento futuro específico con fecha conocida o esperada en los próximos 7 días cuyo resultado aún no se conoce?
+- SÍ → continúa al paso 3
+- NO → new_market_question: null
+Ejemplos que fallan:
+  · "Hospital realiza cirugía reconstructiva" → ya ocurrió, no hay evento futuro
+  · "Betsson ofrece mejores cuotas" → es publicidad, no es noticia
+  · "Futbolistas ecuatorianos que brillaron en la Bundesliga" → opinión/lista, sin evento futuro
+  · "Alcaldes y prefectos bajo la lupa" → investigación periodística vaga, sin fecha ni acción concreta
+  · "Noboa declara conflicto armado" → hecho pasado sin consecuencia futura verificable en 7 días
+
+PASO 3 — FILTRO DE EXCLUSIONES ABSOLUTAS (si aplica → new_market_question: null):
+Rechaza sin importar el contexto:
+  · Muertes, asesinatos, femicidios, sicariato
+  · Criminalidad, narcotráfico, extorsión, robos
+  · Accidentes de tránsito o desastres naturales
+  · Artículos de opinión o análisis sin acción futura
+  · Publicidad o contenido patrocinado disfrazado de noticia
+
+PASO 4 — FILTRO DE DUPLICADOS (si aplica → new_market_question: null):
+¿El tema ya está en la lista de mercados activos o sugerencias pendientes?
+- Si el mismo hecho aparece aunque con diferente redacción → new_market_question: null
+
+SOLO si pasa los 4 filtros: genera la pregunta con Sí/No lo más específica posible (nombres, cifras, fechas).
+
+FECHA DE CIERRE:
+- Si el artículo menciona fecha concreta (partido, votación, fallo): usa ESA fecha
+- Sin fecha concreta: hoy + 2 días para deportes, hoy + 3 para política/economía
+- Máximo: ${in7Days}
+
+category debe ser exactamente una de: deporte, farandula, politica, elecciones, pais, general` : `Reglas:
 - CRÍTICO: Solo genera pregunta si el evento ocurre EN Ecuador o afecta DIRECTAMENTE a Ecuador o a ecuatorianos. Si la noticia es sobre otro país (España, Colombia, EE.UU., etc.) y Ecuador no es el actor principal, devuelve null en new_market_question
 - Usa el contenido del artículo para hacer la pregunta lo más específica posible (nombres, cifras, fechas concretas)
 - Solo genera pregunta si la noticia es relevante (economía, política, deporte, farándula, finanzas)
@@ -338,7 +377,7 @@ DEVUELVE null OBLIGATORIAMENTE en los siguientes casos (no son negociables):
 - Declaraciones de opinión o entrevistas sin anuncio de acción concreta futura
 - Notas de farándula donde no hay un evento verificable próximo (ej: "X luce nuevo look", "X habla de su vida personal")
 - Noticias cuyo resultado ya se conoce al momento de publicar (el evento ya ocurrió y no hay consecuencia pendiente)
-- Noticias donde no existe un evento futuro verificable y concreto dentro de los próximos 5 días`;
+- Noticias donde no existe un evento futuro verificable y concreto dentro de los próximos 5 días`}`;
 
     const rawText = await callAI(prompt, 1024);
     const clean = rawText.replace(/```json|```/g, "").trim();
