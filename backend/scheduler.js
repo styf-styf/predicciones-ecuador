@@ -119,20 +119,34 @@ function setProvider(provider) {
 
 async function callAI(prompt, maxTokens = 1024) {
   if (aiProvider === "groq") {
-    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        messages: [{ role: "user", content: prompt }],
-      }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error?.message || `Groq error ${res.status}`);
-    return data.choices?.[0]?.message?.content || "{}";
+    // Reintenta hasta 3 veces respetando el tiempo de espera del rate limit
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          messages: [{ role: "user", content: prompt }],
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) return data.choices?.[0]?.message?.content || "{}";
+
+      const msg = data.error?.message || "";
+      if (res.status === 429) {
+        // Extraer segundos de espera del mensaje de Groq: "try again in 6.7s"
+        const match = msg.match(/try again in ([\d.]+)s/);
+        const waitMs = match ? Math.ceil(parseFloat(match[1]) * 1000) + 500 : 15000;
+        console.log(`[bot] Groq rate limit — esperando ${Math.round(waitMs / 1000)}s (intento ${attempt}/3)`);
+        await new Promise(r => setTimeout(r, waitMs));
+        continue;
+      }
+      throw new Error(msg || `Groq error ${res.status}`);
+    }
+    throw new Error("Groq rate limit — reintentos agotados");
   }
 
   // Claude (default)
