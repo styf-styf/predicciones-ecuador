@@ -75,6 +75,8 @@ let shouldStop = false;
 let schedulerEnabled = true;
 let lastRun = null;
 let lastStats = { processed: 0, found: 0, urls: 0, errors: 0 };
+// Evita reintentar el mismo mercado si Claude falla (se resetea al reiniciar el servidor)
+const attemptedClosures = new Set();
 
 async function persistEnabled(value) {
   try {
@@ -396,7 +398,8 @@ async function checkClosingMarkets() {
         .eq("source", "bot_close")
         .maybeSingle();
 
-      if (existing) continue;
+      if (existing || attemptedClosures.has(market.id)) continue;
+      attemptedClosures.add(market.id);
 
       console.log(`[bot] Analizando cierre: ${market.question}`);
       await analyzeMarketClose(market);
