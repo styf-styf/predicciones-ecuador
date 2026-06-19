@@ -1,4 +1,5 @@
 const cron = require("node-cron");
+const Anthropic = require("@anthropic-ai/sdk");
 const { scrapeHeadlines, scrapeArticleContent } = require("./scraper");
 
 // Sitios de noticias ecuatorianos — se procesan todos sus artículos recientes
@@ -68,7 +69,7 @@ function isRelevant(headline, sourceUrl) {
   return false;
 }
 
-let supabase, groqApiKey, broadcast;
+let supabase, anthropicClient, broadcast;
 let isRunning = false;
 let shouldStop = false;
 let schedulerEnabled = true;
@@ -85,7 +86,7 @@ async function persistEnabled(value) {
 
 async function init(deps) {
   supabase = deps.supabase;
-  groqApiKey = deps.groqApiKey;
+  anthropicClient = new Anthropic({ apiKey: deps.anthropicApiKey });
   broadcast = deps.broadcast;
 
   // Leer estado persistido al arrancar
@@ -272,21 +273,12 @@ Reglas:
 - Si la noticia es trivial o no involucra a Ecuador, devuelve null en new_market_question
 - category debe ser una de las 6 opciones exactas, elige según el tema principal de la noticia`;
 
-    const aiRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${groqApiKey}`,
-      },
-      body: JSON.stringify({
-        model: "llama-3.1-8b-instant",
-        temperature: 0.3,
-        messages: [{ role: "user", content: prompt }],
-      }),
+    const aiData = await anthropicClient.messages.create({
+      model: "claude-opus-4-8",
+      max_tokens: 1024,
+      messages: [{ role: "user", content: prompt }],
     });
-
-    const aiData = await aiRes.json();
-    const rawText = aiData.choices?.[0]?.message?.content || "{}";
+    const rawText = aiData.content[0]?.text || "{}";
     const clean = rawText.replace(/```json|```/g, "").trim();
 
     let parsed;
@@ -485,21 +477,12 @@ Responde SOLO en JSON sin markdown:
   "reasoning": "explicación breve de tu determinación en 1-2 oraciones"
 }`;
 
-    const aiRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${groqApiKey}`,
-      },
-      body: JSON.stringify({
-        model: "llama-3.1-8b-instant",
-        temperature: 0.2,
-        messages: [{ role: "user", content: prompt }],
-      }),
+    const aiData = await anthropicClient.messages.create({
+      model: "claude-opus-4-8",
+      max_tokens: 2048,
+      messages: [{ role: "user", content: prompt }],
     });
-
-    const aiData = await aiRes.json();
-    const rawText = aiData.choices?.[0]?.message?.content || "{}";
+    const rawText = aiData.content[0]?.text || "{}";
     const clean = rawText.replace(/```json|```/g, "").trim();
 
     let parsed;

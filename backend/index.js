@@ -3564,7 +3564,7 @@ app.post("/admin/bot/enable", auth, async (req, res) => {
 // Inicializar y arrancar el scheduler (init es async: lee bot_enabled de DB)
 scheduler.init({
   supabase,
-  groqApiKey: process.env.GROQ_API_KEY,
+  anthropicApiKey: process.env.ANTHROPIC_API_KEY,
   broadcast,
 }).then(() => scheduler.startScheduler());
 
