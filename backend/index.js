@@ -3541,8 +3541,12 @@ app.post("/admin/bot/run", auth, async (req, res) => {
   const { data: admin } = await supabase.from("users").select("role").eq("id", req.userId).single();
   if (!admin || admin.role !== "admin") return res.status(403).json({ message: "Solo admin" });
 
-  const result = await scheduler.runBot();
-  res.json({ message: "Bot ejecutado", ...result });
+  const status = scheduler.getStatus();
+  if (status.isRunning) return res.json({ message: "Bot ya está corriendo", isRunning: true });
+
+  // Responde de inmediato — el bot corre en background para evitar timeout HTTP
+  res.json({ message: "Bot iniciado" });
+  scheduler.runBot();
 });
 
 app.post("/admin/bot/stop", auth, async (req, res) => {

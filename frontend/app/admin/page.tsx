@@ -2609,18 +2609,23 @@ export default function AdminPage() {
                       onClick={async () => {
                         setBotRunning(true);
                         const token = localStorage.getItem("token");
-                        await fetch("https://api.ecuapred.com/admin/bot/enable", {
-                          method: "POST",
-                          headers: { authorization: `Bearer ${token}` },
-                        });
-                        const res = await fetch("https://api.ecuapred.com/admin/bot/run", {
-                          method: "POST",
-                          headers: { authorization: `Bearer ${token}` },
-                        });
-                        const data = await res.json();
-                        setBotRunning(false);
-                        fetchBotSuggestions(); fetchBotStatus();
-                        showToast(`Bot ejecutado · ${data.processed || 0} preguntas generadas`, "success");
+                        try {
+                          await fetch("https://api.ecuapred.com/admin/bot/enable", {
+                            method: "POST",
+                            headers: { authorization: `Bearer ${token}` },
+                          });
+                          await fetch("https://api.ecuapred.com/admin/bot/run", {
+                            method: "POST",
+                            headers: { authorization: `Bearer ${token}` },
+                          });
+                          showToast("Bot iniciado · Las sugerencias aparecerán en segundos", "success");
+                          fetchBotStatus();
+                          setTimeout(() => { fetchBotSuggestions(); fetchBotStatus(); }, 15000);
+                        } catch {
+                          showToast("Error al iniciar el bot", "error");
+                        } finally {
+                          setBotRunning(false);
+                        }
                       }}
                       className="bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-white/50 px-3 py-2 sm:py-1.5 rounded-lg text-[12px] transition disabled:opacity-40 cursor-pointer"
                     >
